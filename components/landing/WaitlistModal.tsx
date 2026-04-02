@@ -10,7 +10,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CheckCircle, Shield } from "lucide-react";
+import { CheckCircle, Shield, AlertCircle } from "lucide-react";
+import { createBrowserClient } from "@supabase/ssr";
 
 interface WaitlistModalProps {
   open: boolean;
@@ -21,29 +22,53 @@ export default function WaitlistModal({ open, onOpenChange }: WaitlistModalProps
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!email) return;
+    if (!email.trim() || loading) return;
 
     setLoading(true);
+    setError("");
 
-    // TODO: Replace with Supabase insert
-    // const supabase = createClient()
-    // await supabase.from('waitlist').insert({ email, created_at: new Date().toISOString() })
-    await new Promise((resolve) => setTimeout(resolve, 800)); // Simulated delay
+    try {
+      const { error: supabaseError } = await supabase
+        .from("waitlist")
+        .insert({ 
+          email: email.trim().toLowerCase() 
+        });
 
-    setLoading(false);
-    setSubmitted(true);
+      if (supabaseError) {
+        console.error("Supabase error:", supabaseError);
+        
+        if (supabaseError.code === "23505") {
+          setError("This email is already on the waitlist. Thank you!");
+        } else {
+          setError("Something went wrong. Please try again.");
+        }
+      } else {
+        setSubmitted(true);
+      }
+    } catch (err) {
+      console.error("Error:", err);
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   function handleClose(open: boolean) {
     onOpenChange(open);
-    // Reset state after close animation
     if (!open) {
       setTimeout(() => {
         setSubmitted(false);
         setEmail("");
+        setError("");
       }, 300);
     }
   }
@@ -54,19 +79,19 @@ export default function WaitlistModal({ open, onOpenChange }: WaitlistModalProps
         {!submitted ? (
           <>
             <DialogHeader>
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-50">
-                <Shield className="h-6 w-6 text-blue-600" />
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50">
+                <Shield className="h-7 w-7 text-blue-600" />
               </div>
-              <DialogTitle className="text-center text-2xl">
+              <DialogTitle className="text-center text-2xl font-semibold">
                 Get Early Access
               </DialogTitle>
-              <DialogDescription className="text-center text-slate-500">
-                Join 500+ small business owners on the waitlist. Free forever
-                for the first 1,000 members.
+              <DialogDescription className="text-center text-slate-600 mt-2">
+                Join hundreds of small business owners on the waitlist.<br />
+                First 1,000 members get free lifetime access.
               </DialogDescription>
             </DialogHeader>
 
-            <form onSubmit={handleSubmit} className="mt-2 space-y-4">
+            <form onSubmit={handleSubmit} className="mt-6 space-y-5">
               <Input
                 type="email"
                 placeholder="your@email.com"
@@ -74,37 +99,53 @@ export default function WaitlistModal({ open, onOpenChange }: WaitlistModalProps
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoFocus
-                className="text-base"
+                className="text-base h-12"
+                disabled={loading}
               />
+
+              {error && (
+                <div className="flex items-center gap-2 text-red-600 text-sm justify-center bg-red-50 p-3 rounded-lg">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  {error}
+                </div>
+              )}
+
               <Button
                 type="submit"
                 size="lg"
-                className="w-full"
-                disabled={loading || !email}
+                className="w-full h-12 text-base"
+                disabled={loading || !email.trim()}
               >
-                {loading ? "Joining…" : "Join the Waitlist – Get Early Access"}
+                {loading ? "Adding you to the list..." : "Join the Waitlist – Get Early Access"}
               </Button>
+
               <p className="text-center text-xs text-slate-400">
-                No spam, ever. Unsubscribe anytime.
+                No spam. Unsubscribe anytime.
               </p>
             </form>
           </>
         ) : (
-          <div className="py-6 text-center space-y-4">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50">
-              <CheckCircle className="h-8 w-8 text-emerald-500" />
+          <div className="py-10 text-center space-y-6">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100">
+              <CheckCircle className="h-12 w-12 text-emerald-600" />
             </div>
-            <div>
-              <h3 className="text-xl font-semibold text-slate-900">
-                You&apos;re on the list!
+            
+            <div className="space-y-2">
+              <h3 className="text-2xl font-semibold text-slate-900">
+                You're on the list!
               </h3>
-              <p className="mt-2 text-sm text-slate-500">
-                We&apos;ll send you an invite as soon as your spot opens up.
-                Keep building.
+              <p className="text-slate-600">
+                We'll notify you as soon as early access opens.<br />
+                Thank you for joining RegBot!
               </p>
             </div>
-            <Button variant="outline" onClick={() => handleClose(false)}>
-              Close
+
+            <Button 
+              variant="outline" 
+              onClick={() => handleClose(false)}
+              className="mt-4"
+            >
+              Close Window
             </Button>
           </div>
         )}

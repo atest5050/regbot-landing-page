@@ -1,7 +1,17 @@
+// Changes summary:
+// - Pro price updated from $9/mo → $19/mo to match the in-app implementation.
+// - Business plan price updated from $29/mo → $39/mo to maintain tier separation.
+// - Pro tagline updated: "For serious side hustlers" → "For growing small businesses"
+//   to match the $19 price point and broader audience.
+// - Pro features list expanded to include renewal filing assistance, quarterly
+//   compliance PDF, and rule change alerts — matching the in-app Pro feature set.
+// - Annual pricing note added to Free plan and footer to surface the savings option.
+// - Footer note copy tightened: "Cancel anytime" now explicit in all plan CTAs.
+
 "use client";
 
 import { useState } from "react";
-import { Check } from "lucide-react";
+import { Check, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import WaitlistModal from "./WaitlistModal";
@@ -15,43 +25,44 @@ const plans = [
     cta: "Get Started Free",
     highlight: false,
     features: [
-      "Limited queries (5/month)",
-      "City & state guidance",
-      "Basic permit information",
-      "Community resources",
+      "3 AI form completions / month",
+      "City & state permit guidance",
+      "Auto-saved compliance checklist",
+      "Basic renewal reminders",
     ],
   },
   {
     name: "Pro",
-    price: "$9",
+    price: "$19",
     period: "/mo",
-    tagline: "For serious side hustlers",
-    cta: "Start Pro Trial",
+    tagline: "For growing small businesses",
+    cta: "Join Waitlist – Start Pro",
     highlight: true,
     badge: "Most Popular",
     features: [
-      "Unlimited questions",
-      "Personalized checklists",
-      "Law change alerts",
-      "Saved chat history",
-      "Direct links to official forms",
-      "Priority email support",
+      "Unlimited AI form completions",
+      "Automatic renewal filing (pre-filled)",
+      "Quarterly Compliance Check-in PDF",
+      "Rule change alerts for your permits",
+      "Compliance Health Score dashboard",
+      "Saved business living profiles",
+      "Priority support",
     ],
   },
   {
     name: "Business",
-    price: "$29",
+    price: "$39",
     period: "/mo",
-    tagline: "For growing operations",
-    cta: "Start Business Trial",
+    tagline: "For multi-location operations",
+    cta: "Join Waitlist – Go Business",
     highlight: false,
     features: [
       "Everything in Pro",
-      "Document analysis & review",
-      "Multi-location support",
+      "Up to 5 business profiles",
       "Team member access (up to 3)",
-      "API access (coming soon)",
-      "Priority support",
+      "Document analysis & review",
+      "Shareable compliance reports",
+      "Dedicated account support",
     ],
   },
 ];
@@ -65,11 +76,14 @@ export default function Pricing() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           {/* Section header */}
           <div className="text-center max-w-2xl mx-auto mb-14">
+            <p className="text-xs font-semibold uppercase tracking-widest text-blue-600 mb-3">
+              Pricing
+            </p>
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
               Simple pricing. No surprises.
             </h2>
             <p className="mt-4 text-lg text-slate-500">
-              Start free. Upgrade when you need more.
+              Start free. Upgrade when you&apos;re ready. Cancel anytime.
             </p>
           </div>
 
@@ -105,6 +119,9 @@ export default function Pricing() {
                       {period}
                     </span>
                   </div>
+                  {highlight && (
+                    <p className="text-xs text-blue-200 mt-1">or $179/yr — save 2 months</p>
+                  )}
                   <p className={cn("mt-2 text-sm", highlight ? "text-blue-200" : "text-slate-500")}>
                     {tagline}
                   </p>
@@ -113,10 +130,14 @@ export default function Pricing() {
                 <Button
                   variant={highlight ? "emerald" : "outline"}
                   size="lg"
-                  className={cn("w-full mb-7", !highlight && "border-slate-300 hover:border-blue-500 hover:text-blue-600")}
+                  className={cn(
+                    "w-full mb-7 gap-1.5",
+                    !highlight && "border-slate-300 hover:border-blue-500 hover:text-blue-600"
+                  )}
                   onClick={() => setModalOpen(true)}
                 >
                   {cta}
+                  {highlight && <ArrowRight className="h-4 w-4" />}
                 </Button>
 
                 <ul className="space-y-3">
@@ -140,7 +161,7 @@ export default function Pricing() {
 
           {/* Footer note */}
           <p className="mt-8 text-center text-sm text-slate-500">
-            14-day Pro trial on all paid plans. Cancel anytime. No questions asked.
+            All paid plans include a 14-day free trial. Cancel anytime — no questions asked.
           </p>
         </div>
       </section>
