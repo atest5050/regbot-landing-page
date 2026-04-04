@@ -1,3 +1,12 @@
+// Changes summary:
+// - Added GA4 "waitlist_signup" conversion event that fires after a confirmed
+//   successful Supabase insert (i.e. only on real conversions, not on errors or
+//   duplicate emails).
+// - Event parameters include UTM source/medium/campaign read from the current
+//   URL at submit time — no PII is sent to GA4.
+// - gtagEvent and getUtmParams are imported from lib/gtag; both are no-ops when
+//   NEXT_PUBLIC_GA4_ID is absent (safe in local dev).
+
 "use client";
 
 import { useState } from "react";
@@ -12,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CheckCircle, Shield, AlertCircle } from "lucide-react";
 import { createBrowserClient } from "@supabase/ssr";
+import { gtagEvent, getUtmParams } from "@/lib/gtag";
 
 interface WaitlistModalProps {
   open: boolean;
@@ -53,6 +63,16 @@ export default function WaitlistModal({ open, onOpenChange }: WaitlistModalProps
         }
       } else {
         setSubmitted(true);
+        // ── GA4 conversion event ───────────────────────────────────────────
+        // Fired only here — after a confirmed successful DB insert.
+        // No PII: email is not sent; UTM params identify traffic source.
+        const utm = getUtmParams();
+        gtagEvent("waitlist_signup", {
+          event_category: "conversion",
+          source:   utm.source,
+          medium:   utm.medium,
+          campaign: utm.campaign,
+        });
       }
     } catch (err) {
       console.error("Error:", err);
@@ -136,7 +156,7 @@ export default function WaitlistModal({ open, onOpenChange }: WaitlistModalProps
               </h3>
               <p className="text-slate-600">
                 We'll notify you as soon as early access opens.<br />
-                Thank you for joining RegBot!
+                Thank you for joining RegPulse!
               </p>
             </div>
 

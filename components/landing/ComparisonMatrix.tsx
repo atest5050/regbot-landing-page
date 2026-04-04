@@ -1,17 +1,15 @@
 // Changes summary:
-// - New component: "Why Small Businesses Choose RegBot" comparative matrix.
-//   Inserted between DemoTeaser and FeaturesSection on the landing page.
-// - Table compares RegBot against LegalZoom, MyCorporation, and Generic AI across
-//   7 dimensions: local accuracy, AI form filling, renewal reminders, health score,
-//   rule change alerts, pricing, and best-fit use case.
-// - RegBot column is visually distinguished with a blue header and a subtle blue-50
-//   background on every row so the eye lands on it first.
-// - Responsive: horizontally scrollable on mobile so the table never breaks layout.
-// - Alternating row shading added for readability without visual weight.
-// - Section uses a neutral slate-50 background band to visually separate it from
-//   the sections above and below.
+// - Original: single horizontally-scrollable table on all screen sizes.
+// - Mobile (below md): replaced table with stacked feature cards. Each card shows the
+//   feature name, RegPulse's value prominently highlighted in a blue-tinted top band,
+//   then the three competitor values below in a compact grid. Avoids any horizontal
+//   scroll on small screens.
+// - Desktop (md and up): original clean table retained; RegPulse column highlighted in
+//   blue header + blue-50 row tint; alternating row shading; rounded card container.
+// - Footer tagline preserved and already present from prior session.
+// - No changes to data, icons, section heading, or app/page.tsx needed.
 
-import { CheckCircle2, XCircle, MinusCircle } from "lucide-react";
+import { CheckCircle2, XCircle } from "lucide-react";
 
 const rows: {
   feature: string;
@@ -71,21 +69,90 @@ const rows: {
   },
 ];
 
+// ── Shared helpers ────────────────────────────────────────────────────────────
+
+function RegPulseValue({ value }: { value: (typeof rows)[0]["regbot"] }) {
+  if (value.positive === true) {
+    return (
+      <span className="inline-flex items-center gap-1 text-sm font-semibold text-green-700">
+        <CheckCircle2 className="h-4 w-4 shrink-0" />
+        {value.text}
+      </span>
+    );
+  }
+  if (value.positive === "neutral") {
+    return (
+      <span className="text-sm font-semibold text-blue-700">{value.text}</span>
+    );
+  }
+  return <span className="text-sm text-slate-600">{value.text}</span>;
+}
+
+function CompetitorText({ text }: { text: string }) {
+  const isNegative = text === "No" || text === "Poor";
+  if (isNegative) {
+    return (
+      <span className="inline-flex items-center gap-1 text-sm text-slate-400">
+        <XCircle className="h-4 w-4 text-slate-300 shrink-0" />
+        {text}
+      </span>
+    );
+  }
+  return <span className="text-sm text-slate-500">{text}</span>;
+}
+
+// ── Mobile card (shown below md) ─────────────────────────────────────────────
+
+function FeatureCard({ row }: { row: (typeof rows)[0] }) {
+  return (
+    <div className="rounded-xl ring-1 ring-slate-200 bg-white overflow-hidden shadow-sm">
+      {/* Feature name */}
+      <div className="px-4 pt-3 pb-2 border-b border-slate-100">
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+          {row.feature}
+        </p>
+      </div>
+
+      {/* RegPulse value — prominent top band */}
+      <div className="px-4 py-3 bg-blue-50/80 border-b border-blue-100 flex items-center justify-between gap-3">
+        <span className="text-[11px] font-bold text-blue-600 uppercase tracking-widest">
+          RegPulse
+        </span>
+        <RegPulseValue value={row.regbot} />
+      </div>
+
+      {/* Competitor grid */}
+      <div className="grid grid-cols-3 divide-x divide-slate-100">
+        {(
+          [
+            { label: "LegalZoom", value: row.legalzoom },
+            { label: "MyCorp", value: row.mycorporation },
+            { label: "Generic AI", value: row.genericAi },
+          ] as const
+        ).map(({ label, value }) => (
+          <div key={label} className="px-2 py-3 flex flex-col items-center gap-1 text-center">
+            <span className="text-[10px] font-medium text-slate-400 leading-none">
+              {label}
+            </span>
+            <CompetitorText text={value} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Desktop table cell ────────────────────────────────────────────────────────
+
 function CompetitorCell({ text }: { text: string }) {
-  const isNo = text === "No" || text === "Poor";
   return (
     <td className="px-4 py-5 text-center">
-      {isNo ? (
-        <span className="inline-flex items-center justify-center gap-1 text-sm text-slate-400">
-          <XCircle className="h-4 w-4 text-slate-300 shrink-0" />
-          {text}
-        </span>
-      ) : (
-        <span className="text-sm text-slate-500">{text}</span>
-      )}
+      <CompetitorText text={text} />
     </td>
   );
 }
+
+// ── Main component ────────────────────────────────────────────────────────────
 
 export default function ComparisonMatrix() {
   return (
@@ -97,22 +164,27 @@ export default function ComparisonMatrix() {
             How We Compare
           </p>
           <h2 className="text-3xl font-semibold text-slate-900">
-            Why Small Businesses Choose RegBot
+            Why Small Businesses Choose RegPulse
           </h2>
         </div>
 
-        {/* Table — scrolls horizontally on small screens */}
-        <div className="overflow-x-auto rounded-2xl shadow-sm ring-1 ring-slate-200">
+        {/* ── Mobile: stacked cards (hidden on md+) ── */}
+        <div className="md:hidden space-y-3">
+          {rows.map((row) => (
+            <FeatureCard key={row.feature} row={row} />
+          ))}
+        </div>
+
+        {/* ── Desktop: table (hidden below md) ── */}
+        <div className="hidden md:block overflow-x-auto rounded-2xl shadow-sm ring-1 ring-slate-200">
           <table className="w-full border-collapse bg-white">
             <thead>
               <tr className="border-b border-slate-200">
-                {/* Feature column */}
                 <th className="px-6 py-5 text-left text-sm font-medium text-slate-500 min-w-[200px]">
                   Feature
                 </th>
-                {/* RegBot column — highlighted */}
                 <th className="px-6 py-5 text-center min-w-[150px] bg-blue-600">
-                  <span className="text-sm font-semibold text-white">RegBot</span>
+                  <span className="text-sm font-semibold text-white">RegPulse</span>
                 </th>
                 <th className="px-4 py-5 text-center text-sm font-medium text-slate-500 min-w-[140px]">
                   LegalZoom
@@ -133,27 +205,12 @@ export default function ComparisonMatrix() {
                     i % 2 === 1 ? "bg-slate-50/60" : "bg-white"
                   }`}
                 >
-                  {/* Feature label */}
                   <td className="px-6 py-5 text-sm font-medium text-slate-700">
                     {row.feature}
                   </td>
-
-                  {/* RegBot cell — always blue-50 tint */}
                   <td className="px-6 py-5 text-center bg-blue-50/70">
-                    {row.regbot.positive === true ? (
-                      <span className="inline-flex items-center justify-center gap-1 text-sm font-semibold text-green-700">
-                        <CheckCircle2 className="h-4 w-4 shrink-0" />
-                        {row.regbot.text}
-                      </span>
-                    ) : row.regbot.positive === "neutral" ? (
-                      <span className="text-sm font-semibold text-blue-700">
-                        {row.regbot.text}
-                      </span>
-                    ) : (
-                      <span className="text-sm text-slate-600">{row.regbot.text}</span>
-                    )}
+                    <RegPulseValue value={row.regbot} />
                   </td>
-
                   <CompetitorCell text={row.legalzoom} />
                   <CompetitorCell text={row.mycorporation} />
                   <CompetitorCell text={row.genericAi} />
@@ -163,9 +220,9 @@ export default function ComparisonMatrix() {
           </table>
         </div>
 
-        {/* Footer note */}
+        {/* Footer tagline */}
         <p className="text-center text-sm text-slate-500 mt-8 leading-relaxed">
-          RegBot is built for small businesses that need to{" "}
+          RegPulse is built for small businesses that need to{" "}
           <span className="font-medium text-slate-700">
             stay compliant every day
           </span>

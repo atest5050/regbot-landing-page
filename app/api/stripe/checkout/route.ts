@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
           price_data: {
             currency: 'usd',
             product_data: {
-              name: `RegBot: ${formName}`,
+              name: `RegPulse: ${formName}`,
               description:
                 'AI-guided form preparation — your answers organized into a ready-to-submit PDF package with official submission instructions.',
             },

@@ -54,3 +54,24 @@
     background-clip: text;
   }
 }
+
+/* ── RegPulse logo hover-glow ────────────────────────────────────────────────
+   Any .rp-icon-svg inside a .rp-logomark element gets a soft cyan drop-shadow
+   on hover/focus-visible. The transition is on the SVG element directly so it
+   doesn't affect surrounding layout. Works on both <a> and <button> wrappers.   */
+.rp-icon-svg {
+  transition: filter 0.28s ease;
+}
+.rp-logomark:hover .rp-icon-svg,
+.rp-logomark:focus-visible .rp-icon-svg {
+  filter: drop-shadow(0 0 10px rgba(34, 211, 238, 0.55))
+          drop-shadow(0 0 3px  rgba(34, 211, 238, 0.30));
+}
+
+/* ── Chat sidebar brand header — neo-futurist glass panel ────────────────────
+   Deep navy gradient that echoes the shield's interior, with a hairline cyan
+   border at the bottom for a lit-edge glassmorphism effect.                   */
+.rp-brand-header {
+  background: linear-gradient(135deg, #0d1b35 0%, #0f2847 100%);
+  border-bottom: 1px solid rgba(34, 211, 238, 0.14);
+}

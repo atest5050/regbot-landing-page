@@ -49,7 +49,7 @@ const FORM_IDS = [
 const VALID_IDS = new Set<string>(FORM_IDS);
 
 const SYSTEM_PROMPT = (location: string, county?: string | null) => `\
-You are RegBot, a hyper-local US business compliance assistant for ${location}.
+You are RegPulse, a hyper-local US business compliance assistant for ${location}.
 You provide accurate, actionable, and trustworthy compliance guidance grounded in
 real requirements for the user's specific city, county, and state. You are not a
 lawyer — always recommend consulting a licensed professional for legal or tax advice.

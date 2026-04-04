@@ -8,27 +8,27 @@ import {
 const faqs = [
   {
     q: "Is this real legal advice?",
-    a: "No — and we'll always tell you that upfront. RegBot gives you research, context, and actionable next steps, but always recommends verifying with your local government office or a licensed attorney for high-stakes decisions. We cite our sources so you can check everything yourself.",
+    a: "No — and we'll always tell you that upfront. RegPulse gives you research, context, and actionable next steps, but always recommends verifying with your local government office or a licensed attorney for high-stakes decisions. We cite our sources so you can check everything yourself.",
   },
   {
-    q: "How does RegBot know my local regulations?",
+    q: "How does RegPulse know my local regulations?",
     a: "We combine AI with a regularly maintained database of city, county, and state regulations across the US. Every answer shows you the source — specific laws, ordinances, and official program pages — so you can verify directly.",
   },
   {
-    q: "What kinds of businesses does RegBot support?",
+    q: "What kinds of businesses does RegPulse support?",
     a: "Home-based businesses, cottage food and food trucks, Etsy and handmade sellers, freelancers and consultants, retail, and service businesses. Coverage is expanding weekly.",
   },
   {
-    q: "Can I use RegBot on my phone?",
-    a: "Yes. RegBot is fully mobile-optimized. Use it in line at the permit office, on a job site, or anywhere the compliance questions come up.",
+    q: "Can I use RegPulse on my phone?",
+    a: "Yes. RegPulse is fully mobile-optimized. Use it in line at the permit office, on a job site, or anywhere the compliance questions come up.",
   },
   {
     q: "What if my city isn't covered yet?",
-    a: "Enter your location and RegBot will give you state-level guidance and flag what needs local verification. We add new jurisdictions every week — and you can request yours.",
+    a: "Enter your location and RegPulse will give you state-level guidance and flag what needs local verification. We add new jurisdictions every week — and you can request yours.",
   },
   {
     q: "How is this different from just asking ChatGPT?",
-    a: "RegBot is purpose-built for compliance: it knows which questions to ask, understands jurisdictional differences, links to primary sources, and is explicitly designed not to hallucinate legal advice. ChatGPT is general — RegBot is specialized.",
+    a: "RegPulse is purpose-built for compliance: it knows which questions to ask, understands jurisdictional differences, links to primary sources, and is explicitly designed not to hallucinate legal advice. ChatGPT is general — RegPulse is specialized.",
   },
 ];
 

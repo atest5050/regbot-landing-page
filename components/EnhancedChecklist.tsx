@@ -76,6 +76,12 @@ interface Props {
   /** Deletes all items with status === "done". */
   onClearCompleted?: () => void;
   /**
+   * Called when the user confirms "Clear All Business Data".
+   * Clears checklist, completed forms, chat history, and renewal dates for the active business.
+   * Parent handles the actual DB write and state reset.
+   */
+  onClearAll?: () => void;
+  /**
    * Called when user clicks "Complete All Forms" in the dashboard header.
    * Receives the array of formIds from incomplete checklist items that have one.
    * Parent resolves them to templates and starts the multi-form queue.
@@ -123,6 +129,11 @@ interface Props {
    * Parent can scroll to the upgrade banner or open a purchase flow.
    */
   onUpgradeClick?: () => void;
+  /**
+   * When provided, renders a "Upload Document" button below the bulk actions.
+   * The parent opens the DocumentUploadButton / full upload flow when called.
+   */
+  onUploadDocument?: () => void;
 }
 
 // ── Status config ─────────────────────────────────────────────────────────────
@@ -171,7 +182,16 @@ function renewalBadgeColor(days: number): string {
   if (days < 0)   return "text-red-700 bg-red-50 border-red-200";
   if (days <= 30) return "text-red-700 bg-red-50 border-red-200";
   if (days <= 60) return "text-amber-700 bg-amber-50 border-amber-200";
-  return "text-green-700 bg-green-50 border-green-200";
+  if (days <= 90) return "text-green-700 bg-green-50 border-green-200";
+  return "text-slate-600 bg-slate-50 border-slate-200";
+}
+
+/** Returns Tailwind color classes for a Renew Now button based on days remaining. */
+function renewButtonColor(days: number): string {
+  if (days <= 30) return "text-red-700 bg-red-50 hover:bg-red-100 border-red-200";
+  if (days <= 60) return "text-amber-700 bg-amber-50 hover:bg-amber-100 border-amber-200";
+  if (days <= 90) return "text-green-700 bg-green-50 hover:bg-green-100 border-green-200";
+  return "text-slate-600 bg-slate-50 hover:bg-slate-100 border-slate-200";
 }
 
 /** Human-readable renewal countdown label. */
@@ -179,7 +199,10 @@ function renewalLabel(days: number): string {
   if (days < 0)   return `Renewal ${Math.abs(days)}d overdue`;
   if (days === 0) return "Renewal due today";
   if (days === 1) return "Renewal due tomorrow";
-  return `Renews in ${days}d`;
+  if (days <= 90) return `Renews in ${days}d`;
+  const weeks = Math.round(days / 7);
+  if (weeks < 8) return `Renews in ${weeks}w`;
+  return `Renews in ${Math.round(days / 30)}mo`;
 }
 
 /** Returns Tailwind classes for the progress bar fill based on completion %. */
@@ -277,6 +300,7 @@ export default function EnhancedChecklist({
   onResetAll,
   onMarkAllDone,
   onClearCompleted,
+  onClearAll,
   onCompleteAllForms,
   onRenewForm,
   alertedFormIds,
@@ -286,11 +310,12 @@ export default function EnhancedChecklist({
   monthlyFormsUsed = 0,
   freeMonthlyLimit = 3,
   onUpgradeClick,
+  onUploadDocument,
 }: Props) {
   const [expandedId, setExpandedId]   = useState<string | null>(null);
   const [sortBy, setSortBy]           = useState<"default" | "due-date" | "status">("default");
-  // Which confirmation bar is open: "reset" | "clear-done" | null
-  const [confirmAction, setConfirmAction] = useState<"reset" | "clear-done" | null>(null);
+  // Which confirmation bar is open: "reset" | "clear-done" | "clear-all" | null
+  const [confirmAction, setConfirmAction] = useState<"reset" | "clear-done" | "clear-all" | null>(null);
 
   // ── Derived stats ──────────────────────────────────────────────────────────
   const doneCount = useMemo(() => items.filter(i => i.status === "done").length, [items]);
@@ -349,6 +374,12 @@ export default function EnhancedChecklist({
     setExpandedId(null);
   };
 
+  const handleClearAll = () => {
+    onClearAll?.();
+    setConfirmAction(null);
+    setExpandedId(null);
+  };
+
   // ── PDF export ─────────────────────────────────────────────────────────────
   const handleExport = async () => {
     const { default: jsPDF } = await import("jspdf");
@@ -360,7 +391,7 @@ export default function EnhancedChecklist({
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
-    doc.text("RegBot — Compliance Checklist", 14, 17);
+    doc.text("RegPulse — Compliance Checklist", 14, 17);
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.text(
@@ -443,11 +474,11 @@ export default function EnhancedChecklist({
       doc.setPage(i);
       doc.setFontSize(8);
       doc.setTextColor(148, 163, 184);
-      doc.text("RegBot — Not legal advice. Verify requirements with official government sources.", 14, 290);
+      doc.text("RegPulse — Not legal advice. Verify requirements with official government sources.", 14, 290);
       doc.text(`Page ${i} of ${pageCount}`, 196, 290, { align: "right" });
     }
 
-    doc.save("regbot-checklist.pdf");
+    doc.save("regpulse-checklist.pdf");
   };
 
   // ── Empty state ────────────────────────────────────────────────────────────
@@ -565,43 +596,63 @@ export default function EnhancedChecklist({
 
         {/* Dashboard action buttons */}
         {confirmAction === null ? (
-          <div className="grid grid-cols-3 gap-1">
-            {/* Mark All Done */}
-            <button
-              onClick={handleMarkAllDone}
-              disabled={doneCount === items.length}
-              className="flex flex-col items-center gap-1 px-1 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-green-50 hover:border-green-300 hover:text-green-700 transition-all disabled:opacity-30 disabled:cursor-not-allowed text-center"
-              title="Mark all items as done"
-            >
-              <CheckCheck className="h-3.5 w-3.5" />
-              <span className="text-[10px] leading-tight font-medium">Mark All<br />Done</span>
-            </button>
+          <div className="space-y-1">
+            <div className="grid grid-cols-3 gap-1">
+              {/* Mark All Done */}
+              <button
+                onClick={handleMarkAllDone}
+                disabled={doneCount === items.length}
+                className="flex flex-col items-center gap-1 px-1 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-green-50 hover:border-green-300 hover:text-green-700 transition-all disabled:opacity-30 disabled:cursor-not-allowed text-center"
+                title="Mark all items as done"
+              >
+                <CheckCheck className="h-3.5 w-3.5" />
+                <span className="text-[10px] leading-tight font-medium">Mark All<br />Done</span>
+              </button>
 
-            {/* Clear Completed */}
-            <button
-              onClick={() => doneItems.length > 0 && setConfirmAction("clear-done")}
-              disabled={doneItems.length === 0}
-              className="flex flex-col items-center gap-1 px-1 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700 transition-all disabled:opacity-30 disabled:cursor-not-allowed text-center"
-              title="Remove all completed items"
-            >
-              <X className="h-3.5 w-3.5" />
-              <span className="text-[10px] leading-tight font-medium">Clear<br />Completed</span>
-            </button>
+              {/* Clear Completed */}
+              <button
+                onClick={() => doneItems.length > 0 && setConfirmAction("clear-done")}
+                disabled={doneItems.length === 0}
+                className="flex flex-col items-center gap-1 px-1 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700 transition-all disabled:opacity-30 disabled:cursor-not-allowed text-center"
+                title="Remove all completed items"
+              >
+                <X className="h-3.5 w-3.5" />
+                <span className="text-[10px] leading-tight font-medium">Clear<br />Completed</span>
+              </button>
 
-            {/* Reset Checklist */}
-            <button
-              onClick={() => setConfirmAction("reset")}
-              className="flex flex-col items-center gap-1 px-1 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-all text-center"
-              title="Delete all items"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              <span className="text-[10px] leading-tight font-medium">Reset<br />All</span>
-            </button>
+              {/* Reset Checklist */}
+              <button
+                onClick={() => setConfirmAction("reset")}
+                className="flex flex-col items-center gap-1 px-1 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-all text-center"
+                title="Delete all items"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                <span className="text-[10px] leading-tight font-medium">Reset<br />All</span>
+              </button>
+            </div>
+
+            {/* Clear All Business Data */}
+            {onClearAll && (
+              <button
+                onClick={() => setConfirmAction("clear-all")}
+                className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:border-red-300 transition-all text-[10px] font-semibold"
+                title="Clear all business data including forms and chat history"
+              >
+                <Trash2 className="h-3 w-3" />
+                Clear All Business Data
+              </button>
+            )}
           </div>
         ) : confirmAction === "reset" ? (
           <ConfirmBar
             message="Delete all items?"
             onConfirm={handleResetAll}
+            onCancel={() => setConfirmAction(null)}
+          />
+        ) : confirmAction === "clear-all" ? (
+          <ConfirmBar
+            message="Are you sure? This will permanently delete all data for this business."
+            onConfirm={handleClearAll}
             onCancel={() => setConfirmAction(null)}
           />
         ) : (
@@ -652,6 +703,18 @@ export default function EnhancedChecklist({
           );
         })()}
 
+        {/* Upload Document button */}
+        {onUploadDocument && (
+          <button
+            onClick={onUploadDocument}
+            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:border-blue-300 transition-all text-[10px] font-semibold"
+            title="Upload an existing permit or license document for AI analysis"
+          >
+            <Download className="h-3 w-3 rotate-180" />
+            Upload Existing Document
+          </button>
+        )}
+
         {/* Sort + Export row */}
         <div className="flex items-center gap-1.5">
           <select
@@ -699,9 +762,10 @@ export default function EnhancedChecklist({
           const showViewCompletedFormCta =
             !!item.completedVia && !!item.formId && !!onViewCompletedForm;
 
-          // Renewal badge: show when the item has a renewalDate within 90 days (or overdue).
+          // Renewal badge: show for ALL items that have a renewalDate.
+          // Urgency: red ≤30d, amber ≤60d, green ≤90d, slate >90d.
           const renewalDays = item.renewalDate ? renewalDaysLeft(item.renewalDate) : null;
-          const showRenewalBadge = renewalDays !== null && renewalDays <= 90;
+          const showRenewalBadge = renewalDays !== null;
           const showRenewCta     = showRenewalBadge && !!item.formId && !!onRenewForm;
 
           // Rule Change Alert badge: shown when this item's form has an active alert.
@@ -847,13 +911,7 @@ export default function EnhancedChecklist({
                         e.stopPropagation();
                         onRenewForm!(item);
                       }}
-                      className={`mt-2 flex items-center gap-1 text-[10px] font-semibold border rounded-lg px-2 py-1 transition-colors ${
-                        renewalDays <= 30
-                          ? "text-red-700 bg-red-50 hover:bg-red-100 border-red-200"
-                          : renewalDays <= 60
-                          ? "text-amber-700 bg-amber-50 hover:bg-amber-100 border-amber-200"
-                          : "text-green-700 bg-green-50 hover:bg-green-100 border-green-200"
-                      }`}
+                      className={`mt-2 flex items-center gap-1 text-[10px] font-semibold border rounded-lg px-2 py-1 transition-colors ${renewButtonColor(renewalDays)}`}
                     >
                       <RefreshCw className="h-3 w-3" />
                       Renew Now
@@ -935,13 +993,7 @@ export default function EnhancedChecklist({
                     {showRenewCta && renewalDays !== null && (
                       <button
                         onClick={() => { setExpandedId(null); onRenewForm!(item); }}
-                        className={`flex items-center gap-1 text-[10px] font-semibold border rounded-full px-2.5 py-1 transition-colors ${
-                          renewalDays <= 30
-                            ? "text-red-700 bg-red-50 border-red-200 hover:bg-red-100"
-                            : renewalDays <= 60
-                            ? "text-amber-700 bg-amber-50 border-amber-200 hover:bg-amber-100"
-                            : "text-green-700 bg-green-50 border-green-200 hover:bg-green-100"
-                        }`}
+                        className={`flex items-center gap-1 text-[10px] font-semibold border rounded-full px-2.5 py-1 transition-colors ${renewButtonColor(renewalDays)}`}
                       >
                         <RefreshCw className="h-3 w-3 shrink-0" />
                         Renew Now

@@ -24,7 +24,7 @@ const features = [
     bg: "bg-violet-50",
     title: "Document Review",
     description:
-      "Upload a lease, vendor contract, or permit application. RegBot flags potential issues, explains the jargon, and tells you what to ask before you sign.",
+      "Upload a lease, vendor contract, or permit application. RegPulse flags potential issues, explains the jargon, and tells you what to ask before you sign.",
   },
   {
     icon: Bell,
@@ -32,7 +32,7 @@ const features = [
     bg: "bg-amber-50",
     title: "Law Change Alerts",
     description:
-      "RegBot monitors the ordinances that affect your business. Get a heads-up when something changes — before it becomes your problem.",
+      "RegPulse monitors the ordinances that affect your business. Get a heads-up when something changes — before it becomes your problem.",
   },
   {
     icon: Scale,

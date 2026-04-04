@@ -1,4 +1,9 @@
-import { Shield, CheckSquare, Square, ExternalLink } from "lucide-react";
+// Changes summary:
+// - Replaced Shield icons in the mock chat UI with RegPulseIcon.
+// - Chat header icon: RegPulseIcon at 36px inside the frosted circle.
+// - Bot message avatar: RegPulseIcon at 30px, dark navy ring replaces blue circle.
+import { CheckSquare, Square, ExternalLink } from "lucide-react";
+import { RegPulseIcon, RegPulseLogoFull } from "@/components/RegPulseLogo";
 
 export default function DemoTeaser() {
   return (
@@ -7,7 +12,7 @@ export default function DemoTeaser() {
         {/* Section header */}
         <div className="text-center max-w-2xl mx-auto mb-14">
           <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
-            Just ask. RegBot figures out the rest.
+            Just ask. RegPulse figures out the rest.
           </h2>
           <p className="mt-4 text-lg text-slate-500">
             Set your location once. Then chat like you&apos;re texting the one
@@ -19,19 +24,14 @@ export default function DemoTeaser() {
         <div className="mx-auto max-w-3xl">
           <div className="rounded-2xl border border-slate-200 shadow-xl overflow-hidden">
             {/* Chat header */}
-            <div className="flex items-center gap-3 bg-blue-600 px-6 py-4">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20">
-                <Shield className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-white">RegBot</p>
-                <p className="text-xs text-blue-200">
-                  Portland, OR · Home Food Business
-                </p>
-              </div>
-              <div className="ml-auto flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                <span className="text-xs text-blue-200">Online</span>
+            <div className="flex items-center gap-3 bg-[#0b1628] px-6 py-4 border-b border-cyan-900/30">
+              <RegPulseLogoFull shieldSize={36} layout="beside" className="text-white" />
+              <div className="ml-auto flex flex-col items-end gap-0.5">
+                <p className="text-xs text-slate-400">Portland, OR · Home Food Business</p>
+                <div className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                  <span className="text-xs text-cyan-400/80">Online</span>
+                </div>
               </div>
             </div>
 
@@ -46,9 +46,7 @@ export default function DemoTeaser() {
 
               {/* Bot message */}
               <div className="flex items-start gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 shadow-sm">
-                  <Shield className="h-4 w-4 text-white" />
-                </div>
+                <RegPulseIcon size={30} className="shrink-0" />
                 <div className="flex-1 rounded-2xl rounded-tl-sm bg-white border border-slate-200 px-5 py-4 shadow-sm space-y-4">
                   <p className="text-sm text-slate-800 leading-relaxed">
                     <span className="font-medium text-emerald-600">Yes — with a few conditions.</span>{" "}

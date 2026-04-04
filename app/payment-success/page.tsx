@@ -28,7 +28,7 @@ function PaymentSuccessContent() {
 
   useEffect(() => {
     if (!formKey || !sessionId) {
-      setErrorMessage('Invalid payment link. Please return to RegBot and try again.');
+      setErrorMessage('Invalid payment link. Please return to RegPulse and try again.');
       setStatus('error');
       return;
     }
@@ -53,7 +53,7 @@ function PaymentSuccessContent() {
       const stored = localStorage.getItem(`regbot_form_${formKey}`);
       if (!stored) {
         setErrorMessage(
-          'Your form data could not be found. This can happen if you used a different browser or device. Please return to RegBot and complete the form again — your payment has been recorded.',
+          'Your form data could not be found. This can happen if you used a different browser or device. Please return to RegPulse and complete the form again — your payment has been recorded.',
         );
         setStatus('error');
         return;
@@ -63,7 +63,7 @@ function PaymentSuccessContent() {
       try {
         parsed = JSON.parse(stored);
       } catch {
-        setErrorMessage('Form data was corrupted. Please return to RegBot and try again.');
+        setErrorMessage('Form data was corrupted. Please return to RegPulse and try again.');
         setStatus('error');
         return;
       }
@@ -130,7 +130,7 @@ function PaymentSuccessContent() {
           <p className="font-semibold text-slate-800 text-lg mb-2">Something went wrong</p>
           <p className="text-sm text-slate-600 mb-6">{errorMessage}</p>
           <Button variant="outline" onClick={() => (window.location.href = '/chat')}>
-            Return to RegBot
+            Return to RegPulse
           </Button>
         </div>
       </div>
@@ -173,7 +173,7 @@ function PaymentSuccessContent() {
             Download PDF Again
           </Button>
           <Button variant="ghost" onClick={() => (window.location.href = '/chat')}>
-            Return to RegBot
+            Return to RegPulse
           </Button>
         </div>
       </div>

@@ -1,9 +1,11 @@
 // Changes summary:
 // - FinalCTA component added between FAQ and Footer — creates a strong closing
 //   conversion moment after the user has read through the full page.
+// - Testimonials moved to immediately after ComparisonMatrix and before FeaturesSection
+//   so social proof appears while the competitive argument is fresh in the reader's mind.
 // - Page flow is now:
 //     Hero → ProblemSection → DemoTeaser → ComparisonMatrix →
-//     FeaturesSection → Testimonials → Pricing → FAQ → FinalCTA → Footer
+//     Testimonials → FeaturesSection → Pricing → FAQ → FinalCTA → Footer
 // - Hero, Pricing, and FinalCTA all have the same WaitlistModal trigger so the
 //   user can convert at any point in the scroll without hunting for a CTA.
 
@@ -32,10 +34,10 @@ export default function HomePage() {
         <DemoTeaser />
         {/* 4. Competitive differentiation — why RegBot vs alternatives */}
         <ComparisonMatrix />
-        {/* 5. Features — the full capability set */}
-        <FeaturesSection />
-        {/* 6. Social proof — real business owners, real outcomes */}
+        {/* 5. Social proof — validate the argument while competitive contrast is fresh */}
         <Testimonials />
+        {/* 6. Features — the full capability set */}
+        <FeaturesSection />
         {/* 7. Pricing — simple, transparent, remove the final objection */}
         <Pricing />
         {/* 8. FAQ — handle hesitations before they become exit clicks */}

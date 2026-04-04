@@ -11,17 +11,17 @@
 //
 // Option A (pain-led, high urgency):
 //   H1: "Stop losing hours to local compliance guesswork."
-//   Sub: "RegBot reads your city's actual rules and hands you a tailored
+//   Sub: "RegPulse reads your city's actual rules and hands you a tailored
 //         permit checklist, AI-filled forms, and renewal reminders — in minutes."
 //
 // Option B (benefit-led, clarity-focused):
 //   H1: "Your city's compliance rules, explained in plain English."
-//   Sub: "Tell RegBot what you sell and where you operate. Get every permit,
+//   Sub: "Tell RegPulse what you sell and where you operate. Get every permit,
 //         deadline, and renewal alert — calibrated to your exact location."
 //
 // Option C (identity-led, community feel) — currently selected:
 //   H1: "Stop guessing local rules. Get the exact permits your business needs."
-//   Sub: "RegBot gives food trucks, home bakers, Etsy sellers, and side hustlers
+//   Sub: "RegPulse gives food trucks, home bakers, Etsy sellers, and side hustlers
 //         hyper-local permit checklists, AI-filled government forms, and proactive
 //         renewal reminders — without lawyers, PDFs, or rabbit holes."
 // ────────────────────────────────────────────────────────────────────────────
@@ -69,7 +69,7 @@ export default function Hero() {
 
           {/* Subheadline — tight, two sentences */}
           <p className="mt-6 text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            RegBot gives food trucks, home bakers, Etsy sellers, and side
+            RegPulse gives food trucks, home bakers, Etsy sellers, and side
             hustlers hyper-local permit checklists and AI-filled government forms
             — without lawyers, PDFs, or rabbit holes.
           </p>

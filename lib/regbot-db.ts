@@ -15,7 +15,7 @@
 // Server-side operations (Edge Functions) use lib/supabase/server.ts instead.
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { SavedBusiness, RuleAlert, MonthlyUsage } from "@/lib/regbot-types";
+import type { SavedBusiness, SavedMessage, RuleAlert, MonthlyUsage, NotificationPrefs, UploadedDocument, DocumentAnalysis, BusinessLocation } from "@/lib/regbot-types";
 
 // ── localStorage keys (unchanged from MVP) ────────────────────────────────────
 
@@ -94,6 +94,16 @@ interface BusinessRow {
   last_checked: string | null;
   created_at: string;
   updated_at: string;
+  // Living profile extension fields (added in migration 20240003)
+  business_type: string | null;
+  is_pre_existing: boolean | null;
+  existing_permits: string[] | null;
+  // Per-business chat history (added in migration 20240004)
+  chat_history: SavedMessage[] | null;
+  // Per-business notification preferences (added in migration 20240005)
+  notification_prefs: NotificationPrefs | null;
+  // Multi-location support (added in migration 20240007)
+  locations: BusinessLocation[] | null;
 }
 
 interface AlertRow {
@@ -127,6 +137,12 @@ function rowToBusiness(row: BusinessRow): SavedBusiness {
     totalForms:          row.total_forms ?? undefined,
     completedFormsCount: row.completed_forms_count ?? undefined,
     lastChecked:         row.last_checked ?? undefined,
+    businessType:        row.business_type ?? undefined,
+    isPreExisting:       row.is_pre_existing ?? undefined,
+    existingPermits:     row.existing_permits ?? undefined,
+    chatHistory:         row.chat_history ?? undefined,
+    notificationPrefs:   row.notification_prefs ?? undefined,
+    locations:           row.locations ?? undefined,
   };
 }
 
@@ -147,6 +163,12 @@ function businessToRow(
     saved_at:              biz.savedAt,
     last_checked:          biz.lastChecked ?? null,
     updated_at:            new Date().toISOString(),
+    business_type:         biz.businessType ?? null,
+    is_pre_existing:       biz.isPreExisting ?? null,
+    existing_permits:      biz.existingPermits ?? null,
+    chat_history:          biz.chatHistory ?? null,
+    notification_prefs:    biz.notificationPrefs ?? null,
+    locations:             biz.locations ?? null,
   };
 }
 
@@ -227,6 +249,63 @@ export async function dbSaveBusiness(
     if (error) {
       console.error("[regbot-db] saveBusiness:", error.message);
       // localStorage write above is the fallback; no throw needed
+    }
+  }
+}
+
+/**
+ * Delete a single business by ID.
+ * Removes from both Supabase and localStorage.
+ */
+export async function dbDeleteBusiness(
+  db: SupabaseClient | null,
+  userId: string | null,
+  bizId: string,
+): Promise<void> {
+  // Remove from localStorage regardless of auth state
+  try {
+    const existing = localLoadBusinesses().filter(b => b.id !== bizId);
+    localStorage.setItem(BUSINESSES_KEY, JSON.stringify(existing));
+  } catch {}
+
+  if (db && userId) {
+    const { error } = await db
+      .from("businesses")
+      .delete()
+      .eq("id", bizId)
+      .eq("user_id", userId);
+    if (error) {
+      console.error("[regbot-db] deleteBusiness:", error.message);
+    }
+  }
+}
+
+/**
+ * Save notification preferences for a single business.
+ * Uses a targeted column update rather than a full upsert to minimise data written.
+ */
+export async function dbSaveNotificationPrefs(
+  db: SupabaseClient | null,
+  userId: string | null,
+  bizId: string,
+  prefs: NotificationPrefs,
+): Promise<void> {
+  // Persist in localStorage by patching the cached businesses list.
+  try {
+    const existing = localLoadBusinesses().map(b =>
+      b.id === bizId ? { ...b, notificationPrefs: prefs } : b
+    );
+    localStorage.setItem(BUSINESSES_KEY, JSON.stringify(existing));
+  } catch {}
+
+  if (db && userId) {
+    const { error } = await db
+      .from("businesses")
+      .update({ notification_prefs: prefs, updated_at: new Date().toISOString() })
+      .eq("id", bizId)
+      .eq("user_id", userId);
+    if (error) {
+      console.error("[regbot-db] saveNotificationPrefs:", error.message);
     }
   }
 }
@@ -385,5 +464,109 @@ export async function syncGuestDataToSupabase(
   const count = localLoadMonthlyUsage();
   if (count > 0) {
     await dbSaveMonthlyUsage(db, userId, count);
+  }
+}
+
+// ── Business Documents ────────────────────────────────────────────────────────
+
+interface DocumentRow {
+  id: string;
+  user_id: string;
+  business_id: string;
+  original_name: string;
+  mime_type: string;
+  size_bytes: number;
+  storage_path: string;
+  analysis: DocumentAnalysis | null;
+  analyzed: boolean;
+  uploaded_at: string;
+}
+
+function rowToDocument(row: DocumentRow): UploadedDocument {
+  return {
+    id:           row.id,
+    businessId:   row.business_id,
+    originalName: row.original_name,
+    mimeType:     row.mime_type,
+    sizeBytes:    row.size_bytes,
+    storagePath:  row.storage_path,
+    analysis:     row.analysis ?? undefined,
+    analyzed:     row.analyzed,
+    uploadedAt:   row.uploaded_at,
+  };
+}
+
+/**
+ * Load all uploaded documents for a specific business.
+ * Only works for authenticated users (no localStorage fallback for files).
+ */
+export async function dbLoadDocuments(
+  db: SupabaseClient | null,
+  userId: string | null,
+  businessId: string,
+): Promise<UploadedDocument[]> {
+  if (!db || !userId) return [];
+  const { data, error } = await db
+    .from("business_documents")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("business_id", businessId)
+    .is("deleted_at", null)
+    .order("uploaded_at", { ascending: false });
+  if (error) {
+    console.error("[regbot-db] loadDocuments:", error.message);
+    return [];
+  }
+  return (data as DocumentRow[]).map(rowToDocument);
+}
+
+/**
+ * Insert a new document record after a successful upload + analysis.
+ * Returns the saved document with its generated UUID.
+ */
+export async function dbSaveDocument(
+  db: SupabaseClient | null,
+  userId: string | null,
+  doc: Omit<UploadedDocument, "id" | "uploadedAt" | "storageUrl">,
+): Promise<UploadedDocument | null> {
+  if (!db || !userId) return null;
+  const { data, error } = await db
+    .from("business_documents")
+    .insert({
+      user_id:      userId,
+      business_id:  doc.businessId,
+      original_name: doc.originalName,
+      mime_type:    doc.mimeType,
+      size_bytes:   doc.sizeBytes,
+      storage_path: doc.storagePath,
+      analysis:     doc.analysis ?? null,
+      analyzed:     doc.analyzed,
+    })
+    .select()
+    .single();
+  if (error) {
+    console.error("[regbot-db] saveDocument:", error.message);
+    return null;
+  }
+  return rowToDocument(data as DocumentRow);
+}
+
+/**
+ * Soft-delete a document (sets deleted_at = now()).
+ * The file in Storage is NOT deleted here — call storage.remove() separately.
+ */
+export async function dbDeleteDocument(
+  db: SupabaseClient | null,
+  userId: string | null,
+  documentId: string,
+): Promise<void> {
+  if (!db || !userId) return;
+  const { error } = await db
+    .from("business_documents")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", documentId)
+    .eq("user_id", userId);
+  if (error) {
+    console.error("[regbot-db] deleteDocument:", error.message);
   }
 }

@@ -126,7 +126,7 @@ export function useChecklist() {
   const addFormEntry = useCallback(async (template: FormTemplate, currentItems: ChecklistItem[]) => {
     const text = `Complete and submit: ${template.name}`;
     const existing = currentItems.find(c => c.text === text);
-    const changes = { status: 'done' as const, completedVia: 'RegBot AI Form Filler', formId: template.id };
+    const changes = { status: 'done' as const, completedVia: 'RegPulse AI Form Filler', formId: template.id };
 
     if (existing) {
       await updateItem(existing.id, changes);

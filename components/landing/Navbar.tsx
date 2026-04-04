@@ -1,9 +1,13 @@
+// Changes summary:
+// - Replaced generic Shield icon + blue square with RegPulseIcon SVG mark.
+// - Logo link wrapper gets class "rp-logomark" so globals.css hover-glow applies.
+
 "use client";
 
 import { useState, useEffect } from "react";
-import { Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import WaitlistModal from "./WaitlistModal";
+import { RegPulseLogoFull } from "@/components/RegPulseLogo";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -27,13 +31,12 @@ export default function Navbar() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
-            <a href="#" className="flex items-center gap-2 group">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white group-hover:bg-blue-700 transition-colors">
-                <Shield className="h-4 w-4" />
-              </div>
-              <span className="text-lg font-bold text-slate-900 tracking-tight">
-                RegBot
-              </span>
+            <a href="#" aria-label="RegPulse AI — home">
+              <RegPulseLogoFull
+                shieldSize={32}
+                layout="beside"
+                className="text-slate-900"
+              />
             </a>
 
             {/* Nav links — hidden on mobile */}

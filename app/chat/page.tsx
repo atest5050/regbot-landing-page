@@ -177,15 +177,21 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo, Fragment } from "react";
 import {
-  Send, Shield, MapPin, FileText, Layers,
+  Send, MapPin, FileText, Layers,
   CheckCircle2, Loader2, CheckCheck, Sparkles,
-  Briefcase, ChevronRight, Download, ExternalLink,
-  Bell, Activity, Zap, Crown, Lock,
+  Briefcase, ChevronRight, ChevronDown, Download, ExternalLink,
+  Bell, BellOff, Activity, Zap, Crown, Lock, Plus, Trash2, Upload,
   LogIn, LogOut, Mail, KeyRound, UserPlus, X as XIcon,
 } from "lucide-react";
+import AddBusinessModal from "@/components/AddBusinessModal";
+import AddLocationModal from "@/components/AddLocationModal";
+import NotificationPrefsModal from "@/components/NotificationPrefsModal";
+import DocumentUploadButton, { type AnalysisResult } from "@/components/DocumentUploadButton";
+import DocumentAnalysisCard, { type MatchedItem } from "@/components/DocumentAnalysisCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import FormFiller from "@/components/FormFiller";
+import { RegPulseIcon } from "@/components/RegPulseLogo";
 import EnhancedChecklist from "@/components/EnhancedChecklist";
 import type { ChecklistItem } from "@/components/EnhancedChecklist";
 import { getLocaleFormTemplate, getSuggestedRenewalDate, getRuleChangeTopics } from "@/lib/formTemplates";
@@ -193,12 +199,12 @@ import type { FormTemplate } from "@/lib/formTemplates";
 import type { CompletedFormEntry } from "@/lib/generateCompliancePacket";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import type { SavedBusiness, RuleAlert, MonthlyUsage } from "@/lib/regbot-types";
+import type { SavedBusiness, SavedMessage, RuleAlert, MonthlyUsage, NotificationPrefs, UploadedDocument, BusinessLocation } from "@/lib/regbot-types";
 import {
   localLoadBusinesses, localSaveBusiness,
   localLoadAlerts, localSaveAlerts,
   localLoadMonthlyUsage, localSaveMonthlyUsage,
-  dbLoadBusinesses, dbSaveBusiness,
+  dbLoadBusinesses, dbSaveBusiness, dbDeleteBusiness, dbSaveNotificationPrefs, dbSaveDocument,
   dbLoadAlerts, dbSaveAlerts,
   dbLoadMonthlyUsage, dbSaveMonthlyUsage, dbLoadIsPro,
   syncGuestDataToSupabase,
@@ -749,6 +755,26 @@ interface Message {
   formMap?: string[] | null;
 }
 
+// ── Welcome message (used as the default when no chat history exists) ─────────
+
+const WELCOME_MESSAGE: Message = {
+  id: "welcome",
+  role: "assistant",
+  content:
+    "- Welcome to RegPulse — your AI compliance co-pilot for permits, zoning, health codes, and local business regulations. [Learn More](https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits)\n" +
+    "- Tell me what kind of business you are starting or operating and I will provide a tailored compliance checklist for your location. [Learn More](https://www.sba.gov/business-guide)",
+};
+
+/** Convert saved messages back to the full Message type (UI-only fields default to undefined). */
+function toMessages(saved: SavedMessage[]): Message[] {
+  return saved.map(m => ({ id: m.id, role: m.role, content: m.content }));
+}
+
+/** Strip UI-only fields before persisting. */
+function toSavedMessages(msgs: Message[]): SavedMessage[] {
+  return msgs.map(m => ({ id: m.id, role: m.role, content: m.content }));
+}
+
 // ── BulletLine ────────────────────────────────────────────────────────────────
 
 const LINK_RE    = /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g;
@@ -840,7 +866,7 @@ function PacketScreen({
               </p>
               <span className="flex items-center gap-1 bg-blue-50 text-blue-700 text-[10px] font-semibold px-2 py-0.5 rounded-full ring-1 ring-blue-200">
                 <Sparkles className="h-2.5 w-2.5" />
-                Included with RegBot Pro
+                Included with RegPulse Pro
               </span>
             </div>
             <p className="font-semibold text-slate-900 mt-0.5">
@@ -981,14 +1007,14 @@ function PacketScreen({
           <div className="mt-3 flex items-center justify-center gap-1.5">
             <Crown className="h-3 w-3 text-amber-500" />
             <p className="text-[11px] text-amber-700 font-medium">
-              RegBot Pro — all features active
+              RegPulse Pro — all features active
             </p>
           </div>
         ) : (
           <div className="mt-3 rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 px-4 py-3 space-y-2">
             <div className="flex items-center gap-1.5">
               <Crown className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-              <p className="text-xs font-bold text-slate-800">Unlock RegBot Pro — $19/mo</p>
+              <p className="text-xs font-bold text-slate-800">Unlock RegPulse Pro — $19/mo</p>
             </div>
             <ul className="grid grid-cols-2 gap-x-3 gap-y-1">
               {[
@@ -1018,13 +1044,10 @@ function PacketScreen({
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState<Message[]>([{
-    id: "1",
-    role: "assistant",
-    content:
-      "- Welcome to RegBot — your AI compliance co-pilot for permits, zoning, health codes, and local business regulations. [Learn More](https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits)\n" +
-      "- Tell me what kind of business you are starting or operating and I will provide a tailored compliance checklist for your location. [Learn More](https://www.sba.gov/business-guide)",
-  }]);
+  const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
+
+  /** Debounce timer for auto-saving the active business profile. */
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [input, setInput]         = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -1053,11 +1076,36 @@ export default function ChatPage() {
    */
   const [completedFormsByFormId, setCompletedFormsByFormId] =
     useState<Record<string, CompletedFormEntry>>({});
+  /**
+   * Pre-filled field values passed to FormFiller when the user clicks "Renew Now".
+   * Carries the previous submission's formData so fields are pre-populated.
+   * Reset to undefined when opening a fresh (non-renewal) form.
+   */
+  const [activeFormInitialData, setActiveFormInitialData] =
+    useState<Record<string, string> | undefined>(undefined);
+  /** True when the active FormFiller session is a renewal (drives the renewal banner). */
+  const [activeFormIsRenewal, setActiveFormIsRenewal] = useState(false);
 
   // ── Saved businesses ──────────────────────────────────────────────────────
   const [savedBusinesses, setSavedBusinesses] = useState<SavedBusiness[]>([]);
   /** The currently active business profile (set on load; cleared on reset). */
   const [loadedBusiness, setLoadedBusiness]   = useState<SavedBusiness | null>(null);
+  /** Controls the Add Business modal visibility. */
+  const [showAddBizModal, setShowAddBizModal]       = useState(false);
+  const [confirmDeleteBizId, setConfirmDeleteBizId] = useState<string | null>(null);
+  const [notifPrefsBizId, setNotifPrefsBizId]       = useState<string | null>(null);
+  // Multi-location support
+  /** ID of the currently active BusinessLocation within loadedBusiness.locations. null = single-location mode. */
+  const [activeLocationId, setActiveLocationId]     = useState<string | null>(null);
+  /** ID of the business whose "Add Location" modal is open. */
+  const [addLocationBizId, setAddLocationBizId]     = useState<string | null>(null);
+  /** Set of business IDs whose location list is expanded in the sidebar. */
+  const [expandedBizIds, setExpandedBizIds]         = useState<Set<string>>(new Set());
+  // Document upload + analysis
+  const [docAnalysisResult, setDocAnalysisResult]   = useState<AnalysisResult | null>(null);
+  const [showDocUploadPanel, setShowDocUploadPanel] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [uploadedDocs, setUploadedDocs]             = useState<UploadedDocument[]>([]);
 
   // ── Pro subscription state ────────────────────────────────────────────────
   // Loaded from profiles.is_pro for authenticated users; defaults true for guests.
@@ -1222,6 +1270,64 @@ export default function ChatPage() {
     });
   }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Active location (derived) ─────────────────────────────────────────────
+  // When the loaded business has multiple locations and one is active, this gives
+  // the active BusinessLocation object. null in single-location mode.
+  const activeLocation = useMemo<BusinessLocation | null>(() => {
+    if (!loadedBusiness?.locations?.length || !activeLocationId) return null;
+    return loadedBusiness.locations.find(l => l.id === activeLocationId) ?? null;
+  }, [loadedBusiness, activeLocationId]);
+
+  // ── Cross-business renewals ───────────────────────────────────────────────
+  // Aggregates renewal items from ALL saved businesses (not just the active one).
+  // Each entry carries the owning SavedBusiness so the sidebar can show the name
+  // and the "Renew" button can switch to that business if needed.
+  // Multi-location: also aggregates from each location's checklist.
+  const allRenewals = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const rows: {
+      biz: SavedBusiness;
+      item: ChecklistItem;
+      daysLeft: number;
+      formName: string;
+    }[] = [];
+
+    const addFromChecklist = (biz: SavedBusiness, items: ChecklistItem[]) => {
+      for (const item of items) {
+        if (!item.renewalDate) continue;
+        const d = new Date(item.renewalDate + "T00:00:00");
+        const daysLeft = Math.ceil((d.getTime() - today.getTime()) / 86_400_000);
+        const formName = item.text.replace(/^Complete and submit:\s*/i, "").split("(")[0].trim();
+        rows.push({ biz, item, daysLeft, formName });
+      }
+    };
+
+    // Include saved businesses' checklists (covers all businesses, including active one).
+    // For the active business, prefer live checklist state over the saved snapshot so
+    // any in-session edits (e.g. status changes) are reflected immediately.
+    for (const biz of savedBusinesses) {
+      const isActive = loadedBusiness?.id === biz.id;
+      if (biz.locations?.length) {
+        // Multi-location: aggregate from all locations
+        for (const loc of biz.locations) {
+          const isActiveLocation = isActive && loc.id === activeLocationId;
+          addFromChecklist(biz, isActiveLocation ? checklist : (loc.checklist ?? []));
+        }
+      } else {
+        // Single-location (backward compat)
+        addFromChecklist(biz, isActive ? checklist : biz.checklist);
+      }
+    }
+
+    // De-duplicate by item.id (in case the active business appears in both sources),
+    // then sort soonest first.
+    const seen = new Set<string>();
+    return rows
+      .filter(r => { if (seen.has(r.item.id)) return false; seen.add(r.item.id); return true; })
+      .sort((a, b) => a.daysLeft - b.daysLeft);
+  }, [savedBusinesses, loadedBusiness, checklist, activeLocationId]);
+
   // ── Compliance Health Score ───────────────────────────────────────────────
   // Computed from live checklist state on every render (including after
   // handleLoadBusiness) so returning users immediately see their current posture.
@@ -1231,18 +1337,76 @@ export default function ChatPage() {
     const done     = checklist.filter(i => i.status === "done").length;
     const pending  = total - done;
     const score    = Math.round((done / total) * 100);
-    const today    = new Date(); today.setHours(0, 0, 0, 0);
-    const expiringCount = checklist.filter(i => {
-      if (!i.renewalDate) return false;
-      const d = new Date(i.renewalDate + "T00:00:00");
-      return Math.ceil((d.getTime() - today.getTime()) / 86_400_000) <= 90;
-    }).length;
+    // expiringCount = renewals within 90 days across ALL businesses (not just active one).
+    // allRenewals is already computed above; we just filter it here so the health card
+    // reflects the full portfolio's urgency, not just the active business.
+    const expiringCount = allRenewals.filter(r => r.daysLeft <= 90).length;
     return { score, pending, expiringCount, total, done };
-  }, [checklist]);
+  // allRenewals already depends on checklist, so we include it here.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checklist, allRenewals]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, activeTemplate, showPacketScreen]);
+
+  // ── Auto-save the active business profile ─────────────────────────────────
+  // Whenever the checklist, completed-forms map, or messages change while a
+  // business is loaded, write the updated profile back to storage.
+  // Debounced 2 s so rapid typing doesn't flood the DB.
+  useEffect(() => {
+    if (!loadedBusiness) return;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      const allCompleted = Object.values(completedFormsByFormId);
+      const completedForms = allCompleted.length > 0
+        ? allCompleted
+        : loadedBusiness.completedForms;
+      const profile = calcBizProfile(checklist, completedForms);
+      const now = new Date().toISOString();
+
+      let updated: SavedBusiness;
+      if (activeLocationId && loadedBusiness.locations?.length) {
+        // Multi-location: patch only the active location's slot
+        updated = {
+          ...loadedBusiness,
+          lastChecked: now,
+          locations: loadedBusiness.locations.map(loc =>
+            loc.id === activeLocationId
+              ? {
+                  ...loc,
+                  checklist,
+                  completedForms,
+                  chatHistory:         toSavedMessages(messages),
+                  healthScore:         profile.healthScore,
+                  totalForms:          profile.totalForms,
+                  completedFormsCount: profile.completedFormsCount,
+                  lastChecked:         now,
+                }
+              : loc
+          ),
+        };
+      } else {
+        // Single-location (backward compat)
+        updated = {
+          ...loadedBusiness,
+          lastChecked:         now,
+          checklist,
+          completedForms,
+          chatHistory:         toSavedMessages(messages),
+          healthScore:         profile.healthScore,
+          totalForms:          profile.totalForms,
+          completedFormsCount: profile.completedFormsCount,
+        };
+      }
+      setLoadedBusiness(updated);
+      void dbSaveBusiness(user ? getSb() : null, user?.id ?? null, updated).then(() => {
+        setSavedBusinesses(localLoadBusinesses());
+      });
+    }, 2000);
+    return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checklist, completedFormsByFormId, messages, loadedBusiness?.id, activeLocationId]);
 
   // ── GPS ───────────────────────────────────────────────────────────────────
 
@@ -1507,8 +1671,63 @@ export default function ChatPage() {
     setQueueIndex(0);
     setCompletedFormsData([]);
     setShowPacketScreen(false);
+    setActiveFormInitialData(undefined);
+    setActiveFormIsRenewal(false);
     setActiveTemplate(template);
   };
+
+  /**
+   * Launch a renewal of an existing form, optionally pre-filling with the last
+   * submission's field values. If the item belongs to a different saved business,
+   * that business is activated first before the form opens.
+   *
+   * Called from:
+   *  - EnhancedChecklist "Renew Now" button (active business items)
+   *  - Cross-business sidebar "Renew" button (any saved business)
+   */
+  const handleRenewFormItem = useCallback((
+    formId: string,
+    /** Business that owns this checklist item — null = active business. */
+    ownerBiz: SavedBusiness | null,
+  ) => {
+    if (!isPro && monthlyFormsUsed >= FREE_MONTHLY_LIMIT) return;
+
+    // Look up pre-filled data from the most recent completed form for this formId.
+    // First check the in-memory map (active session); fall back to the owner biz's
+    // completedForms if the item belongs to a different business.
+    let prefill: Record<string, string> | undefined;
+    if (ownerBiz && ownerBiz.id !== loadedBusiness?.id) {
+      const entry = ownerBiz.completedForms?.find(e => e.template.id === formId);
+      prefill = entry?.formData;
+    } else {
+      prefill = completedFormsByFormId[formId]?.formData;
+    }
+
+    const launchForm = (loc: string, county: string | null) => {
+      const template = getLocaleFormTemplate(formId, loc, county);
+      if (!template) return;
+      setFormQueue([]);
+      setQueueIndex(0);
+      setCompletedFormsData([]);
+      setShowPacketScreen(false);
+      setActiveFormInitialData(prefill);
+      setActiveFormIsRenewal(true);
+      setActiveTemplate(template);
+    };
+
+    if (ownerBiz && ownerBiz.id !== loadedBusiness?.id) {
+      // Switch business first, then launch — handleLoadBusiness updates userLocation.
+      handleLoadBusiness(ownerBiz);
+      // Defer form launch until after React has flushed the location state update.
+      // Using a 0ms timeout is sufficient because handleLoadBusiness is synchronous
+      // for the state writes we need (userLocation is set inline, not in a useEffect).
+      const targetLoc = ownerBiz.location;
+      setTimeout(() => launchForm(targetLoc, null), 0);
+    } else {
+      launchForm(userLocation, detectedCounty);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPro, monthlyFormsUsed, loadedBusiness, completedFormsByFormId, userLocation, detectedCounty]);
 
   const handleStartAllForms = (formIds: string[]) => {
     if (!isPro && monthlyFormsUsed >= FREE_MONTHLY_LIMIT) return;
@@ -1541,7 +1760,7 @@ export default function ChatPage() {
             text:         doneText,
             fee:          template.fee,
             status:       "done" as const,
-            completedVia: "RegBot AI Form Filler",
+            completedVia: "RegPulse AI Form Filler",
             formId:       template.id,
             renewalDate,
             createdAt:    completionDate,
@@ -1596,6 +1815,8 @@ export default function ChatPage() {
 
   // handleSaveBusiness is fire-and-forget async — the onSave prop signature stays
   // (name: string) => void so PacketScreen doesn't need updating.
+  // If a business is already loaded, it is UPDATED IN PLACE (same ID) rather than
+  // creating a duplicate. This also captures the current chat history.
   const handleSaveBusiness = useCallback((name: string) => {
     const allCompleted = Object.values(completedFormsByFormId);
     const completedForms = allCompleted.length > 0
@@ -1603,45 +1824,75 @@ export default function ChatPage() {
       : completedFormsData.length > 0 ? completedFormsData : undefined;
     const profile = calcBizProfile(checklist, completedForms);
     const now = new Date().toISOString();
-    const biz: SavedBusiness = {
-      id:                  `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      name,
-      location:            userLocation,
-      savedAt:             now,
-      lastChecked:         now,
-      checklist,
-      completedForms,
-      healthScore:         profile.healthScore,
-      totalForms:          profile.totalForms,
-      completedFormsCount: profile.completedFormsCount,
-    };
+
+    let biz: SavedBusiness;
+    if (activeLocationId && loadedBusiness?.locations?.length) {
+      // Multi-location: update active location slot, keep top-level identity fields
+      biz = {
+        ...(loadedBusiness ?? {}),
+        id:      loadedBusiness?.id ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        name,
+        savedAt: loadedBusiness?.savedAt ?? now,
+        lastChecked: now,
+        locations: loadedBusiness.locations.map(loc =>
+          loc.id === activeLocationId
+            ? {
+                ...loc,
+                location:            userLocation,
+                checklist,
+                completedForms,
+                chatHistory:         toSavedMessages(messages),
+                healthScore:         profile.healthScore,
+                totalForms:          profile.totalForms,
+                completedFormsCount: profile.completedFormsCount,
+                lastChecked:         now,
+              }
+            : loc
+        ),
+      };
+    } else {
+      // Single-location (backward compat)
+      biz = {
+        ...(loadedBusiness ?? {}),
+        id:                  loadedBusiness?.id ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        name,
+        location:            userLocation,
+        savedAt:             loadedBusiness?.savedAt ?? now,
+        lastChecked:         now,
+        checklist,
+        completedForms,
+        chatHistory:         toSavedMessages(messages),
+        healthScore:         profile.healthScore,
+        totalForms:          profile.totalForms,
+        completedFormsCount: profile.completedFormsCount,
+      };
+    }
+    setLoadedBusiness(biz);
     void dbSaveBusiness(user ? getSb() : null, user?.id ?? null, biz).then(() => {
       setSavedBusinesses(localLoadBusinesses());
     });
-  }, [userLocation, checklist, completedFormsData, completedFormsByFormId, user]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [userLocation, checklist, completedFormsData, completedFormsByFormId, loadedBusiness, messages, user, activeLocationId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleLoadBusiness = (biz: SavedBusiness) => {
-    const now = new Date().toISOString();
-    const profile = calcBizProfile(biz.checklist, biz.completedForms);
-    const updated: SavedBusiness = {
-      ...biz,
-      lastChecked:         now,
-      healthScore:         profile.healthScore,
-      totalForms:          profile.totalForms,
-      completedFormsCount: profile.completedFormsCount,
-    };
-    // Persist updated lastChecked + profile metrics (Supabase + localStorage).
-    void dbSaveBusiness(user ? getSb() : null, user?.id ?? null, updated).then(() => {
-      setSavedBusinesses(localLoadBusinesses());
-    });
-    setLoadedBusiness(updated);
-
-    setChecklist(biz.checklist);
-    if (biz.completedForms && biz.completedForms.length > 0) {
-      setCompletedFormsData(biz.completedForms);
-      // Restore per-formId map so "View Completed Form" works after loading a business.
+  /** Internal: load the working state from a specific data source (location or top-level). */
+  const loadLocationData = (
+    locData: { checklist: ChecklistItem[]; completedForms?: CompletedFormEntry[]; chatHistory?: SavedMessage[]; location: string },
+  ) => {
+    if (locData.chatHistory && locData.chatHistory.length > 0) {
+      setMessages(toMessages(locData.chatHistory));
+    } else {
+      setMessages([WELCOME_MESSAGE]);
+    }
+    setUseExactLocation(false);
+    gpsActiveRef.current = false;
+    setManualLocation(locData.location);
+    setZipResolved(false);
+    setDetectedCounty(null);
+    setUserLocation(locData.location);
+    setChecklist(locData.checklist);
+    if (locData.completedForms && locData.completedForms.length > 0) {
+      setCompletedFormsData(locData.completedForms);
       const byId: Record<string, CompletedFormEntry> = {};
-      biz.completedForms.forEach(e => { byId[e.template.id] = e; });
+      locData.completedForms.forEach(e => { byId[e.template.id] = e; });
       setCompletedFormsByFormId(byId);
       setShowPacketScreen(true);
     } else {
@@ -1649,8 +1900,296 @@ export default function ChatPage() {
       setCompletedFormsByFormId({});
       setShowPacketScreen(false);
     }
+    setActiveTemplate(null);
+    setFormQueue([]);
+    setQueueIndex(0);
+  };
+
+  const handleLoadBusiness = (biz: SavedBusiness, targetLocationId?: string) => {
+    // ── 1. Snapshot the current session into the previously-loaded business ──
+    if (loadedBusiness && loadedBusiness.id !== biz.id) {
+      let snapshot: SavedBusiness;
+      if (activeLocationId && loadedBusiness.locations?.length) {
+        snapshot = {
+          ...loadedBusiness,
+          locations: loadedBusiness.locations.map(loc =>
+            loc.id === activeLocationId
+              ? { ...loc, checklist, chatHistory: toSavedMessages(messages), completedForms: Object.values(completedFormsByFormId).length > 0 ? Object.values(completedFormsByFormId) : loc.completedForms }
+              : loc
+          ),
+        };
+      } else {
+        snapshot = {
+          ...loadedBusiness,
+          chatHistory: toSavedMessages(messages),
+          checklist,
+          completedForms: Object.values(completedFormsByFormId).length > 0
+            ? Object.values(completedFormsByFormId)
+            : loadedBusiness.completedForms,
+        };
+      }
+      void dbSaveBusiness(user ? getSb() : null, user?.id ?? null, snapshot);
+    }
+
+    // ── 2. Build the updated profile for the incoming business ────────────────
+    const now = new Date().toISOString();
+
+    // Determine which location to activate
+    const hasLocations = biz.locations && biz.locations.length > 0;
+    const firstLocId   = hasLocations ? biz.locations![0].id : null;
+    const chosenLocId  = targetLocationId ?? (hasLocations ? firstLocId : null);
+    const chosenLoc    = chosenLocId ? biz.locations?.find(l => l.id === chosenLocId) : null;
+
+    // Profile metrics come from the chosen location or top-level
+    const profileSource = chosenLoc
+      ? { checklist: chosenLoc.checklist, completedForms: chosenLoc.completedForms }
+      : { checklist: biz.checklist, completedForms: biz.completedForms };
+    const profile = calcBizProfile(profileSource.checklist, profileSource.completedForms);
+
+    const updated: SavedBusiness = {
+      ...biz,
+      lastChecked:         now,
+      healthScore:         profile.healthScore,
+      totalForms:          profile.totalForms,
+      completedFormsCount: profile.completedFormsCount,
+    };
+    void dbSaveBusiness(user ? getSb() : null, user?.id ?? null, updated).then(() => {
+      setSavedBusinesses(localLoadBusinesses());
+    });
+    setLoadedBusiness(updated);
+    setActiveLocationId(chosenLocId);
+
+    // ── 3-5. Restore working state from chosen location or top-level ──────────
+    if (chosenLoc) {
+      loadLocationData(chosenLoc);
+    } else {
+      loadLocationData({
+        checklist:     biz.checklist,
+        completedForms: biz.completedForms,
+        chatHistory:   biz.chatHistory,
+        location:      biz.location,
+      });
+    }
+
     checklistTopRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+  /**
+   * Switch to a different location within the SAME loaded business.
+   * Snapshots the current location's data, then restores the target location.
+   */
+  const handleSwitchLocation = useCallback((targetLoc: BusinessLocation) => {
+    if (!loadedBusiness) return;
+    if (targetLoc.id === activeLocationId) return; // already active
+
+    // Snapshot current location
+    const updatedBiz: SavedBusiness = {
+      ...loadedBusiness,
+      locations: loadedBusiness.locations?.map(loc =>
+        loc.id === activeLocationId
+          ? {
+              ...loc,
+              checklist,
+              completedForms: Object.values(completedFormsByFormId).length > 0
+                ? Object.values(completedFormsByFormId)
+                : loc.completedForms,
+              chatHistory: toSavedMessages(messages),
+            }
+          : loc
+      ) ?? loadedBusiness.locations,
+    };
+    setLoadedBusiness(updatedBiz);
+    void dbSaveBusiness(user ? getSb() : null, user?.id ?? null, updatedBiz);
+
+    // Activate new location
+    setActiveLocationId(targetLoc.id);
+    loadLocationData(targetLoc);
+    checklistTopRef.current?.scrollIntoView({ behavior: "smooth" });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadedBusiness, activeLocationId, checklist, completedFormsByFormId, messages, user]);
+
+  /**
+   * Add a new location to the currently loaded business.
+   */
+  const handleAddLocation = useCallback((newLoc: BusinessLocation) => {
+    if (!loadedBusiness) return;
+    setAddLocationBizId(null);
+
+    // Snapshot current location state before switching
+    const currentLocations = loadedBusiness.locations ?? [];
+    const snapshotLocations = currentLocations.map(loc =>
+      loc.id === activeLocationId
+        ? { ...loc, checklist, completedForms: Object.values(completedFormsByFormId).length > 0 ? Object.values(completedFormsByFormId) : loc.completedForms, chatHistory: toSavedMessages(messages) }
+        : loc
+    );
+
+    const updatedBiz: SavedBusiness = {
+      ...loadedBusiness,
+      locations: [...snapshotLocations, newLoc],
+    };
+    setLoadedBusiness(updatedBiz);
+    void dbSaveBusiness(user ? getSb() : null, user?.id ?? null, updatedBiz).then(() => {
+      setSavedBusinesses(localLoadBusinesses());
+    });
+
+    // Switch to the new location immediately
+    setActiveLocationId(newLoc.id);
+    loadLocationData(newLoc);
+    // Auto-expand this business's location list in the sidebar
+    setExpandedBizIds(prev => new Set([...prev, loadedBusiness.id]));
+    checklistTopRef.current?.scrollIntoView({ behavior: "smooth" });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadedBusiness, activeLocationId, checklist, completedFormsByFormId, messages, user]);
+
+  /**
+   * Add a new location to a NON-ACTIVE business (from the sidebar).
+   * The business is NOT switched to — we just append the location and save.
+   */
+  const handleAddLocationToOtherBiz = useCallback((biz: SavedBusiness, newLoc: BusinessLocation) => {
+    setAddLocationBizId(null);
+    const updatedBiz: SavedBusiness = {
+      ...biz,
+      locations: [...(biz.locations ?? []), newLoc],
+    };
+    void dbSaveBusiness(user ? getSb() : null, user?.id ?? null, updatedBiz).then(() => {
+      setSavedBusinesses(localLoadBusinesses());
+    });
+    setExpandedBizIds(prev => new Set([...prev, biz.id]));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  /** Called by AddBusinessModal when an existing business is submitted. */
+  const handleAddPreExistingBusiness = useCallback((biz: SavedBusiness) => {
+    void dbSaveBusiness(user ? getSb() : null, user?.id ?? null, biz).then(() => {
+      setSavedBusinesses(localLoadBusinesses());
+    });
+    setShowAddBizModal(false);
+    // Immediately activate the new business
+    handleLoadBusiness(biz);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  /** Clears all data for the active business (checklist, forms, chat, renewals). */
+  const handleClearActiveBusiness = useCallback(() => {
+    if (!loadedBusiness) return;
+    let cleared: SavedBusiness;
+    if (activeLocationId && loadedBusiness.locations?.length) {
+      // Multi-location: clear only the active location's data
+      cleared = {
+        ...loadedBusiness,
+        locations: loadedBusiness.locations.map(loc =>
+          loc.id === activeLocationId
+            ? { ...loc, checklist: [], completedForms: undefined, chatHistory: [], healthScore: 0, totalForms: 0, completedFormsCount: 0 }
+            : loc
+        ),
+      };
+    } else {
+      cleared = {
+        ...loadedBusiness,
+        checklist:           [],
+        completedForms:      undefined,
+        chatHistory:         [],
+        healthScore:         0,
+        totalForms:          0,
+        completedFormsCount: 0,
+      };
+    }
+    void dbSaveBusiness(user ? getSb() : null, user?.id ?? null, cleared).then(() => {
+      setSavedBusinesses(localLoadBusinesses());
+    });
+    setLoadedBusiness(cleared);
+    setChecklist([]);
+    setCompletedFormsData([]);
+    setCompletedFormsByFormId({});
+    setMessages([WELCOME_MESSAGE]);
+    setShowPacketScreen(false);
+    setActiveTemplate(null);
+    setFormQueue([]);
+    setQueueIndex(0);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadedBusiness, activeLocationId, user]);
+
+  /** Permanently deletes a business from Supabase and localStorage. */
+  const handleDeleteBusiness = useCallback((biz: SavedBusiness) => {
+    void dbDeleteBusiness(user ? getSb() : null, user?.id ?? null, biz.id).then(() => {
+      setSavedBusinesses(localLoadBusinesses());
+    });
+    // If this was the active business, reset to blank state
+    if (loadedBusiness?.id === biz.id) {
+      setLoadedBusiness(null);
+      setActiveLocationId(null);
+      setChecklist([]);
+      setCompletedFormsData([]);
+      setCompletedFormsByFormId({});
+      setMessages([WELCOME_MESSAGE]);
+      setShowPacketScreen(false);
+      setActiveTemplate(null);
+      setFormQueue([]);
+      setQueueIndex(0);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadedBusiness, user]);
+
+  /** Save notification preferences for a business (targeted column update). */
+  const handleSaveNotificationPrefs = useCallback((bizId: string, prefs: NotificationPrefs) => {
+    void dbSaveNotificationPrefs(user ? getSb() : null, user?.id ?? null, bizId, prefs).then(() => {
+      setSavedBusinesses(localLoadBusinesses());
+    });
+    // If this is the active business, patch loadedBusiness state so the bell icon updates immediately
+    if (loadedBusiness?.id === bizId) {
+      setLoadedBusiness(prev => prev ? { ...prev, notificationPrefs: prefs } : prev);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadedBusiness, user]);
+
+  /**
+   * Called when DocumentUploadButton finishes uploading + AI analysis.
+   * Persists the document record to Supabase and shows the analysis card.
+   */
+  const handleDocumentAnalysisComplete = useCallback((result: AnalysisResult) => {
+    setDocAnalysisResult(result);
+    setShowDocUploadPanel(false);
+
+    // Persist document record for authenticated users with an active business
+    if (user && loadedBusiness) {
+      void dbSaveDocument(getSb(), user.id, {
+        businessId:   loadedBusiness.id,
+        originalName: result.fileName,
+        mimeType:     result.mimeType,
+        sizeBytes:    result.sizeBytes,
+        storagePath:  result.storagePath,
+        analysis:     result.analysis,
+        analyzed:     true,
+      }).then(saved => {
+        if (saved) setUploadedDocs(prev => [saved, ...prev]);
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, loadedBusiness]);
+
+  /**
+   * Called when user clicks "Apply Updates" in the DocumentAnalysisCard.
+   * Marks matching checklist items as "done" with completedVia = "Document Upload".
+   * Also sets renewalDate from the expiration date when available.
+   */
+  const handleApplyDocumentUpdates = useCallback((matched: MatchedItem[]) => {
+    if (matched.length === 0) return;
+    const expirationDate = docAnalysisResult?.analysis.expirationDate;
+
+    setChecklist(prev => prev.map(item => {
+      const isMatched = matched.some(m => m.checklistItemId === item.id);
+      if (!isMatched) return item;
+      return {
+        ...item,
+        status:      "done" as const,
+        completedVia: "Document Upload",
+        // Only set renewalDate if not already set and the document has an expiration
+        renewalDate: item.renewalDate
+          ?? (expirationDate && typeof expirationDate === "string" ? expirationDate : undefined),
+      };
+    }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [docAnalysisResult]);
 
   // ── Location display helpers ──────────────────────────────────────────────
 
@@ -1668,14 +2207,12 @@ export default function ChatPage() {
       {/* ════════════ Sidebar ════════════ */}
       <div className="w-72 border-r border-slate-200 bg-white flex flex-col shrink-0">
 
-        {/* Brand */}
-        <div className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-100">
-          <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center shrink-0">
-            <Shield className="h-4 w-4 text-white" />
-          </div>
+        {/* Brand — neo-futurist glass header */}
+        <div className="rp-brand-header flex items-center gap-2.5 px-4 py-3.5">
+          <RegPulseIcon size={34} className="shrink-0" />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
-              <h1 className="font-semibold text-[15px] leading-tight text-slate-900">RegBot</h1>
+              <h1 className="font-semibold text-[15px] leading-tight text-white">RegPulse</h1>
               {isPro && (
                 <span
                   className="inline-flex items-center gap-0.5 bg-gradient-to-r from-amber-400 to-amber-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full tracking-wide"
@@ -1686,7 +2223,7 @@ export default function ChatPage() {
                 </span>
               )}
             </div>
-            <p className="text-[10px] text-slate-400 leading-tight">Compliance Co-pilot</p>
+            <p className="text-[10px] text-cyan-400/70 leading-tight">Compliance Co-pilot</p>
           </div>
           {/* Dev toggle — click to simulate Free / Pro tier */}
           <button
@@ -1970,7 +2507,7 @@ export default function ChatPage() {
                         className="mt-1 flex items-center gap-0.5 text-[10px] font-semibold text-amber-700 hover:underline"
                       >
                         <Bell className="h-2.5 w-2.5" />
-                        {expiringCount} renewal{expiringCount !== 1 ? "s" : ""} within 90d
+                        {expiringCount} renewal{expiringCount !== 1 ? "s" : ""} due soon
                       </button>
                     )}
                   </div>
@@ -1991,7 +2528,7 @@ export default function ChatPage() {
               onStartForm={item => { if (item.formId) handleStartForm(item.formId); }}
               onViewCompletedForm={handleViewCompletedForm}
               onCompleteAllForms={formIds => handleStartAllForms(formIds)}
-              onRenewForm={item => { if (item.formId) handleStartForm(item.formId); }}
+              onRenewForm={item => { if (item.formId) handleRenewFormItem(item.formId, loadedBusiness); }}
               alertedFormIds={alertedFormIds}
               onViewRuleAlert={() => alertsSectionRef.current?.scrollIntoView({ behavior: "smooth" })}
               onMarkAllDone={() =>
@@ -2001,6 +2538,8 @@ export default function ChatPage() {
                 setChecklist(prev => prev.filter(i => i.status !== "done"))
               }
               onResetAll={() => { setChecklist([]); setLoadedBusiness(null); }}
+              onClearAll={loadedBusiness ? handleClearActiveBusiness : undefined}
+              onUploadDocument={loadedBusiness ? () => setShowDocUploadPanel(true) : undefined}
               loadedBusiness={loadedBusiness ?? undefined}
               isPro={isPro}
               monthlyFormsUsed={monthlyFormsUsed}
@@ -2008,20 +2547,14 @@ export default function ChatPage() {
             />
           </div>
 
-          {/* Upcoming Renewals — shows ALL items with a renewalDate, soonest first.
-               Urgency colouring: red ≤30d, amber ≤60d, green >60d. */}
-          {(() => {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const upcoming = checklist
-              .filter(i => i.renewalDate)
-              .map(i => {
-                const d = new Date(i.renewalDate! + "T00:00:00");
-                const daysLeft = Math.ceil((d.getTime() - today.getTime()) / 86_400_000);
-                return { item: i, daysLeft };
-              })
-              .sort((a, b) => a.daysLeft - b.daysLeft);
-            if (upcoming.length === 0) return null;
+          {/* Upcoming Renewals — aggregated across ALL saved businesses.
+               Urgency: red ≤30d, amber ≤60d, green ≤90d, slate >90d. */}
+          {allRenewals.length > 0 && (() => {
+            // Show first 5 soonest; rest hidden behind a "show more" concept
+            // (keeping the sidebar compact — the most urgent items are what matter).
+            const visible = allRenewals.slice(0, 5);
+            const overdueCount = allRenewals.filter(r => r.daysLeft < 0).length;
+            const soonCount    = allRenewals.filter(r => r.daysLeft >= 0 && r.daysLeft <= 30).length;
             return (
               <div ref={renewalsSectionRef} className="shrink-0 border-t border-slate-100 px-4 py-3 space-y-2">
                 <div className="flex items-center gap-1.5">
@@ -2029,47 +2562,70 @@ export default function ChatPage() {
                   <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
                     Upcoming Renewals
                   </p>
+                  {(overdueCount > 0 || soonCount > 0) && (
+                    <span className={`ml-auto text-[10px] font-bold border rounded-full px-1.5 py-0.5 tabular-nums ${
+                      overdueCount > 0
+                        ? "text-red-700 bg-red-50 border-red-200"
+                        : "text-amber-700 bg-amber-50 border-amber-200"
+                    }`}>
+                      {overdueCount > 0 ? `${overdueCount} overdue` : `${soonCount} soon`}
+                    </span>
+                  )}
                 </div>
                 <div className="space-y-1.5">
-                  {upcoming.map(({ item, daysLeft }) => {
-                    const color =
+                  {visible.map(({ biz, item, daysLeft, formName }) => {
+                    const isActiveBiz = loadedBusiness?.id === biz.id;
+                    const badgeColor =
                       daysLeft < 0   ? "text-red-700 bg-red-50 border-red-200" :
                       daysLeft <= 30 ? "text-red-700 bg-red-50 border-red-200" :
                       daysLeft <= 60 ? "text-amber-700 bg-amber-50 border-amber-200" :
-                      daysLeft <= 90 ? "text-blue-700 bg-blue-50 border-blue-200" :
+                      daysLeft <= 90 ? "text-green-700 bg-green-50 border-green-200" :
                                        "text-slate-600 bg-slate-50 border-slate-200";
-                    const label =
+                    const countLabel =
                       daysLeft < 0   ? `${Math.abs(daysLeft)}d overdue` :
-                      daysLeft === 0 ? "Due today" :
+                      daysLeft === 0 ? "Today" :
                       daysLeft === 1 ? "Tomorrow" :
-                      daysLeft <= 90 ? `${daysLeft}d` :
+                      daysLeft <= 13 ? `${daysLeft}d` :
+                      daysLeft <= 90 ? `${Math.round(daysLeft / 7)}w` :
                                        `${Math.round(daysLeft / 30)}mo`;
-                    const formName = item.text.replace(/^Complete and submit:\s*/i, "").split("(")[0].trim();
                     return (
-                      <div key={item.id} className="flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 px-2.5 py-1.5">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[11px] font-medium text-slate-700 truncate" title={formName}>
-                            {formName}
+                      <div key={`${biz.id}-${item.id}`} className="rounded-lg border border-slate-100 bg-slate-50 px-2.5 py-2 space-y-1">
+                        {/* Business name — only shown for cross-business items */}
+                        {!isActiveBiz && (
+                          <p className="text-[9px] font-semibold text-blue-600 uppercase tracking-wide truncate">
+                            {biz.name}
                           </p>
-                          <p className="text-[10px] text-slate-400">
-                            {new Date(item.renewalDate! + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                          </p>
-                        </div>
-                        <span className={`shrink-0 text-[10px] font-semibold border rounded px-1.5 py-0.5 ${color}`}>
-                          {label}
-                        </span>
-                        {item.formId && (
-                          <button
-                            onClick={() => handleStartForm(item.formId!)}
-                            className="shrink-0 text-[10px] font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded px-1.5 py-0.5 hover:bg-blue-100 transition-colors"
-                            title="Renew this permit now"
-                          >
-                            Renew
-                          </button>
                         )}
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[11px] font-medium text-slate-700 truncate" title={formName}>
+                              {formName}
+                            </p>
+                            <p className="text-[10px] text-slate-400">
+                              {new Date(item.renewalDate! + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                            </p>
+                          </div>
+                          <span className={`shrink-0 text-[10px] font-semibold border rounded px-1.5 py-0.5 ${badgeColor}`}>
+                            {countLabel}
+                          </span>
+                          {item.formId && (
+                            <button
+                              onClick={() => handleRenewFormItem(item.formId!, isActiveBiz ? null : biz)}
+                              className="shrink-0 text-[10px] font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded px-1.5 py-0.5 hover:bg-blue-100 transition-colors"
+                              title={isActiveBiz ? "Renew this permit" : `Switch to ${biz.name} and renew`}
+                            >
+                              Renew
+                            </button>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
+                  {allRenewals.length > 5 && (
+                    <p className="text-[10px] text-slate-400 text-center pt-0.5">
+                      +{allRenewals.length - 5} more renewal{allRenewals.length - 5 !== 1 ? "s" : ""}
+                    </p>
+                  )}
                 </div>
               </div>
             );
@@ -2150,7 +2706,7 @@ export default function ChatPage() {
               <div className="rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 p-3 space-y-2">
                 <div className="flex items-center gap-1.5">
                   <Crown className="h-3 w-3 text-amber-500 shrink-0" />
-                  <p className="text-[11px] font-bold text-slate-800">Upgrade to RegBot Pro</p>
+                  <p className="text-[11px] font-bold text-slate-800">Upgrade to RegPulse Pro</p>
                   <span className="ml-auto text-[10px] font-bold text-blue-700">$19/mo</span>
                 </div>
                 <ul className="space-y-1">
@@ -2174,13 +2730,31 @@ export default function ChatPage() {
 
           {/* My Businesses — Living Profile cards */}
           <div className="shrink-0 border-t border-slate-100 px-4 py-3 space-y-2">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-              My Businesses
-            </p>
-            {savedBusinesses.length === 0 ? (
-              <p className="text-[11px] text-slate-400 italic px-0.5">
-                No businesses saved yet — complete forms to save a checklist.
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+                My Businesses
               </p>
+              <button
+                onClick={() => setShowAddBizModal(true)}
+                className="flex items-center gap-0.5 text-[10px] font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg px-2 py-0.5 transition-colors"
+                title="Add a business"
+              >
+                <Plus className="h-3 w-3" />
+                Add
+              </button>
+            </div>
+            {savedBusinesses.length === 0 ? (
+              <div className="text-center py-3 space-y-2">
+                <p className="text-[11px] text-slate-400 italic">
+                  No businesses yet — add one to get started.
+                </p>
+                <button
+                  onClick={() => setShowAddBizModal(true)}
+                  className="text-[11px] font-semibold text-blue-600 hover:underline"
+                >
+                  + Add your first business
+                </button>
+              </div>
             ) : (
               <div className="space-y-1.5">
                 {savedBusinesses.map(biz => {
@@ -2202,60 +2776,231 @@ export default function ChatPage() {
                     isUrgent  ? "text-red-700"  :
                     hasAlert  ? "text-amber-800" : "text-slate-700";
 
+                  const isConfirmingDelete = confirmDeleteBizId === biz.id;
+
                   return (
-                    <button
-                      key={biz.id}
-                      onClick={() => handleLoadBusiness(biz)}
-                      className={`w-full text-left rounded-xl border px-2.5 py-2 transition-all group ${cardBg}`}
-                      title={`Load profile for ${biz.name} (${biz.location})`}
-                    >
-                      {/* Row 1: icon + name + Pro badge + chevron */}
-                      <div className="flex items-center gap-2">
-                        {/* Health dot */}
-                        <span className={`h-2 w-2 rounded-full shrink-0 ${dotColor}`} />
-                        <p className={`flex-1 text-xs font-semibold truncate transition-colors ${nameColor}`}>
-                          {biz.name}
-                        </p>
-                        {isPro && (
-                          <span className="shrink-0 inline-flex items-center gap-0.5 text-[8px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded px-1 py-0.5">
-                            <Crown className="h-1.5 w-1.5" />
-                            Pro
-                          </span>
-                        )}
-                        <ChevronRight className={`h-3 w-3 shrink-0 transition-colors ${
-                          isLoaded ? "text-blue-400" : "text-slate-300 group-hover:text-blue-400"
-                        }`} />
-                      </div>
+                    <div key={biz.id} className="relative group/card">
+                      {isConfirmingDelete ? (
+                        /* Delete confirmation inline bar */
+                        <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs">
+                          <p className="text-red-700 font-medium mb-1.5 leading-snug">
+                            Delete &ldquo;{biz.name}&rdquo; and all its data? This cannot be undone.
+                          </p>
+                          <div className="flex gap-1.5">
+                            <button
+                              onClick={() => {
+                                handleDeleteBusiness(biz);
+                                setConfirmDeleteBizId(null);
+                              }}
+                              className="px-2 py-0.5 bg-red-600 text-white rounded font-semibold hover:bg-red-700 transition-colors"
+                            >
+                              Delete
+                            </button>
+                            <button
+                              onClick={() => setConfirmDeleteBizId(null)}
+                              className="px-2 py-0.5 bg-white border border-slate-300 rounded text-slate-600 hover:bg-slate-50 transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => handleLoadBusiness(biz)}
+                            className={`w-full text-left rounded-xl border px-2.5 py-2 transition-all group pr-14 ${cardBg}`}
+                            title={`Load profile for ${biz.name} (${biz.location})`}
+                          >
+                            {/* Row 1: icon + name + Pro badge + chevron */}
+                            <div className="flex items-center gap-2">
+                              {/* Health dot */}
+                              <span className={`h-2 w-2 rounded-full shrink-0 ${dotColor}`} />
+                              <p className={`flex-1 text-xs font-semibold truncate transition-colors ${nameColor}`}>
+                                {biz.name}
+                              </p>
+                              {isPro && (
+                                <span className="shrink-0 inline-flex items-center gap-0.5 text-[8px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded px-1 py-0.5">
+                                  <Crown className="h-1.5 w-1.5" />
+                                  Pro
+                                </span>
+                              )}
+                              <ChevronRight className={`h-3 w-3 shrink-0 transition-colors ${
+                                isLoaded ? "text-blue-400" : "text-slate-300 group-hover:text-blue-400"
+                              }`} />
+                            </div>
 
-                      {/* Row 2: location */}
-                      <p className="text-[10px] text-slate-400 truncate mt-0.5 pl-4">
-                        {biz.location}
-                      </p>
+                            {/* Row 2: location + type badge */}
+                            <div className="flex items-center gap-1.5 mt-0.5 pl-4">
+                              <p className="text-[10px] text-slate-400 truncate flex-1">
+                                {biz.location}
+                              </p>
+                              {biz.isPreExisting && (
+                                <span className="shrink-0 text-[9px] text-slate-400 bg-slate-100 border border-slate-200 rounded px-1 py-0.5">
+                                  existing
+                                </span>
+                              )}
+                            </div>
 
-                      {/* Row 3: meta chips */}
-                      <div className="flex items-center gap-1.5 mt-1.5 pl-4 flex-wrap">
-                        {hasScore && (
-                          <span className={`text-[10px] font-semibold tabular-nums ${
-                            score >= 80 ? "text-green-700" : score >= 50 ? "text-amber-700" : "text-red-700"
-                          }`}>
-                            {score}% health
-                          </span>
-                        )}
-                        {biz.totalForms != null && biz.totalForms > 0 && (
-                          <span className="text-[10px] text-slate-400">
-                            · {biz.completedFormsCount ?? 0}/{biz.totalForms} forms
-                          </span>
-                        )}
-                        {hasAlert && (
-                          <span className="text-[10px] font-semibold text-amber-600">· alert</span>
-                        )}
-                        {biz.lastChecked && (
-                          <span className="text-[10px] text-slate-400 ml-auto">
-                            {relativeDate(biz.lastChecked)}
-                          </span>
-                        )}
-                      </div>
-                    </button>
+                            {/* Row 3: meta chips */}
+                            <div className="flex items-center gap-1.5 mt-1.5 pl-4 flex-wrap">
+                              {hasScore && (
+                                <span className={`text-[10px] font-semibold tabular-nums ${
+                                  score >= 80 ? "text-green-700" : score >= 50 ? "text-amber-700" : "text-red-700"
+                                }`}>
+                                  {score}% health
+                                </span>
+                              )}
+                              {biz.totalForms != null && biz.totalForms > 0 && (
+                                <span className="text-[10px] text-slate-400">
+                                  · {biz.completedFormsCount ?? 0}/{biz.totalForms} forms
+                                </span>
+                              )}
+                              {hasAlert && (
+                                <span className="text-[10px] font-semibold text-amber-600">· alert</span>
+                              )}
+                              {biz.lastChecked && (
+                                <span className="text-[10px] text-slate-400 ml-auto">
+                                  {relativeDate(biz.lastChecked)}
+                                </span>
+                              )}
+                            </div>
+                          </button>
+
+                          {/* Bell icon — opens notification prefs */}
+                          <button
+                            onClick={e => {
+                              e.stopPropagation();
+                              setNotifPrefsBizId(biz.id);
+                            }}
+                            className={`absolute top-1.5 right-7 p-1 rounded-md transition-all opacity-0 group-hover/card:opacity-100 ${
+                              biz.notificationPrefs?.emailEnabled || biz.notificationPrefs?.smsEnabled
+                                ? "text-blue-400 hover:text-blue-600 hover:bg-blue-50"
+                                : biz.notificationPrefs && !biz.notificationPrefs.emailEnabled && !biz.notificationPrefs.smsEnabled
+                                  ? "text-slate-300 hover:text-slate-500 hover:bg-slate-50"
+                                  : "text-slate-300 hover:text-blue-400 hover:bg-blue-50"
+                            }`}
+                            title="Notification preferences"
+                          >
+                            {biz.notificationPrefs && !biz.notificationPrefs.emailEnabled && !biz.notificationPrefs.smsEnabled
+                              ? <BellOff className="h-3 w-3" />
+                              : <Bell className="h-3 w-3" />
+                            }
+                          </button>
+
+                          {/* Trash icon — visible on hover */}
+                          <button
+                            onClick={e => {
+                              e.stopPropagation();
+                              setConfirmDeleteBizId(biz.id);
+                            }}
+                            className="absolute top-1.5 right-1.5 p-1 rounded-md text-slate-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover/card:opacity-100 transition-all"
+                            title={`Delete ${biz.name}`}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </>
+                      )}
+
+                      {/* ── Locations sub-list ────────────────────────────── */}
+                      {(() => {
+                        const locs = biz.locations;
+                        if (!locs?.length) {
+                          // No locations yet — show "Add Location" link below card on hover
+                          return (
+                            <div className="pl-2 pr-1 pb-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                              <button
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  if (isLoaded) {
+                                    setAddLocationBizId("__active__");
+                                  } else {
+                                    setAddLocationBizId(biz.id);
+                                  }
+                                }}
+                                className="flex items-center gap-1 text-[10px] text-blue-500 hover:text-blue-700 hover:underline transition-colors py-0.5"
+                              >
+                                <Plus className="h-2.5 w-2.5" />
+                                Add location
+                              </button>
+                            </div>
+                          );
+                        }
+
+                        const isExpanded = expandedBizIds.has(biz.id);
+                        return (
+                          <div className="pl-2 pr-1 pb-1 mt-0.5 space-y-0.5">
+                            {/* Toggle row */}
+                            <button
+                              onClick={e => {
+                                e.stopPropagation();
+                                setExpandedBizIds(prev => {
+                                  const next = new Set(prev);
+                                  if (next.has(biz.id)) next.delete(biz.id); else next.add(biz.id);
+                                  return next;
+                                });
+                              }}
+                              className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-slate-600 transition-colors w-full py-0.5"
+                            >
+                              {isExpanded
+                                ? <ChevronDown className="h-2.5 w-2.5 shrink-0" />
+                                : <ChevronRight className="h-2.5 w-2.5 shrink-0" />}
+                              <span>{locs.length} location{locs.length !== 1 ? "s" : ""}</span>
+                            </button>
+
+                            {isExpanded && (
+                              <div className="space-y-0.5 pl-1">
+                                {locs.map(loc => {
+                                  const isActiveLoc = isLoaded && activeLocationId === loc.id;
+                                  const locScore = loc.healthScore ?? 0;
+                                  const locHasScore = loc.totalForms != null && loc.totalForms > 0;
+                                  const locDot = !locHasScore ? "bg-slate-300" :
+                                                  locScore >= 80 ? "bg-green-500" :
+                                                  locScore >= 50 ? "bg-amber-400" : "bg-red-400";
+                                  return (
+                                    <button
+                                      key={loc.id}
+                                      onClick={e => {
+                                        e.stopPropagation();
+                                        if (isLoaded) {
+                                          handleSwitchLocation(loc);
+                                        } else {
+                                          handleLoadBusiness(biz, loc.id);
+                                        }
+                                      }}
+                                      className={`w-full text-left flex items-center gap-1.5 px-2 py-1 rounded-lg border transition-all ${
+                                        isActiveLoc
+                                          ? "bg-blue-50 border-blue-200 text-blue-700"
+                                          : "bg-white border-slate-100 text-slate-600 hover:bg-blue-50 hover:border-blue-100 hover:text-blue-700"
+                                      }`}
+                                    >
+                                      <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${locDot}`} />
+                                      <span className="text-[10px] font-semibold truncate flex-1">{loc.name}</span>
+                                      <span className="text-[9px] text-slate-400 truncate max-w-[60px]">{loc.location}</span>
+                                      {isActiveLoc && <span className="h-1 w-1 rounded-full bg-blue-500 shrink-0" />}
+                                    </button>
+                                  );
+                                })}
+                                {/* Add location button */}
+                                <button
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    if (isLoaded) {
+                                      setAddLocationBizId("__active__");
+                                    } else {
+                                      setAddLocationBizId(biz.id);
+                                    }
+                                  }}
+                                  className="w-full flex items-center gap-1 text-[10px] text-blue-500 hover:text-blue-700 hover:bg-blue-50 transition-colors px-2 py-1 rounded-lg"
+                                >
+                                  <Plus className="h-2.5 w-2.5" />
+                                  Add location
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
                   );
                 })}
               </div>
@@ -2264,14 +3009,90 @@ export default function ChatPage() {
         </div>
       </div>
 
+      {/* ── Notification Prefs Modal ────────────────────────────────────── */}
+      {notifPrefsBizId && (() => {
+        const targetBiz = savedBusinesses.find(b => b.id === notifPrefsBizId);
+        if (!targetBiz) return null;
+        return (
+          <NotificationPrefsModal
+            businessName={targetBiz.name}
+            currentPrefs={targetBiz.notificationPrefs}
+            userEmail={user?.email ?? undefined}
+            onSave={prefs => handleSaveNotificationPrefs(notifPrefsBizId, prefs)}
+            onClose={() => setNotifPrefsBizId(null)}
+          />
+        );
+      })()}
+
+      {/* ── Add Location Modal ──────────────────────────────────────────── */}
+      {addLocationBizId && (() => {
+        const isActive = addLocationBizId === "__active__";
+        const targetBiz = isActive
+          ? loadedBusiness
+          : savedBusinesses.find(b => b.id === addLocationBizId);
+        if (!targetBiz) return null;
+        return (
+          <AddLocationModal
+            businessName={targetBiz.name}
+            onAdd={newLoc => {
+              if (isActive) {
+                handleAddLocation(newLoc);
+              } else {
+                handleAddLocationToOtherBiz(targetBiz, newLoc);
+              }
+              setAddLocationBizId(null);
+            }}
+            onClose={() => setAddLocationBizId(null)}
+          />
+        );
+      })()}
+
+      {/* ── Add Business Modal ──────────────────────────────────────────── */}
+      {showAddBizModal && (
+        <AddBusinessModal
+          onAdd={handleAddPreExistingBusiness}
+          onClose={() => setShowAddBizModal(false)}
+          onStartChat={() => {
+            setShowAddBizModal(false);
+            // Focus the chat input so the user can start immediately
+            setTimeout(() => {
+              (document.querySelector("input[placeholder*='business']") as HTMLInputElement | null)?.focus();
+            }, 100);
+          }}
+        />
+      )}
+
       {/* ════════════ Chat area ════════════ */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
 
         {/* Header bar */}
         <div className="border-b border-slate-200 bg-white px-6 py-3.5 shrink-0 flex items-center justify-between">
-          <div>
-            <h2 className="font-semibold text-slate-900 text-sm leading-tight">Chat with RegBot</h2>
-            <p className="text-xs text-slate-400 mt-0.5 leading-tight">Hyper-local compliance guidance</p>
+          <div className="flex items-center gap-2.5">
+            <RegPulseIcon size={26} />
+            <div>
+              <h2 className="font-semibold text-slate-900 text-sm leading-tight">Chat with RegPulse</h2>
+              {loadedBusiness ? (
+                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                  <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
+                  <p className="text-xs text-blue-600 font-medium leading-tight truncate max-w-[160px]">
+                    {loadedBusiness.name}
+                  </p>
+                  {activeLocation ? (
+                    <>
+                      <span className="text-xs text-slate-300">•</span>
+                      <span className="text-xs text-slate-500 font-medium truncate max-w-[120px]">
+                        {activeLocation.name}
+                      </span>
+                      <span className="text-xs text-slate-400 truncate max-w-[100px]">· {activeLocation.location}</span>
+                    </>
+                  ) : (
+                    <span className="text-xs text-slate-400">· {loadedBusiness.location}</span>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400 mt-0.5 leading-tight">Hyper-local compliance guidance</p>
+              )}
+            </div>
           </div>
           {locationIsReady && (
             <span className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full ring-1 transition-colors ${
@@ -2472,10 +3293,22 @@ export default function ChatPage() {
             onDismiss={handleDismissForm}
             queueLabel={queueLabel}
             skipPayment={true}
+            initialFormData={activeFormInitialData}
+            isRenewal={activeFormIsRenewal}
           />
         ) : (
           <div className="px-6 py-4 border-t border-slate-200 bg-white shrink-0">
             <div className="max-w-3xl mx-auto flex gap-2 items-center">
+              {/* Upload button — compact, sits left of the text input */}
+              <DocumentUploadButton
+                variant="compact"
+                businessId={loadedBusiness?.id}
+                businessName={loadedBusiness?.name ?? "My Business"}
+                location={userLocation}
+                checklist={checklist}
+                onAnalysisComplete={handleDocumentAnalysisComplete}
+                disabled={isLoading}
+              />
               <div className="flex-1 flex items-center bg-slate-50 border border-slate-200 rounded-2xl px-4 focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-300 transition-all">
                 <input
                   value={input}
@@ -2493,6 +3326,65 @@ export default function ChatPage() {
               >
                 <Send className="h-4 w-4" />
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Document Analysis Card overlay ────────────────────────────────
+             Shown after a successful upload + AI analysis.
+             Floats above the chat messages; user can dismiss or apply updates. */}
+        {docAnalysisResult && (
+          <div className="absolute inset-x-0 bottom-20 z-30 px-6 pb-2 max-w-3xl mx-auto left-1/2 -translate-x-1/2 w-full pointer-events-none">
+            <div className="pointer-events-auto">
+              <DocumentAnalysisCard
+                fileName={docAnalysisResult.fileName}
+                analysis={docAnalysisResult.analysis}
+                checklist={checklist}
+                onApplyUpdates={(matched: MatchedItem[]) => {
+                  handleApplyDocumentUpdates(matched);
+                }}
+                onDismiss={() => setDocAnalysisResult(null)}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ── Full upload panel (from checklist sidebar button) ─────────────
+             Slide-in bottom sheet with the full DocumentUploadButton drop zone. */}
+        {showDocUploadPanel && (
+          <div
+            className="absolute inset-0 z-30 bg-black/30 backdrop-blur-sm flex items-end justify-center"
+            onClick={e => { if (e.target === e.currentTarget) setShowDocUploadPanel(false); }}
+          >
+            <div className="bg-white rounded-t-2xl w-full max-w-lg shadow-2xl p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Upload className="h-4 w-4 text-blue-600" />
+                  <h3 className="text-sm font-bold text-slate-900">Upload Existing Document</h3>
+                </div>
+                <button
+                  onClick={() => setShowDocUploadPanel(false)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                  <XIcon className="h-4 w-4" />
+                </button>
+              </div>
+              {loadedBusiness && (
+                <p className="text-xs text-slate-500">
+                  Analyzing for <strong className="text-slate-700">{loadedBusiness.name}</strong>
+                </p>
+              )}
+              <DocumentUploadButton
+                variant="full"
+                businessId={loadedBusiness?.id}
+                businessName={loadedBusiness?.name ?? "My Business"}
+                location={userLocation}
+                checklist={checklist}
+                onAnalysisComplete={result => {
+                  setShowDocUploadPanel(false);
+                  handleDocumentAnalysisComplete(result);
+                }}
+              />
             </div>
           </div>
         )}

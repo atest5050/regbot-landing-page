@@ -46,7 +46,7 @@ export default function FinalCTA() {
                 Compliance shouldn&apos;t keep you up at night.
               </h2>
               <p className="mt-4 text-lg text-slate-600 leading-relaxed">
-                Join 500+ small business owners who use RegBot to stay ahead of
+                Join 500+ small business owners who use RegPulse to stay ahead of
                 permits, deadlines, and rule changes — without lawyers or guesswork.
               </p>
 

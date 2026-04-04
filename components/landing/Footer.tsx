@@ -1,9 +1,31 @@
-import { Shield } from "lucide-react";
+// Changes summary:
+// - Replaced all href="#" placeholders with real Next.js <Link> destinations.
+// - Product links (Features, Pricing, FAQ) use /#section anchors so they work
+//   both from the landing page (smooth scroll) and from any other route (navigate
+//   home then scroll).
+// - Changelog, About, Blog, Contact, and Legal pages use <Link> to their own routes.
+// - Logo wrapper gets "rp-logomark" for hover-glow from globals.css.
 
-const footerLinks = {
-  Product: ["Features", "Pricing", "FAQ", "Changelog"],
-  Company: ["About", "Blog", "Contact"],
-  Legal: ["Privacy Policy", "Terms of Service", "Disclaimer"],
+import Link from "next/link";
+import { RegPulseLogoFull } from "@/components/RegPulseLogo";
+
+const footerLinks: Record<string, { label: string; href: string }[]> = {
+  Product: [
+    { label: "Features",   href: "/#features"   },
+    { label: "Pricing",    href: "/#pricing"     },
+    { label: "FAQ",        href: "/#faq"         },
+    { label: "Changelog",  href: "/changelog"    },
+  ],
+  Company: [
+    { label: "About",      href: "/about"        },
+    { label: "Blog",       href: "/blog"         },
+    { label: "Contact",    href: "/contact"      },
+  ],
+  Legal: [
+    { label: "Privacy Policy",    href: "/privacy"    },
+    { label: "Terms of Service",  href: "/terms"      },
+    { label: "Disclaimer",        href: "/disclaimer" },
+  ],
 };
 
 export default function Footer() {
@@ -14,12 +36,13 @@ export default function Footer() {
         <div className="py-14 grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand column */}
           <div className="col-span-2 md:col-span-1">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600">
-                <Shield className="h-4 w-4 text-white" />
-              </div>
-              <span className="text-base font-bold text-white">RegBot</span>
-            </div>
+            <Link href="/" aria-label="RegPulse — home" className="rp-logomark inline-block mb-4">
+              <RegPulseLogoFull
+                shieldSize={32}
+                layout="beside"
+                className="text-white"
+              />
+            </Link>
             <p className="text-sm leading-relaxed text-slate-500">
               Your neighborhood compliance co-pilot for small businesses,
               freelancers, and side hustlers.
@@ -33,14 +56,14 @@ export default function Footer() {
                 {group}
               </h3>
               <ul className="space-y-3">
-                {links.map((link) => (
-                  <li key={link}>
-                    <a
-                      href="#"
+                {links.map(({ label, href }) => (
+                  <li key={label}>
+                    <Link
+                      href={href}
                       className="text-sm text-slate-500 hover:text-slate-200 transition-colors"
                     >
-                      {link}
-                    </a>
+                      {label}
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -51,12 +74,12 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="border-t border-slate-800 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-slate-600 text-center sm:text-left max-w-lg">
-            RegBot provides informational assistance only. Nothing on this site
+            RegPulse provides informational assistance only. Nothing on this site
             constitutes legal advice. Always verify with official government
             sources or a licensed attorney.
           </p>
           <p className="text-xs text-slate-600 shrink-0">
-            © {new Date().getFullYear()} RegBot. All rights reserved.
+            © {new Date().getFullYear()} RegPulse. All rights reserved.
           </p>
         </div>
       </div>
