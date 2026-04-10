@@ -13,14 +13,24 @@
 // The parent is responsible for calling onApplyUpdates() which will:
 //   - Set matching checklist items to status "done" with completedVia = "Document Upload"
 //   - Update renewal dates from the expiration date if applicable
+//
+// v30 — Completed Document → Business Profile Flow
+//   • Added optional onCreateProfileFromDocument prop
+//   • When the document looks completed (status ≠ Unknown, businessName, or matchedFormIds
+//     present) and no business is currently loaded, a subtle hint button is shown in the
+//     footer: "Use this to create a business profile?"
+//   • Clicking it calls onCreateProfileFromDocument() so the parent can handle the flow.
 
 import { useState } from "react";
 import {
   CheckCircle2, AlertCircle, Calendar, Building2, Hash,
-  ChevronDown, ChevronRight, FileText, Info, X, RefreshCw,
+  ChevronDown, ChevronRight, FileText, Info, X, RefreshCw, Download, UserPlus,
 } from "lucide-react";
 import type { DocumentAnalysis } from "@/lib/regbot-types";
 import type { ChecklistItem } from "@/lib/checklist";
+// v19 — Download Blank Form: surface a local PDF link when the analyzed document
+// matches a downloadable form in the federal/state forms library.
+import { ALL_FORMS, isFederalForm, isStateForm } from "@/lib/formTemplates";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -39,6 +49,14 @@ interface Props {
   onApplyUpdates: (matched: MatchedItem[]) => void;
   /** Called to dismiss/close the card */
   onDismiss: () => void;
+  /**
+   * v30 — Optional. When provided and the document looks completed, a subtle
+   * "Use this to create a business profile?" hint button is shown in the footer.
+   * The parent handles the actual profile creation flow.
+   */
+  onCreateProfileFromDocument?: () => void;
+  /** v30 — Pass true when a business profile is already loaded (hides the hint). */
+  hasActiveBusinessProfile?: boolean;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -85,9 +103,28 @@ export default function DocumentAnalysisCard({
   checklist,
   onApplyUpdates,
   onDismiss,
+  onCreateProfileFromDocument,
+  hasActiveBusinessProfile = false,
 }: Props) {
-  const [showRaw, setShowRaw]     = useState(false);
-  const [applied, setApplied]     = useState(false);
+  const [showRaw, setShowRaw]           = useState(false);
+  const [applied, setApplied]           = useState(false);
+  const [profileHintDismissed, setProfileHintDismissed] = useState(false);
+
+  // v30 — Determine whether the document looks completed (not a blank template).
+  // Mirrors the same heuristic used in handleDocumentAnalysisComplete in chat/page.tsx.
+  const documentLooksCompleted =
+    analysis.status !== "Unknown" ||
+    !!analysis.businessName ||
+    !!analysis.permitNumber ||
+    analysis.matchedFormIds.length > 0;
+
+  // Show the profile hint when: document is completed, no profile active, prop provided,
+  // and the user hasn't already dismissed the hint for this card instance.
+  const showProfileHint =
+    documentLooksCompleted &&
+    !hasActiveBusinessProfile &&
+    !!onCreateProfileFromDocument &&
+    !profileHintDismissed;
 
   // ── Compute matched checklist items ────────────────────────────────────────
   // Find items in the current checklist whose formId is in analysis.matchedFormIds
@@ -127,6 +164,20 @@ export default function DocumentAnalysisCard({
   };
 
   const rawEntries = Object.entries(analysis.rawExtracted ?? {}).filter(([, v]) => v);
+
+  // v19 — Download Blank Form: find a downloadable PDF for the first matched formId.
+  // Uses the federal/state forms library; FormTemplate entries have no pdfPath so
+  // only FederalFormEntry / StateFormEntry with isDownloadable: true are surfaced.
+  const downloadPdfPath: string | null = (() => {
+    for (const formId of analysis.matchedFormIds) {
+      const entry = ALL_FORMS[formId];
+      if (!entry) continue;
+      if ((isFederalForm(entry) || isStateForm(entry)) && entry.isDownloadable && entry.pdfPath) {
+        return entry.pdfPath;
+      }
+    }
+    return null;
+  })();
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white shadow-lg overflow-hidden">
@@ -219,6 +270,19 @@ export default function DocumentAnalysisCard({
       {/* ── Summary ────────────────────────────────────────────────────────── */}
       <div className="px-4 py-3 border-b border-slate-100">
         <p className="text-xs text-slate-600 leading-relaxed">{analysis.summary}</p>
+        {/* v19 — Download Blank Form: shown prominently below the summary when
+            the matched form has a locally-hosted blank PDF available. */}
+        {downloadPdfPath && (
+          <a
+            href={downloadPdfPath}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Download Blank Form
+          </a>
+        )}
       </div>
 
       {/* ── Checklist impact ───────────────────────────────────────────────── */}
@@ -321,6 +385,36 @@ export default function DocumentAnalysisCard({
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── v30 — Create Business Profile hint ────────────────────────────── */}
+      {showProfileHint && (
+        <div className="px-4 py-2.5 bg-indigo-50 border-b border-indigo-100 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <UserPlus className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
+            <p className="text-[11px] text-indigo-700 font-medium leading-snug">
+              Use this to create a business profile?
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              onClick={() => {
+                onCreateProfileFromDocument!();
+                setProfileHintDismissed(true);
+              }}
+              className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+            >
+              Yes, create it
+            </button>
+            <button
+              onClick={() => setProfileHintDismissed(true)}
+              className="text-[11px] text-indigo-400 hover:text-indigo-600 transition-colors p-1"
+              aria-label="Dismiss hint"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
         </div>
       )}
 

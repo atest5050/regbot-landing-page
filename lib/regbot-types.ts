@@ -177,6 +177,14 @@ export interface UploadedDocument {
   analysis?: DocumentAnalysis;
   analyzed: boolean;
   uploadedAt: string;
+  /**
+   * v36 — Form template ID this document is linked to.
+   * Set for synthetic documents created automatically when the user completes a
+   * form via RegPulse AI Form Filler. Used by BusinessProfileView to show the
+   * completed document under the matching recommended form card.
+   * NOT persisted to the DB — lives in client state only.
+   */
+  formId?: string;
 }
 
 // ── NotificationPrefs ─────────────────────────────────────────────────────────

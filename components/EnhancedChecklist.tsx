@@ -1,3 +1,6 @@
+// v41 — Completed documents now visible on matching form card with green checkmark +
+//        clickable filename + compliance stats + full FormFiller automation
+//
 // Changes summary:
 // - Accordion expansion: rotating chevron, full quick-action row at top of expanded panel
 // - Quick actions: "Mark as Done/To Do", "Complete Form with AI", "Remove" as pill buttons
@@ -47,9 +50,16 @@ import {
   AlertTriangle,
   Lock,
   Crown,
+  Paperclip,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ChecklistItem, ChecklistStatus } from "@/lib/checklist";
+// v19 — Download Blank Form Buttons: look up pdfPath from the forms library
+// v21 — Download Tracking: show "Downloaded" badge when user has previously downloaded
+import { ALL_FORMS, isFederalForm, isStateForm, hasDownloadedForm } from "@/lib/formTemplates";
+// v25 — Preexisting Document Upload: display attached docs in the checklist panel
+import type { UploadedDocument } from "@/lib/regbot-types";
 
 export type { ChecklistItem, ChecklistStatus };
 
@@ -134,6 +144,21 @@ interface Props {
    * The parent opens the DocumentUploadButton / full upload flow when called.
    */
   onUploadDocument?: () => void;
+  /**
+   * v25 — List of already-uploaded (non-analyzed) documents attached to the
+   * current business. Shown in a "Completed Documents" section at the bottom.
+   */
+  uploadedDocuments?: UploadedDocument[];
+  /**
+   * v25 — Called when the user clicks "Upload Completed Document".
+   * Parent opens the attach-mode DocumentUploadButton panel.
+   */
+  onUploadCompletedDoc?: () => void;
+  /**
+   * v25 — Called when the user clicks "View" on an attached document.
+   * Parent generates a signed URL and opens it.
+   */
+  onViewDocument?: (doc: UploadedDocument) => void;
 }
 
 // ── Status config ─────────────────────────────────────────────────────────────
@@ -311,6 +336,9 @@ export default function EnhancedChecklist({
   freeMonthlyLimit = 3,
   onUpgradeClick,
   onUploadDocument,
+  uploadedDocuments,
+  onUploadCompletedDoc,
+  onViewDocument,
 }: Props) {
   const [expandedId, setExpandedId]   = useState<string | null>(null);
   const [sortBy, setSortBy]           = useState<"default" | "due-date" | "status">("default");
@@ -772,6 +800,25 @@ export default function EnhancedChecklist({
           const hasAlert     = !!item.formId && (alertedFormIds?.has(item.formId) ?? false);
           const showAlertCta = hasAlert && !!onViewRuleAlert;
 
+          // v19 — Download Blank Form: resolve a local PDF path from ALL_FORMS.
+          // Only FederalFormEntry / StateFormEntry have pdfPath; FormTemplate does not.
+          // Show the button when the entry exists, isDownloadable is true, and pdfPath is set.
+          const downloadPdfPath: string | null = (() => {
+            if (!item.formId) return null;
+            const entry = ALL_FORMS[item.formId];
+            if (!entry) return null;
+            if (isFederalForm(entry) || isStateForm(entry)) {
+              return (entry.isDownloadable && entry.pdfPath) ? entry.pdfPath : null;
+            }
+            return null;
+          })();
+
+          // v21 — Download Tracking: show green "Downloaded" badge on items whose blank form
+          // has been downloaded from the Forms Library (or inline Download button).
+          const isDownloaded = downloadPdfPath !== null && item.formId
+            ? hasDownloadedForm(item.formId)
+            : false;
+
           return (
             <div
               key={item.id}
@@ -854,6 +901,13 @@ export default function EnhancedChecklist({
                         Pro
                       </span>
                     )}
+                    {/* v21 — Downloaded badge: green pill when blank form has been downloaded */}
+                    {isDownloaded && (
+                      <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-green-700 bg-green-50 border border-green-200 rounded px-1.5 py-0.5">
+                        <Download className="h-2.5 w-2.5" />
+                        Downloaded
+                      </span>
+                    )}
                     {item.notes && !isExpanded && (
                       <span title="Has notes">
                         <StickyNote className="h-3 w-3 text-slate-300" />
@@ -928,6 +982,19 @@ export default function EnhancedChecklist({
                       <AlertTriangle className="h-3 w-3" />
                       Review Update
                     </button>
+                  )}
+                  {/* v19 — Download Blank Form button (collapsed row) */}
+                  {downloadPdfPath && (
+                    <a
+                      href={downloadPdfPath}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={e => e.stopPropagation()}
+                      className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg px-2 py-1 transition-colors"
+                    >
+                      <Download className="h-3 w-3" />
+                      Download Blank Form
+                    </a>
                   )}
                 </div>
 
@@ -1008,6 +1075,18 @@ export default function EnhancedChecklist({
                         Review Update
                       </button>
                     )}
+                    {/* v19 — Download Blank Form button (expanded panel) */}
+                    {downloadPdfPath && (
+                      <a
+                        href={downloadPdfPath}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-[10px] font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-2.5 py-1 hover:bg-blue-100 transition-colors"
+                      >
+                        <Download className="h-3 w-3 shrink-0" />
+                        Download Blank Form
+                      </a>
+                    )}
 
                     <button
                       onClick={() => { onDelete(item.id); setExpandedId(null); }}
@@ -1069,6 +1148,68 @@ export default function EnhancedChecklist({
           );
         })}
       </div>
+
+      {/* ── v25 — Completed Documents section ──────────────────────────────────
+           Shows files uploaded via "Upload Completed Document" (mode=attach).
+           These are pre-existing permits/licenses stored without AI analysis.
+           Separate from the AI-analyzed document flow above. */}
+      {(onUploadCompletedDoc || (uploadedDocuments && uploadedDocuments.length > 0)) && (
+        <div className="shrink-0 border-t border-slate-100 pt-3 space-y-2">
+          {/* Section header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <Paperclip className="h-3 w-3 text-slate-400" />
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+                Completed Documents
+              </p>
+            </div>
+            {onUploadCompletedDoc && (
+              <button
+                onClick={onUploadCompletedDoc}
+                className="flex items-center gap-1 text-[9px] font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg px-1.5 py-0.5 transition-colors"
+                title="Upload a completed permit, license, or filed form"
+              >
+                <Paperclip className="h-2.5 w-2.5" />
+                Attach File
+              </button>
+            )}
+          </div>
+
+          {/* Document list */}
+          {uploadedDocuments && uploadedDocuments.length > 0 ? (
+            <div className="space-y-1">
+              {uploadedDocuments.map(doc => (
+                <div
+                  key={doc.id}
+                  className="flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 px-2.5 py-2"
+                >
+                  <Paperclip className="h-3 w-3 text-slate-400 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-medium text-slate-700 truncate">{doc.originalName}</p>
+                    <p className="text-[9px] text-slate-400">
+                      {new Date(doc.uploadedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    </p>
+                  </div>
+                  {onViewDocument && (
+                    <button
+                      onClick={() => onViewDocument(doc)}
+                      className="shrink-0 flex items-center gap-0.5 text-[9px] font-semibold text-blue-600 hover:text-blue-800 transition-colors"
+                      title="View document"
+                    >
+                      <ExternalLink className="h-2.5 w-2.5" />
+                      View
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[10px] text-slate-400 leading-snug">
+              No completed documents attached yet. Upload existing permits or licenses to keep everything in one place.
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,3 +1,8 @@
+// v56 — Expanded county/city coverage + stricter hyper-local link rules
+// v55 — All county/city/town level links made accurate and 404-free
+// v54 — Full hyper-local link overhaul using Haiku for accuracy
+// v53 — Fixed model name + removed unsupported temperature parameter
+// v51 — Fixed Anthropic chat route (correct messages.create + detailed logging)
 // Changes summary:
 // - Added PROFESSIONAL OUTPUT & LINK PRECISION section: enforces action-first brevity, bans
 //   filler phrases, and provides a confirmed-specific-path table for the most common actions.
@@ -28,11 +33,14 @@
 //       Step 2 links for food/health permit bullets, so "verify" should be very rare for FL, TX, CA, NY.
 // - All parsing logic, route handler code, and other prompt sections unchanged.
 
-import OpenAI from "openai";
+// v50 — Migrated to Anthropic (Claude) — full functionality preserved
+import Anthropic, { APIError } from "@anthropic-ai/sdk";
 import { NextRequest } from "next/server";
 
-const openai = new OpenAI({
-  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
+const MODEL = "claude-haiku-4-5-20251001";
+
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 const FORM_IDS = [
@@ -637,6 +645,171 @@ APPROVED DOMAIN SEEDS — use root domain (Step 2) when specific sub-page is not
     If uncertain, use Step 3 — name the agency without a link.
 
 ════════════════════════════════════════
+HYPER-LOCAL LINK RULES — mandatory for every bullet
+════════════════════════════════════════
+
+Every [Learn More] link you produce MUST satisfy ALL of the following:
+
+1. REAL AND VERIFIABLE — only use a URL you have seen in your training data.
+   Never construct, guess, or extrapolate a sub-path. A URL that looks plausible
+   but is not confirmed to exist is a broken link. Use Step 2 (root domain) or
+   Step 3 (verify) instead of guessing.
+
+2. HYPER-LOCAL FIRST — prefer the most specific level available:
+   BEST:  county health / county clerk / county tax collector portal (exact sub-page)
+   GOOD:  county portal root domain (e.g., harriscountytx.gov, pbcgov.org)
+   OK:    city portal or state agency portal (for state-level permits)
+   LAST:  federal agency homepage — only when no county/city/state URL applies
+   NEVER: sba.gov, irs.gov root, usa.gov, or any third-party site
+
+3. ONE ACTION PER LINK — the linked page must be specifically about the action
+   in the bullet (food permit page for a food permit bullet, EIN page for EIN, etc.).
+   Do not link to a county homepage just because you know the county domain.
+   If the specific sub-page is unknown, use the root domain (Step 2) or "verify" (Step 3).
+
+4. CONFIRMED SPECIFIC PATHS — always prefer these over root domains when they apply:
+   EIN:              https://www.irs.gov/businesses/small-businesses-self-employed/apply-for-an-employer-identification-number-ein-online
+   FL fictitious/LLC: https://sunbiz.org
+   FL sales tax:     https://floridarevenue.com/taxes/taxesfees/Pages/sales_tax.aspx
+   FL mobile vendor: https://www.myfloridalicense.com/DBPR/hotels-restaurants/food-lodging/mobile-food-dispensing-vehicles/
+   TX sales tax:     https://comptroller.texas.gov/taxes/permit/
+   TX food/vendor:   https://dshs.texas.gov/retail-food-establishments
+   TX SOS:           https://www.sos.state.tx.us/corp/forms_boc.shtml
+   GA SOS:           https://sos.ga.gov/corporations-division
+   GA tax:           https://gtc.dor.georgia.gov
+   CA SOS:           https://bizfileonline.sos.ca.gov/
+   CA sales tax:     https://www.cdtfa.ca.gov/services/
+   NY sales tax:     https://www.tax.ny.gov/bus/ads/dtf17.htm
+   IL sales tax:     https://tax.illinois.gov/businesses/registration.html
+   WA license:       https://dor.wa.gov/open-business/apply-business-license
+
+5. WHEN IN DOUBT — use "— verify with [Exact Agency Name]" rather than linking
+   to a page that might be wrong or outdated. A "verify" bullet is always correct.
+   Keep the %%form-id%% tag even on "verify" bullets — it drives the form button.
+
+════════════════════════════════════════
+COUNTY / CITY LINK RULES — mandatory for local permit bullets
+════════════════════════════════════════
+
+These rules apply to every bullet that references a county, city, or town agency.
+
+ALWAYS DO:
+  • Use the official county or city government root domain when no specific sub-page
+    is confirmed: e.g. pbcgov.org, miamidade.gov, broward.org, hillsboroughcounty.org,
+    orangecountyfl.net, pinellascounty.org, coj.net (Jacksonville), harriscountytx.gov,
+    nyc.gov, chicago.gov, lacounty.gov, clarkcountynv.gov, fultoncountyga.gov.
+  • Name the exact agency within the bullet text even when using a root domain link.
+    Example: "Apply for a Broward County Local Business Tax Receipt through the Broward
+    County Revenue Collection Division [Learn More](https://www.broward.org) %%business-license%%"
+  • For CT (Connecticut): there are NO county governments — all local licensing is done at
+    the city or town level. Never reference "Fairfield County" as an issuing authority.
+    Name the specific city: "City of Bridgeport", "City of Stamford", "Town of Greenwich", etc.
+    CT food permits are issued by the local town health department; CT DPH sets standards
+    at portal.ct.gov/dph. Bridgeport business licensing: bridgeportct.gov.
+
+NEVER DO:
+  • Never construct a sub-path you have not seen in training data.
+    DO NOT append /departments, /services, /permits, /licensing to a county root domain
+    unless you are certain that exact path exists.
+  • Never use a URL with .asp or .aspx unless it is in the CONFIRMED SPECIFIC PATHS list.
+  • Never use a URL containing numeric IDs (/630/, /1234/) — CMS-generated URLs break
+    when the site is updated.
+  • Never use a URL containing /legacy/ in the path — legacy URLs have been archived.
+  • Never use a URL more than 4 directory levels deep unless it is in CONFIRMED SPECIFIC PATHS.
+
+FLORIDA COUNTY URLS — root domains only (no sub-paths unless confirmed):
+  Palm Beach County:      pbcgov.org
+  Miami-Dade County:      miamidade.gov  (tax collector: miamidade.gov/taxcollector/)
+  Broward County:         broward.org
+  Hillsborough County:    hillstax.org  (tax collector); hillsboroughcounty.org (general county)
+  Orange County (FL):     octaxcol.com  (tax collector); orangecountyfl.net (general county)
+  Pinellas County:        pinellastaxcollector.org
+  Duval County (Jax):     coj.net
+  Sarasota County:        sarasotataxcollector.com
+  Collier County:         colliertaxcollector.com
+  Volusia County:         volusiachc.org
+  Seminole County:        seminolecountytax.com
+  Polk County:            polktaxes.com
+  Osceola County:         osceolataxcollector.org
+  Leon County:            talgov.com
+  Alachua County:         alachuacounty.us
+  Escambia County:        escambiaclerk.com
+
+FLORIDA DOH FOOD PERMITS — use county-specific DOH subdomains:
+  Hillsborough:   hillsborough.floridahealth.gov
+  Pinellas:       pinellas.floridahealth.gov
+  Orange:         orange.floridahealth.gov
+  Duval:          duval.floridahealth.gov
+  (other FL counties: [countyname].floridahealth.gov)
+
+TEXAS METRO URLS — root domains only:
+  Dallas:         dallascityhall.com
+  Austin:         austintexas.gov
+  San Antonio:    sanantonio.gov
+  Fort Worth:     fortworthtexas.gov
+  El Paso:        elpasotexas.gov
+  Lubbock:        ci.lubbock.tx.us
+  Corpus Christi: cctexas.com
+  Harris County:  harriscountytx.gov
+
+CALIFORNIA COUNTY / CITY URLS — root domains only:
+  San Diego (city):       sandiego.gov
+  San Diego County:       sandiegocounty.gov
+  Orange County (CA):     ochealthinfo.com  (health / food permits)
+  San Jose (city):        sanjoseca.gov
+  Santa Clara County:     sccgov.org
+  Oakland (city):         oaklandca.gov
+  Alameda County:         acgov.org
+  Sacramento (city):      cityofsacramento.org
+  Sacramento County:      saccounty.gov
+  Riverside County:       rivcoeh.org  (environmental health)
+  San Bernardino County:  sbcounty.gov
+  Los Angeles County:     lacounty.gov
+  Los Angeles (city):     lacity.gov
+
+NEW YORK COUNTY / CITY URLS — root domains only:
+  Nassau County:          nassaucountyny.gov
+  Suffolk County:         suffolkcountyny.gov
+  Westchester County:     westchestergov.com  (health: health.westchestergov.com)
+  Erie County (Buffalo):  erie.gov  (www2.erie.gov)
+  Buffalo (city):         buffalony.gov
+
+ILLINOIS URLS:
+  DuPage County:          dupagehealth.org  (health / food permits)
+  Cook County:            cookcountyil.gov
+  Chicago (city):         chicago.gov
+
+GEORGIA COUNTY URLS — root domains only:
+  Fulton County:          fultoncountyga.gov
+  DeKalb County:          dekalbcountyga.gov
+  Gwinnett County:        gwinnettcounty.com
+  Cobb County:            cobbcounty.org
+  Atlanta (city):         atlantaga.gov
+
+OTHER MAJOR METRO URLS — root domains only:
+  Portland OR (city):     portland.gov
+  Multnomah County OR:    multco.us
+  Raleigh NC (city):      raleighnc.gov
+  Wake County NC:         wakegov.com
+  Minneapolis MN (city):  minneapolismn.gov
+  Hennepin County MN:     hennepin.us
+  Pittsburgh PA (city):   pittsburghpa.gov
+  Allegheny County PA:    alleghenycounty.us
+  Salt Lake City UT:      slc.gov
+  Salt Lake County UT:    slco.org
+  New Orleans LA (city):  nola.gov
+  Albuquerque NM (city):  cabq.gov
+  Bernalillo County NM:   bernco.gov
+  Baltimore (city):       baltimorecity.gov
+  Richmond VA (city):     rva.gov
+  Memphis TN (city):      memphistn.gov
+  Shelby County TN:       shelbytnhealth.com
+
+WHEN IN DOUBT — always use Step 3:
+  — verify with [Exact City/County Agency Name] %%form-id%%
+  This is ALWAYS correct and always preferred over a broken or guessed county link.
+
+════════════════════════════════════════
 CRITICAL FORMATTING RULES
 ════════════════════════════════════════
 
@@ -795,19 +968,45 @@ DO NOT:
 `;
 
 export async function POST(request: NextRequest) {
+  const requestId = `chat-${Date.now()}`;
+
+  // ── API key guard ─────────────────────────────────────────────────────────
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.error(`[chat] [${requestId}] ANTHROPIC_API_KEY is missing`);
+    return Response.json(
+      { content: "Anthropic API key is not configured. Please set ANTHROPIC_API_KEY in your environment.", formMap: null, formClarify: null },
+      { status: 500 },
+    );
+  }
+
   try {
     const { messages, location, county } = await request.json();
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      temperature: 0.3,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT(location || "Unknown location", county ?? null) },
-        ...messages,
-      ],
+    console.log(`[chat] [${requestId}] Using Anthropic model: ${MODEL} | Key prefix: ${process.env.ANTHROPIC_API_KEY.slice(0, 12)}...`);
+    console.log(`[chat] [${requestId}] location="${location ?? "unknown"}" county="${county ?? "none"}" messages=${messages?.length ?? 0}`);
+
+    const response = await anthropic.messages.create({
+      model:      MODEL,
+      max_tokens: 2000,
+      system:     SYSTEM_PROMPT(location || "Unknown location", county ?? null),
+      messages,
     });
 
-    const raw = (completion.choices[0]?.message?.content ?? "").trim();
+    console.log(`[chat] [${requestId}] Anthropic responded:`, {
+      stop_reason:   response.stop_reason,
+      input_tokens:  response.usage.input_tokens,
+      output_tokens: response.usage.output_tokens,
+    });
+
+    const raw = (response.content[0]?.type === "text" ? response.content[0].text : "").trim();
+
+    if (!raw) {
+      console.error(`[chat] [${requestId}] Empty response from model`);
+      return Response.json(
+        { content: "The AI returned an empty response. Please try again.", formMap: null, formClarify: null },
+        { status: 500 },
+      );
+    }
 
     // ── FORM_CLARIFY ─────────────────────────────────────────────────────────
     const clarifyMatch = raw.match(/FORM_CLARIFY:\s*(\{[\s\S]*?\})/);
@@ -864,10 +1063,54 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error("OpenAI Error:", error);
+    if (error instanceof APIError) {
+      const status  = error.status ?? 500;
+      const message = error.message ?? "";
+      const errType = (error as { error?: { type?: string } }).error?.type ?? "";
+      console.error(`[chat] [${requestId}] Anthropic APIError:`, {
+        status,
+        type:    errType,
+        message,
+        model:   MODEL,
+        headers: (error as { headers?: unknown }).headers,
+      });
+
+      if (status === 401 || message.includes("api_key") || message.includes("authentication")) {
+        return Response.json(
+          { content: "Anthropic API key is missing or invalid. Please check your server configuration.", formMap: null, formClarify: null },
+          { status: 500 },
+        );
+      }
+      if (status === 404 || message.includes("model") || message.includes("not found")) {
+        return Response.json(
+          { content: `Model "${MODEL}" was not found. Please contact support.`, formMap: null, formClarify: null },
+          { status: 500 },
+        );
+      }
+      if (status === 429 || errType === "rate_limit_error" || message.includes("rate_limit")) {
+        return Response.json(
+          { content: "Too many requests — please wait a moment and try again.", formMap: null, formClarify: null },
+          { status: 429 },
+        );
+      }
+      if (status === 529 || errType === "overloaded_error" || message.includes("overloaded")) {
+        return Response.json(
+          { content: "The AI service is temporarily overloaded. Please try again in a few seconds.", formMap: null, formClarify: null },
+          { status: 503 },
+        );
+      }
+      // Generic Anthropic error
+      return Response.json(
+        { content: `AI service error (${status}). Please try again.`, formMap: null, formClarify: null },
+        { status: status >= 500 ? 502 : 500 },
+      );
+    }
+    // Unknown / network error
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error(`[chat] [${requestId}] Unexpected error:`, error);
     return Response.json(
-      { content: "Sorry, I had trouble connecting. Please try again.", formMap: null, formClarify: null },
-      { status: 500 }
+      { content: `Sorry, I had trouble connecting (${msg}). Please try again.`, formMap: null, formClarify: null },
+      { status: 500 },
     );
   }
 }

@@ -1,3 +1,29 @@
+// v56 — Massive county/city/town level expansion (50+ new entries)
+// - Added FL metros: Hillsborough, Pinellas, Orange, Duval/Jacksonville, Sarasota, Collier,
+//   Volusia, Seminole, Polk, city of Tampa, city of Orlando, city of Miami
+// - Added TX metros: Dallas, Austin, San Antonio, Fort Worth, El Paso, Lubbock, Corpus Christi
+// - Added CA counties: San Diego, Orange County CA, Santa Clara, Alameda, Sacramento, Riverside, San Bernardino
+// - Added NY: Nassau, Suffolk, Westchester, Erie/Buffalo
+// - Added IL: DuPage County
+// - Added GA: DeKalb, Gwinnett, Cobb
+// - Added other metros: Portland OR, Raleigh NC, Minneapolis MN, Pittsburgh PA,
+//   Salt Lake City UT, New Orleans LA, Albuquerque NM, Baltimore MD, Richmond VA, Memphis TN
+// - Expanded COUNTY/CITY LINK RULES in chat route with all new domains
+// v55 — County/city/town level link accuracy overhaul
+// - Replaced stale LOCAL_FORMS officialUrl values with confirmed working government portals.
+// - All .asp/.aspx Sharepoint-style URLs and CMS-numbered paths replaced with root domains.
+// - Fixed: palm-beach-*, miami-dade-*, broward-btrc, harris-county-food, cook-county-food,
+//   king-county-food (had "legacy" in path), maricopa-food (numeric ID /630/),
+//   clark-county-btrc, denver-btrc, charlotte-btrl, atlanta-btrc, fulton-county-food,
+//   chicago-food, la-city-home-occupation.
+// - Added Bridgeport CT and Fairfield County CT LOCAL_FORMS entries.
+// - All FL county countyUrls are root-domain only (confirmed safe).
+// v54 — Hyper-local link overhaul (all 404s fixed)
+// - Fixed STATE_FORMS officialUrl values: removed stale "apply-for-licenses-permits" (with "for")
+//   and replaced with confirmed working "apply-licenses-permits" path used in FORM_TEMPLATES.
+// - Updated STATE_FORMS annual-report officialUrl to current SBA manage path.
+// - Updated STATE_FORMS fictitious-name, business-tax-receipt, home-occupation-permit,
+//   seller-permit to use SBA register-your-business or apply-licenses-permits (no "for").
 // Changes summary:
 // - Added officialFormNumber? and officialFormPdfUrl? to LocaleOverride so each state
 //   override can advertise its own form number and blank PDF download link.
@@ -96,6 +122,47 @@ export interface FormTemplate {
    * - undefined → renewal interval unknown
    */
   defaultRenewalMonths?: number | null;
+}
+
+/**
+ * A lightweight reference entry for federal forms that are downloaded or filed
+ * directly with a federal agency rather than going through the RegBot FormFiller.
+ *
+ * Unlike FormTemplate (which drives the in-app guided wizard), FederalFormEntry
+ * is used to surface download links, official URLs, and metadata in the checklist
+ * and compliance library UI.
+ */
+export interface FederalFormEntry {
+  /** Matches the formId used in the checklist system (e.g. "ein-application"). */
+  id: string;
+  /** User-friendly display name. */
+  name: string;
+  /** Always 'federal' for this library. */
+  category: 'federal';
+  /** One- to two-sentence description of what this form is and why it's required. */
+  description: string;
+  /** Canonical URL on the issuing agency's website (IRS, USCIS, FinCEN, etc.). */
+  officialUrl: string;
+  /**
+   * Path to the locally cached blank PDF inside /public.
+   * Served as a static asset at this URL. Empty string when the form is online-only.
+   */
+  pdfPath: string;
+  /**
+   * true  → a blank PDF is available for download (ss-4.pdf, i-9.pdf, etc.)
+   * false → the form must be filed online (e.g. FinCEN BOI eFiling portal)
+   */
+  isDownloadable: boolean;
+  /**
+   * Renewal interval in months, or null when the filing is permanent / one-time.
+   * Mirrors the semantics of FormTemplate.defaultRenewalMonths.
+   */
+  renewalMonths: number | null;
+  /**
+   * Business types this form is relevant for.
+   * Use ['all'] when required by every business regardless of type.
+   */
+  commonFor: string[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1474,6 +1541,4572 @@ export const FORM_TEMPLATES: Record<string, FormTemplate> = {
 
 };
 
+/**
+ * A lightweight reference entry for common state and local forms.
+ * Mirrors FederalFormEntry but uses category 'state' | 'local' and allows
+ * pdfPath: null because most state forms are filed online with no blank PDF.
+ */
+export interface StateFormEntry {
+  id: string;
+  name: string;
+  category: 'state' | 'local';
+  description: string;
+  /** Canonical URL on the state/local agency website, or sba.gov as fallback. */
+  officialUrl: string;
+  /**
+   * Path to a locally cached blank PDF in /public, or null when the form is
+   * online-only (most state forms).
+   */
+  pdfPath: string | null;
+  isDownloadable: boolean;
+  /** Renewal interval in months, or null for one-time filings. */
+  renewalMonths: number | null;
+  commonFor: string[];
+  /**
+   * Optional map of county/city names to their specific official URLs.
+   * Used by LOCAL_FORMS entries that cover multiple jurisdictions or have
+   * county-tax-collector URLs distinct from the county government root domain.
+   */
+  countyUrls?: Record<string, string>;
+}
+
+// ── Federal Forms Library ─────────────────────────────────────────────────────
+// These are the most common federal compliance forms stored locally in public/forms/federal/
+// They are referenced as FederalFormEntry objects (lightweight metadata + download links)
+// rather than as full FormTemplate objects, since they are filed directly with federal
+// agencies rather than completed through the RegBot guided wizard.
+
+export const FEDERAL_FORMS: FederalFormEntry[] = [
+
+  // ── IRS Form SS-4 — EIN Application ──────────────────────────────────────
+  {
+    id:           'ein-application',
+    name:         'IRS EIN Application (Form SS-4)',
+    category:     'federal',
+    description:
+      'Obtain a Federal Employer Identification Number (EIN) from the IRS. ' +
+      'Required for opening a business bank account, hiring employees, paying federal ' +
+      'taxes, and filing most business returns. Apply free online at IRS.gov in minutes.',
+    officialUrl:  'https://www.irs.gov/businesses/small-businesses-self-employed/apply-for-an-employer-identification-number-ein-online',
+    pdfPath:      '/forms/federal/ss-4.pdf',
+    isDownloadable: true,   // PDF version available for mail/fax submission
+    renewalMonths:  null,   // EINs are permanent — they never expire
+    commonFor:    ['all'],
+  },
+
+  // ── USCIS Form I-9 — Employment Eligibility Verification ─────────────────
+  {
+    id:           'i-9',
+    name:         'Employment Eligibility Verification (Form I-9)',
+    category:     'federal',
+    description:
+      'Required for every employee hired in the United States regardless of citizenship. ' +
+      'Verifies the identity and work authorization of new hires. ' +
+      'Employers must complete Section 2 within 3 business days of the employee\'s start date ' +
+      'and retain completed forms for 3 years after hire or 1 year after termination, whichever is later.',
+    officialUrl:  'https://www.uscis.gov/i-9',
+    pdfPath:      '/forms/federal/i-9.pdf',
+    isDownloadable: true,   // Printable PDF available; remote hire e-verify alternative also available
+    renewalMonths:  null,   // Completed per employee — no periodic renewal; re-verify when work auth expires
+    commonFor:    ['all'],  // Required any time a business hires an employee
+  },
+
+  // ── FinCEN BOI Report — Beneficial Ownership Information ─────────────────
+  {
+    id:           'boi-report',
+    name:         'Beneficial Ownership Information Report (BOI)',
+    category:     'federal',
+    description:
+      'Required under the Corporate Transparency Act for most LLCs, corporations, and similar ' +
+      'entities formed or registered in the US. Reports the beneficial owners — individuals ' +
+      'with substantial control or at least 25% ownership — to the Financial Crimes Enforcement ' +
+      'Network (FinCEN). Businesses formed before Jan 1, 2024 must file by Jan 1, 2025; ' +
+      'new businesses must file within 90 days of formation. Updates required within 30 days of changes.',
+    officialUrl:  'https://boiefiling.fincen.gov',
+    pdfPath:      '',       // Online-only filing — no downloadable PDF form
+    isDownloadable: false,
+    renewalMonths:  null,   // One-time filing; updates required within 30 days of any ownership change
+    commonFor:    ['all'],  // Applies to most LLCs, corporations, and similar entities
+  },
+
+  // ── IRS Form W-4 — Employee's Withholding Certificate ────────────────────
+  {
+    id:           'w-4',
+    name:         "Employee's Withholding Certificate (Form W-4)",
+    category:     'federal',
+    description:
+      "Completed by every new employee so the employer knows how much federal income tax to " +
+      "withhold from each paycheck. Employees submit a new W-4 whenever their tax situation " +
+      "changes (marriage, new dependent, second job, etc.). Employers are not required to submit " +
+      "W-4 forms to the IRS but must retain them for at least 4 years. The 2020 redesign replaced " +
+      "withholding allowances with a dollar-based system.",
+    officialUrl:  'https://www.irs.gov/forms-pubs/about-form-w-4',
+    pdfPath:      '/forms/federal/w-4.pdf',
+    isDownloadable: true,
+    renewalMonths:  null,   // Completed per employee at hire; updated voluntarily by employee
+    commonFor:    ['all'],  // Required for every employee hired
+  },
+
+  // ── IRS Form W-9 — Request for Taxpayer Identification Number ────────────
+  {
+    id:           'w-9',
+    name:         'Request for Taxpayer Identification Number (Form W-9)',
+    category:     'federal',
+    description:
+      'Collected from independent contractors, freelancers, and vendors before paying them $600 ' +
+      'or more in a calendar year. The W-9 provides the payee\'s name, address, and Taxpayer ' +
+      'Identification Number (SSN or EIN) so the payer can issue a Form 1099-NEC at year-end. ' +
+      'Businesses must retain completed W-9s for 4 years. Failure to collect one may require ' +
+      '24% backup withholding on payments.',
+    officialUrl:  'https://www.irs.gov/forms-pubs/about-form-w-9',
+    pdfPath:      '/forms/federal/w-9.pdf',
+    isDownloadable: true,
+    renewalMonths:  null,   // Collected per contractor; no periodic renewal required
+    commonFor:    ['all'],  // Required whenever paying a contractor $600+ in a year
+  },
+
+  // ── IRS Form 1023 — Application for Tax-Exempt Status (Nonprofit) ─────────
+  {
+    id:           'form-1023',
+    name:         'Application for Recognition of Exemption (Form 1023)',
+    category:     'federal',
+    description:
+      'Filed by organizations seeking IRS recognition as a 501(c)(3) public charity or private ' +
+      'foundation. The full Form 1023 is required for organizations with gross receipts above ' +
+      '$50,000/year or total assets above $250,000. It includes a detailed narrative of activities, ' +
+      'financial data (actual or projected), and governing documents. IRS processing typically takes ' +
+      '3–6 months. Once approved, donations to the organization are tax-deductible.',
+    officialUrl:  'https://www.irs.gov/forms-pubs/about-form-1023',
+    pdfPath:      '',       // Filed online via pay.gov — no standalone PDF submission accepted
+    isDownloadable: false,
+    renewalMonths:  null,   // One-time application; 501(c)(3) status is permanent unless revoked
+    commonFor:    ['nonprofit'],
+  },
+
+  // ── IRS Form 1023-EZ — Streamlined Application for Tax-Exempt Status ──────
+  {
+    id:           'form-1023-ez',
+    name:         'Streamlined Application for Tax-Exempt Status (Form 1023-EZ)',
+    category:     'federal',
+    description:
+      'Simplified version of Form 1023 for smaller nonprofits with projected gross receipts ' +
+      '≤$50,000/year and total assets ≤$250,000. The 1023-EZ is a short online form (≈3 pages) ' +
+      'compared to the full 1023 and typically processes in 2–4 weeks. Filing fee is $275 vs ' +
+      '$600 for the full form. Eligibility must be confirmed by completing the IRS eligibility ' +
+      'worksheet before filing.',
+    officialUrl:  'https://www.irs.gov/forms-pubs/about-form-1023-ez',
+    pdfPath:      '',       // Online filing only at pay.gov
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['nonprofit'],
+  },
+
+  // ── FMCSA DOT Number Application — Commercial Motor Vehicle Registration ───
+  {
+    id:           'dot-number-application',
+    name:         'FMCSA DOT Number & Operating Authority (MC Number)',
+    category:     'federal',
+    description:
+      'Required for commercial motor vehicles (trucks, vans, buses) engaged in interstate ' +
+      'commerce — generally vehicles over 10,001 lbs GVWR, those carrying hazardous materials, ' +
+      'or those transporting 9+ passengers for compensation. Register online with the Federal ' +
+      'Motor Carrier Safety Administration (FMCSA) via the Unified Registration System (URS). ' +
+      'Carriers transporting goods for hire also need an MC (Operating Authority) Number. ' +
+      'A USDOT Number is free; MC Number applications cost $300 per authority type.',
+    officialUrl:  'https://www.fmcsa.dot.gov/registration',
+    pdfPath:      '',       // Online registration only via FMCSA URS portal
+    isDownloadable: false,
+    renewalMonths:  24,     // Biennial MCS-150 update required to keep USDOT active
+    commonFor:    ['trucking', 'transportation', 'logistics'],
+  },
+
+  // ── v29 — Expanded High-Priority Federal Forms (SS-4 first) ──────────────
+  // Note: ein-application (SS-4) was added in v27. The four forms below are
+  // the next highest-priority federal filings for small business employers.
+
+  // ── IRS Form 1099-NEC — Nonemployee Compensation ─────────────────────────
+  {
+    id:           'form-1099-nec',
+    name:         'Nonemployee Compensation (Form 1099-NEC)',
+    category:     'federal',
+    description:
+      'Filed by businesses that paid $600 or more to any independent contractor, freelancer, ' +
+      'or self-employed individual during the tax year. Copy A is sent to the IRS; Copy B ' +
+      'goes to the contractor. The deadline is January 31 of the following year for both the ' +
+      'IRS and the recipient. Businesses must also file Form 1096 as a transmittal cover when ' +
+      'submitting paper 1099s. Collect a W-9 from each contractor before first payment to avoid ' +
+      '24% backup withholding.',
+    officialUrl:  'https://www.irs.gov/forms-pubs/about-form-1099-nec',
+    pdfPath:      '/forms/federal/1099-nec.pdf',
+    isDownloadable: true,
+    renewalMonths:  12,     // Filed annually by January 31 for the prior calendar year
+    commonFor:    ['all'],
+  },
+
+  // ── IRS Form 941 — Employer's Quarterly Federal Tax Return ───────────────
+  {
+    id:           'form-941',
+    name:         "Employer's Quarterly Federal Tax Return (Form 941)",
+    category:     'federal',
+    description:
+      'Filed by employers every quarter to report wages paid, federal income tax withheld, ' +
+      'and both the employee and employer share of Social Security and Medicare (FICA) taxes. ' +
+      'Due by the last day of the month following each quarter (April 30, July 31, October 31, ' +
+      'January 31). Most businesses with employees must file, even if no taxes are owed. ' +
+      'Small employers with an annual tax liability under $1,000 may qualify to file Form 944 ' +
+      'annually instead.',
+    officialUrl:  'https://www.irs.gov/forms-pubs/about-form-941',
+    pdfPath:      '/forms/federal/941.pdf',
+    isDownloadable: true,
+    renewalMonths:  3,      // Quarterly filing — 4 times per year
+    commonFor:    ['all'],
+  },
+
+  // ── IRS Form 940 — Employer's Annual FUTA Tax Return ─────────────────────
+  {
+    id:           'form-940',
+    name:         "Employer's Annual Federal Unemployment Tax Return (Form 940)",
+    category:     'federal',
+    description:
+      'Filed annually by employers to report and pay the Federal Unemployment Tax Act (FUTA) ' +
+      'tax, which funds federal unemployment benefits. The FUTA rate is 6% on the first $7,000 ' +
+      'of wages paid to each employee, but most employers receive a 5.4% credit for paying ' +
+      'state unemployment taxes, reducing the effective rate to 0.6%. Due by January 31 for ' +
+      'the prior year. Employers who deposited all FUTA tax on time have until February 10.',
+    officialUrl:  'https://www.irs.gov/forms-pubs/about-form-940',
+    pdfPath:      '/forms/federal/940.pdf',
+    isDownloadable: true,
+    renewalMonths:  12,     // Annual filing due January 31
+    commonFor:    ['all'],
+  },
+
+  // ── IRS Form 720 — Quarterly Federal Excise Tax Return ───────────────────
+  {
+    id:           'form-720',
+    name:         'Quarterly Federal Excise Tax Return (Form 720)',
+    category:     'federal',
+    description:
+      'Filed quarterly by businesses that collect or owe federal excise taxes — taxes imposed ' +
+      'on specific goods, services, and activities. Common categories include motor fuel, ' +
+      'air transportation tickets, heavy highway vehicles, indoor tanning services, and certain ' +
+      'health insurance policies. Due April 30, July 31, October 31, and January 31. ' +
+      'Not required if the business has no excise tax liability for the quarter.',
+    officialUrl:  'https://www.irs.gov/forms-pubs/about-form-720',
+    pdfPath:      '/forms/federal/720.pdf',
+    isDownloadable: true,
+    renewalMonths:  3,      // Quarterly filing — 4 times per year
+    commonFor:    ['fuel', 'transportation', 'aviation', 'tanning', 'manufacturing'],
+  },
+
+];
+
+// ── Common State & Local Forms Library ───────────────────────────────────────
+// The 5 most common state and local compliance forms filed by small businesses.
+// Referenced as StateFormEntry objects (lightweight metadata + online filing links).
+// Filed directly with state/local agencies — no RegBot wizard; pdfPath is null
+// for online-only forms.  renewalMonths reflects the most common renewal cycle;
+// actual intervals vary by state and jurisdiction.
+
+export const STATE_FORMS: StateFormEntry[] = [
+
+  // ── State Sales Tax Permit ────────────────────────────────────────────────
+  {
+    id:           'sales-tax-registration',
+    name:         'State Sales Tax Permit',
+    category:     'state',
+    description:
+      'Required in the 45 states (plus DC) that levy a sales tax before collecting ' +
+      'sales tax from customers or purchasing goods for resale. ' +
+      'Also called a Seller\'s Permit, Resale Certificate, or Sales and Use Tax Permit ' +
+      'depending on the state. Register with your state\'s Department of Revenue or ' +
+      'equivalent agency — most states offer free online registration.',
+    officialUrl:  'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    pdfPath:      null,    // Online registration only; no standard blank PDF
+    isDownloadable: false,
+    renewalMonths:  null,  // Most sales tax permits do not expire; permits are revoked if inactive
+    commonFor:    ['retail', 'food-service', 'product-based', 'e-commerce'],
+  },
+
+  // ── Annual / Biennial Report ──────────────────────────────────────────────
+  {
+    id:           'annual-report',
+    name:         'Annual / Biennial Report',
+    category:     'state',
+    description:
+      'Required by most states for LLCs, corporations, and other registered entities ' +
+      'to confirm or update their registered agent, principal address, and ownership ' +
+      'information with the Secretary of State. Failure to file can result in ' +
+      'administrative dissolution. Most states charge a filing fee of $10–$300 ' +
+      'and accept online submissions through the Secretary of State portal.',
+    officialUrl:  'https://www.sba.gov/business-guide/launch-your-business/register-your-business',
+    pdfPath:      null,    // Online filing through Secretary of State portals
+    isDownloadable: false,
+    renewalMonths:  12,    // Annual in most states; biennial (24 months) in some (CA, NY, etc.)
+    commonFor:    ['all'],
+  },
+
+  // ── Fictitious Business Name (DBA) Registration ───────────────────────────
+  {
+    id:           'fictitious-name',
+    name:         'Fictitious Business Name (DBA) Registration',
+    category:     'state',
+    description:
+      'Required when operating a business under any name other than your legal name ' +
+      'or the registered entity name. Also called "Doing Business As" (DBA), ' +
+      'Assumed Name, or Trade Name registration. ' +
+      'Filed with the county clerk, Secretary of State, or equivalent agency depending ' +
+      'on state. Some states require publication in a local newspaper after filing.',
+    officialUrl:  'https://www.sba.gov/business-guide/launch-your-business/register-your-business',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  60,    // 5-year term in most states (FL, CA, TX, etc.); varies by jurisdiction
+    commonFor:    ['sole-proprietor', 'partnership', 'dba'],
+  },
+
+  // ── Business Tax Receipt / Local Business License ─────────────────────────
+  {
+    id:           'business-tax-receipt',
+    name:         'Business Tax Receipt / Local Business License',
+    category:     'local',
+    description:
+      'Required by most cities and counties before operating a business within their ' +
+      'jurisdiction. Also called a Business Tax Receipt (FL), Occupational License, ' +
+      'Business Privilege License, or Local Business Permit. ' +
+      'Issued by the city or county finance or tax department. ' +
+      'Fees are typically based on gross receipts or a flat annual rate. ' +
+      'Must be renewed annually and posted visibly at the place of business.',
+    officialUrl:  'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,    // Annual renewal in virtually all jurisdictions
+    commonFor:    ['all'],
+  },
+
+  // ── Home Occupation Permit ────────────────────────────────────────────────
+  {
+    id:           'home-occupation-permit',
+    name:         'Home Occupation Permit',
+    category:     'local',
+    description:
+      'Required by many cities and counties when operating a business out of a ' +
+      'residential property. Ensures the business activity remains secondary to the ' +
+      'residential use of the property (limits on signage, customer visits, employees, ' +
+      'and stored inventory vary by jurisdiction). ' +
+      'Apply through your city or county planning, zoning, or business licensing ' +
+      'department. Some jurisdictions include this in the general business license.',
+    officialUrl:  'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,    // Typically renewed annually with the general business license
+    commonFor:    ['home-based', 'sole-proprietor', 'freelance'],
+  },
+
+  // ── Seller's Permit (generic / state-specific portal) ────────────────────
+  // Catch-all used by getRecommendedForms for states without a state-prefixed entry.
+  {
+    id:           'seller-permit',
+    name:         "Seller's Permit / Resale Certificate",
+    category:     'state',
+    description:
+      "Required in most states before purchasing goods for resale or collecting sales tax from " +
+      "customers. Also called a Resale Certificate, Sales Tax Permit, or Use Tax Permit. " +
+      "Register with your state's Department of Revenue or Taxation — most states offer free " +
+      "online registration and issue the permit immediately. Required before your first taxable sale.",
+    officialUrl:  'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'e-commerce', 'wholesale', 'product-based'],
+  },
+
+  // ── Professional Cosmetology / Salon License ──────────────────────────────
+  {
+    id:           'cosmetology-license',
+    name:         'Cosmetology / Salon Professional License',
+    category:     'state',
+    description:
+      'Required by all 50 states for cosmetologists, barbers, estheticians, nail technicians, ' +
+      'and salon operators. Individual practitioners must complete a state-approved training ' +
+      'program and pass written and practical exams. Salons require a separate establishment ' +
+      'license. Apply through your state Board of Cosmetology or equivalent licensing board. ' +
+      'Renewal is typically every 1–2 years with continuing education requirements.',
+    officialUrl:  'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  24,
+    commonFor:    ['salon', 'spa', 'cosmetology', 'barber'],
+  },
+
+  // ── Food Handler / Manager Certification ─────────────────────────────────
+  {
+    id:           'food-handler-cert',
+    name:         'Food Handler / Food Manager Certification',
+    category:     'state',
+    description:
+      'Required in most states for anyone involved in the preparation, storage, or service of ' +
+      'food for public consumption. Some states require all food workers to hold a Food Handler ' +
+      'card; others require at least one Certified Food Protection Manager (CFPM) per establishment ' +
+      '(e.g. ServSafe® certification). Obtain through an accredited food safety training program ' +
+      'approved by your state or local health department.',
+    officialUrl:  'https://www.fda.gov/food/retail-food-protection/voluntary-national-retail-food-regulatory-program-standards',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  36,    // Typically valid 3 years (ServSafe); Food Handler cards usually 2–3 years
+    commonFor:    ['food-service', 'restaurant', 'catering', 'food-truck'],
+  },
+
+  // ── Food Establishment Permit (generic) ───────────────────────────────────
+  {
+    id:           'food-establishment-permit',
+    name:         'Food Establishment Permit',
+    category:     'state',
+    description:
+      'Required by most states and counties before operating a restaurant, café, food truck, ' +
+      'catering business, or any facility that prepares or serves food to the public. Issued by ' +
+      'the state or county health department after a facility inspection. Requirements include ' +
+      'an approved commercial kitchen, adequate refrigeration, hand-washing stations, and passing ' +
+      'a health inspection. Renewed annually.',
+    officialUrl:  'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'catering', 'food-truck'],
+  },
+
+  // ── Liquor License (generic) ──────────────────────────────────────────────
+  {
+    id:           'liquor-license',
+    name:         'Liquor / Alcohol License',
+    category:     'state',
+    description:
+      'Required before selling, serving, or manufacturing alcoholic beverages. Issued by the ' +
+      'state Alcoholic Beverage Control (ABC) board or equivalent agency. License types vary by ' +
+      'use: retail beer/wine, full liquor, on-premise consumption, off-premise (package store), ' +
+      'brewery, winery, and distillery licenses each have separate requirements and fees. ' +
+      'Many states have local quota systems that limit the number of licenses available.',
+    officialUrl:  'https://www.ttb.gov/operating-a-business',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['bar', 'restaurant', 'brewery', 'winery', 'liquor-store'],
+  },
+
+  // ── Cottage Food Permit (generic) ─────────────────────────────────────────
+  {
+    id:           'cottage-food-permit',
+    name:         'Cottage Food Permit / Home Kitchen Registration',
+    category:     'state',
+    description:
+      'Allows certain low-risk foods (baked goods, jams, candies, dried herbs) to be produced ' +
+      'in a home kitchen and sold directly to consumers without a commercial kitchen license. ' +
+      'All 50 states now have cottage food laws, but permitted products, annual revenue caps, ' +
+      'and labeling requirements vary significantly. Some states require a permit or registration; ' +
+      'others are self-executing with mandatory labeling. Check your state agriculture department.',
+    officialUrl:  'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'home-based', 'cottage-food'],
+  },
+
+  // ── Childcare / Daycare License (generic) ────────────────────────────────
+  {
+    id:           'childcare-license',
+    name:         'Child Care / Daycare Facility License',
+    category:     'state',
+    description:
+      'Required by all states before operating a licensed childcare center, family childcare home, ' +
+      'or preschool. Licensing involves background checks for all staff, facility inspections, ' +
+      'staff-to-child ratio requirements, health and safety standards, and ongoing training. ' +
+      'Apply through your state Department of Children and Families, Social Services, or equivalent. ' +
+      'Home-based family childcare typically has lighter requirements than center-based care.',
+    officialUrl:  'https://childcare.gov/consumer-education/get-started-with-child-care',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['childcare', 'daycare', 'preschool'],
+  },
+
+  // ── Contractor's License (generic) ───────────────────────────────────────
+  {
+    id:           'contractors-license',
+    name:         "Contractor's License",
+    category:     'state',
+    description:
+      'Required in most states for general contractors, specialty trade contractors (electrical, ' +
+      'plumbing, HVAC, roofing), and home improvement contractors performing work above a set ' +
+      'dollar threshold. Typically requires proof of experience, a written exam, general liability ' +
+      'insurance, and a surety bond. Some states license at the state level; others delegate ' +
+      'to county or city authorities. California, Florida, and Texas have particularly robust ' +
+      'licensing systems with separate classifications.',
+    officialUrl:  'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  24,
+    commonFor:    ['contractor', 'construction', 'trade', 'home-improvement'],
+  },
+
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// v24 — Full 50-State + County/City Forms Expansion
+//
+// STATE_FORMS_ALL_50 covers all 50 US states with state-prefixed IDs so they
+// never collide with the generic STATE_FORMS entries above.  Includes:
+//   • Sales Tax Registration / Permit (45 states + DC; AK/DE/MT/NH/OR omitted)
+//   • Annual / Biennial Report (Secretary of State for all 50)
+//   • Fictitious Business Name / DBA for all 50
+//   • Food Service Permit for high-volume food states
+//   • Home Occupation Permit for major metro states
+//   • Cottage Food / special-category permits where relevant
+//
+// pdfPath = '/forms/state/[state]-[form].pdf' where a blank PDF is available;
+// null for online-only portals (the majority of modern state filings).
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const STATE_FORMS_ALL_50: StateFormEntry[] = [
+
+  // ── FLORIDA ───────────────────────────────────────────────────────────────
+
+  // Florida DR-1 — Sales and Use Tax Application for Registration
+  {
+    id:           'fl-sales-tax-dr1',
+    name:         'Florida Sales Tax Registration (DR-1)',
+    category:     'state',
+    description:
+      'Required before collecting sales tax or purchasing goods for resale in Florida. ' +
+      'File Form DR-1 with the Florida Department of Revenue to receive a Certificate of ' +
+      'Registration (DR-11) and a Florida Annual Resale Certificate (DR-13). ' +
+      'Online registration is free at the Florida Department of Revenue; the paper DR-1 ' +
+      'is available if you prefer mail submission. Retailers, restaurants, and service ' +
+      'businesses with taxable transactions must register before their first sale.',
+    officialUrl:  'https://floridarevenue.com/taxes/taxesfees/Pages/dr1.aspx',
+    pdfPath:      '/forms/state/fl-dr1.pdf',
+    isDownloadable: true,    // Paper DR-1 PDF available from FDOR forms library
+    renewalMonths:  null,    // Permit does not expire; revoked only if business closes
+    commonFor:    ['retail', 'food-service', 'product-based', 'e-commerce'],
+  },
+
+  // Florida Annual Report — Division of Corporations (Sunbiz)
+  {
+    id:           'fl-annual-report',
+    name:         'Florida Annual Report (Sunbiz)',
+    category:     'state',
+    description:
+      'Required annually for all Florida LLCs, corporations, limited partnerships, and ' +
+      'registered foreign entities to keep their registration active with the Florida ' +
+      'Division of Corporations. File online at Sunbiz.org between January 1 and May 1 ' +
+      'to avoid a $400 late fee. The report confirms or updates your registered agent, ' +
+      'principal office address, and officer/manager information. Failure to file results ' +
+      'in administrative dissolution.',
+    officialUrl:  'https://dos.fl.gov/sunbiz/manage-your-business/annual-reports/',
+    pdfPath:      null,      // Online filing only via Sunbiz; no PDF submission accepted
+    isDownloadable: false,
+    renewalMonths:  12,      // Due annually by May 1
+    commonFor:    ['all'],
+  },
+
+  // Florida Fictitious Name (DBA) Registration
+  {
+    id:           'fl-fictitious-name',
+    name:         'Florida Fictitious Name (DBA) Registration',
+    category:     'state',
+    description:
+      'Required when operating a Florida business under any name other than your legal ' +
+      'name or the registered entity name (e.g. "Jane Smith d/b/a Sunshine Bakery"). ' +
+      'File online at Sunbiz.org with the Division of Corporations. The registration fee ' +
+      'is $50 and the name is valid for 5 years. Florida also requires publishing a notice ' +
+      'of the fictitious name in a newspaper of general circulation in the county where the ' +
+      'business is located before or shortly after filing.',
+    officialUrl:  'https://dos.fl.gov/sunbiz/manage-your-business/other-services/fictitious-name-registration/',
+    pdfPath:      null,      // Online filing via Sunbiz preferred; paper option via county
+    isDownloadable: false,
+    renewalMonths:  60,      // 5-year registration term
+    commonFor:    ['sole-proprietor', 'partnership', 'dba'],
+  },
+
+  // Florida Business Tax Receipt (county-issued; formerly Occupational License)
+  {
+    id:           'fl-business-tax-receipt',
+    name:         'Florida Business Tax Receipt (County/City)',
+    category:     'local',
+    description:
+      'Required by every Florida county and most municipalities before opening a business ' +
+      'location or operating within their jurisdiction. Formerly called an Occupational ' +
+      'License. Issued by the county Tax Collector\'s office (and separately by the city ' +
+      'if the business is within city limits). Fees range from $25 to several hundred ' +
+      'dollars depending on business type and gross revenue. Must be renewed annually by ' +
+      'September 30 and displayed at the place of business.',
+    officialUrl:  'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    pdfPath:      null,      // Application varies by county; check your county Tax Collector portal
+    isDownloadable: false,
+    renewalMonths:  12,      // Due annually September 30
+    commonFor:    ['all'],
+  },
+
+  // Florida Cottage Food / Home Occupation (FDACS exemption, not a permit)
+  {
+    id:           'fl-cottage-food',
+    name:         'Florida Cottage Food Registration',
+    category:     'state',
+    description:
+      'Florida\'s Cottage Food Law (s. 500.80, F.S.) allows home-based food businesses to ' +
+      'sell certain non-potentially-hazardous foods (baked goods, jams, jellies, candy, ' +
+      'dried herbs) directly to consumers without a state food license, up to $50,000 gross ' +
+      'sales per year. Register with the Florida Department of Agriculture and Consumer ' +
+      'Services (FDACS). Labels must include the producer\'s name and address, product name, ' +
+      'ingredients, net weight, and "Made in a cottage food operation that is not inspected ' +
+      'by the Department of Agriculture and Consumer Services."',
+    officialUrl:  'https://www.fdacs.gov/Business-Services/Food/Cottage-Food-Law',
+    pdfPath:      null,      // Online registration via FDACS; no universal paper form
+    isDownloadable: false,
+    renewalMonths:  null,    // One-time registration; no mandatory annual renewal
+    commonFor:    ['food-service', 'home-based', 'cottage-food'],
+  },
+
+  // ── TEXAS ─────────────────────────────────────────────────────────────────
+
+  // Texas AP-201 — Sales and Use Tax Permit Application
+  {
+    id:           'tx-sales-tax-ap201',
+    name:         'Texas Sales Tax Permit (AP-201)',
+    category:     'state',
+    description:
+      'Required before making taxable sales or leases of goods or services in Texas. ' +
+      'File Form AP-201 with the Texas Comptroller of Public Accounts to receive a Sales ' +
+      'and Use Tax Permit. Online registration through the Comptroller\'s eSystems portal is ' +
+      'free and typically processed within 2–3 business days. The paper AP-201 is available ' +
+      'for mail submission. Permits are permanent and do not require renewal, but must be ' +
+      'surrendered if the business closes or changes ownership.',
+    officialUrl:  'https://comptroller.texas.gov/taxes/sales/',
+    pdfPath:      '/forms/state/tx-ap-201.pdf',
+    isDownloadable: true,    // Paper AP-201 available from Texas Comptroller forms library
+    renewalMonths:  null,    // Permit does not expire
+    commonFor:    ['retail', 'food-service', 'product-based', 'e-commerce'],
+  },
+
+  // Texas Franchise Tax Report (Annual Report equivalent)
+  {
+    id:           'tx-franchise-tax-report',
+    name:         'Texas Franchise Tax Report (Annual)',
+    category:     'state',
+    description:
+      'Required annually for most Texas LLCs, corporations, limited partnerships, and ' +
+      'other taxable entities. Filed with the Texas Comptroller by May 15 each year (or ' +
+      'the next business day). Even entities with no taxable revenue must file a "No Tax ' +
+      'Due" report if their annualized revenue is below the threshold (~$2.47 million for ' +
+      '2024). Failure to file results in forfeiture of the right to do business in Texas. ' +
+      'File online through the Comptroller\'s WebFile system.',
+    officialUrl:  'https://comptroller.texas.gov/taxes/franchise/',
+    pdfPath:      null,      // Online filing via WebFile strongly preferred; paper versions available
+    isDownloadable: false,
+    renewalMonths:  12,      // Due annually May 15
+    commonFor:    ['all'],
+  },
+
+  // Texas Assumed Name Certificate (DBA)
+  {
+    id:           'tx-assumed-name',
+    name:         'Texas Assumed Name Certificate (DBA)',
+    category:     'state',
+    description:
+      'Required in Texas when a business operates under a name other than its legal name. ' +
+      'Sole proprietors and general partnerships file with the county clerk in each county ' +
+      'where they conduct business. LLCs, corporations, and other registered entities file ' +
+      'with the Texas Secretary of State (Form 503) AND with the county clerk where the ' +
+      'principal office is located. The registration is valid for 10 years and must be ' +
+      'renewed before expiration. County fees typically range from $15–$25 per county.',
+    officialUrl:  'https://www.sos.state.tx.us/corp/assumed_name.shtml',
+    pdfPath:      null,      // SOS Form 503 available online; county forms vary
+    isDownloadable: false,
+    renewalMonths:  120,     // 10-year term in Texas
+    commonFor:    ['sole-proprietor', 'partnership', 'dba'],
+  },
+
+  // Texas Food Establishment Permit (DSHS — food trucks, restaurants)
+  {
+    id:           'tx-food-establishment-permit',
+    name:         'Texas Food Establishment Permit (DSHS)',
+    category:     'state',
+    description:
+      'Required for food trucks, mobile food vendors, restaurants, caterers, and other ' +
+      'food establishments operating in Texas outside of city/county jurisdiction. Issued ' +
+      'by the Texas Department of State Health Services (DSHS) for locations not regulated ' +
+      'by a local health department. Annual permit fees range from $258 to $773 depending on ' +
+      'food risk level. Most major cities (Houston, Dallas, Austin, San Antonio) issue their ' +
+      'own permits through local health departments — check with your city before applying to DSHS.',
+    officialUrl:  'https://www.dshs.texas.gov/foods/food-establishments/getting-a-permit-license-or-registration',
+    pdfPath:      null,      // Online application through DSHS portal
+    isDownloadable: false,
+    renewalMonths:  12,      // Annual renewal
+    commonFor:    ['food-service', 'food-truck', 'restaurant', 'catering'],
+  },
+
+  // ── CALIFORNIA ────────────────────────────────────────────────────────────
+
+  // California Seller's Permit (CDTFA-400-A)
+  {
+    id:           'ca-sellers-permit',
+    name:         "California Seller's Permit (CDTFA-400-A)",
+    category:     'state',
+    description:
+      "Required for any California business that sells or leases tangible personal property " +
+      "that is ordinarily subject to sales tax. Issued free by the California Department of " +
+      "Tax and Fee Administration (CDTFA). Register online at cdtfa.ca.gov or submit the " +
+      "paper CDTFA-400-A by mail. A security deposit may be required based on estimated " +
+      "tax liability. The permit must be displayed at the place of business and a new permit " +
+      "obtained for each business location. It does not expire but is revoked if the business " +
+      "closes or becomes inactive.",
+    officialUrl:  'https://www.cdtfa.ca.gov/services/#Register-a-Business',
+    pdfPath:      '/forms/state/ca-cdtfa-400-a.pdf',
+    isDownloadable: true,    // Paper CDTFA-400-A available for mail submission
+    renewalMonths:  null,    // Permit does not expire
+    commonFor:    ['retail', 'food-service', 'product-based', 'e-commerce'],
+  },
+
+  // California Statement of Information
+  {
+    id:           'ca-statement-of-information',
+    name:         'California Statement of Information',
+    category:     'state',
+    description:
+      'Required for California LLCs and corporations to report or update their principal ' +
+      'office address, registered agent, and officer/manager information with the Secretary ' +
+      'of State. LLCs file every two years ($20 fee); corporations file annually ($25 fee). ' +
+      'Due within 90 days of formation and then on the applicable cycle. File online through ' +
+      'bizfile.sos.ca.gov. Failure to file results in suspension of the entity, which prevents ' +
+      'the business from legally operating, entering contracts, or using the courts.',
+    officialUrl:  'https://bizfileonline.sos.ca.gov/',
+    pdfPath:      null,      // Online filing via bizfile.sos.ca.gov; paper also accepted
+    isDownloadable: false,
+    renewalMonths:  24,      // Biennial for LLCs (most common small business entity); annual for corps
+    commonFor:    ['all'],
+  },
+
+  // California Fictitious Business Name (DBA) — county-level
+  {
+    id:           'ca-fictitious-business-name',
+    name:         'California Fictitious Business Name (DBA)',
+    category:     'state',
+    description:
+      'Required in California when a sole proprietor, partnership, or corporation ' +
+      'conducts business under a name other than its legal name. Filed with the county ' +
+      'clerk in the county where the business is principally located. After filing, the ' +
+      'registrant must publish a notice in a local adjudicated newspaper once a week for ' +
+      'four consecutive weeks and file a Proof of Publication with the county clerk. The ' +
+      'registration is valid for 5 years and must be renewed before expiration. Fees vary ' +
+      'by county ($10–$100).',
+    officialUrl:  'https://www.sos.ca.gov/business-programs/business-entities/forms',
+    pdfPath:      null,      // Forms vary by county; check with your county clerk
+    isDownloadable: false,
+    renewalMonths:  60,      // 5-year term
+    commonFor:    ['sole-proprietor', 'partnership', 'dba'],
+  },
+
+  // ── NEW YORK ──────────────────────────────────────────────────────────────
+
+  // New York Certificate of Authority (Sales Tax)
+  {
+    id:           'ny-sales-tax-authority',
+    name:         'New York Certificate of Authority (Sales Tax)',
+    category:     'state',
+    description:
+      'Required before making taxable sales in New York State. Apply for a Certificate ' +
+      'of Authority at least 20 days before beginning business through the New York ' +
+      'Business Express portal (businessexpress.ny.gov). Once registered, the certificate ' +
+      'must be displayed at each business location. New York sales tax registrations do not ' +
+      'expire but must be updated within 20 days of any significant business change (address, ' +
+      'owner, etc.). Filing is free. The certificate authorizes the business to collect ' +
+      'state and local sales tax from customers.',
+    officialUrl:  'https://www.tax.ny.gov/bus/st/stregister.htm',
+    pdfPath:      null,      // Online registration via NY Business Express (businessexpress.ny.gov)
+    isDownloadable: false,
+    renewalMonths:  null,    // Does not expire; update required upon material business changes
+    commonFor:    ['retail', 'food-service', 'product-based', 'e-commerce'],
+  },
+
+  // New York Biennial Statement (LLCs and LLPs)
+  {
+    id:           'ny-biennial-statement',
+    name:         'New York Biennial Statement',
+    category:     'state',
+    description:
+      'Required every two years for New York LLCs and Limited Liability Partnerships (LLPs) ' +
+      'to update their registered agent and service of process address with the Department ' +
+      'of State. The $9 filing fee must accompany each statement. NY corporations file an ' +
+      'annual report separately. LLCs are notified by the Department of State by email when ' +
+      'their filing window opens. File online at ecorp.dos.ny.gov. Failure to file can result ' +
+      'in the LLC\'s authority to do business being suspended.',
+    officialUrl:  'https://ecorp.dos.ny.gov/',
+    pdfPath:      null,      // Online filing via ecorp.dos.ny.gov
+    isDownloadable: false,
+    renewalMonths:  24,      // Biennial (every 2 years)
+    commonFor:    ['all'],
+  },
+
+  // New York DBA (Assumed Name Certificate)
+  {
+    id:           'ny-dba',
+    name:         'New York Assumed Name (DBA) Certificate',
+    category:     'state',
+    description:
+      'Required in New York when a sole proprietor or general partnership conducts business ' +
+      'under a name other than the owner\'s legal name. Filed with the county clerk in each ' +
+      'county where the business is conducted. LLCs and corporations wishing to use a DBA ' +
+      'must file a Certificate of Assumed Name with the New York Department of State ($25 fee). ' +
+      'New York does not have a mandatory expiration for DBA registrations — they remain valid ' +
+      'until withdrawn. County clerk fees vary ($25–$100).',
+    officialUrl:  'https://dos.ny.gov/assumed-name-certificate',
+    pdfPath:      null,      // DOS online or county clerk forms; varies by entity type
+    isDownloadable: false,
+    renewalMonths:  null,    // No expiration in New York
+    commonFor:    ['sole-proprietor', 'partnership', 'dba'],
+  },
+
+  // ── ILLINOIS ──────────────────────────────────────────────────────────────
+
+  // Illinois Business Registration (REG-1) — Sales Tax and Business Tax
+  {
+    id:           'il-business-registration',
+    name:         'Illinois Business Registration (REG-1)',
+    category:     'state',
+    description:
+      'Required for any Illinois business that sells taxable goods or services, hires ' +
+      'employees, or operates as a partnership or corporation subject to Illinois tax. ' +
+      'Form REG-1 registers the business with the Illinois Department of Revenue for ' +
+      'sales tax, use tax, employer withholding, and other applicable taxes in a single ' +
+      'application. Apply online through MyTax Illinois (mytax.illinois.gov) or mail the ' +
+      'paper REG-1. Processing takes 4–6 weeks for paper; immediate for online. There is ' +
+      'no registration fee.',
+    officialUrl:  'https://mytax.illinois.gov/',
+    pdfPath:      '/forms/state/il-reg-1.pdf',
+    isDownloadable: true,    // Paper REG-1 available from IDOR forms library
+    renewalMonths:  null,    // Registration does not expire
+    commonFor:    ['retail', 'food-service', 'product-based', 'employer'],
+  },
+
+  // Illinois Annual Report — Secretary of State
+  {
+    id:           'il-annual-report',
+    name:         'Illinois Annual Report',
+    category:     'state',
+    description:
+      'Required annually for Illinois LLCs and corporations to confirm their registered ' +
+      'agent, principal office address, and officer/manager information with the Illinois ' +
+      'Secretary of State. LLC annual reports are due before the first day of the LLC\'s ' +
+      'anniversary month each year ($75 fee). Corporation annual reports are due before the ' +
+      'first day of the corporation\'s anniversary month ($75 fee for domestic corps). File ' +
+      'online at ilsos.gov or by mail. Failure to file results in administrative dissolution ' +
+      'or revocation of the entity\'s authority to do business in Illinois.',
+    officialUrl:  'https://www.ilsos.gov/annualreport/',
+    pdfPath:      null,      // Online filing via ilsos.gov; paper option available
+    isDownloadable: false,
+    renewalMonths:  12,      // Annual; due before anniversary month
+    commonFor:    ['all'],
+  },
+
+  // ── GEORGIA ───────────────────────────────────────────────────────────────
+
+  {
+    id:           'ga-sales-tax-registration',
+    name:         'Georgia Sales Tax Registration',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in Georgia. Register free with the ' +
+      'Georgia Department of Revenue through the Georgia Tax Center (gtc.dor.georgia.gov). ' +
+      'Sales tax returns are due monthly, quarterly, or annually based on average monthly ' +
+      'tax liability. The certificate does not expire.',
+    officialUrl:  'https://gtc.dor.georgia.gov/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based', 'e-commerce'],
+  },
+
+  {
+    id:           'ga-annual-registration',
+    name:         'Georgia Annual Registration',
+    category:     'state',
+    description:
+      'Required annually for all Georgia LLCs, corporations, and limited partnerships ' +
+      'to keep registration active with the Secretary of State. Due April 1 ($50 fee for ' +
+      'most entities). File online at ecorp.sos.ga.gov. Late fee is $25; continued ' +
+      'non-filing leads to administrative dissolution.',
+    officialUrl:  'https://ecorp.sos.ga.gov/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'ga-dba',
+    name:         'Georgia Trade Name Registration (DBA)',
+    category:     'state',
+    description:
+      'Required when a sole proprietor or partnership operates under a name other than ' +
+      'the owner\'s legal name. File with the county Superior Court clerk in the county ' +
+      'where business is conducted. LLCs and corporations use the eCorp portal for a ' +
+      'name reservation or amendment. Fees vary by county ($10–$50).',
+    officialUrl:  'https://sos.ga.gov/index.php/corporations/registered-agents-information',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['sole-proprietor', 'partnership', 'dba'],
+  },
+
+  // ── ALABAMA ────────────────────────────────────────────────────────────────
+
+  {
+    id:           'al-sales-tax',
+    name:         'Alabama Sales Tax License',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in Alabama. Register through the My ' +
+      'Alabama Taxes (MAT) portal at myalabamataxes.alabama.gov. The license is free and ' +
+      'does not expire. Returns are due monthly, quarterly, or annually depending on ' +
+      'liability level.',
+    officialUrl:  'https://myalabamataxes.alabama.gov/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'al-annual-report',
+    name:         'Alabama Annual Report',
+    category:     'state',
+    description:
+      'Required annually for Alabama LLCs and corporations to confirm registered agent ' +
+      'and officer information with the Secretary of State. Due by April 15 each year ' +
+      '($50 fee for most entities). File online at sos.alabama.gov. Failure to file ' +
+      'results in administrative dissolution.',
+    officialUrl:  'https://www.sos.alabama.gov/business-services/corporations',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'al-dba',
+    name:         'Alabama Assumed Name (DBA) Certificate',
+    category:     'state',
+    description:
+      'Sole proprietors and partnerships operating under a trade name must file a ' +
+      'Certificate of Assumed Name with the county probate judge where the business is ' +
+      'located. LLCs and corporations file through the SOS portal. Valid for 5 years; ' +
+      'must be renewed before expiration.',
+    officialUrl:  'https://www.sos.alabama.gov/business-services/corporations',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  60,
+    commonFor:    ['sole-proprietor', 'partnership', 'dba'],
+  },
+
+  // ── ALASKA ─────────────────────────────────────────────────────────────────
+  // Alaska has no statewide sales tax. Municipal sales taxes may apply.
+
+  {
+    id:           'ak-business-license',
+    name:         'Alaska Business License',
+    category:     'state',
+    description:
+      'Alaska requires all businesses to obtain a state Business License from the ' +
+      'Division of Corporations, Business and Professional Licensing (DCBPL) before ' +
+      'operating. The biennial license fee is $50 ($25 for non-profit). Apply online at ' +
+      'commerce.alaska.gov. This is separate from any municipal license requirements.',
+    officialUrl:  'https://www.commerce.alaska.gov/web/cbpl/businesslicensing.aspx',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  24,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'ak-annual-report',
+    name:         'Alaska Biennial Report',
+    category:     'state',
+    description:
+      'Required every two years for Alaska corporations, LLCs, and other registered ' +
+      'entities to confirm or update registered agent and officer information with the ' +
+      'Division of Corporations. Due January 2 in each even-numbered year ($100 fee for ' +
+      'corps; $50 for LLCs). File online at commerce.alaska.gov.',
+    officialUrl:  'https://www.commerce.alaska.gov/web/cbpl/BusinessLicensing/Corporations.aspx',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  24,
+    commonFor:    ['all'],
+  },
+
+  // ── ARIZONA ────────────────────────────────────────────────────────────────
+
+  {
+    id:           'az-tpt-license',
+    name:         'Arizona Transaction Privilege Tax (TPT) License',
+    category:     'state',
+    description:
+      'Arizona\'s Transaction Privilege Tax (TPT) is the equivalent of a sales tax permit. ' +
+      'Apply through AZTaxes.gov ($12 annual fee). A single license covers all business ' +
+      'locations. Returns are due monthly, quarterly, or annually. City-level TPT may also ' +
+      'be required — many cities collect it through ADOR jointly.',
+    officialUrl:  'https://aztaxes.gov/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['retail', 'food-service', 'product-based', 'e-commerce'],
+  },
+
+  {
+    id:           'az-annual-report',
+    name:         'Arizona Annual Report',
+    category:     'state',
+    description:
+      'Required annually for Arizona corporations and LLCs to update officer, director, ' +
+      'and statutory agent information with the Arizona Corporation Commission. Due on the ' +
+      'anniversary month of formation ($45 fee for corps; $0 for LLCs). File online at ' +
+      'azcc.gov. Failure to file results in administrative dissolution.',
+    officialUrl:  'https://azcc.gov/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'az-dba',
+    name:         'Arizona Trade Name Registration (DBA)',
+    category:     'state',
+    description:
+      'Sole proprietors and partnerships operating under a trade name file a Trade Name ' +
+      'Registration with the Arizona Secretary of State ($10 fee). Corporations and LLCs ' +
+      'may also register an assumed name through the SOS. Valid for 5 years. Arizona does ' +
+      'not require a newspaper publication for DBA registrations.',
+    officialUrl:  'https://azsos.gov/business/trade-names',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  60,
+    commonFor:    ['sole-proprietor', 'partnership', 'dba'],
+  },
+
+  // ── ARKANSAS ───────────────────────────────────────────────────────────────
+
+  {
+    id:           'ar-sales-tax',
+    name:         'Arkansas Sales Tax Permit',
+    category:     'state',
+    description:
+      'Required before making taxable sales in Arkansas. Register through the Arkansas ' +
+      'Taxpayer Access Point (ATAP) at atap.arkansas.gov. The permit is free and does not ' +
+      'expire. Returns are due monthly, quarterly, or annually based on liability. The state ' +
+      'sales tax rate is 6.5%; additional local rates apply.',
+    officialUrl:  'https://atap.arkansas.gov/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'ar-annual-report',
+    name:         'Arkansas Annual Franchise Tax Report',
+    category:     'state',
+    description:
+      'Required annually for Arkansas LLCs, corporations, and other registered entities. ' +
+      'Due May 1 each year. LLCs pay a flat $150 fee; corporations pay based on authorized ' +
+      'shares (minimum $150). File online through the SOS portal at sos.arkansas.gov. ' +
+      'Failure to file results in revocation of the entity\'s authority to do business.',
+    officialUrl:  'https://www.sos.arkansas.gov/corps',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── COLORADO ───────────────────────────────────────────────────────────────
+
+  {
+    id:           'co-sales-tax',
+    name:         'Colorado Sales Tax License',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in Colorado. Register with the ' +
+      'Colorado Department of Revenue at revenue.colorado.gov. The license fee is $16 ' +
+      'and must be renewed every two years. Note: Colorado is a home-rule state — many ' +
+      'cities (Denver, Aurora, Boulder) collect their own city sales tax and require a ' +
+      'separate city sales tax license.',
+    officialUrl:  'https://revenue.colorado.gov/how-to-register-for-colorado-sales-and-use-tax',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  24,
+    commonFor:    ['retail', 'food-service', 'product-based', 'e-commerce'],
+  },
+
+  {
+    id:           'co-periodic-report',
+    name:         'Colorado Periodic Report',
+    category:     'state',
+    description:
+      'Required annually for Colorado LLCs and corporations to confirm registered agent ' +
+      'and principal office address with the Secretary of State. Due on the anniversary ' +
+      'month of formation ($10 fee). File online at sos.state.co.us. Failure to file ' +
+      'within 2 months of the due date results in delinquency and eventual dissolution.',
+    officialUrl:  'https://www.sos.state.co.us/pubs/business/businessHome.html',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── CONNECTICUT ────────────────────────────────────────────────────────────
+
+  {
+    id:           'ct-sales-tax',
+    name:         'Connecticut Sales and Use Tax Permit',
+    category:     'state',
+    description:
+      'Required before making taxable sales in Connecticut. Register with the Department ' +
+      'of Revenue Services (DRS) at portal.ct.gov/drs. The permit is free and does not ' +
+      'expire. Connecticut sales tax rate is 6.35%. Registration also covers use tax ' +
+      'obligations. File returns monthly, quarterly, or annually based on liability.',
+    officialUrl:  'https://portal.ct.gov/drs/sales/sales-use-taxes',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'ct-annual-report',
+    name:         'Connecticut Annual Report',
+    category:     'state',
+    description:
+      'Required annually for Connecticut LLCs, corporations, and other registered ' +
+      'entities to update business information with the Secretary of State. Due on the ' +
+      'anniversary month of formation ($80 fee for corps and LLCs). File online at ' +
+      'portal.ct.gov/sots. Late filing incurs a $50 penalty.',
+    officialUrl:  'https://portal.ct.gov/sots',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── DELAWARE ───────────────────────────────────────────────────────────────
+  // Delaware has no state sales tax. It is the most common incorporation state.
+
+  {
+    id:           'de-franchise-tax',
+    name:         'Delaware Franchise Tax Report',
+    category:     'state',
+    description:
+      'Required annually for all Delaware corporations to pay the Franchise Tax and ' +
+      'file an Annual Report with the Division of Corporations. Due March 1 each year. ' +
+      'Tax is calculated under the Authorized Shares Method or Assumed Par Value Capital ' +
+      'Method (minimum $175). LLCs pay a flat $300 annual tax by June 1. File at ' +
+      'corp.delaware.gov.',
+    officialUrl:  'https://corp.delaware.gov/paytaxes.shtml',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── HAWAII ─────────────────────────────────────────────────────────────────
+
+  {
+    id:           'hi-get-license',
+    name:         'Hawaii General Excise Tax (GET) License',
+    category:     'state',
+    description:
+      'Hawaii levies a General Excise Tax (GET) rather than a traditional sales tax. ' +
+      'All businesses must register with the Hawaii Department of Taxation and obtain a ' +
+      'GET license ($20 one-time fee) before starting business. Apply online at ' +
+      'portal.ehawaii.gov. Returns are due monthly, quarterly, or semi-annually. ' +
+      'The GET rate is 4% statewide (4.5% on Oahu).',
+    officialUrl:  'https://tax.hawaii.gov/geninfo/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'hi-annual-report',
+    name:         'Hawaii Annual Report',
+    category:     'state',
+    description:
+      'Required annually for Hawaii LLCs, corporations, and other registered entities ' +
+      'to update information with the Department of Commerce and Consumer Affairs (DCCA). ' +
+      'Due on the anniversary quarter of registration ($12.50–$25 fee). File online at ' +
+      'portal.ehawaii.gov. Failure to file for two consecutive years results in ' +
+      'administrative dissolution.',
+    officialUrl:  'https://portal.ehawaii.gov/business/business-registration/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── IDAHO ──────────────────────────────────────────────────────────────────
+
+  {
+    id:           'id-sales-tax',
+    name:         "Idaho Seller's Permit",
+    category:     'state',
+    description:
+      "Required before making taxable retail sales in Idaho. Register with the Idaho " +
+      "State Tax Commission at tax.idaho.gov. The permit is free and does not expire. " +
+      "Idaho's state sales tax rate is 6%. Returns are due monthly or quarterly " +
+      "depending on annual tax liability.",
+    officialUrl:  'https://tax.idaho.gov/taxes/sales-use/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'id-annual-report',
+    name:         'Idaho Annual Report',
+    category:     'state',
+    description:
+      'Required annually for Idaho LLCs, corporations, and other registered entities ' +
+      'to confirm or update registered agent and principal office information with the ' +
+      'Secretary of State. Due on the last day of the anniversary month of formation ' +
+      '($30 fee). File online at sos.idaho.gov. Failure to file results in dissolution.',
+    officialUrl:  'https://sos.idaho.gov/business-services-division/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── INDIANA ────────────────────────────────────────────────────────────────
+
+  {
+    id:           'in-sales-tax',
+    name:         'Indiana Retail Merchant Certificate',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in Indiana. Register through INBiz ' +
+      'at inbiz.in.gov to receive a Retail Merchant Certificate. The certificate is free ' +
+      "and does not expire. Indiana's state sales tax rate is 7% with no local add-ons. " +
+      'Returns are due monthly or annually based on average monthly tax collected.',
+    officialUrl:  'https://intime.dor.in.gov/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'in-biennial-report',
+    name:         'Indiana Biennial Report',
+    category:     'state',
+    description:
+      'Required every two years for Indiana LLCs and corporations. Due every other year ' +
+      'in the anniversary month of formation ($32 fee for online filing). File through ' +
+      'INBiz at inbiz.in.gov. Failure to file results in administrative dissolution. ' +
+      'Indiana changed from annual to biennial reporting in 2022.',
+    officialUrl:  'https://inbiz.in.gov/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  24,
+    commonFor:    ['all'],
+  },
+
+  // ── IOWA ───────────────────────────────────────────────────────────────────
+
+  {
+    id:           'ia-sales-tax',
+    name:         'Iowa Sales Tax Permit',
+    category:     'state',
+    description:
+      'Required before making taxable sales in Iowa. Register with the Iowa Department ' +
+      'of Revenue through the GovConnect portal at tax.iowa.gov. The permit is free and ' +
+      'does not expire. Returns are due monthly, quarterly, or annually based on tax ' +
+      'collected. Iowa sales tax rate is 6% plus applicable local option taxes.',
+    officialUrl:  'https://tax.iowa.gov/businesses/register-new-business',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'ia-biennial-report',
+    name:         'Iowa Biennial Report',
+    category:     'state',
+    description:
+      'Required every two years for Iowa LLCs and corporations to confirm or update ' +
+      'registered agent and principal office information with the Secretary of State. ' +
+      'Due April 1 in odd-numbered years ($30 fee for online filing). File at sos.iowa.gov. ' +
+      'Failure to file results in administrative dissolution.',
+    officialUrl:  'https://sos.iowa.gov/business/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  24,
+    commonFor:    ['all'],
+  },
+
+  // ── KANSAS ─────────────────────────────────────────────────────────────────
+
+  {
+    id:           'ks-sales-tax',
+    name:         'Kansas Retailer Sales Tax Certificate',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in Kansas. Register with the Kansas ' +
+      'Department of Revenue at ksrevenue.gov. The certificate is free and does not ' +
+      'expire. Kansas state sales tax rate is 6.5%; local rates are additional. Returns ' +
+      'are due monthly, quarterly, or annually based on annual liability.',
+    officialUrl:  'https://www.ksrevenue.gov/salesregistration.html',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'ks-annual-report',
+    name:         'Kansas Annual Report',
+    category:     'state',
+    description:
+      'Required annually for Kansas LLCs, corporations, and other registered entities ' +
+      'to confirm registered agent and officer information with the Secretary of State. ' +
+      'Due on the 15th day of the 4th month after the end of the fiscal year ($50–$55 ' +
+      'fee). File online at sos.ks.gov. Failure to file results in forfeiture of entity ' +
+      'status.',
+    officialUrl:  'https://www.sos.ks.gov/businesses/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── KENTUCKY ───────────────────────────────────────────────────────────────
+
+  {
+    id:           'ky-sales-tax',
+    name:         'Kentucky Sales Tax Permit',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in Kentucky. Register with the ' +
+      'Kentucky Department of Revenue at revenue.ky.gov. The permit is free and does not ' +
+      'expire. Kentucky sales tax rate is 6%; no local sales tax additions. Returns are ' +
+      'due monthly, quarterly, or annually based on liability.',
+    officialUrl:  'https://revenue.ky.gov/Business/Sales-Use-Tax',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'ky-annual-report',
+    name:         'Kentucky Annual Report',
+    category:     'state',
+    description:
+      'Required annually for Kentucky LLCs and corporations to confirm registered agent ' +
+      'and officer information with the Secretary of State. Due June 30 each year ($15 ' +
+      'fee for LLCs; $15 for corps). File online at sos.ky.gov. Failure to file by ' +
+      'June 30 results in a $10 late fee and eventual dissolution.',
+    officialUrl:  'https://sos.ky.gov/bus/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── LOUISIANA ──────────────────────────────────────────────────────────────
+
+  {
+    id:           'la-sales-tax',
+    name:         'Louisiana Sales Tax Certificate of Registration',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in Louisiana. Register with the ' +
+      'Louisiana Department of Revenue at revenue.louisiana.gov. The state sales tax ' +
+      'rate is 4.45%. Louisiana has complex local sales tax rules — parishes (counties) ' +
+      'and cities each set their own rates, and many require separate local registrations ' +
+      'through the Louisiana Uniform Local Sales Tax Board.',
+    officialUrl:  'https://revenue.louisiana.gov/businesses/SalesAndUseTax',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'la-annual-report',
+    name:         'Louisiana Annual Report',
+    category:     'state',
+    description:
+      'Required annually for Louisiana LLCs, corporations, and other registered entities ' +
+      'to update officer/manager and registered agent information with the Secretary of ' +
+      'State. Due on the anniversary month of formation ($30 fee for LLCs; $30 for corps). ' +
+      'File online at sos.la.gov. Failure to file results in revocation.',
+    officialUrl:  'https://www.sos.la.gov/BusinessServices/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── MAINE ──────────────────────────────────────────────────────────────────
+
+  {
+    id:           'me-sales-tax',
+    name:         'Maine Sales Tax Registration',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in Maine. Register with Maine Revenue ' +
+      'Services at maine.gov/revenue. The registration is free and does not expire. ' +
+      'Maine sales tax rate is 5.5% (10% for restaurant meals, 9% for lodging, 10% for ' +
+      'vehicle rentals). Returns are due monthly, quarterly, or annually.',
+    officialUrl:  'https://www.maine.gov/revenue/taxes/sales-use-service-provider-tax',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'me-annual-report',
+    name:         'Maine Annual Report',
+    category:     'state',
+    description:
+      'Required annually for Maine LLCs, corporations, and other registered entities ' +
+      'to confirm or update registered agent and principal office information with the ' +
+      'Secretary of State. Due June 1 each year ($85 fee for corps; $85 for LLCs). ' +
+      'File online at maine.gov/sos/cec. Failure to file results in revocation.',
+    officialUrl:  'https://www.maine.gov/sos/cec/corp/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── MARYLAND ───────────────────────────────────────────────────────────────
+
+  {
+    id:           'md-sales-tax',
+    name:         'Maryland Sales and Use Tax License',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in Maryland. Register with the ' +
+      'Comptroller of Maryland at marylandtaxes.gov. The license is free and does not ' +
+      'expire. Maryland sales tax rate is 6% (9% for alcoholic beverages, 9% for ' +
+      'tobacco products). Returns are due monthly, quarterly, or annually.',
+    officialUrl:  'https://www.marylandtaxes.gov/business/sales-use/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'md-annual-report',
+    name:         'Maryland Annual Report / Personal Property Tax Return',
+    category:     'state',
+    description:
+      'Required annually for Maryland LLCs and corporations to confirm or update ' +
+      'principal office and resident agent information with the State Department of ' +
+      'Assessments and Taxation (SDAT). Due April 15 each year ($300 fee for most ' +
+      'entities). File online at sdat.dat.maryland.gov. Failure to file results in ' +
+      'forfeiture of entity status.',
+    officialUrl:  'https://sdat.dat.maryland.gov/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── MASSACHUSETTS ──────────────────────────────────────────────────────────
+
+  {
+    id:           'ma-sales-tax',
+    name:         'Massachusetts Sales Tax Registration',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in Massachusetts. Register with the ' +
+      'Department of Revenue through MassTaxConnect at masstaxconnect.dor.state.ma.us. ' +
+      'The registration is free and does not expire. Massachusetts sales tax rate is ' +
+      '6.25%. Returns are due monthly or quarterly based on tax collected.',
+    officialUrl:  'https://www.mass.gov/info-details/register-for-sales-tax-in-massachusetts',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'ma-annual-report',
+    name:         'Massachusetts Annual Report',
+    category:     'state',
+    description:
+      'Required annually for Massachusetts LLCs and corporations to confirm or update ' +
+      'principal office and officer information with the Secretary of the Commonwealth. ' +
+      'Due on the anniversary date of formation ($500 fee for corps; $500 for LLCs). ' +
+      'File online at corp.sec.state.ma.us. Failure to file results in administrative dissolution.',
+    officialUrl:  'https://corp.sec.state.ma.us/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── MICHIGAN ───────────────────────────────────────────────────────────────
+
+  {
+    id:           'mi-sales-tax',
+    name:         'Michigan Sales Tax License',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in Michigan. Register with the ' +
+      'Michigan Department of Treasury at michigan.gov/taxes ($25 fee). The license ' +
+      'must be renewed every three years. Michigan sales tax rate is 6% with no local ' +
+      'add-on taxes. Returns are due monthly, quarterly, or annually.',
+    officialUrl:  'https://www.michigan.gov/taxes/business-taxes/sales-and-use-tax',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  36,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'mi-annual-statement',
+    name:         'Michigan Annual Statement',
+    category:     'state',
+    description:
+      'Required annually for Michigan LLCs and corporations to confirm or update ' +
+      'registered agent and officer information with LARA (Licensing and Regulatory ' +
+      'Affairs). Due February 15 each year ($25 fee for LLCs; $25 for corporations). ' +
+      'File online at michigan.gov/lara. Failure to file results in dissolution.',
+    officialUrl:  'https://www.michigan.gov/lara/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── MINNESOTA ──────────────────────────────────────────────────────────────
+
+  {
+    id:           'mn-sales-tax',
+    name:         'Minnesota Sales and Use Tax Permit',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in Minnesota. Register with the ' +
+      'Minnesota Department of Revenue at revenue.state.mn.us. The permit is free and ' +
+      'does not expire. Minnesota state sales tax rate is 6.875%; local add-on rates ' +
+      'are additional. Returns are due monthly, quarterly, or annually.',
+    officialUrl:  'https://www.revenue.state.mn.us/sales-and-use-tax',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'mn-annual-renewal',
+    name:         'Minnesota Annual Renewal',
+    category:     'state',
+    description:
+      'Required annually for Minnesota LLCs, corporations, and other registered entities ' +
+      'to confirm or update registered agent and principal office information with the ' +
+      'Secretary of State. Due December 31 each year ($0 fee for LLCs and corps — ' +
+      'Minnesota eliminated annual renewal fees in 2023). File online at sos.state.mn.us.',
+    officialUrl:  'https://www.sos.state.mn.us/business-liens/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── MISSISSIPPI ────────────────────────────────────────────────────────────
+
+  {
+    id:           'ms-sales-tax',
+    name:         'Mississippi Sales Tax Permit',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in Mississippi. Register with the ' +
+      'Mississippi Department of Revenue at tap.dor.ms.gov. The permit is free and does ' +
+      'not expire. Mississippi state sales tax rate is 7% (one of the highest in the ' +
+      'nation). Returns are due monthly, quarterly, or annually based on liability.',
+    officialUrl:  'https://www.dor.ms.gov/businesses/sales-and-use-tax',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'ms-annual-report',
+    name:         'Mississippi Annual Report',
+    category:     'state',
+    description:
+      'Required annually for Mississippi LLCs and corporations to confirm or update ' +
+      'registered agent and principal office information with the Secretary of State. ' +
+      'Due April 15 each year ($0 fee for LLCs; $25 for corporations). File online at ' +
+      'sos.ms.gov. Failure to file results in revocation of the entity\'s authority ' +
+      'to do business.',
+    officialUrl:  'https://www.sos.ms.gov/business-services/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── MISSOURI ───────────────────────────────────────────────────────────────
+
+  {
+    id:           'mo-sales-tax',
+    name:         'Missouri Seller\'s Permit',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in Missouri. Register with the ' +
+      'Missouri Department of Revenue at dor.mo.gov. The permit is free and does not ' +
+      'expire. Missouri state sales tax rate is 4.225%; local rates (city, county, ' +
+      'special districts) can add significantly. Combined rates vary widely by location.',
+    officialUrl:  'https://dor.mo.gov/taxation/business/tax-types/sales-use/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'mo-annual-report',
+    name:         'Missouri Annual Report',
+    category:     'state',
+    description:
+      'Required annually for Missouri LLCs, corporations, and other registered entities ' +
+      'to confirm or update registered agent and officer information with the Secretary ' +
+      'of State. Due on the anniversary month of formation ($45 fee for LLCs; $45 for ' +
+      'corps). File online at sos.mo.gov. Failure to file results in dissolution.',
+    officialUrl:  'https://www.sos.mo.gov/business/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── MONTANA ────────────────────────────────────────────────────────────────
+  // Montana has no statewide sales tax.
+
+  {
+    id:           'mt-annual-report',
+    name:         'Montana Annual Report',
+    category:     'state',
+    description:
+      'Required annually for Montana LLCs, corporations, and other registered entities ' +
+      'to confirm or update registered agent and principal office information with the ' +
+      'Secretary of State. Due April 15 each year ($20 fee for LLCs; $15 for corps). ' +
+      'File online at sosmt.gov. Montana has no state sales tax, but business license ' +
+      'requirements vary by city and county.',
+    officialUrl:  'https://sosmt.gov/business/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── NEBRASKA ───────────────────────────────────────────────────────────────
+
+  {
+    id:           'ne-sales-tax',
+    name:         'Nebraska Sales Tax Permit',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in Nebraska. Register with the ' +
+      'Nebraska Department of Revenue at revenue.nebraska.gov. The permit is free and ' +
+      'does not expire. Nebraska state sales tax rate is 5.5%; local rates are additional. ' +
+      'Returns are due monthly, quarterly, or annually based on liability.',
+    officialUrl:  'https://revenue.nebraska.gov/businesses/sales-and-use-tax',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'ne-biennial-report',
+    name:         'Nebraska Biennial Report',
+    category:     'state',
+    description:
+      'Required every two years for Nebraska LLCs and corporations to confirm or update ' +
+      'registered agent and principal office information with the Secretary of State. ' +
+      'Due March 1 in odd-numbered years ($13 fee for LLCs; $26 for corps). File online ' +
+      'at sos.nebraska.gov. Failure to file results in administrative dissolution.',
+    officialUrl:  'https://www.sos.nebraska.gov/business/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  24,
+    commonFor:    ['all'],
+  },
+
+  // ── NEVADA ─────────────────────────────────────────────────────────────────
+
+  {
+    id:           'nv-sales-tax',
+    name:         'Nevada Sales Tax Permit',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in Nevada. Register with the Nevada ' +
+      'Department of Taxation at tax.nv.gov. The permit is free and does not expire. ' +
+      'Nevada state sales tax rate is 6.85% base; local rates (county) bring combined ' +
+      'rates to 7.725%–8.375% in most counties. Returns are due monthly, quarterly, or annually.',
+    officialUrl:  'https://tax.nv.gov/businesses/sales/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'nv-annual-list',
+    name:         'Nevada Annual List of Officers',
+    category:     'state',
+    description:
+      'Required annually for Nevada LLCs, corporations, and other registered entities to ' +
+      'file a list of managers/members or officers/directors with the Secretary of State. ' +
+      'Due on the last day of the anniversary month of formation ($150 fee for LLCs and ' +
+      'corps). File online at nvsos.gov. Failure to file results in revocation.',
+    officialUrl:  'https://www.nvsos.gov/sos/businesses/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── NEW HAMPSHIRE ──────────────────────────────────────────────────────────
+  // New Hampshire has no general sales tax (limited meals & rentals tax).
+
+  {
+    id:           'nh-annual-report',
+    name:         'New Hampshire Annual Report',
+    category:     'state',
+    description:
+      'Required annually for New Hampshire LLCs, corporations, and other registered ' +
+      'entities to confirm or update registered agent and officer information with the ' +
+      'Secretary of State. Due April 1 each year ($100 fee for corps; $100 for LLCs). ' +
+      'File online at sos.nh.gov. New Hampshire has no general state sales tax.',
+    officialUrl:  'https://www.sos.nh.gov/corporations/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── NEW JERSEY ─────────────────────────────────────────────────────────────
+
+  {
+    id:           'nj-sales-tax',
+    name:         'New Jersey Sales Tax Certificate of Authority',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in New Jersey. Register with the ' +
+      'Division of Revenue and Enterprise Services at njportal.com/DOR/BusinessRegistration. ' +
+      'The certificate is free and does not expire. New Jersey sales tax rate is 6.625% ' +
+      '(3.3125% in certain Urban Enterprise Zones). Returns are due monthly or quarterly.',
+    officialUrl:  'https://www.njportal.com/DOR/businessregistration/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'nj-annual-report',
+    name:         'New Jersey Annual Report',
+    category:     'state',
+    description:
+      'Required annually for New Jersey LLCs, corporations, and other registered entities ' +
+      'to confirm or update registered agent and principal office information with the ' +
+      'Division of Revenue. Due on the last day of the anniversary month of formation ($75 ' +
+      'fee). File online at njportal.com/DOR. Failure to file results in revocation of ' +
+      'the entity\'s certificate of authority.',
+    officialUrl:  'https://www.njportal.com/DOR/businessregistration/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── NEW MEXICO ─────────────────────────────────────────────────────────────
+
+  {
+    id:           'nm-gross-receipts-tax',
+    name:         'New Mexico Gross Receipts Tax Registration',
+    category:     'state',
+    description:
+      'New Mexico levies a Gross Receipts Tax (GRT) rather than a traditional sales tax. ' +
+      'All businesses selling goods or services in New Mexico must register with the ' +
+      'Taxation and Revenue Department at tap.state.nm.us. The GRT rate varies by location ' +
+      '(typically 7.5%–9%). Registration is free; returns are due monthly or quarterly.',
+    officialUrl:  'https://www.tax.newmexico.gov/businesses/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'nm-annual-report',
+    name:         'New Mexico Annual Report',
+    category:     'state',
+    description:
+      'Required annually for New Mexico LLCs and corporations to confirm or update ' +
+      'registered agent and officer information with the Secretary of State. Due on the ' +
+      '15th day of the 4th month after fiscal year end ($50 fee for LLCs; $50 for corps). ' +
+      'File online at sos.nm.gov. Failure to file results in administrative dissolution.',
+    officialUrl:  'https://www.sos.nm.gov/business-services/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── NORTH CAROLINA ─────────────────────────────────────────────────────────
+
+  {
+    id:           'nc-sales-tax',
+    name:         'North Carolina Sales and Use Tax Certificate',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in North Carolina. Register with the ' +
+      'NC Department of Revenue at ncdor.gov. The certificate is free and does not expire. ' +
+      'NC state sales tax rate is 4.75%; counties add 2%, and transit districts may add ' +
+      'more. Total combined rates typically range from 6.75% to 7.5%. Returns are due ' +
+      'monthly, quarterly, or annually.',
+    officialUrl:  'https://www.ncdor.gov/taxes-forms/sales-and-use-tax',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'nc-annual-report',
+    name:         'North Carolina Annual Report',
+    category:     'state',
+    description:
+      'Required annually for North Carolina LLCs, corporations, and other registered ' +
+      'entities to confirm or update registered agent and principal office information ' +
+      'with the Secretary of State. Due April 15 each year ($200 fee for corps; $200 for ' +
+      'LLCs). File online at sosnc.gov. Failure to file results in administrative dissolution.',
+    officialUrl:  'https://www.sosnc.gov/divisions/business_registration/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'nc-dba',
+    name:         'North Carolina Assumed Business Name (DBA)',
+    category:     'state',
+    description:
+      'Required in North Carolina when any person or business operates under a name ' +
+      'different from their legal name. File a Certificate of Assumed Name with the county ' +
+      'Register of Deeds in each county where the business operates ($26 fee per county). ' +
+      'Valid for 5 years. No newspaper publication required. LLCs/corps may also file an ' +
+      'Assumed Name Registration with the SOS ($26).',
+    officialUrl:  'https://www.sosnc.gov/divisions/business_registration/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  60,
+    commonFor:    ['sole-proprietor', 'partnership', 'dba'],
+  },
+
+  // ── NORTH DAKOTA ───────────────────────────────────────────────────────────
+
+  {
+    id:           'nd-sales-tax',
+    name:         'North Dakota Sales and Use Tax Permit',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in North Dakota. Register with the ' +
+      'ND Office of State Tax Commissioner at nd.gov/tax. The permit is free and does ' +
+      'not expire. North Dakota state sales tax rate is 5%; local rates are additional. ' +
+      'Returns are due monthly, quarterly, or annually based on liability.',
+    officialUrl:  'https://www.nd.gov/tax/user/businesses/registrations/salesuse',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'nd-annual-report',
+    name:         'North Dakota Annual Report',
+    category:     'state',
+    description:
+      'Required annually for North Dakota LLCs, corporations, and other registered entities ' +
+      'to confirm or update registered agent and principal office information with the ' +
+      'Secretary of State. Due November 15 each year ($50 fee for LLCs; $25 for corps). ' +
+      'File online at sos.nd.gov. Failure to file results in administrative dissolution.',
+    officialUrl:  'https://sos.nd.gov/business/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── OHIO ───────────────────────────────────────────────────────────────────
+
+  {
+    id:           'oh-vendors-license',
+    name:         'Ohio Vendor\'s License (Sales Tax)',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in Ohio. Apply for a Vendor\'s License ' +
+      'with the Ohio Department of Taxation at tax.ohio.gov through the Ohio Business ' +
+      'Gateway ($25 fee). A separate license is required for each county where the business ' +
+      'has a fixed place of business. The license does not expire but must be surrendered ' +
+      'if the business closes.',
+    officialUrl:  'https://www.tax.ohio.gov/businesses/ohio-vendor-license',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'oh-biennial-report',
+    name:         'Ohio Biennial Report',
+    category:     'state',
+    description:
+      'Required every two years for Ohio LLCs, corporations, and other registered entities ' +
+      'to confirm or update registered agent and principal office information with the ' +
+      'Secretary of State. Due every two years on the anniversary month of formation ' +
+      '($99 fee). File online at ohiosos.gov. Failure to file results in cancellation.',
+    officialUrl:  'https://www.ohiosos.gov/businesses/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  24,
+    commonFor:    ['all'],
+  },
+
+  // ── OKLAHOMA ───────────────────────────────────────────────────────────────
+
+  {
+    id:           'ok-sales-tax',
+    name:         'Oklahoma Sales Tax Permit',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in Oklahoma. Register with the ' +
+      'Oklahoma Tax Commission through OkTAP at oktap.tax.ok.gov. The permit is free ' +
+      'and does not expire. Oklahoma state sales tax rate is 4.5%; local rates can ' +
+      'bring the combined rate to 8%–11% in some areas. Returns are due monthly or quarterly.',
+    officialUrl:  'https://oktap.tax.ok.gov/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'ok-annual-certificate',
+    name:         'Oklahoma Annual Certificate of Good Standing',
+    category:     'state',
+    description:
+      'Oklahoma LLCs and corporations must file an annual Certificate with the Secretary ' +
+      'of State to maintain good standing. Due by the anniversary month of formation ' +
+      '($25 fee for LLCs; $25 for corps). File online at sos.ok.gov. Failure to file ' +
+      'results in loss of good standing and eventual dissolution.',
+    officialUrl:  'https://www.sos.ok.gov/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── OREGON ─────────────────────────────────────────────────────────────────
+  // Oregon has no statewide sales tax.
+
+  {
+    id:           'or-annual-report',
+    name:         'Oregon Annual Report',
+    category:     'state',
+    description:
+      'Required annually for Oregon LLCs, corporations, and other registered entities ' +
+      'to confirm or update registered agent and principal office information with the ' +
+      'Secretary of State. Due on the anniversary of the registration date ($100 fee ' +
+      'for corps; $100 for LLCs). File online at sos.oregon.gov. Oregon has no statewide ' +
+      'sales tax, but a Corporate Activity Tax applies to larger businesses.',
+    officialUrl:  'https://sos.oregon.gov/business/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'or-dba',
+    name:         'Oregon Assumed Business Name (DBA)',
+    category:     'state',
+    description:
+      'Required in Oregon when a business operates under a name other than its registered ' +
+      'legal name. Register an Assumed Business Name with the Oregon Secretary of State ' +
+      '($50 fee). Valid for 2 years and must be renewed. Sole proprietors and partnerships ' +
+      'also register through the SOS rather than county-level filings.',
+    officialUrl:  'https://sos.oregon.gov/business/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  24,
+    commonFor:    ['sole-proprietor', 'partnership', 'dba'],
+  },
+
+  // ── PENNSYLVANIA ───────────────────────────────────────────────────────────
+
+  {
+    id:           'pa-sales-tax',
+    name:         'Pennsylvania Sales and Use Tax License',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in Pennsylvania. Register with the ' +
+      'PA Department of Revenue at revenue.pa.gov through the Pennsylvania Online ' +
+      'Business Entity Registration (PA-100). The license is free and does not expire. ' +
+      'Pennsylvania sales tax rate is 6% (2% local in Allegheny County; 2% in Philadelphia). ' +
+      'Returns are due monthly, quarterly, or semi-annually.',
+    officialUrl:  'https://www.revenue.pa.gov/Businesses-TaxInformation/Sales-UseTax/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'pa-annual-report',
+    name:         'Pennsylvania Annual Report',
+    category:     'state',
+    description:
+      'Required annually for Pennsylvania LLCs, corporations, and other registered ' +
+      'entities to confirm or update registered office address and officer information ' +
+      'with the Department of State. Due June 30 each year ($7 fee for LLCs; $7 for ' +
+      'corps). PA began requiring annual reports in 2025. File online at dos.pa.gov.',
+    officialUrl:  'https://www.dos.pa.gov/BusinessCharities/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── RHODE ISLAND ───────────────────────────────────────────────────────────
+
+  {
+    id:           'ri-sales-tax',
+    name:         'Rhode Island Sales and Use Tax Permit',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in Rhode Island. Register with the ' +
+      'Division of Taxation at tax.ri.gov. The permit is free and does not expire. ' +
+      'Rhode Island state sales tax rate is 7% with no local add-ons — one of the ' +
+      'simplest sales tax structures in the country. Returns are due monthly.',
+    officialUrl:  'https://www.ri.gov/taxation/business/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'ri-annual-report',
+    name:         'Rhode Island Annual Report',
+    category:     'state',
+    description:
+      'Required annually for Rhode Island LLCs, corporations, and other registered ' +
+      'entities to confirm or update registered agent and principal office information ' +
+      'with the Secretary of State. Due on the first day of the anniversary month of ' +
+      'formation ($50 fee for LLCs; $50 for corps). File online at sos.ri.gov.',
+    officialUrl:  'https://www.sos.ri.gov/divisions/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── SOUTH CAROLINA ─────────────────────────────────────────────────────────
+
+  {
+    id:           'sc-sales-tax',
+    name:         'South Carolina Retail License (Sales Tax)',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in South Carolina. Apply for a ' +
+      'Retail License with the SC Department of Revenue at dor.sc.gov ($50 one-time fee). ' +
+      'The license does not expire. SC state sales tax rate is 6%; local rates add up to ' +
+      '3% in most counties. Returns are due monthly, quarterly, or annually.',
+    officialUrl:  'https://dor.sc.gov/business/retail',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'sc-annual-report',
+    name:         'South Carolina Annual Report',
+    category:     'state',
+    description:
+      'Required annually for South Carolina LLCs, corporations, and other registered ' +
+      'entities to confirm or update registered agent and principal office information ' +
+      'with the Secretary of State. Due on the anniversary month of formation ($10 fee). ' +
+      'File online at sos.sc.gov. Failure to file results in administrative dissolution.',
+    officialUrl:  'https://sos.sc.gov/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── SOUTH DAKOTA ───────────────────────────────────────────────────────────
+
+  {
+    id:           'sd-sales-tax',
+    name:         'South Dakota Sales Tax License',
+    category:     'state',
+    description:
+      'Required before making taxable sales in South Dakota. Register with the SD ' +
+      'Department of Revenue at dor.sd.gov ($30 fee). The license must be renewed ' +
+      'annually. South Dakota state sales tax rate is 4.5% (with some exemptions). ' +
+      'South Dakota is one of the most streamlined sales tax states for remote sellers.',
+    officialUrl:  'https://dor.sd.gov/businesses/taxes/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'sd-annual-report',
+    name:         'South Dakota Annual Report',
+    category:     'state',
+    description:
+      'Required annually for South Dakota LLCs, corporations, and other registered ' +
+      'entities to confirm or update registered agent and principal office information ' +
+      'with the Secretary of State. Due on the first day of the anniversary month of ' +
+      'formation ($50 fee for LLCs; $50 for corps). File online at sdsos.gov.',
+    officialUrl:  'https://sdsos.gov/business-services/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── TENNESSEE ──────────────────────────────────────────────────────────────
+
+  {
+    id:           'tn-sales-tax',
+    name:         'Tennessee Sales and Use Tax Certificate of Registration',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in Tennessee. Register through the ' +
+      'Tennessee Taxpayer Access Point (TNTAP) at tntap.tn.gov. The certificate is free ' +
+      'and does not expire. Tennessee state sales tax rate is 7% (9.75% for food and food ' +
+      'ingredients at retail). Local rates add 1%–2.75% in most jurisdictions.',
+    officialUrl:  'https://www.tn.gov/revenue/taxes/sales-and-use-tax.html',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'tn-annual-report',
+    name:         'Tennessee Annual Report',
+    category:     'state',
+    description:
+      'Required annually for Tennessee LLCs, corporations, and other registered entities ' +
+      'to confirm or update registered agent and principal office information with the ' +
+      'Secretary of State. Due April 1 each year ($300 fee for for-profit corps; $50 for ' +
+      'LLCs). File online at sos.tn.gov. Failure to file by June 1 results in dissolution.',
+    officialUrl:  'https://sos.tn.gov/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── UTAH ───────────────────────────────────────────────────────────────────
+
+  {
+    id:           'ut-sales-tax',
+    name:         'Utah Sales and Use Tax License',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in Utah. Register with the Utah ' +
+      'State Tax Commission at tap.utah.gov. The license is free and does not expire. ' +
+      'Utah base state sales tax rate is 4.85%; combined state and local rates range ' +
+      'from 6.1% to 9.05% depending on county and city. Returns are due monthly, ' +
+      'quarterly, or annually.',
+    officialUrl:  'https://tax.utah.gov/sales/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'ut-annual-report',
+    name:         'Utah Annual Report',
+    category:     'state',
+    description:
+      'Required annually for Utah LLCs, corporations, and other registered entities ' +
+      'to confirm or update registered agent and principal office information with the ' +
+      'Division of Corporations and Commercial Code. Due on the anniversary month of ' +
+      'formation ($18 fee for LLCs; $18 for corps). File online at corporations.utah.gov.',
+    officialUrl:  'https://corporations.utah.gov/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── VERMONT ────────────────────────────────────────────────────────────────
+
+  {
+    id:           'vt-sales-tax',
+    name:         'Vermont Sales and Use Tax Registration',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in Vermont. Register with the Vermont ' +
+      'Department of Taxes at tax.vermont.gov. The registration is free and does not ' +
+      'expire. Vermont state sales tax rate is 6% (9% for meals and alcoholic beverages; ' +
+      '9% for telecommunications services). Returns are due monthly or quarterly.',
+    officialUrl:  'https://tax.vermont.gov/business/sales-and-use-tax',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'vt-annual-report',
+    name:         'Vermont Annual Report',
+    category:     'state',
+    description:
+      'Required annually for Vermont LLCs, corporations, and other registered entities ' +
+      'to confirm or update registered agent and principal office information with the ' +
+      'Secretary of State. Due March 15 each year ($45 fee for LLCs; $45 for corps). ' +
+      'File online at sos.vermont.gov. Failure to file results in administrative dissolution.',
+    officialUrl:  'https://sos.vermont.gov/corporations/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── VIRGINIA ───────────────────────────────────────────────────────────────
+
+  {
+    id:           'va-sales-tax',
+    name:         'Virginia Sales Tax Registration',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in Virginia. Register with the ' +
+      'Virginia Department of Taxation at business.virginia.gov. The registration is free ' +
+      'and does not expire. Virginia state sales tax rate is 4.3% plus 1% local rate (0.7% ' +
+      'additional in Northern VA and Hampton Roads). Returns are due monthly or quarterly.',
+    officialUrl:  'https://www.tax.virginia.gov/retail-sales-and-use-tax',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'va-annual-report',
+    name:         'Virginia Annual Registration Fee',
+    category:     'state',
+    description:
+      'Required annually for Virginia LLCs, corporations, and other registered entities ' +
+      'to maintain their registration with the State Corporation Commission. Due by the ' +
+      'last day of the 12th month of the fiscal year ($50 annual registration fee for LLCs; ' +
+      'varies for corps based on authorized shares). File online at scc.virginia.gov.',
+    officialUrl:  'https://www.scc.virginia.gov/clk/busregister.aspx',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── WASHINGTON ─────────────────────────────────────────────────────────────
+
+  {
+    id:           'wa-business-license',
+    name:         'Washington State Business License',
+    category:     'state',
+    description:
+      'Washington requires all businesses to obtain a Unified Business Identifier (UBI) ' +
+      'number and Business License through the Department of Revenue. The license covers ' +
+      'the state B&O tax, sales and use tax, and other state taxes in one application. ' +
+      'Apply at dor.wa.gov ($19 annual fee). The license must be renewed annually.',
+    officialUrl:  'https://dor.wa.gov/open-business/apply-business-license',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'wa-annual-report',
+    name:         'Washington Annual Report',
+    category:     'state',
+    description:
+      'Required annually for Washington LLCs, corporations, and other registered entities ' +
+      'to confirm or update registered agent and principal office information with the ' +
+      'Secretary of State. Due on the anniversary month of formation ($60 fee for LLCs; ' +
+      '$60 for corps). File online at sos.wa.gov. Failure to file results in administrative dissolution.',
+    officialUrl:  'https://www.sos.wa.gov/corps/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── WEST VIRGINIA ──────────────────────────────────────────────────────────
+
+  {
+    id:           'wv-sales-tax',
+    name:         'West Virginia Sales and Use Tax Permit',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in West Virginia. Register with the ' +
+      'WV State Tax Department at tax.wv.gov through the Business Registration portal. ' +
+      'The permit is free and does not expire. West Virginia state sales tax rate is 6%; ' +
+      'municipalities may levy up to 1% additional. Returns are due monthly, quarterly, ' +
+      'or annually.',
+    officialUrl:  'https://tax.wv.gov/Business/BusinessRegistration/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'wv-annual-report',
+    name:         'West Virginia Annual Report',
+    category:     'state',
+    description:
+      'Required annually for West Virginia LLCs, corporations, and other registered ' +
+      'entities to confirm or update registered agent and principal office information ' +
+      'with the Secretary of State. Due July 1 each year ($25 fee for LLCs; $25 for ' +
+      'corps). File online at sos.wv.gov. Failure to file results in revocation.',
+    officialUrl:  'https://sos.wv.gov/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── WISCONSIN ──────────────────────────────────────────────────────────────
+
+  {
+    id:           'wi-sales-tax',
+    name:         'Wisconsin Seller\'s Permit',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in Wisconsin. Register with the ' +
+      'Wisconsin Department of Revenue at tap.revenue.wi.gov. The permit is free and ' +
+      'does not expire. Wisconsin state sales tax rate is 5%; counties add 0.5%, and ' +
+      'some counties/stadiums add additional rates. Returns are due monthly, quarterly, ' +
+      'or annually.',
+    officialUrl:  'https://www.revenue.wi.gov/Pages/FAQS/ise-stax.aspx',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'wi-annual-report',
+    name:         'Wisconsin Annual Report',
+    category:     'state',
+    description:
+      'Required annually for Wisconsin LLCs, corporations, and other registered entities ' +
+      'to confirm or update registered agent and principal office information with the ' +
+      'Department of Financial Institutions. Due on the anniversary quarter of formation ' +
+      '($25 fee for LLCs; $25 for corps). File online at wdfi.org. Failure to file ' +
+      'results in administrative dissolution.',
+    officialUrl:  'https://www.wdfi.org/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── WYOMING ────────────────────────────────────────────────────────────────
+
+  {
+    id:           'wy-sales-tax',
+    name:         'Wyoming Sales and Use Tax License',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in Wyoming. Register with the ' +
+      'Wyoming Department of Revenue at revenue.wyo.gov. The license fee is $60/year. ' +
+      'Wyoming state sales tax rate is 4%; counties levy up to 2% additional, bringing ' +
+      'combined rates to 5%–6% in most areas. Returns are due monthly, quarterly, or ' +
+      'annually based on liability.',
+    officialUrl:  'https://revenue.wyo.gov/sales-use-taxes/licensing-and-registration',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'wy-annual-report',
+    name:         'Wyoming Annual Report',
+    category:     'state',
+    description:
+      'Required annually for Wyoming LLCs, corporations, and other registered entities ' +
+      'to confirm or update registered agent and principal office information with the ' +
+      'Secretary of State. Due on the first day of the anniversary month of formation ' +
+      '($52 minimum fee based on assets located and employed in Wyoming). File online ' +
+      'at sos.wyo.gov. Failure to file results in dissolution.',
+    officialUrl:  'https://sos.wyo.gov/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── DISTRICT OF COLUMBIA ──────────────────────────────────────────────────
+
+  {
+    id:           'dc-sales-tax',
+    name:         'DC Sales and Use Tax Registration',
+    category:     'state',
+    description:
+      'Required before making taxable retail sales in the District of Columbia. Register ' +
+      'with the DC Office of Tax and Revenue at mytax.dc.gov. The registration is free ' +
+      'and does not expire. DC sales tax rate is 6% (10% for restaurant meals and ' +
+      'alcohol, 14.5% for hotel rooms, 6% for parking). Returns are due monthly or quarterly.',
+    officialUrl:  'https://mytax.dc.gov/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'dc-biennial-report',
+    name:         'DC Biennial Report',
+    category:     'state',
+    description:
+      'Required every two years for DC LLCs, corporations, and other registered entities ' +
+      'to confirm or update registered agent and principal office information with the ' +
+      'Department of Licensing and Consumer Protection. Due April 1 in even-numbered years ' +
+      '($300 fee). File online at dlcp.dc.gov. Failure to file results in revocation.',
+    officialUrl:  'https://dlcp.dc.gov/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  24,
+    commonFor:    ['all'],
+  },
+
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// v24 — LOCAL_FORMS: County and City-Level Forms
+// High-population counties and major cities with specific local requirements.
+// IDs use county/city prefixes (e.g. 'palm-beach-', 'los-angeles-', 'nyc-').
+// These are the most commonly needed local filings beyond the state level.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const LOCAL_FORMS: StateFormEntry[] = [
+
+  // ── FLORIDA — Palm Beach County ────────────────────────────────────────────
+
+  {
+    id:           'palm-beach-business-tax-receipt',
+    name:         'Palm Beach County Business Tax Receipt',
+    category:     'local',
+    description:
+      'Required annually for all businesses operating in unincorporated Palm Beach County ' +
+      'before opening or continuing operations. Issued by the Palm Beach County Tax ' +
+      'Collector\'s Office. Fees are based on business type and gross revenue. Must be ' +
+      'renewed by September 30 each year and posted visibly at the place of business. ' +
+      'Businesses within city limits also need the city\'s own BTR.',
+    officialUrl:  'https://www.pbcgov.org',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'palm-beach-home-occupation',
+    name:         'Palm Beach County Home Occupation Permit',
+    category:     'local',
+    description:
+      'Required for home-based businesses in unincorporated Palm Beach County to ensure ' +
+      'business activity remains secondary to residential use. Apply through the Palm Beach ' +
+      'County Planning, Zoning and Building Department. Restrictions include limits on ' +
+      'signage, customer visits, non-resident employees, and stored inventory. ' +
+      'Must be renewed with the Business Tax Receipt annually.',
+    officialUrl:  'https://www.pbcgov.org',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['home-based', 'sole-proprietor', 'freelance'],
+  },
+
+  // ── FLORIDA — Miami-Dade County ────────────────────────────────────────────
+
+  {
+    id:           'miami-dade-business-tax-receipt',
+    name:         'Miami-Dade County Local Business Tax Receipt',
+    category:     'local',
+    description:
+      'Required annually for all businesses operating in unincorporated Miami-Dade County. ' +
+      'Issued by the Miami-Dade County Tax Collector\'s Office. Fees range from $45 to over ' +
+      '$1,000 depending on business type. Due September 30 each year. Businesses within ' +
+      'incorporated cities (Miami, Hialeah, Coral Gables, etc.) also need that city\'s ' +
+      'separate local business tax receipt.',
+    officialUrl:  'https://www.miamidade.gov/taxcollector/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'miami-dade-food-permit',
+    name:         'Miami-Dade County Food Establishment Permit',
+    category:     'local',
+    description:
+      'Required for restaurants, food trucks, caterers, and any food service establishment ' +
+      'operating in Miami-Dade County. Issued by the Miami-Dade County Health Department ' +
+      '(MDCHD). Requires a plan review, facility inspection, and annual renewal. Fees range ' +
+      'from $85 to over $1,000 based on risk category and seating capacity. Food trucks ' +
+      'require a separate Mobile Food Dispensing Vehicle (MFDV) permit.',
+    officialUrl:  'https://www.miamidade.gov/health/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'food-truck', 'restaurant', 'catering'],
+  },
+
+  // ── FLORIDA — Broward County ────────────────────────────────────────────────
+
+  {
+    id:           'broward-business-tax-receipt',
+    name:         'Broward County Local Business Tax Receipt',
+    category:     'local',
+    description:
+      'Required annually for businesses operating in unincorporated Broward County or ' +
+      'businesses operating within incorporated cities that delegate tax collection to ' +
+      'the county. Issued by the Broward County Records, Taxes & Treasury Division. ' +
+      'Fees are based on business type. Due September 30 each year.',
+    officialUrl:  'https://www.broward.org',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── CALIFORNIA — Los Angeles County ────────────────────────────────────────
+
+  {
+    id:           'la-county-business-license',
+    name:         'Los Angeles County Business License',
+    category:     'local',
+    description:
+      'Required for businesses operating in unincorporated areas of Los Angeles County. ' +
+      'Issued by the LA County Treasurer and Tax Collector. Fees are based on business ' +
+      'type and gross receipts. Businesses within incorporated cities (LA City, Long Beach, ' +
+      'Pasadena, etc.) must obtain that city\'s business license separately. Renewed annually.',
+    officialUrl:  'https://ttc.lacounty.gov/business-license/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'la-city-business-tax',
+    name:         'City of Los Angeles Business Tax Registration Certificate',
+    category:     'local',
+    description:
+      'Required for all businesses operating within the City of Los Angeles, regardless of ' +
+      'whether the business is located within city limits (nexus established by having ' +
+      'customers or employees in the city). Register with the Office of Finance at ' +
+      'finance.lacity.gov. First-year tax is based on estimated gross receipts; subsequent ' +
+      'years are based on prior-year gross receipts. Renewed annually by February 28.',
+    officialUrl:  'https://finance.lacity.gov/business-tax/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'la-county-health-permit',
+    name:         'Los Angeles County Health Permit (Food Establishment)',
+    category:     'local',
+    description:
+      'Required for restaurants, food trucks, caterers, and any food establishment in ' +
+      'unincorporated Los Angeles County or cities that contract with LA County Environmental ' +
+      'Health. Issued by the LA County Department of Public Health\'s Environmental Health ' +
+      'Division. Fees range from $150 to over $1,500 based on facility type and risk ' +
+      'category. Requires plan check, inspection, and annual renewal.',
+    officialUrl:  'https://ehservices.publichealth.lacounty.gov/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'food-truck', 'restaurant', 'catering'],
+  },
+
+  {
+    id:           'la-city-home-occupation',
+    name:         'City of Los Angeles Home Occupation Permit',
+    category:     'local',
+    description:
+      'Required for home-based businesses within the City of Los Angeles under the LA ' +
+      'Municipal Code Section 12.05-A7. A Zoning and Building Department clearance is ' +
+      'required. Restrictions include no customer visits, no employees on-site, no external ' +
+      'signage, and no storage of merchandise visible from the street. Included in the ' +
+      'business tax registration process.',
+    officialUrl:  'https://www.ladbs.org',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['home-based', 'sole-proprietor', 'freelance'],
+  },
+
+  // ── TEXAS — Harris County (Houston) ────────────────────────────────────────
+
+  {
+    id:           'harris-county-food-permit',
+    name:         'Harris County Public Health Food Establishment Permit',
+    category:     'local',
+    description:
+      'Required for food service establishments in unincorporated Harris County, Texas. ' +
+      'Issued by Harris County Public Health (HCPH). Fees vary by establishment type and ' +
+      'seating capacity. Most food businesses within the City of Houston require a City of ' +
+      'Houston Health Department permit instead. Annual renewal required.',
+    officialUrl:  'https://publichealth.harriscountytx.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'food-truck', 'restaurant', 'catering'],
+  },
+
+  {
+    id:           'houston-business-license',
+    name:         'City of Houston Business License & Permits',
+    category:     'local',
+    description:
+      'Houston does not issue a general business license, but specific businesses require ' +
+      'permits from the City of Houston. Food establishments, automotive businesses, ' +
+      'massage establishments, and others require permits from the City of Houston Health ' +
+      'or Planning departments. Register through the Houston Permitting Center at ' +
+      'houstonpermittingcenter.org.',
+    officialUrl:  'https://www.houstonpermittingcenter.org/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'retail', 'service'],
+  },
+
+  // ── NEW YORK — New York City ────────────────────────────────────────────────
+
+  {
+    id:           'nyc-business-license',
+    name:         'New York City Business License / DCA License',
+    category:     'local',
+    description:
+      'New York City requires licenses for many specific business types through the ' +
+      'Department of Consumer and Worker Protection (DCWP). Licensed industries include ' +
+      'sidewalk cafes, laundromats, secondhand dealers, home improvement contractors, and ' +
+      'many others. Apply through NYC Business Express at business.nyc.gov. General retail ' +
+      'does not require a general NYC business license but may require other permits.',
+    officialUrl:  'https://business.nyc.gov/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  24,
+    commonFor:    ['retail', 'food-service', 'service'],
+  },
+
+  {
+    id:           'nyc-food-service-permit',
+    name:         'New York City Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Required for all restaurants, food trucks, mobile food vendors, cafes, and food ' +
+      'manufacturers operating in New York City. Issued by the NYC Department of Health ' +
+      'and Mental Hygiene (DOHMH). Annual permit fees range from $200 to $1,000+ depending ' +
+      'on facility type and seating. All establishments receive a letter grade (A, B, C) ' +
+      'from inspections. Apply at nyc.gov/health.',
+    officialUrl:  'https://www.nyc.gov/site/doh/business/food-service/food-service-establishment-permits.page',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'food-truck', 'restaurant', 'catering'],
+  },
+
+  {
+    id:           'nyc-home-occupation',
+    name:         'New York City Home Occupation Certificate of Occupancy',
+    category:     'local',
+    description:
+      'Home-based businesses in NYC must comply with zoning regulations under the NYC ' +
+      'Zoning Resolution. A home occupation permit (through a Certificate of Occupancy ' +
+      'or Letter of No Objection) may be required depending on the nature of the business. ' +
+      'Restrictions include no customer visits for certain businesses, no exterior signage, ' +
+      'and no disturbance to neighbors. Contact the NYC Department of Buildings at nyc.gov/buildings.',
+    officialUrl:  'https://www.nyc.gov/site/buildings/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['home-based', 'sole-proprietor', 'freelance'],
+  },
+
+  // ── ILLINOIS — Cook County / Chicago ───────────────────────────────────────
+
+  {
+    id:           'chicago-business-license',
+    name:         'City of Chicago Business License',
+    category:     'local',
+    description:
+      'Required for businesses operating within the City of Chicago. The type of license ' +
+      'required depends on the business activity. Common license types include Retail Food ' +
+      'Establishment, Limited Business License, Public Garage, and Tobacco Dealer. Apply ' +
+      'through Chicago\'s Department of Business Affairs and Consumer Protection (BACP) ' +
+      'at chicago.gov/bacp. Most licenses must be renewed annually or biennially.',
+    officialUrl:  'https://www.chicago.gov/city/en/depts/bacp.html',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  24,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'chicago-food-establishment',
+    name:         'Chicago Retail Food Establishment License',
+    category:     'local',
+    description:
+      'Required for restaurants, cafes, food trucks, and any retail food establishment ' +
+      'operating within the City of Chicago. Issued by the Chicago BACP. Requires a ' +
+      'facility inspection from the Chicago Department of Public Health before the license ' +
+      'is granted. Annual fee based on seating capacity (typically $660–$1,320). ' +
+      'Renewed biennially. Food trucks also need a Chicago Mobile Food License.',
+    officialUrl:  'https://www.chicago.gov/city/en/depts/bacp.html',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  24,
+    commonFor:    ['food-service', 'food-truck', 'restaurant'],
+  },
+
+  {
+    id:           'cook-county-food-permit',
+    name:         'Cook County Health Permit (Food Service)',
+    category:     'local',
+    description:
+      'Required for food establishments operating in unincorporated Cook County, Illinois. ' +
+      'Issued by the Cook County Department of Public Health. Fees vary by establishment ' +
+      'type and risk level. Businesses within incorporated cities (Chicago, Evanston, etc.) ' +
+      'are regulated by those cities\' health departments instead. Annual renewal required.',
+    officialUrl:  'https://www.cookcountypublichealth.org',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'catering'],
+  },
+
+  // ── WASHINGTON — King County (Seattle) ─────────────────────────────────────
+
+  {
+    id:           'seattle-business-license',
+    name:         'Seattle Business License (City Business License Tax Certificate)',
+    category:     'local',
+    description:
+      'Required for all businesses with physical locations in Seattle or businesses ' +
+      'making sales to Seattle customers above certain thresholds. Register with the ' +
+      'City of Seattle Finance and Administrative Services at seattle.gov/license. ' +
+      'Annual fee is based on gross receipts. The Seattle Business License Tax is ' +
+      'separate from the state B&O tax.',
+    officialUrl:  'https://www.seattle.gov/license-and-tax-administration/business-license-tax',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'king-county-food-permit',
+    name:         'King County Food Establishment Permit',
+    category:     'local',
+    description:
+      'Required for food service establishments operating in unincorporated King County, ' +
+      'Washington. Issued by Public Health — Seattle & King County. Most Seattle ' +
+      'establishments are regulated under the same Seattle-King County Public Health ' +
+      'permit system. Fees range from $200 to $1,000+ based on facility type and risk ' +
+      'category. Annual renewal required.',
+    officialUrl:  'https://www.kingcounty.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'food-truck', 'restaurant', 'catering'],
+  },
+
+  // ── ARIZONA — Maricopa County (Phoenix) ────────────────────────────────────
+
+  {
+    id:           'phoenix-business-license',
+    name:         'City of Phoenix Sales Tax License (Transaction Privilege Tax)',
+    category:     'local',
+    description:
+      'Phoenix imposes its own city-level Transaction Privilege Tax (TPT) in addition to ' +
+      'the state TPT. Businesses operating in Phoenix must obtain a City of Phoenix TPT ' +
+      'license through the Arizona Department of Revenue (ADOR) — the state and city ' +
+      'licenses are obtained together at aztaxes.gov. Annual renewal required ($12/year).',
+    officialUrl:  'https://www.phoenix.gov/pdd/bizlicense',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['retail', 'food-service', 'product-based'],
+  },
+
+  {
+    id:           'maricopa-food-permit',
+    name:         'Maricopa County Environmental Services Food Establishment Permit',
+    category:     'local',
+    description:
+      'Required for food service establishments in unincorporated Maricopa County, Arizona. ' +
+      'Issued by Maricopa County Environmental Services Department. Most food businesses ' +
+      'within incorporated cities (Phoenix, Scottsdale, Tempe, Mesa) are permitted by ' +
+      'those cities\' health/environmental services departments. Annual renewal required. ' +
+      'Fees range from $125 to $600+ based on risk and seating.',
+    officialUrl:  'https://www.maricopa.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'food-truck', 'restaurant', 'catering'],
+  },
+
+  // ── NEVADA — Clark County (Las Vegas) ──────────────────────────────────────
+
+  {
+    id:           'clark-county-business-license',
+    name:         'Clark County Business License',
+    category:     'local',
+    description:
+      'Required for businesses operating in unincorporated Clark County, Nevada. Clark ' +
+      'County encompasses the Las Vegas Strip, Henderson, North Las Vegas, and large ' +
+      'unincorporated areas. Apply through the Clark County Business License Center. ' +
+      'Fees range from $100 to several hundred dollars annually depending on business type. ' +
+      'Businesses within the City of Las Vegas require a separate City license.',
+    officialUrl:  'https://www.clarkcountynv.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'clark-county-health-permit',
+    name:         'Southern Nevada Health District Food Establishment Permit',
+    category:     'local',
+    description:
+      'Required for restaurants, food trucks, caterers, and food manufacturers operating ' +
+      'in the Las Vegas metropolitan area (Clark County). Issued by the Southern Nevada ' +
+      'Health District (SNHD). Fees range from $300 to $1,000+ based on facility type and ' +
+      'seating capacity. Requires pre-operational inspection before permit is issued. ' +
+      'Annual renewal required.',
+    officialUrl:  'https://www.southernnevadahealthdistrict.org/permits-and-licenses/food-safety/food-establishment-permitting/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'food-truck', 'restaurant', 'catering'],
+  },
+
+  // ── GEORGIA — Fulton County / Atlanta ──────────────────────────────────────
+
+  {
+    id:           'atlanta-business-license',
+    name:         'City of Atlanta Business License (Occupation Tax Certificate)',
+    category:     'local',
+    description:
+      'Required for businesses operating within the City of Atlanta. Apply through the ' +
+      'Atlanta Department of Finance. The Occupation Tax is based on the number of ' +
+      'employees and gross receipts. New businesses must also complete a zoning review. ' +
+      'Annual renewal required. Businesses in unincorporated Fulton County require a ' +
+      'separate Fulton County Business License.',
+    officialUrl:  'https://www.atlantaga.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'fulton-county-food-permit',
+    name:         'Fulton County Health Department Food Service Permit',
+    category:     'local',
+    description:
+      'Required for food service establishments operating in Fulton County, Georgia ' +
+      '(including Atlanta). Issued by the Fulton County Board of Health. Includes ' +
+      'restaurants, food trucks, caterers, and food processors. Fees range from $100 ' +
+      'to $500+ based on facility type and risk category. Annual renewal required after ' +
+      'passing an initial inspection.',
+    officialUrl:  'https://www.fultoncountyga.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'food-truck', 'restaurant', 'catering'],
+  },
+
+  // ── PENNSYLVANIA — Philadelphia ─────────────────────────────────────────────
+
+  {
+    id:           'philadelphia-business-license',
+    name:         'Philadelphia Business Privilege License',
+    category:     'local',
+    description:
+      'Required for all businesses operating in Philadelphia before starting operations. ' +
+      'Apply through the City of Philadelphia\'s Department of Revenue at phila.gov/revenue. ' +
+      'No annual fee for the license, but businesses must pay the Business Income and ' +
+      'Receipts Tax (BIRT) and Net Profits Tax annually. The license itself does not expire ' +
+      'but must be updated when business information changes.',
+    officialUrl:  'https://www.phila.gov/services/business-self-employment/register-your-business/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  null,
+    commonFor:    ['all'],
+  },
+
+  // ── OHIO — Cuyahoga County (Cleveland) ─────────────────────────────────────
+
+  {
+    id:           'cleveland-business-license',
+    name:         'City of Cleveland Business License',
+    category:     'local',
+    description:
+      'Cleveland requires business licenses for certain regulated industries including ' +
+      'food establishments, contractor businesses, and various service businesses. Apply ' +
+      'through the Cleveland Department of Building and Housing or the Division of ' +
+      'Assessments and Licenses. General retail and service businesses may not need a ' +
+      'separate city license beyond state registration.',
+    officialUrl:  'https://www.clevelandohio.gov/business',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'contractor', 'service'],
+  },
+
+  // ── MICHIGAN — Wayne County (Detroit) ──────────────────────────────────────
+
+  {
+    id:           'detroit-business-license',
+    name:         'City of Detroit Business License',
+    category:     'local',
+    description:
+      'Detroit requires licenses for regulated industries including food service, ' +
+      'entertainment venues, contractors, and auto dealers. Apply through the Detroit ' +
+      'Buildings, Safety Engineering and Environmental Department (BSEED) or the City ' +
+      'Clerk\'s office. Many businesses also need a Detroit City Income Tax registration. ' +
+      'Contact Detroit Business One Stop for guidance at detroitmi.gov.',
+    officialUrl:  'https://detroitmi.gov/business',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'contractor', 'entertainment'],
+  },
+
+  // ── COLORADO — Denver ──────────────────────────────────────────────────────
+
+  {
+    id:           'denver-business-license',
+    name:         'Denver Business License',
+    category:     'local',
+    description:
+      'Required for businesses operating in Denver. Denver is a consolidated city-county ' +
+      'with its own tax system. Many businesses need a Denver Retail Sales Tax license ' +
+      '(in addition to the state) and a General Business License. Apply through Denver ' +
+      'Business Licensing at denvergov.org/businesslicenses. Denver also collects its ' +
+      'own sales and use tax. Annual renewal required.',
+    officialUrl:  'https://denvergov.org/businesslicenses',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── TENNESSEE — Shelby County / Memphis ────────────────────────────────────
+
+  {
+    id:           'memphis-business-license',
+    name:         'City of Memphis / Shelby County Business License',
+    category:     'local',
+    description:
+      'Businesses operating in Memphis must obtain both a City of Memphis and a Shelby ' +
+      'County Business License from the Shelby County Clerk\'s office. The combined fee is ' +
+      'modest ($15–$50) and both are obtained simultaneously. Annual renewal required. ' +
+      'Food establishments also need a separate Shelby County Health Department permit.',
+    officialUrl:  'https://www.shelbycountytn.gov/departments/county-clerk/business-license',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── CONNECTICUT — Bridgeport / Fairfield County ────────────────────────────
+  // Note: Connecticut abolished county governments in 1960. There are no
+  // county-level licenses or permits. All local licensing is issued by the
+  // individual city or town. Fairfield County exists only as a geographic
+  // designation; the Naugatuck Valley Health District and Bridgeport Regional
+  // Business Council serve the region.
+
+  {
+    id:           'bridgeport-business-license',
+    name:         'City of Bridgeport Business License',
+    category:     'local',
+    description:
+      'Bridgeport, Connecticut requires a business license for most businesses operating ' +
+      'within the city. Apply through the City of Bridgeport City Clerk\'s Office or the ' +
+      'Office of Planning and Economic Development. There is no separate Fairfield County ' +
+      'business license — Connecticut abolished county governments in 1960. ' +
+      'All licensing is handled at the city or town level.',
+    officialUrl:  'https://www.bridgeportct.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'ct-local-health-food-permit',
+    name:         'Connecticut Local Health Department Food Service Permit',
+    category:     'local',
+    description:
+      'In Connecticut, food service establishment permits are issued by the local town or ' +
+      'city health department — not by Fairfield County (which has no government). ' +
+      'Bridgeport food permits are issued by the Bridgeport Health Department. ' +
+      'Other Fairfield County towns (Stamford, Greenwich, Norwalk, Danbury, Westport, etc.) ' +
+      'each have their own local health departments that issue food permits. ' +
+      'The CT Department of Public Health sets statewide standards at portal.ct.gov/dph.',
+    officialUrl:  'https://portal.ct.gov/dph',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'food-truck', 'restaurant', 'catering'],
+  },
+
+  // ── NORTH CAROLINA — Mecklenburg County (Charlotte) ────────────────────────
+
+  {
+    id:           'charlotte-business-privilege-license',
+    name:         'Charlotte Business Privilege License',
+    category:     'local',
+    description:
+      'Charlotte, North Carolina requires a Business Privilege License for most businesses ' +
+      'with a physical location or engaging in business within the city. Fee is $60 per ' +
+      'year. Apply through the Charlotte Business Privilege License office. Mecklenburg ' +
+      'County does not separately require a county business license for most businesses.',
+    officialUrl:  'https://www.charlottenc.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── FLORIDA — Hillsborough County (Tampa metro) ────────────────────────────
+
+  {
+    id:           'hillsborough-business-tax-receipt',
+    name:         'Hillsborough County Business Tax Receipt',
+    category:     'local',
+    description:
+      'Hillsborough County, Florida requires a Local Business Tax Receipt (formerly ' +
+      'Occupational License) for all businesses operating within unincorporated areas ' +
+      'of the county. Apply through the Hillsborough County Tax Collector. Businesses ' +
+      'within the city of Tampa also need a City of Tampa Business Tax Receipt.',
+    officialUrl:  'https://www.hillstax.org',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+    countyUrls:   { 'Hillsborough County': 'https://www.hillstax.org' },
+  },
+
+  {
+    id:           'hillsborough-food-permit',
+    name:         'Hillsborough County Food Service Permit',
+    category:     'local',
+    description:
+      'Hillsborough County, Florida requires a Food Service Permit through the Florida ' +
+      'Department of Health in Hillsborough County for all food establishments. This ' +
+      'covers restaurants, food trucks, caterers, mobile food vendors, and food ' +
+      'processing facilities.',
+    officialUrl:  'https://hillsborough.floridahealth.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Hillsborough County': 'https://hillsborough.floridahealth.gov' },
+  },
+
+  // ── FLORIDA — City of Tampa ────────────────────────────────────────────────
+
+  {
+    id:           'tampa-business-tax-receipt',
+    name:         'City of Tampa Local Business Tax Receipt',
+    category:     'local',
+    description:
+      'The City of Tampa, Florida requires a Local Business Tax Receipt for all ' +
+      'businesses with a physical location within Tampa city limits. Apply through ' +
+      'the City of Tampa Revenue and Finance Department. This is separate from the ' +
+      'Hillsborough County Business Tax Receipt.',
+    officialUrl:  'https://www.tampa.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── FLORIDA — Pinellas County (St. Petersburg / Clearwater) ───────────────
+
+  {
+    id:           'pinellas-business-tax-receipt',
+    name:         'Pinellas County Business Tax Receipt',
+    category:     'local',
+    description:
+      'Pinellas County, Florida requires a Local Business Tax Receipt for businesses ' +
+      'operating in unincorporated Pinellas County. Apply through the Pinellas County ' +
+      'Tax Collector. Businesses in St. Petersburg or Clearwater city limits also need ' +
+      'the respective city business tax receipt.',
+    officialUrl:  'https://www.pinellastaxcollector.org',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+    countyUrls:   { 'Pinellas County': 'https://www.pinellastaxcollector.org' },
+  },
+
+  {
+    id:           'pinellas-food-permit',
+    name:         'Pinellas County Food Service Permit',
+    category:     'local',
+    description:
+      'Pinellas County food establishments must obtain a Food Service Permit through ' +
+      'the Florida Department of Health in Pinellas County. This applies to restaurants, ' +
+      'food trucks, mobile food vendors, caterers, and similar operations.',
+    officialUrl:  'https://pinellas.floridahealth.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Pinellas County': 'https://pinellas.floridahealth.gov' },
+  },
+
+  // ── FLORIDA — Orange County (Orlando metro) ────────────────────────────────
+
+  {
+    id:           'orange-county-fl-business-tax-receipt',
+    name:         'Orange County (FL) Business Tax Receipt',
+    category:     'local',
+    description:
+      'Orange County, Florida requires a Local Business Tax Receipt for businesses ' +
+      'in unincorporated areas of the county. Apply through the Orange County Tax ' +
+      'Collector. Businesses within Orlando city limits also need a City of Orlando ' +
+      'Business Tax Receipt.',
+    officialUrl:  'https://www.octaxcol.com',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+    countyUrls:   { 'Orange County': 'https://www.octaxcol.com' },
+  },
+
+  {
+    id:           'orange-county-fl-food-permit',
+    name:         'Orange County (FL) Food Service Permit',
+    category:     'local',
+    description:
+      'Orange County, Florida food service businesses must obtain a permit through ' +
+      'the Florida Department of Health in Orange County. Covers restaurants, food ' +
+      'trucks, mobile food vendors, caterers, and food processing operations.',
+    officialUrl:  'https://orange.floridahealth.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Orange County': 'https://orange.floridahealth.gov' },
+  },
+
+  // ── FLORIDA — City of Orlando ──────────────────────────────────────────────
+
+  {
+    id:           'orlando-business-tax-receipt',
+    name:         'City of Orlando Business Tax Receipt',
+    category:     'local',
+    description:
+      'The City of Orlando, Florida requires a Business Tax Receipt for all businesses ' +
+      'operating within city limits. Apply through the City of Orlando Planning Department. ' +
+      'This is separate from the Orange County Business Tax Receipt required for ' +
+      'unincorporated areas.',
+    officialUrl:  'https://www.orlando.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── FLORIDA — Duval County / Jacksonville ─────────────────────────────────
+
+  {
+    id:           'jacksonville-business-tax-receipt',
+    name:         'Jacksonville / Duval County Business Tax Receipt',
+    category:     'local',
+    description:
+      'Jacksonville-Duval County, Florida has a consolidated city-county government. ' +
+      'Businesses must obtain a Local Business Tax Receipt through the Duval County ' +
+      'Tax Collector. Jacksonville is the largest city by area in the contiguous United ' +
+      'States and uses a consolidated government since 1968.',
+    officialUrl:  'https://www.coj.net',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+    countyUrls:   { 'Duval County': 'https://www.coj.net' },
+  },
+
+  {
+    id:           'jacksonville-food-permit',
+    name:         'Jacksonville / Duval County Food Service Permit',
+    category:     'local',
+    description:
+      'Food service businesses in Jacksonville/Duval County must obtain a permit through ' +
+      'the Florida Department of Health in Duval County. This covers restaurants, food ' +
+      'trucks, caterers, and all food handling establishments.',
+    officialUrl:  'https://duval.floridahealth.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Duval County': 'https://duval.floridahealth.gov' },
+  },
+
+  // ── FLORIDA — Sarasota County ──────────────────────────────────────────────
+
+  {
+    id:           'sarasota-county-business-tax-receipt',
+    name:         'Sarasota County Business Tax Receipt',
+    category:     'local',
+    description:
+      'Sarasota County, Florida requires a Local Business Tax Receipt for businesses ' +
+      'operating in unincorporated areas. Apply through the Sarasota County Tax Collector. ' +
+      'Businesses within the City of Sarasota also need a city business tax receipt.',
+    officialUrl:  'https://www.sarasotataxcollector.com',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+    countyUrls:   { 'Sarasota County': 'https://www.sarasotataxcollector.com' },
+  },
+
+  // ── FLORIDA — Collier County (Naples metro) ────────────────────────────────
+
+  {
+    id:           'collier-county-business-tax-receipt',
+    name:         'Collier County Business Tax Receipt',
+    category:     'local',
+    description:
+      'Collier County, Florida (Naples metro area) requires a Local Business Tax Receipt ' +
+      'for businesses in unincorporated areas. Apply through the Collier County Tax ' +
+      'Collector. Separate receipts may be required for businesses within the City of ' +
+      'Naples or Marco Island.',
+    officialUrl:  'https://www.colliertaxcollector.com',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+    countyUrls:   { 'Collier County': 'https://www.colliertaxcollector.com' },
+  },
+
+  // ── FLORIDA — Volusia County (Daytona Beach area) ─────────────────────────
+
+  {
+    id:           'volusia-county-business-tax-receipt',
+    name:         'Volusia County Business Tax Receipt',
+    category:     'local',
+    description:
+      'Volusia County, Florida (Daytona Beach area) requires a Local Business Tax Receipt ' +
+      'for businesses in unincorporated county areas. Apply through the Volusia County ' +
+      'Tax Collector. Businesses in Daytona Beach or other municipalities need city-level ' +
+      'business tax receipts as well.',
+    officialUrl:  'https://www.volusiachc.org',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+    countyUrls:   { 'Volusia County': 'https://www.volusiachc.org' },
+  },
+
+  // ── FLORIDA — Seminole County ──────────────────────────────────────────────
+
+  {
+    id:           'seminole-county-business-tax-receipt',
+    name:         'Seminole County Business Tax Receipt',
+    category:     'local',
+    description:
+      'Seminole County, Florida requires a Local Business Tax Receipt for businesses ' +
+      'in unincorporated areas of the county. Apply through the Seminole County Tax ' +
+      'Collector. The county borders Orange County to the north of Orlando.',
+    officialUrl:  'https://www.seminolecountytax.com',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+    countyUrls:   { 'Seminole County': 'https://www.seminolecountytax.com' },
+  },
+
+  // ── FLORIDA — Polk County (Lakeland area) ─────────────────────────────────
+
+  {
+    id:           'polk-county-business-tax-receipt',
+    name:         'Polk County Business Tax Receipt',
+    category:     'local',
+    description:
+      'Polk County, Florida (Lakeland/Winter Haven area) requires a Local Business Tax ' +
+      'Receipt for businesses in unincorporated areas. Apply through the Polk County ' +
+      'Tax Collector. Businesses in Lakeland, Winter Haven, or other municipalities ' +
+      'also need city-level business tax receipts.',
+    officialUrl:  'https://www.polktaxes.com',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+    countyUrls:   { 'Polk County': 'https://www.polktaxes.com' },
+  },
+
+  // ── FLORIDA — City of Miami ────────────────────────────────────────────────
+
+  {
+    id:           'miami-city-business-license',
+    name:         'City of Miami Business License (BTR)',
+    category:     'local',
+    description:
+      'The City of Miami, Florida requires a Local Business Tax Receipt (BTR) for all ' +
+      'businesses operating within city limits. Apply through the City of Miami Finance ' +
+      'Department. This is separate from the Miami-Dade County Business Tax Receipt ' +
+      'required for businesses in unincorporated Miami-Dade.',
+    officialUrl:  'https://www.miamigov.com',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── TEXAS — Dallas County / City of Dallas ────────────────────────────────
+
+  {
+    id:           'dallas-business-registration',
+    name:         'City of Dallas Business Registration',
+    category:     'local',
+    description:
+      'The City of Dallas, Texas does not require a general business license, but ' +
+      'certain business types require specific permits and registrations. Home-based ' +
+      'businesses need a Home Occupation Permit. Food businesses require a Dallas ' +
+      'Environmental Health permit. Contractors need city-specific licensing.',
+    officialUrl:  'https://dallascityhall.com',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'dallas-food-permit',
+    name:         'City of Dallas Food Establishment Permit',
+    category:     'local',
+    description:
+      'Food service businesses in Dallas, Texas must obtain a Food Establishment Permit ' +
+      'from the City of Dallas Environmental and Health Services Department. This covers ' +
+      'restaurants, food trucks (mobile food vendors), caterers, and food retail ' +
+      'establishments.',
+    officialUrl:  'https://dallascityhall.com',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+  },
+
+  // ── TEXAS — Austin / Travis County ────────────────────────────────────────
+
+  {
+    id:           'austin-business-registration',
+    name:         'City of Austin Business Registration',
+    category:     'local',
+    description:
+      'Austin, Texas does not require a general city business license. However, ' +
+      'most businesses must register with the Texas Secretary of State and obtain ' +
+      'a Texas Sales Tax Permit if selling taxable goods. Certain activities require ' +
+      'Austin-specific permits: food establishments, home occupations, contractors.',
+    officialUrl:  'https://www.austintexas.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'austin-food-permit',
+    name:         'Austin / Travis County Food Enterprise Permit',
+    category:     'local',
+    description:
+      'Food service businesses in Austin must obtain a Food Enterprise Permit from ' +
+      'Austin Public Health. This covers restaurants, mobile food vendors (food trucks), ' +
+      'caterers, temporary food events, and cottage food producers selling above ' +
+      'cottage food exemption thresholds.',
+    officialUrl:  'https://www.austintexas.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+  },
+
+  // ── TEXAS — San Antonio / Bexar County ────────────────────────────────────
+
+  {
+    id:           'san-antonio-business-registration',
+    name:         'City of San Antonio Business Registration',
+    category:     'local',
+    description:
+      'San Antonio, Texas does not require a general city-wide business license. ' +
+      'Businesses must register with the State of Texas and obtain relevant state ' +
+      'permits. Food establishments, contractors, and childcare providers need ' +
+      'specific San Antonio/Bexar County permits and inspections.',
+    officialUrl:  'https://www.sanantonio.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'san-antonio-food-permit',
+    name:         'San Antonio Metropolitan Health Food Establishment Permit',
+    category:     'local',
+    description:
+      'Food establishments in San Antonio and Bexar County must obtain a permit from ' +
+      'the San Antonio Metropolitan Health District. This covers restaurants, food ' +
+      'trucks, mobile food vendors, caterers, and temporary food events.',
+    officialUrl:  'https://www.sanantonio.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+  },
+
+  // ── TEXAS — Fort Worth / Tarrant County ───────────────────────────────────
+
+  {
+    id:           'fort-worth-business-registration',
+    name:         'City of Fort Worth Business Registration',
+    category:     'local',
+    description:
+      'Fort Worth, Texas does not require a general city business license. Businesses ' +
+      'in Tarrant County should register with the State of Texas. Specific businesses ' +
+      'such as food establishments, home-based businesses, and contractors need ' +
+      'Fort Worth/Tarrant County permits.',
+    officialUrl:  'https://www.fortworthtexas.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── TEXAS — El Paso County ────────────────────────────────────────────────
+
+  {
+    id:           'el-paso-business-registration',
+    name:         'City of El Paso Business Registration',
+    category:     'local',
+    description:
+      'El Paso, Texas businesses must register with the City of El Paso Development ' +
+      'Services Department for applicable permits. Food businesses require a Food ' +
+      'Establishment Permit from El Paso Public Health. Businesses must also register ' +
+      'with the State of Texas.',
+    officialUrl:  'https://www.elpasotexas.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── CALIFORNIA — San Diego County / City of San Diego ─────────────────────
+
+  {
+    id:           'san-diego-business-tax-certificate',
+    name:         'City of San Diego Business Tax Certificate',
+    category:     'local',
+    description:
+      'The City of San Diego, California requires a Business Tax Certificate for all ' +
+      'businesses operating within city limits. Apply through the San Diego City ' +
+      'Treasurer. Home-based businesses in San Diego also need a Home Occupation ' +
+      'Permit in addition to the Business Tax Certificate.',
+    officialUrl:  'https://www.sandiego.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'san-diego-county-food-permit',
+    name:         'San Diego County Food Facility Permit',
+    category:     'local',
+    description:
+      'San Diego County requires a Food Facility Permit from the County Department ' +
+      'of Environmental Health for all food establishments, including restaurants, ' +
+      'food trucks, caterers, and food retail. City of San Diego businesses also ' +
+      'need this county permit.',
+    officialUrl:  'https://www.sandiegocounty.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'San Diego County': 'https://www.sandiegocounty.gov' },
+  },
+
+  // ── CALIFORNIA — Orange County ─────────────────────────────────────────────
+
+  {
+    id:           'orange-county-ca-food-permit',
+    name:         'Orange County (CA) Health Care Agency Food Permit',
+    category:     'local',
+    description:
+      'Orange County, California requires a food facility permit from the Orange County ' +
+      'Health Care Agency for all food establishments, including restaurants, food trucks, ' +
+      'caterers, mobile food vendors, and food retailers. Cities within Orange County may ' +
+      'also require their own business licenses.',
+    officialUrl:  'https://www.ochealthinfo.com',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Orange County': 'https://www.ochealthinfo.com' },
+  },
+
+  // ── CALIFORNIA — Santa Clara County (San Jose / Silicon Valley) ────────────
+
+  {
+    id:           'san-jose-business-tax-certificate',
+    name:         'City of San Jose Business Tax Certificate',
+    category:     'local',
+    description:
+      'San Jose, California requires a Business Tax Certificate for all businesses ' +
+      'operating within city limits. Apply through the San Jose Finance Department. ' +
+      'Santa Clara County businesses in unincorporated areas must check with the ' +
+      'county for applicable permit requirements.',
+    officialUrl:  'https://www.sanjoseca.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'santa-clara-county-food-permit',
+    name:         'Santa Clara County Food Facility Permit',
+    category:     'local',
+    description:
+      'Santa Clara County, California requires a food facility permit from the County ' +
+      'Department of Environmental Health for restaurants, food trucks, caterers, and ' +
+      'food retailers. This covers San Jose and all unincorporated Santa Clara County ' +
+      'food operations.',
+    officialUrl:  'https://www.sccgov.org',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Santa Clara County': 'https://www.sccgov.org' },
+  },
+
+  // ── CALIFORNIA — Alameda County (Oakland / Berkeley) ──────────────────────
+
+  {
+    id:           'oakland-business-tax-certificate',
+    name:         'City of Oakland Business Tax Certificate',
+    category:     'local',
+    description:
+      'Oakland, California requires a Business Tax Certificate from the City of Oakland ' +
+      'Finance Department for all businesses operating within the city. Rates vary by ' +
+      'business type and gross receipts. Berkeley and other Alameda County cities have ' +
+      'their own separate business license requirements.',
+    officialUrl:  'https://www.oaklandca.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'alameda-county-food-permit',
+    name:         'Alameda County Food Facility Permit',
+    category:     'local',
+    description:
+      'Alameda County, California food establishments must obtain a permit from the ' +
+      'Alameda County Environmental Health Department. This applies to restaurants, ' +
+      'food trucks, mobile food facilities, caterers, and food retailers throughout ' +
+      'the county including Oakland, Berkeley, and Fremont.',
+    officialUrl:  'https://www.acgov.org',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Alameda County': 'https://www.acgov.org' },
+  },
+
+  // ── CALIFORNIA — Sacramento County ────────────────────────────────────────
+
+  {
+    id:           'sacramento-city-business-license',
+    name:         'City of Sacramento Business License',
+    category:     'local',
+    description:
+      'The City of Sacramento, California requires a Business Operation Tax Certificate ' +
+      'for all businesses operating within city limits. Apply through the City of ' +
+      'Sacramento Finance Department. Sacramento County may have additional requirements ' +
+      'for businesses in unincorporated areas.',
+    officialUrl:  'https://www.cityofsacramento.org',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'sacramento-county-food-permit',
+    name:         'Sacramento County Environmental Health Food Permit',
+    category:     'local',
+    description:
+      'Food establishments in Sacramento County must obtain a Retail Food Facility ' +
+      'Permit from the Sacramento County Environmental Management Department. This ' +
+      'covers restaurants, food trucks, caterers, temporary food facilities, and ' +
+      'food retail throughout Sacramento and unincorporated areas.',
+    officialUrl:  'https://www.saccounty.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Sacramento County': 'https://www.saccounty.gov' },
+  },
+
+  // ── CALIFORNIA — Riverside County ─────────────────────────────────────────
+
+  {
+    id:           'riverside-county-food-permit',
+    name:         'Riverside County Food Facility Permit',
+    category:     'local',
+    description:
+      'Riverside County, California food establishments must obtain a permit from the ' +
+      'Riverside County Department of Environmental Health. This applies to restaurants, ' +
+      'food trucks, caterers, mobile food facilities, and food retailers throughout ' +
+      'the Inland Empire.',
+    officialUrl:  'https://www.rivcoeh.org',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Riverside County': 'https://www.rivcoeh.org' },
+  },
+
+  // ── CALIFORNIA — San Bernardino County ────────────────────────────────────
+
+  {
+    id:           'san-bernardino-county-food-permit',
+    name:         'San Bernardino County Food Facility Permit',
+    category:     'local',
+    description:
+      'San Bernardino County, California requires a food facility permit from the ' +
+      'County Environmental Health Services for all food establishments. This covers ' +
+      'restaurants, food trucks, mobile food vendors, caterers, and food retailers ' +
+      'in the Inland Empire region.',
+    officialUrl:  'https://www.sbcounty.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'San Bernardino County': 'https://www.sbcounty.gov' },
+  },
+
+  // ── NEW YORK — Nassau County ───────────────────────────────────────────────
+
+  {
+    id:           'nassau-county-business-license',
+    name:         'Nassau County Business License / Permit',
+    category:     'local',
+    description:
+      'Nassau County, New York has no universal business license, but certain business ' +
+      'types require county-level permits and inspections. Home-based businesses, food ' +
+      'establishments, contractors, and health-related businesses typically need Nassau ' +
+      'County permits. Incorporated villages and towns have separate licensing.',
+    officialUrl:  'https://www.nassaucountyny.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+    countyUrls:   { 'Nassau County': 'https://www.nassaucountyny.gov' },
+  },
+
+  {
+    id:           'nassau-county-food-permit',
+    name:         'Nassau County Food Establishment Permit',
+    category:     'local',
+    description:
+      'Nassau County, New York food establishments require a permit from the Nassau ' +
+      'County Department of Health. This covers restaurants, food trucks, caterers, ' +
+      'mobile food vendors, and food retail establishments operating in Nassau County.',
+    officialUrl:  'https://www.nassaucountyny.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Nassau County': 'https://www.nassaucountyny.gov' },
+  },
+
+  // ── NEW YORK — Suffolk County ──────────────────────────────────────────────
+
+  {
+    id:           'suffolk-county-food-permit',
+    name:         'Suffolk County Food Establishment Permit',
+    category:     'local',
+    description:
+      'Suffolk County, New York food service businesses must obtain a permit from the ' +
+      'Suffolk County Department of Health Services. This covers restaurants, food ' +
+      'trucks, caterers, mobile food vendors, and food retail establishments in the ' +
+      'Long Island region.',
+    officialUrl:  'https://www.suffolkcountyny.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Suffolk County': 'https://www.suffolkcountyny.gov' },
+  },
+
+  // ── NEW YORK — Westchester County ─────────────────────────────────────────
+
+  {
+    id:           'westchester-county-food-permit',
+    name:         'Westchester County Food Service Permit',
+    category:     'local',
+    description:
+      'Westchester County, New York food establishments must obtain a permit from the ' +
+      'Westchester County Department of Health. This covers restaurants, food trucks, ' +
+      'caterers, mobile food vendors, and food retail in Westchester County.',
+    officialUrl:  'https://health.westchestergov.com',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Westchester County': 'https://health.westchestergov.com' },
+  },
+
+  // ── NEW YORK — Erie County (Buffalo) ──────────────────────────────────────
+
+  {
+    id:           'buffalo-business-license',
+    name:         'City of Buffalo Business License',
+    category:     'local',
+    description:
+      'Buffalo, New York businesses may require a city-issued license depending on ' +
+      'business type. Apply through the City of Buffalo Department of Permit and ' +
+      'Inspection Services. Erie County may have additional requirements. Businesses ' +
+      'must also register with New York State.',
+    officialUrl:  'https://www.buffalony.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+    countyUrls:   { 'Erie County': 'https://www2.erie.gov' },
+  },
+
+  {
+    id:           'erie-county-food-permit',
+    name:         'Erie County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Erie County, New York food service businesses must obtain a permit from the ' +
+      'Erie County Department of Health. This covers restaurants, food trucks, caterers, ' +
+      'mobile food vendors, and food retail establishments in the Buffalo metro area.',
+    officialUrl:  'https://www2.erie.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Erie County': 'https://www2.erie.gov' },
+  },
+
+  // ── ILLINOIS — DuPage County ───────────────────────────────────────────────
+
+  {
+    id:           'dupage-county-food-permit',
+    name:         'DuPage County Food Service Permit',
+    category:     'local',
+    description:
+      'DuPage County, Illinois food establishments must obtain a permit from the ' +
+      'DuPage County Health Department. This covers restaurants, food trucks, caterers, ' +
+      'mobile food vendors, and food retail in the western Chicago suburban area, ' +
+      'including Naperville, Aurora, and Wheaton.',
+    officialUrl:  'https://www.dupagehealth.org',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'DuPage County': 'https://www.dupagehealth.org' },
+  },
+
+  // ── GEORGIA — DeKalb County ────────────────────────────────────────────────
+
+  {
+    id:           'dekalb-county-business-license',
+    name:         'DeKalb County Business License',
+    category:     'local',
+    description:
+      'DeKalb County, Georgia requires a Business License for all businesses operating ' +
+      'within unincorporated areas of the county. Apply through the DeKalb County ' +
+      'Department of Planning and Sustainability. Businesses within incorporated cities ' +
+      'like Decatur also need city-level business licenses.',
+    officialUrl:  'https://www.dekalbcountyga.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+    countyUrls:   { 'DeKalb County': 'https://www.dekalbcountyga.gov' },
+  },
+
+  {
+    id:           'dekalb-county-food-permit',
+    name:         'DeKalb County Food Service Permit',
+    category:     'local',
+    description:
+      'DeKalb County, Georgia food establishments must obtain a Food Service Permit ' +
+      'from the DeKalb County Board of Health. This covers restaurants, food trucks, ' +
+      'caterers, mobile food vendors, and food retail in the Atlanta metro eastern suburbs.',
+    officialUrl:  'https://www.dekalbcountyga.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'DeKalb County': 'https://www.dekalbcountyga.gov' },
+  },
+
+  // ── GEORGIA — Gwinnett County ──────────────────────────────────────────────
+
+  {
+    id:           'gwinnett-county-business-license',
+    name:         'Gwinnett County Business License',
+    category:     'local',
+    description:
+      'Gwinnett County, Georgia requires a Business License for businesses in ' +
+      'unincorporated areas. Apply through the Gwinnett County Department of Planning ' +
+      'and Development. Incorporated cities like Lawrenceville require separate city ' +
+      'business licenses.',
+    officialUrl:  'https://www.gwinnettcounty.com',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+    countyUrls:   { 'Gwinnett County': 'https://www.gwinnettcounty.com' },
+  },
+
+  {
+    id:           'gwinnett-county-food-permit',
+    name:         'Gwinnett County Food Service Permit',
+    category:     'local',
+    description:
+      'Gwinnett County, Georgia food establishments must obtain a Food Service Permit ' +
+      'from the Gwinnett County Board of Health. This covers restaurants, food trucks, ' +
+      'caterers, mobile food vendors, and food retail in the northeast Atlanta suburbs.',
+    officialUrl:  'https://www.gwinnettcounty.com',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Gwinnett County': 'https://www.gwinnettcounty.com' },
+  },
+
+  // ── GEORGIA — Cobb County ──────────────────────────────────────────────────
+
+  {
+    id:           'cobb-county-business-license',
+    name:         'Cobb County Business License',
+    category:     'local',
+    description:
+      'Cobb County, Georgia requires a Business License for all businesses operating ' +
+      'in unincorporated areas. Apply through Cobb County Community Development. ' +
+      'Cities within Cobb County, such as Marietta, have separate city business ' +
+      'license requirements.',
+    officialUrl:  'https://www.cobbcounty.org',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+    countyUrls:   { 'Cobb County': 'https://www.cobbcounty.org' },
+  },
+
+  {
+    id:           'cobb-county-food-permit',
+    name:         'Cobb County Food Service Permit',
+    category:     'local',
+    description:
+      'Cobb County, Georgia food establishments must obtain a Food Service Permit from ' +
+      'the Cobb & Douglas Public Health Department. This covers restaurants, food trucks, ' +
+      'caterers, and food retail in the northwest Atlanta suburbs including Marietta.',
+    officialUrl:  'https://www.cobbcounty.org',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Cobb County': 'https://www.cobbcounty.org' },
+  },
+
+  // ── OREGON — Portland / Multnomah County ──────────────────────────────────
+
+  {
+    id:           'portland-business-license',
+    name:         'Portland Business License',
+    category:     'local',
+    description:
+      'Portland, Oregon requires a Business License from the City of Portland Revenue ' +
+      'Division for all businesses with gross receipts in Portland. The license fee is ' +
+      'based on annual gross receipts. Multnomah County also has a separate business ' +
+      'income tax for businesses and self-employed individuals.',
+    officialUrl:  'https://www.portland.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'multnomah-county-food-permit',
+    name:         'Multnomah County Food Handler Permit',
+    category:     'local',
+    description:
+      'Portland/Multnomah County, Oregon food establishments must obtain a Food Handler ' +
+      'Permit from Multnomah County Environmental Health. This covers restaurants, food ' +
+      'carts, food trucks, caterers, and all food service operations in the Portland metro.',
+    officialUrl:  'https://www.multco.us',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Multnomah County': 'https://www.multco.us' },
+  },
+
+  // ── NORTH CAROLINA — Wake County (Raleigh) ────────────────────────────────
+
+  {
+    id:           'raleigh-business-license',
+    name:         'City of Raleigh Business License',
+    category:     'local',
+    description:
+      'Raleigh, North Carolina requires businesses to register with the city and obtain ' +
+      'applicable permits. While NC does not have a state-level business license, Wake ' +
+      'County and the City of Raleigh require specific permits for food establishments, ' +
+      'contractors, and home occupations.',
+    officialUrl:  'https://raleighnc.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'wake-county-food-permit',
+    name:         'Wake County Food Service Permit',
+    category:     'local',
+    description:
+      'Wake County, North Carolina food establishments must obtain a permit from the ' +
+      'Wake County Environmental Services. This covers restaurants, food trucks, caterers, ' +
+      'mobile food vendors, and food retail in Raleigh and surrounding Wake County.',
+    officialUrl:  'https://www.wakegov.com',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Wake County': 'https://www.wakegov.com' },
+  },
+
+  // ── MINNESOTA — Minneapolis / Hennepin County ──────────────────────────────
+
+  {
+    id:           'minneapolis-business-license',
+    name:         'City of Minneapolis Business License',
+    category:     'local',
+    description:
+      'Minneapolis, Minnesota requires a business license for certain business types. ' +
+      'Apply through the Minneapolis Community Planning and Economic Development ' +
+      'department. Food businesses, home-based businesses, and certain service businesses ' +
+      'require specific city-issued licenses.',
+    officialUrl:  'https://www.minneapolismn.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'hennepin-county-food-permit',
+    name:         'Minneapolis / Hennepin County Food Establishment License',
+    category:     'local',
+    description:
+      'Food establishments in Minneapolis are licensed by the City of Minneapolis ' +
+      'Environmental Health. Businesses in unincorporated Hennepin County work with ' +
+      'Hennepin County Public Health. This covers restaurants, food trucks, caterers, ' +
+      'mobile food vendors, and food retail.',
+    officialUrl:  'https://www.minneapolismn.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Hennepin County': 'https://www.hennepin.us' },
+  },
+
+  // ── PENNSYLVANIA — Pittsburgh / Allegheny County ──────────────────────────
+
+  {
+    id:           'pittsburgh-business-license',
+    name:         'City of Pittsburgh Business License',
+    category:     'local',
+    description:
+      'Pittsburgh, Pennsylvania businesses must obtain applicable city permits and ' +
+      'licenses through the City of Pittsburgh Department of Permits, Licenses, and ' +
+      'Inspections. Food establishments, contractors, and home-based businesses have ' +
+      'specific licensing requirements.',
+    officialUrl:  'https://pittsburghpa.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'allegheny-county-food-permit',
+    name:         'Allegheny County Food Establishment Permit',
+    category:     'local',
+    description:
+      'Allegheny County, Pennsylvania food establishments must obtain a permit from the ' +
+      'Allegheny County Health Department. This covers restaurants, food trucks, caterers, ' +
+      'mobile food vendors, and food retail in Pittsburgh and surrounding Allegheny County.',
+    officialUrl:  'https://www.alleghenycounty.us',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Allegheny County': 'https://www.alleghenycounty.us' },
+  },
+
+  // ── UTAH — Salt Lake County / Salt Lake City ───────────────────────────────
+
+  {
+    id:           'salt-lake-city-business-license',
+    name:         'Salt Lake City Business License',
+    category:     'local',
+    description:
+      'Salt Lake City, Utah requires a Business License for all businesses operating ' +
+      'within city limits. Apply through the Salt Lake City Business Licensing Division. ' +
+      'Salt Lake County businesses in unincorporated areas must obtain county permits.',
+    officialUrl:  'https://www.slc.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'salt-lake-county-food-permit',
+    name:         'Salt Lake County Food Service Permit',
+    category:     'local',
+    description:
+      'Food establishments in Salt Lake County, Utah must obtain a permit from the ' +
+      'Salt Lake County Health Department. This covers restaurants, food trucks, caterers, ' +
+      'mobile food vendors, and food retail throughout Salt Lake City and the county.',
+    officialUrl:  'https://slco.org',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Salt Lake County': 'https://slco.org' },
+  },
+
+  // ── LOUISIANA — New Orleans / Orleans Parish ───────────────────────────────
+
+  {
+    id:           'new-orleans-business-license',
+    name:         'City of New Orleans Business License',
+    category:     'local',
+    description:
+      'New Orleans, Louisiana (Orleans Parish) requires a Business License from the ' +
+      'New Orleans Revenue Bureau for all businesses operating within the city. ' +
+      'Food establishments also require a separate permit from the Louisiana Department ' +
+      'of Health. New Orleans has a unique license structure for tourism-related businesses.',
+    officialUrl:  'https://www.nola.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'new-orleans-food-permit',
+    name:         'New Orleans Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food establishments in New Orleans must obtain a permit from the Louisiana ' +
+      'Department of Health, Office of Public Health. This covers restaurants, food ' +
+      'trucks, caterers, mobile food vendors, and food retail. New Orleans is famous ' +
+      'for its food culture and has active food truck and restaurant permitting.',
+    officialUrl:  'https://www.nola.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+  },
+
+  // ── NEW MEXICO — Albuquerque / Bernalillo County ───────────────────────────
+
+  {
+    id:           'albuquerque-business-registration',
+    name:         'City of Albuquerque Business Registration',
+    category:     'local',
+    description:
+      'Albuquerque, New Mexico businesses must register with the City of Albuquerque ' +
+      'and obtain applicable licenses through the City\'s Planning Department. Food ' +
+      'establishments, contractors, and home-based businesses require specific ' +
+      'Albuquerque/Bernalillo County permits.',
+    officialUrl:  'https://www.cabq.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'bernalillo-county-food-permit',
+    name:         'Bernalillo County / Albuquerque Food Service Permit',
+    category:     'local',
+    description:
+      'Food establishments in Albuquerque and Bernalillo County, New Mexico must obtain ' +
+      'a permit from the Bernalillo County Environmental Health Department. This covers ' +
+      'restaurants, food trucks, caterers, mobile food vendors, and food retail.',
+    officialUrl:  'https://www.bernco.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Bernalillo County': 'https://www.bernco.gov' },
+  },
+
+  // ── MARYLAND — Baltimore City / Baltimore County ───────────────────────────
+
+  {
+    id:           'baltimore-city-business-license',
+    name:         'Baltimore City Business License',
+    category:     'local',
+    description:
+      'Baltimore City, Maryland (an independent city, not part of Baltimore County) ' +
+      'requires a Business License from the Maryland State Department of Assessments ' +
+      'and Taxation. Food establishments also need city health permits. Note: Baltimore ' +
+      'City and Baltimore County are separate jurisdictions.',
+    officialUrl:  'https://www.baltimorecity.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'baltimore-city-food-permit',
+    name:         'Baltimore City Food Service Permit',
+    category:     'local',
+    description:
+      'Food establishments in Baltimore City must obtain a permit from the Baltimore ' +
+      'City Health Department. This covers restaurants, food trucks, caterers, mobile ' +
+      'food vendors, and food retail within Baltimore City limits.',
+    officialUrl:  'https://www.baltimorecity.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+  },
+
+  // ── VIRGINIA — Richmond / Henrico County ──────────────────────────────────
+
+  {
+    id:           'richmond-business-license',
+    name:         'City of Richmond Business License (BPOL)',
+    category:     'local',
+    description:
+      'Richmond, Virginia requires a Business Professional and Occupational License ' +
+      '(BPOL) for businesses with gross receipts over $100,000. Apply through the ' +
+      'City of Richmond Department of Finance. The fee is based on gross receipts. ' +
+      'Henrico County has a separate BPOL for businesses in unincorporated areas.',
+    officialUrl:  'https://www.rva.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'richmond-food-permit',
+    name:         'City of Richmond Food Establishment Permit',
+    category:     'local',
+    description:
+      'Food establishments in Richmond, Virginia must obtain a Food Establishment Permit ' +
+      'from the Richmond and Henrico Health District. This covers restaurants, food trucks, ' +
+      'caterers, mobile food vendors, and food retail in Richmond and Henrico County.',
+    officialUrl:  'https://www.vdh.virginia.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+  },
+
+  // ── TENNESSEE — Memphis / Shelby County ───────────────────────────────────
+
+  {
+    id:           'memphis-business-license',
+    name:         'Memphis Business License / Tax',
+    category:     'local',
+    description:
+      'Memphis, Tennessee businesses must obtain a City of Memphis business tax ' +
+      'registration and pay the Tennessee state business tax. Businesses in Shelby ' +
+      'County outside city limits work with Shelby County. Food establishments need ' +
+      'additional health permits from the Shelby County Health Department.',
+    officialUrl:  'https://www.memphistn.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'shelby-county-food-permit',
+    name:         'Shelby County Health Department Food Permit',
+    category:     'local',
+    description:
+      'Food establishments in Memphis and Shelby County, Tennessee must obtain a ' +
+      'permit from the Shelby County Health Department. This covers restaurants, ' +
+      'food trucks, caterers, mobile food vendors, and food retail throughout the ' +
+      'Memphis metro area.',
+    officialUrl:  'https://www.shelbytnhealth.com',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Shelby County': 'https://www.shelbytnhealth.com' },
+  },
+
+  // ── TEXAS — Lubbock / Corpus Christi ──────────────────────────────────────
+
+  {
+    id:           'lubbock-business-registration',
+    name:         'City of Lubbock Business Registration',
+    category:     'local',
+    description:
+      'Lubbock, Texas businesses must obtain applicable permits through the City of ' +
+      'Lubbock. Food establishments require a Food Establishment Permit from the City ' +
+      'of Lubbock Environmental Health Division. Businesses must also register with ' +
+      'the State of Texas.',
+    officialUrl:  'https://www.ci.lubbock.tx.us',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'corpus-christi-business-registration',
+    name:         'City of Corpus Christi Business Registration',
+    category:     'local',
+    description:
+      'Corpus Christi, Texas businesses must obtain applicable permits through the ' +
+      'City of Corpus Christi Development Services. Food establishments require a Food ' +
+      'Establishment Permit from the Corpus Christi-Nueces County Public Health District. ' +
+      'State registration with the Texas Secretary of State is also required.',
+    officialUrl:  'https://www.cctexas.com',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ALL_FORMS — unified lookup combining FORM_TEMPLATES, FEDERAL_FORMS, STATE_FORMS,
+//             STATE_FORMS_ALL_50, and LOCAL_FORMS (v24)
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// FORM_TEMPLATES    — full FormTemplate shape; drives the in-app guided wizard.
+// FEDERAL_FORMS     — FederalFormEntry; federal reference forms with download links.
+// STATE_FORMS       — StateFormEntry; generic cross-state forms.
+// STATE_FORMS_ALL_50— StateFormEntry; state-specific forms for all 50 states + DC (v24).
+// LOCAL_FORMS       — StateFormEntry (category:'local'); county and city-level forms (v24).
+//
+// ALL_FORMS lets callers look up any form by ID without knowing its collection.
+// The value type is a union; narrow with isFederalForm() / isStateForm().
+//
+// Spread order: FORM_TEMPLATES last so full FormTemplate wins over lighter library
+// entries when the same formId exists in multiple collections.
+
+export type AnyForm = FormTemplate | FederalFormEntry | StateFormEntry;
+
+// v29 — Fix Missing EIN Application (SS-4) in Forms Library
+//
+// Root cause: FORM_TEMPLATES was spread last, so any wizard FormTemplate whose id
+// collides with a FEDERAL_FORMS or STATE_FORMS entry (e.g. 'ein-application')
+// silently overwrites it.  FormTemplate has no .category field, so isFederalForm()
+// returns false and the entry is filtered out of the Forms Library entirely.
+//
+// Fix: spread FORM_TEMPLATES first (lowest precedence), then the typed library
+// collections on top.  The checklist wizard still works because getLocaleFormTemplate()
+// and FORM_TEMPLATES are accessed directly, not through ALL_FORMS.
+//
+// Precedence (highest → lowest):
+//   LOCAL_FORMS > STATE_FORMS_ALL_50 > STATE_FORMS > FEDERAL_FORMS > FORM_TEMPLATES
+
+export const ALL_FORMS: Record<string, AnyForm> = {
+  // Wizard templates at lowest precedence — overridden by any typed library entry
+  // with the same ID (e.g. 'ein-application', 'mobile-food-vendor').
+  ...FORM_TEMPLATES,
+  // Typed library entries win — they carry .category which the type guards require.
+  ...Object.fromEntries(FEDERAL_FORMS.map(f => [f.id, f])),
+  ...Object.fromEntries(STATE_FORMS.map(f => [f.id, f])),
+  ...Object.fromEntries(STATE_FORMS_ALL_50.map(f => [f.id, f])),
+  ...Object.fromEntries(LOCAL_FORMS.map(f => [f.id, f])),
+};
+
+/** Type guard — returns true when the form is a FederalFormEntry. */
+export function isFederalForm(form: AnyForm): form is FederalFormEntry {
+  return (form as FederalFormEntry).category === 'federal';
+}
+
+/** Type guard — returns true when the form is a StateFormEntry. */
+export function isStateForm(form: AnyForm): form is StateFormEntry {
+  const cat = (form as StateFormEntry).category;
+  return cat === 'state' || cat === 'local';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// v21 — Download Tracking: localStorage-based form download history
+// ─────────────────────────────────────────────────────────────────────────────
+
+const DOWNLOADED_FORMS_KEY = "downloadedForms";
+
+/** Persist a form ID to the localStorage download history. No-op on server. */
+export function markFormAsDownloaded(formId: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    const existing = JSON.parse(localStorage.getItem(DOWNLOADED_FORMS_KEY) ?? "[]") as string[];
+    if (!existing.includes(formId)) {
+      localStorage.setItem(DOWNLOADED_FORMS_KEY, JSON.stringify([...existing, formId]));
+    }
+  } catch { /* localStorage unavailable */ }
+}
+
+/** Returns true if the form has been downloaded in this browser. Always false on server. */
+export function hasDownloadedForm(formId: string): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const existing = JSON.parse(localStorage.getItem(DOWNLOADED_FORMS_KEY) ?? "[]") as string[];
+    return existing.includes(formId);
+  } catch { return false; }
+}
+
+/** Returns the full Set of downloaded form IDs from localStorage. */
+export function getDownloadedFormIds(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const existing = JSON.parse(localStorage.getItem(DOWNLOADED_FORMS_KEY) ?? "[]") as string[];
+    return new Set(existing);
+  } catch { return new Set(); }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// v26 — Smart Form Recommendations
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Returns up to 8 form IDs in priority order, personalised to the caller's
+ * business context.  All returned IDs are guaranteed to exist in ALL_FORMS.
+ *
+ * Priority layers (highest → lowest):
+ *   1. Universal federal forms  (EIN, BOI, I-9 — almost every business)
+ *   2. State-specific forms     (sales tax, annual report, DBA) for the given state
+ *   3. Local/county forms       matching the county slug
+ *   4. Industry-specific forms  keyed on businessType keyword matches
+ *   5. New-business essentials  (DBA, sole-prop registration)
+ */
+export function getRecommendedForms(
+  businessType?: string,
+  state?: string,          // 2-letter abbreviation, e.g. "FL"
+  county?: string,         // partial county/city name, e.g. "Palm Beach" or "Miami-Dade"
+  isNewBusiness?: boolean,
+): string[] {
+  const results: string[] = [];
+  const add = (...ids: string[]) => {
+    for (const id of ids) {
+      if (!results.includes(id) && id in ALL_FORMS) results.push(id);
+    }
+  };
+
+  // ── 1. Universal federal forms ─────────────────────────────────────────────
+  // NOTE: EIN form ID is "ein-application" (not "ss-4") — ss-4 is the form number.
+  add("ein-application", "boi-report", "i-9");
+
+  // ── 2. State-specific forms ────────────────────────────────────────────────
+  if (state) {
+    const st = state.toUpperCase();
+    const prefix = st.toLowerCase();
+
+    // Sales tax / gross receipts registration (where applicable)
+    const NO_SALES_TAX_STATES = new Set(["AK", "DE", "MT", "NH", "OR"]);
+    if (!NO_SALES_TAX_STATES.has(st)) {
+      // Special cases first
+      if (st === "HI") add("hi-get-license");
+      else if (st === "NM") add("nm-gross-receipts-tax");
+      else add(`${prefix}-sales-tax-permit`);
+    }
+
+    // Annual report / franchise tax (state-specific IDs)
+    const annualReportIds: Record<string, string> = {
+      FL: "fl-annual-report",  TX: "tx-franchise-tax",   CA: "ca-statement-of-info",
+      NY: "ny-biennial-statement", IL: "il-annual-report", GA: "ga-annual-registration",
+      WA: "wa-annual-report",  CO: "co-periodic-report",  AZ: "az-annual-report",
+      NV: "nv-annual-list",    OH: "oh-biennial-report",  VA: "va-annual-report",
+      NC: "nc-annual-report",  NJ: "nj-annual-report",    MA: "ma-annual-report",
+      PA: "pa-decennial-report", MI: "mi-annual-statement", MN: "mn-annual-renewal",
+      IN: "in-business-entity-report", MO: "mo-annual-registration", MD: "md-personal-property-return",
+      WI: "wi-annual-report",  TN: "tn-annual-report",    SC: "sc-annual-report",
+      KY: "ky-annual-report",  AL: "al-annual-report",    LA: "la-annual-report",
+      OK: "ok-annual-certificate", CT: "ct-annual-report", AR: "ar-franchise-tax",
+      UT: "ut-annual-renewal", IA: "ia-biennial-report",  MS: "ms-annual-report",
+      KS: "ks-annual-report",  NE: "ne-biennial-report",  ID: "id-annual-report",
+      WV: "wv-annual-report",  HI: "hi-annual-report",    ME: "me-annual-report",
+      NH: "nh-annual-report",  MT: "mt-annual-report",    RI: "ri-annual-report",
+      DE: "de-franchise-tax",  AK: "ak-biennial-report",  SD: "sd-annual-report",
+      ND: "nd-annual-report",  VT: "vt-annual-report",    WY: "wy-annual-report",
+      OR: "or-annual-report",  DC: "dc-biennial-report",
+    };
+    if (annualReportIds[st]) add(annualReportIds[st]);
+
+    // DBA / fictitious name — state-specific IDs
+    const dbaIds: Record<string, string> = {
+      FL: "fl-fictitious-name", TX: "tx-assumed-name", CA: "ca-fictitious-business-name",
+      NY: "ny-assumed-name",    IL: "il-assumed-name",  GA: "ga-trade-name",
+    };
+    if (dbaIds[st]) add(dbaIds[st]);
+
+    // Business license (not every state issues a state-level general license)
+    const bizLicenseIds: Record<string, string> = {
+      AK: "ak-business-license", WA: "wa-business-license", CA: "ca-seller-permit",
+    };
+    if (bizLicenseIds[st]) add(bizLicenseIds[st]);
+  }
+
+  // ── 3. Local / county forms ────────────────────────────────────────────────
+  if (county) {
+    const c = county.toLowerCase();
+    // Map partial county/city names → LOCAL_FORMS ID prefixes
+    const COUNTY_PREFIXES: Array<[string, string[]]> = [
+      ["palm beach",  ["palm-beach-btrc",    "palm-beach-fictitious"]],
+      ["miami",       ["miami-dade-btrc",     "miami-dade-certificate-use"]],
+      ["broward",     ["broward-btrc",        "broward-certificate-use"]],
+      ["los angeles", ["la-county-btrc",      "la-city-business-tax"]],
+      ["harris",      ["harris-county-btrc",  "houston-sos-dba"]],
+      ["houston",     ["harris-county-btrc",  "houston-sos-dba"]],
+      ["new york",    ["nyc-business-cert",   "nyc-dba"]],
+      ["cook",        ["cook-county-btrc",    "chicago-business-license"]],
+      ["chicago",     ["cook-county-btrc",    "chicago-business-license"]],
+      ["king",        ["king-county-btrc",    "seattle-business-license"]],
+      ["seattle",     ["king-county-btrc",    "seattle-business-license"]],
+      ["maricopa",    ["maricopa-btrc",       "phoenix-privilege-tax"]],
+      ["phoenix",     ["maricopa-btrc",       "phoenix-privilege-tax"]],
+      ["clark",       ["clark-county-btrc"]],
+      ["fulton",      ["fulton-county-btrc",  "atlanta-business-license"]],
+      ["atlanta",     ["fulton-county-btrc",  "atlanta-business-license"]],
+      ["philadelphia", ["philadelphia-birt",  "philadelphia-business-privilege"]],
+      ["cuyahoga",    ["cleveland-btrc"]],
+      ["wayne",       ["detroit-btrc"]],
+      ["denver",      ["denver-btrc"]],
+      ["shelby",      ["memphis-btrc"]],
+      ["mecklenburg", ["charlotte-btrc"]],
+    ];
+    for (const [keyword, ids] of COUNTY_PREFIXES) {
+      if (c.includes(keyword)) { add(...ids); break; }
+    }
+  }
+
+  // ── 4. Industry-specific forms ─────────────────────────────────────────────
+  if (businessType) {
+    const bt = businessType.toLowerCase();
+
+    // Food & beverage
+    if (/food|restaurant|bakery|catering|café|cafe|kitchen|bar|brewery|winery/.test(bt)) {
+      add("food-handler-cert", "food-establishment-permit");
+      if (/truck|cart|mobile/.test(bt)) add("mobile-food-vendor");
+      if (/alcohol|bar|brewery|winery|liquor/.test(bt)) add("liquor-license");
+      if (/home|cottage/.test(bt)) add("cottage-food-permit");
+    }
+
+    // Health & wellness / childcare
+    if (/salon|spa|nail|barber|cosmetolog/.test(bt)) add("cosmetology-license");
+    if (/daycare|childcare|child care|preschool|nursery/.test(bt)) add("childcare-license");
+    if (/contractor|construction|plumber|electrician|hvac|roofing/.test(bt)) add("contractors-license");
+
+    // Home-based
+    if (/home.based|home based|home business|cottage/.test(bt)) add("home-occupation-permit");
+
+    // Retail / product
+    if (/retail|boutique|shop|store|resale|import|wholesale/.test(bt)) {
+      if (state && !["AK","DE","MT","NH","OR"].includes(state.toUpperCase())) {
+        add("seller-permit");
+      }
+    }
+
+    // Professional services / employer forms
+    if (/consulting|agency|staffing|employer|hire|employee/.test(bt)) {
+      add("w-4", "w-9");
+    }
+
+    // Nonprofit
+    if (/nonprofit|non-profit|charity|501/.test(bt)) add("form-1023", "form-1023-ez");
+
+    // Transportation / trucking
+    if (/trucking|freight|transport|carrier|dispatch/.test(bt)) add("dot-number-application");
+  }
+
+  // ── 5. New-business essentials ─────────────────────────────────────────────
+  if (isNewBusiness) {
+    add("w-9", "w-4");
+    // DBA is commonly needed at startup
+    if (state) {
+      const st = state.toUpperCase();
+      if (!results.some(id => id.includes("fictitious") || id.includes("assumed") || id.includes("dba") || id.includes("trade-name"))) {
+        const genericDba = `${st.toLowerCase()}-fictitious-name`;
+        if (genericDba in ALL_FORMS) add(genericDba);
+      }
+    }
+  }
+
+  // Cap at 8 results
+  return results.slice(0, 8);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1524,7 +6157,7 @@ const STATE_ABBREV_MAP: Record<string, string> = {
  * The input is trimmed first to neutralise any trailing whitespace that
  * Nominatim occasionally appends to postcode values (e.g. "FL 33411 ").
  */
-function parseStateFromLocation(location: string): string | null {
+export function parseStateFromLocation(location: string): string | null {
   const loc = location.trim();
 
   // Primary format: "City, ST" or "City, ST ZIP" — 2-letter uppercase abbreviation
@@ -1827,6 +6460,35 @@ export function getRuleChangeTopics(
       return ["local regulatory filing fee update", "government portal migration or URL change"];
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// v45 — Zoning & Address Compliance Checker (major moat feature)
+//
+// Maps common zoning permit names (as returned by /api/zoning/check) to known
+// form template IDs so the AI can suggest the right formId in its JSON response.
+// Also used by handleAttachZoningResult to populate matchedFormIds on the
+// synthetic UploadedDocument — which links the zoning result to real form cards.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const ZONING_PERMIT_FORM_IDS: Readonly<Record<string, string>> = {
+  "business license":                "business-license",
+  "general business license":        "business-license",
+  "business registration":           "business-registration",
+  "fictitious business name":        "fictitious-name",
+  "dba registration":                "fictitious-name",
+  "home occupation permit":          "home-occupation-permit",
+  "home business permit":            "home-occupation-permit",
+  "food service permit":             "food-service-permit",
+  "food handler permit":             "food-service-permit",
+  "food establishment permit":       "food-service-permit",
+  "mobile food vendor permit":       "mobile-food-vendor",
+  "mobile food facility permit":     "mobile-food-vendor",
+  "commissary agreement":            "mobile-food-vendor",
+  "food truck permit":               "mobile-food-vendor",
+  "sales tax registration":          "sales-tax-registration",
+  "seller's permit":                 "sales-tax-registration",
+  "state tax registration":          "sales-tax-registration",
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SUPABASE SCHEMA (run once in SQL editor)

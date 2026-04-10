@@ -1,3 +1,4 @@
+// v52 — Fixed build errors for Vercel deployment
 // Changes summary:
 // - Expanded manual location input to support ZIP, "City, ST", and "City, Full State Name"
 // - Added STATE_NAME_TO_ABBREV map for better full-state parsing
@@ -176,26 +177,30 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useMemo, Fragment } from "react";
+import Link from "next/link"; // v22 — Forms Library full-page link
 import {
   Send, MapPin, FileText, Layers,
   CheckCircle2, Loader2, CheckCheck, Sparkles,
   Briefcase, ChevronRight, ChevronDown, Download, ExternalLink,
   Bell, BellOff, Activity, Zap, Crown, Lock, Plus, Trash2, Upload,
   LogIn, LogOut, Mail, KeyRound, UserPlus, X as XIcon,
+  FolderOpen, // v20 — Forms Library Section
 } from "lucide-react";
 import AddBusinessModal from "@/components/AddBusinessModal";
 import AddLocationModal from "@/components/AddLocationModal";
 import NotificationPrefsModal from "@/components/NotificationPrefsModal";
-import DocumentUploadButton, { type AnalysisResult } from "@/components/DocumentUploadButton";
+import DocumentUploadButton, { type AnalysisResult, type AttachResult } from "@/components/DocumentUploadButton";
 import DocumentAnalysisCard, { type MatchedItem } from "@/components/DocumentAnalysisCard";
+import FormsLibrary, { saveBusinessContext } from "@/components/FormsLibrary"; // v20 — Forms Library Section
+import BusinessProfileView, { type DraftDoc, type ZoningResult } from "@/components/BusinessProfileView"; // v31 — Business Profile View
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import FormFiller from "@/components/FormFiller";
 import { RegPulseIcon } from "@/components/RegPulseLogo";
 import EnhancedChecklist from "@/components/EnhancedChecklist";
 import type { ChecklistItem } from "@/components/EnhancedChecklist";
-import { getLocaleFormTemplate, getSuggestedRenewalDate, getRuleChangeTopics } from "@/lib/formTemplates";
-import type { FormTemplate } from "@/lib/formTemplates";
+import { getLocaleFormTemplate, getSuggestedRenewalDate, getRuleChangeTopics, parseStateFromLocation, getRecommendedForms, ALL_FORMS, isFederalForm, isStateForm } from "@/lib/formTemplates";
+import type { FormTemplate, FederalFormEntry, StateFormEntry } from "@/lib/formTemplates";
 import type { CompletedFormEntry } from "@/lib/generateCompliancePacket";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
@@ -205,6 +210,7 @@ import {
   localLoadAlerts, localSaveAlerts,
   localLoadMonthlyUsage, localSaveMonthlyUsage,
   dbLoadBusinesses, dbSaveBusiness, dbDeleteBusiness, dbSaveNotificationPrefs, dbSaveDocument,
+  dbLoadDocuments,
   dbLoadAlerts, dbSaveAlerts,
   dbLoadMonthlyUsage, dbSaveMonthlyUsage, dbLoadIsPro,
   syncGuestDataToSupabase,
@@ -1104,7 +1110,23 @@ export default function ChatPage() {
   // Document upload + analysis
   const [docAnalysisResult, setDocAnalysisResult]   = useState<AnalysisResult | null>(null);
   const [showDocUploadPanel, setShowDocUploadPanel] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // v25 — Preexisting Document Upload: attach-mode panel (no AI analysis)
+  const [showAttachPanel, setShowAttachPanel]       = useState(false);
+  // v30 — Completed Document → Business Profile Flow
+  // v31 — Fix: use refs alongside state so sendMessage always reads the latest values
+  //        regardless of closure capture timing (stale useCallback deps were causing
+  //        awaitingProfileConfirmation to read as false on the first "yes" reply).
+  //
+  //   State is for UI rendering (bot message, card hint visibility).
+  //   Refs are for sendMessage's synchronous confirmation check (no stale closure).
+  const [awaitingProfileConfirmation, setAwaitingProfileConfirmation] = useState(false);
+  const [pendingDocumentForProfile, setPendingDocumentForProfile]     = useState<AnalysisResult | null>(null);
+  const awaitingProfileConfirmationRef = useRef(false);
+  const pendingDocumentForProfileRef   = useRef<AnalysisResult | null>(null);
+  // v20 — Forms Library Section: collapsed by default to keep sidebar compact
+  const [formsLibraryOpen, setFormsLibraryOpen]     = useState(false);
+  // v31 — Business Profile View: replaces chat messages pane when active
+  const [showProfileView, setShowProfileView]       = useState(false);
   const [uploadedDocs, setUploadedDocs]             = useState<UploadedDocument[]>([]);
 
   // ── Pro subscription state ────────────────────────────────────────────────
@@ -1269,6 +1291,18 @@ export default function ChatPage() {
       return updated;
     });
   }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── v33: Recommended forms for the active business (passed to BusinessProfileView) ──
+  // Derived from loadedBusiness so they auto-refresh when handleLocationChangeFromProfile
+  // updates the location and triggers a re-render.
+  const profileRecommendedForms = useMemo<(FederalFormEntry | StateFormEntry)[]>(() => {
+    if (!loadedBusiness) return [];
+    const state = parseStateFromLocation(loadedBusiness.location) ?? undefined;
+    const ids   = getRecommendedForms(loadedBusiness.businessType, state, undefined, loadedBusiness.isPreExisting === false);
+    return ids
+      .map(id => ALL_FORMS[id])
+      .filter((f): f is FederalFormEntry | StateFormEntry => !!f && (isFederalForm(f) || isStateForm(f)));
+  }, [loadedBusiness]);
 
   // ── Active location (derived) ─────────────────────────────────────────────
   // When the loaded business has multiple locations and one is active, this gives
@@ -1590,9 +1624,185 @@ export default function ChatPage() {
     }
   };
 
+  // v31 — Business Profile Creation from Document (replaces v30 useCallback approach)
+  //
+  // WHY REFS: handleProfileConfirmationReply was a useCallback whose deps included
+  // awaitingProfileConfirmation and pendingDocumentForProfile (state). In React 18
+  // concurrent mode, batched state updates may not have flushed by the time sendMessage
+  // runs, so the memoized callback could close over stale false/null values → the "yes"
+  // reply fell through to callApi silently.
+  //
+  // FIX: read from refs (always current) instead of state in sendMessage.
+  //       State is still set alongside refs so the UI (card hint, etc.) reacts normally.
+
+  /**
+   * Creates a business from a document analysis result and attaches the document.
+   * v45 — Fixed document attachment on "Yes, create it" so it appears on the matching
+   *        recommended form card: optimistic doc added synchronously with formId set
+   *        from analysis.matchedFormIds[0], before the profile view opens.
+   */
+  const createBusinessFromDocument = useCallback((result: AnalysisResult) => {
+    const a = result.analysis;
+    const suggestedName = a.businessName?.trim() || "My Business";
+    const now = new Date().toISOString();
+    const profile = calcBizProfile([], undefined);
+
+    const newBiz: SavedBusiness = {
+      id:                  `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      name:                suggestedName,
+      location:            a.businessAddress?.trim() || userLocation,
+      savedAt:             now,
+      lastChecked:         now,
+      checklist:           [],
+      chatHistory:         toSavedMessages(messages),
+      healthScore:         profile.healthScore,
+      totalForms:          profile.totalForms,
+      completedFormsCount: profile.completedFormsCount,
+      isPreExisting:       true,
+    };
+
+    // v31 — Fix UI Refresh After Business Profile Creation
+    //
+    // Optimistic update: add the new business to the sidebar immediately so it
+    // appears in "My Businesses" without waiting for the async dbSaveBusiness
+    // promise.  `dbSaveBusiness` calls `localSaveBusiness` synchronously, so the
+    // localStorage copy is written before the Supabase roundtrip; but the React
+    // state update was previously deferred to `.then()`, causing a visible delay.
+    //
+    // Three-step update:
+    //   1. Push newBiz into savedBusinesses right now (optimistic, synchronous).
+    //   2. Mark it as the active/loaded business immediately.
+    //   3. After the async save resolves, reconcile from localStorage to pick up
+    //      any server-side mutations (e.g. Supabase-generated fields).
+    setLoadedBusiness(newBiz);
+    setSavedBusinesses(prev => {
+      // Replace if somehow already present (idempotent); otherwise prepend.
+      const without = prev.filter(b => b.id !== newBiz.id);
+      return [newBiz, ...without];
+    });
+    void dbSaveBusiness(user ? getSb() : null, user?.id ?? null, newBiz).then(() => {
+      // Reconcile: localStorage is authoritative after the save completes.
+      setSavedBusinesses(localLoadBusinesses());
+    });
+
+    // Save document context for /forms recommendations
+    saveBusinessContext({
+      businessType:  a.scope ?? undefined,
+      state:         parseStateFromLocation(newBiz.location) ?? undefined,
+      isNewBusiness: false,
+    });
+
+    // v45 — Attach the document to the new business with formId so it appears on the
+    // matching recommended form card immediately (via cardDocs filter in BusinessProfileView).
+    //
+    // formId: use the first AI-matched form ID if present. This is what cardDocs checks
+    // first (`doc.formId === entry.id`), so the green badge appears without needing
+    // analysis.matchedFormIds to be re-evaluated on every card render.
+    const primaryFormId = a.matchedFormIds?.[0] ?? undefined;
+
+    const docRecord = {
+      businessId:   newBiz.id,
+      originalName: result.fileName,
+      mimeType:     result.mimeType,
+      sizeBytes:    result.sizeBytes,
+      storagePath:  result.storagePath,
+      analysis:     a,
+      analyzed:     true as const,
+    };
+
+    // Optimistic local doc — added synchronously so the profile view that opens
+    // 350ms later already has this document in uploadedDocs. For auth users we
+    // replace it with the DB-returned record in .then(); for guests it stays as-is.
+    const optimisticId = `opt-${Date.now()}`;
+    const optimisticDoc: UploadedDocument = {
+      id:         optimisticId,
+      uploadedAt: now,
+      formId:     primaryFormId,
+      ...docRecord,
+    };
+    setUploadedDocs(prev => [optimisticDoc, ...prev]);
+
+    if (user) {
+      void dbSaveDocument(getSb(), user.id, docRecord).then(saved => {
+        setUploadedDocs(prev =>
+          saved
+            ? prev.map(d =>
+                d.id === optimisticId
+                  ? { ...saved, formId: primaryFormId }
+                  : d
+              )
+            : prev.filter(d => d.id !== optimisticId),
+        );
+      });
+    }
+    // Guest: optimisticDoc already in state above — nothing more to do.
+
+    // Dismiss the analysis card now that the profile was created
+    setDocAnalysisResult(null);
+
+    // Confirmation message in chat
+    setMessages(prev => [
+      ...prev,
+      {
+        id:      `doc-profile-confirm-${Date.now()}`,
+        role:    "assistant" as const,
+        content:
+          `Done! I created a new business profile called **"${suggestedName}"** and attached the ${a.docType} to it.\n\n` +
+          `You can edit the name anytime in the **My Businesses** panel. ` +
+          `Want me to build out a compliance checklist for this business?`,
+      },
+    ]);
+
+    // v37 — Auto-open Business Profile View so the checkmark and attached document
+    // appear immediately without requiring the user to click "View Profile".
+    // Small delay lets the confirmation message render before the view switches.
+    setTimeout(() => setShowProfileView(true), 350);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userLocation, messages, user]);
+
   const sendMessage = async () => {
     const trimmed = input.trim();
     if (!trimmed || isLoading) return;
+
+    // v31 — Check refs (not state) so we always read the latest values even if React
+    //        hasn't re-rendered yet after the state updates in handleDocumentAnalysisComplete.
+    if (awaitingProfileConfirmationRef.current && pendingDocumentForProfileRef.current) {
+      const lower  = trimmed.toLowerCase();
+      const isYes  = /^(yes|yeah|yep|sure|go ahead|ok|okay|create it|do it|please|yup|absolutely)/.test(lower);
+      const isNo   = /^(no|nope|skip|not now|cancel|don't|dont|pass|later|nah)/.test(lower);
+
+      if (isYes || isNo) {
+        // Echo the user's reply into the chat
+        const userMsg: Message = { id: Date.now().toString(), role: "user", content: trimmed };
+        setMessages(prev => [...prev, userMsg]);
+        setInput("");
+
+        // Capture the pending result before clearing refs/state
+        const captured = pendingDocumentForProfileRef.current;
+
+        // Clear confirmation state (refs first so any subsequent render sees clean state)
+        awaitingProfileConfirmationRef.current = false;
+        pendingDocumentForProfileRef.current   = null;
+        setAwaitingProfileConfirmation(false);
+        setPendingDocumentForProfile(null);
+
+        if (isYes && captured) {
+          createBusinessFromDocument(captured);
+        } else {
+          setMessages(prev => [
+            ...prev,
+            {
+              id:      `doc-profile-skip-${Date.now()}`,
+              role:    "assistant" as const,
+              content: "No problem — I'll leave the document analysis here. Let me know if you'd like help with anything else.",
+            },
+          ]);
+        }
+        return; // do NOT call the AI API
+      }
+      // Ambiguous reply (e.g. "what does that mean?") — fall through to normal AI call
+    }
+
     const userMsg: Message = { id: Date.now().toString(), role: "user", content: trimmed };
     setMessages(prev => [...prev, userMsg]);
     setInput("");
@@ -1769,6 +1979,28 @@ export default function ChatPage() {
 
     // Always record the completed form so "View Completed Form" works from the checklist.
     setCompletedFormsByFormId(prev => ({ ...prev, [template.id]: { template, formData } }));
+
+    // v36 — Auto-create a synthetic document record so the completed form appears
+    // under the correct recommended form card in BusinessProfileView.
+    // Replaces any prior synthetic doc for the same formId (idempotent on re-complete).
+    if (loadedBusiness) {
+      const syntheticDoc: UploadedDocument = {
+        id:           `form-complete-${template.id}-${Date.now()}`,
+        businessId:   loadedBusiness.id,
+        originalName: `${template.name} — Completed`,
+        mimeType:     "application/pdf",
+        sizeBytes:    0,
+        storagePath:  "",
+        analysis:     undefined,
+        analyzed:     false,
+        uploadedAt:   completionDate,
+        formId:       template.id,
+      };
+      setUploadedDocs(prev => [
+        syntheticDoc,
+        ...prev.filter(d => !(d.formId === template.id && d.id.startsWith("form-complete-"))),
+      ]);
+    }
 
     // Track monthly usage for Free-tier gating (Supabase profile or localStorage).
     const newCount = monthlyFormsUsed + 1;
@@ -1959,6 +2191,16 @@ export default function ChatPage() {
     setLoadedBusiness(updated);
     setActiveLocationId(chosenLocId);
 
+    // v26 — Persist business context for /forms page "Recommended for You"
+    {
+      const loc = chosenLoc?.location ?? biz.location;
+      saveBusinessContext({
+        businessType:  biz.businessType ?? undefined,
+        state:         loc ? (parseStateFromLocation(loc) ?? undefined) : undefined,
+        isNewBusiness: biz.isPreExisting === false,
+      });
+    }
+
     // ── 3-5. Restore working state from chosen location or top-level ──────────
     if (chosenLoc) {
       loadLocationData(chosenLoc);
@@ -1972,6 +2214,11 @@ export default function ChatPage() {
     }
 
     checklistTopRef.current?.scrollIntoView({ behavior: "smooth" });
+
+    // v25 — Load uploaded (attached) documents for the incoming business
+    void dbLoadDocuments(user ? getSb() : null, user?.id ?? null, biz.id).then(docs => {
+      setUploadedDocs(docs);
+    });
   };
 
   /**
@@ -2164,8 +2411,384 @@ export default function ChatPage() {
         if (saved) setUploadedDocs(prev => [saved, ...prev]);
       });
     }
+
+    // v30 — Completed Document → Business Profile Flow
+    // A document is considered "completed" when the AI found real permit/license data
+    // (status ≠ Unknown, or a businessName/permitNumber was extracted, or at least one
+    // matchedFormId was recognised).  Blank / template forms typically have status
+    // Unknown and no extracted fields.
+    const a = result.analysis;
+    const looksCompleted =
+      a.status !== "Unknown" ||
+      !!a.businessName ||
+      !!a.permitNumber ||
+      a.matchedFormIds.length > 0;
+
+    if (looksCompleted && !loadedBusiness) {
+      // v31 — Fix Yes Create It Button (Direct Trigger)
+      // No business profile active — notify the user and point them to the
+      // "Yes, create it" button in the card above (primary trigger).
+      // Also arm the ref-based fallback so typing "yes" in the chat still works.
+      const botPrompt: Message = {
+        id:      `doc-profile-prompt-${Date.now()}`,
+        role:    "assistant",
+        content:
+          `I detected this is a completed **${a.docType}**` +
+          (a.issuingAuthority ? ` issued by ${a.issuingAuthority}` : "") +
+          (a.businessName ? ` for **${a.businessName}**` : "") +
+          `.\n\nClick **"Yes, create it"** on the card above to create a new business profile and attach this document — or type **yes** to confirm.`,
+      };
+      setMessages(prev => [...prev, botPrompt]);
+      // Arm the ref-based fallback for users who type "yes" instead of clicking
+      setPendingDocumentForProfile(result);
+      pendingDocumentForProfileRef.current = result;
+      setAwaitingProfileConfirmation(true);
+      awaitingProfileConfirmationRef.current = true;
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, loadedBusiness]);
+
+  /**
+   * v25 — Called when DocumentUploadButton (mode="attach") finishes uploading.
+   * Saves the document record as analyzed=false (no AI analysis performed).
+   * Used for "Upload Completed Document" — preexisting permits, licenses, etc.
+   */
+  const handleAttachDocument = useCallback((result: AttachResult) => {
+    setShowAttachPanel(false);
+
+    if (user && loadedBusiness) {
+      void dbSaveDocument(getSb(), user.id, {
+        businessId:   loadedBusiness.id,
+        originalName: result.fileName,
+        mimeType:     result.mimeType,
+        sizeBytes:    result.sizeBytes,
+        storagePath:  result.storagePath,
+        analysis:     undefined,
+        analyzed:     false,
+      }).then(saved => {
+        if (saved) setUploadedDocs(prev => [saved, ...prev]);
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, loadedBusiness]);
+
+  /**
+   * v32 — Called by BusinessProfileView when the user saves an inline name/location edit.
+   * Persists the updated business to Supabase (or localStorage for guests).
+   */
+  const handleUpdateBusinessFromProfile = useCallback((updated: SavedBusiness) => {
+    setLoadedBusiness(updated);
+    setSavedBusinesses(prev => {
+      const without = prev.filter(b => b.id !== updated.id);
+      return [updated, ...without];
+    });
+    void dbSaveBusiness(user ? getSb() : null, user?.id ?? null, updated);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  /**
+   * v33 — Thin wrapper: update only the business name.
+   * Passes through to handleUpdateBusinessFromProfile with the rest of the
+   * business unchanged so the caller doesn't need the full SavedBusiness object.
+   */
+  const handleUpdateBusinessNameFromProfile = useCallback((name: string) => {
+    if (!loadedBusiness) return;
+    handleUpdateBusinessFromProfile({ ...loadedBusiness, name });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadedBusiness, handleUpdateBusinessFromProfile]);
+
+  /**
+   * v33 — Thin wrapper: update only the business location.
+   * Called by BusinessProfileView when the user commits an inline location edit.
+   * The parent re-derives recommendedForms via useMemo on the next render.
+   */
+  const handleLocationChangeFromProfile = useCallback((location: string) => {
+    if (!loadedBusiness) return;
+    handleUpdateBusinessFromProfile({ ...loadedBusiness, location });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadedBusiness, handleUpdateBusinessFromProfile]);
+
+  /**
+   * v35 — Fixed Upload Completed button + Drag & Drop support.
+   * Called by BusinessProfileView when the user picks or drops a file on a
+   * recommended form card. Immediately adds an optimistic UploadedDocument to
+   * uploadedDocs so the entry appears in the Completed Documents section without
+   * waiting for the Supabase round-trip, then reconciles with the real saved record.
+   * Uses loadedBusiness?.id to scope the document to the correct business profile.
+   */
+  const handleUploadCompletedDocFromProfile = useCallback(async (file: File, _formId: string) => {
+    if (!loadedBusiness) return;
+    const ts       = Date.now();
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const now      = new Date().toISOString();
+
+    if (user) {
+      const storagePath  = `${user.id}/${loadedBusiness.id}/${ts}-${safeName}`;
+      const optimisticId = `optimistic-${ts}`;
+
+      // v35 — Optimistic update: add doc immediately so BusinessProfileView
+      // shows it in Completed Documents without waiting for the storage upload.
+      const optimisticDoc: UploadedDocument = {
+        id:           optimisticId,
+        businessId:   loadedBusiness.id,
+        originalName: file.name,
+        mimeType:     file.type,
+        sizeBytes:    file.size,
+        storagePath,
+        analysis:     undefined,
+        analyzed:     false,
+        uploadedAt:   now,
+      };
+      setUploadedDocs(prev => [optimisticDoc, ...prev]);
+
+      const sb = getSb();
+      const { error: storageErr } = await sb.storage
+        .from("business-documents")
+        .upload(storagePath, file, { contentType: file.type, upsert: false });
+
+      if (storageErr) {
+        console.error("BusinessProfileView upload error:", storageErr.message);
+        // Remove the optimistic entry if storage upload failed
+        setUploadedDocs(prev => prev.filter(d => d.id !== optimisticId));
+        return;
+      }
+
+      // Persist DB record; replace optimistic entry with the real saved doc
+      void dbSaveDocument(sb, user.id, {
+        businessId:   loadedBusiness.id,
+        originalName: file.name,
+        mimeType:     file.type,
+        sizeBytes:    file.size,
+        storagePath,
+        analysis:     undefined,
+        analyzed:     false,
+      }).then(saved => {
+        setUploadedDocs(prev =>
+          saved
+            ? prev.map(d => d.id === optimisticId ? saved : d)
+            : prev.filter(d => d.id !== optimisticId),
+        );
+      });
+    } else {
+      // Guest path — no storage, keep local record only; appears instantly
+      const localDoc: UploadedDocument = {
+        id:           `local-${ts}`,
+        businessId:   loadedBusiness.id,
+        originalName: file.name,
+        mimeType:     file.type,
+        sizeBytes:    file.size,
+        storagePath:  "",
+        analysis:     undefined,
+        analyzed:     false,
+        uploadedAt:   now,
+      };
+      setUploadedDocs(prev => [localDoc, ...prev]);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, loadedBusiness]);
+
+  /**
+   * v39 — Called by BusinessProfileView when the user explicitly clicks "Save Changes".
+   * Persists every draft document (File + formId) to Supabase Storage + DB,
+   * with the same optimistic-update pattern used by handleUploadCompletedDocFromProfile.
+   * Returns a Promise so BusinessProfileView can await completion before clearing drafts.
+   */
+  // v41 FIX — returns Promise<UploadedDocument[]> so BusinessProfileView can populate
+  // localSavedDocs immediately and show the green badge without waiting for the parent
+  // re-render to propagate completedDocuments back down as a prop.
+  const handleSaveDraftsFromProfile = useCallback(async (drafts: DraftDoc[]): Promise<UploadedDocument[]> => {
+    if (!loadedBusiness) return [];
+    const sb  = user ? getSb() : null;
+    const now = new Date().toISOString();
+    // Collect the docs that were successfully queued/saved — returned to BusinessProfileView.
+    const result: UploadedDocument[] = [];
+
+    for (const draft of drafts) {
+      const ts       = Date.now();
+      const safeName = draft.file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+
+      if (user && sb) {
+        const storagePath  = `${user.id}/${loadedBusiness.id}/${ts}-${safeName}`;
+        const optimisticId = `draft-opt-${draft.localId}`;
+
+        // Optimistic entry — added to uploadedDocs state immediately for the parent.
+        const optimisticDoc: UploadedDocument = {
+          id:           optimisticId,
+          businessId:   loadedBusiness.id,
+          originalName: draft.file.name,
+          mimeType:     draft.file.type,
+          sizeBytes:    draft.file.size,
+          storagePath,
+          analysis:     undefined,
+          analyzed:     false,
+          uploadedAt:   now,
+          formId:       draft.formId || undefined,
+        };
+        setUploadedDocs(prev => [optimisticDoc, ...prev]);
+
+        const { error: storageErr } = await sb.storage
+          .from("business-documents")
+          .upload(storagePath, draft.file, { contentType: draft.file.type, upsert: false });
+
+        if (storageErr) {
+          console.error("[handleSaveDraftsFromProfile] storage upload failed:", storageErr.message);
+          setUploadedDocs(prev => prev.filter(d => d.id !== optimisticId));
+          // Don't push to result — upload failed, no green badge for this draft.
+          continue;
+        }
+
+        // Upload succeeded — include optimisticDoc in result so BusinessProfileView
+        // can show the green badge immediately via localSavedDocs.
+        result.push(optimisticDoc);
+
+        void dbSaveDocument(sb, user.id, {
+          businessId:   loadedBusiness.id,
+          originalName: draft.file.name,
+          mimeType:     draft.file.type,
+          sizeBytes:    draft.file.size,
+          storagePath,
+          analysis:     undefined,
+          analyzed:     false,
+        }).then(saved => {
+          setUploadedDocs(prev =>
+            saved
+              ? prev.map(d => d.id === optimisticId ? { ...saved, formId: draft.formId || undefined } : d)
+              : prev.filter(d => d.id !== optimisticId),
+          );
+        });
+      } else {
+        // Guest — keep local record only (no storage upload).
+        const localDoc: UploadedDocument = {
+          id:           `local-${ts}`,
+          businessId:   loadedBusiness.id,
+          originalName: draft.file.name,
+          mimeType:     draft.file.type,
+          sizeBytes:    draft.file.size,
+          storagePath:  "",
+          analysis:     undefined,
+          analyzed:     false,
+          uploadedAt:   now,
+          formId:       draft.formId || undefined,
+        };
+        setUploadedDocs(prev => [localDoc, ...prev]);
+        result.push(localDoc);
+      }
+    }
+
+    return result;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, loadedBusiness]);
+
+  /**
+   * v39 — Called by BusinessProfileView when the user discards all drafts.
+   * Drafts are purely client-side until saved, so the parent has nothing to undo.
+   */
+  const handleDiscardDraftsFromProfile = useCallback(() => {
+    // No server-side state to roll back — the component already cleared its own draft state.
+  }, []);
+
+  /**
+   * v45 — Zoning & Address Compliance Checker.
+   * v46 — Surfaces specific server error messages (and optional details) so
+   *        BusinessProfileView can display them verbatim instead of a generic fallback.
+   */
+  const handleCheckZoning = useCallback(async (
+    address: string,
+    businessType: string,
+  ): Promise<ZoningResult> => {
+    const res = await fetch("/api/zoning/check", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ address, businessType }),
+    });
+    const data = await res.json() as { ok: boolean; result?: ZoningResult; error?: string; details?: string };
+    if (!data.ok || !data.result) {
+      // Prefer server's specific error; append details when present and different.
+      const msg = data.error ?? "Zoning check failed. Please try again.";
+      const detail = data.details && data.details !== data.error ? ` (${data.details})` : "";
+      throw new Error(msg + detail);
+    }
+    return data.result;
+  }, []);
+
+  /**
+   * v45 — Called when user clicks "Attach Zoning Result to Profile".
+   * Creates a synthetic UploadedDocument from the ZoningResult so it appears
+   * in the Completed Documents list with a clear label.
+   * v50 — Added formId, dbSaveDocument for auth users, and setShowProfileView(true).
+   */
+  const handleAttachZoningResult = useCallback((result: ZoningResult) => {
+    if (!loadedBusiness) return;
+    const ts = Date.now();
+    const optimisticId = `zoning-${ts}`;
+    const statusLabel = result.status.charAt(0).toUpperCase() + result.status.slice(1);
+    const matchedFormIds = result.requiredPermits
+      .map(p => p.formId)
+      .filter((id): id is string => typeof id === "string" && id.length > 0);
+    // Use the first matched permit formId so the result card appears on a form card,
+    // falling back to "zoning-check" if no permits were returned.
+    const primaryFormId = matchedFormIds[0] ?? "zoning-check";
+
+    const docRecord = {
+      businessId:   loadedBusiness.id,
+      originalName: `Zoning Check — ${statusLabel} — ${new Date(result.checkedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
+      mimeType:     "application/json",
+      sizeBytes:    0,
+      storagePath:  "", // synthetic — no actual file
+      analysis: {
+        docType:          "Zoning Compliance Check",
+        issuingAuthority: result.zoneType,
+        status:           (result.status === "allowed" ? "Active" : result.status === "prohibited" ? "Suspended" : "Pending") as "Active" | "Expired" | "Suspended" | "Pending" | "Unknown",
+        summary:          result.notes,
+        suggestions:      result.restrictions,
+        matchedFormIds,
+        rawExtracted: {
+          zone_type:     result.zoneType,
+          status:        result.status,
+          address:       result.address,
+          business_type: result.businessType,
+        },
+      },
+      analyzed:   true,
+      uploadedAt: result.checkedAt,
+    };
+
+    // Optimistic update — immediately visible in BusinessProfileView
+    const optimisticDoc: UploadedDocument = {
+      id:     optimisticId,
+      formId: primaryFormId,
+      ...docRecord,
+    };
+    setUploadedDocs(prev => [optimisticDoc, ...prev]);
+    setShowProfileView(true);
+
+    // Persist for authenticated users (synthetic doc — storagePath is empty)
+    if (user) {
+      void dbSaveDocument(getSb(), user.id, docRecord).then(saved => {
+        setUploadedDocs(prev =>
+          saved
+            ? prev.map(d => d.id === optimisticId ? { ...saved, formId: primaryFormId } : d)
+            : prev.filter(d => d.id !== optimisticId),
+        );
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadedBusiness, user]);
+
+  /**
+   * v25 — Called when user clicks "View" on an uploaded document.
+   * Generates a signed URL from Supabase Storage and opens it in a new tab.
+   */
+  const handleViewDocument = useCallback(async (doc: UploadedDocument) => {
+    if (!doc.storagePath) return;
+    const supabase = createClient();
+    const { data } = await supabase.storage
+      .from("business-documents")
+      .createSignedUrl(doc.storagePath, 60 * 60); // 1-hour expiry
+    if (data?.signedUrl) {
+      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    }
+  }, []);
 
   /**
    * Called when user clicks "Apply Updates" in the DocumentAnalysisCard.
@@ -2540,6 +3163,9 @@ export default function ChatPage() {
               onResetAll={() => { setChecklist([]); setLoadedBusiness(null); }}
               onClearAll={loadedBusiness ? handleClearActiveBusiness : undefined}
               onUploadDocument={loadedBusiness ? () => setShowDocUploadPanel(true) : undefined}
+              uploadedDocuments={loadedBusiness ? uploadedDocs : undefined}
+              onUploadCompletedDoc={loadedBusiness ? () => setShowAttachPanel(true) : undefined}
+              onViewDocument={handleViewDocument}
               loadedBusiness={loadedBusiness ?? undefined}
               isPro={isPro}
               monthlyFormsUsed={monthlyFormsUsed}
@@ -2728,6 +3354,60 @@ export default function ChatPage() {
             </div>
           )}
 
+          {/* ── v20: Forms Library Section ────────────────────────────────────
+               Collapsible sidebar section listing all forms from ALL_FORMS
+               (federal + state/local entries with download links / official URLs).
+               Collapsed by default; toggle via the FolderOpen header button.
+               v22 — added "View full library →" link to /forms page. */}
+          <div className="shrink-0 border-t border-slate-100">
+            {/* Header row — always visible */}
+            <div className="flex items-center justify-between px-4 py-3">
+              <button
+                onClick={() => setFormsLibraryOpen(o => !o)}
+                className="flex items-center gap-1.5 flex-1 hover:opacity-70 transition-opacity group"
+              >
+                <FolderOpen className="h-3 w-3 text-blue-500 shrink-0" />
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 group-hover:text-slate-600 transition-colors">
+                  Forms Library
+                </p>
+                <ChevronDown className={`h-3 w-3 text-slate-400 transition-transform duration-200 ml-auto ${formsLibraryOpen ? "rotate-180" : ""}`} />
+              </button>
+              {/* v22 — link to the full /forms page */}
+              <Link
+                href="/forms"
+                className="shrink-0 ml-2 text-[9px] font-semibold text-blue-500 hover:text-blue-700 transition-colors flex items-center gap-0.5"
+                title="Open full Forms Library"
+              >
+                View all
+                <ChevronRight className="h-2.5 w-2.5" />
+              </Link>
+            </div>
+
+            {/* v26 — Recommended Forms teaser (shown when a business is loaded) */}
+            {loadedBusiness && (
+              <div className="px-4 pb-2">
+                <Link
+                  href="/forms"
+                  className="flex items-center gap-1.5 w-full text-left bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg px-2.5 py-1.5 transition-colors group"
+                  title="View personalised form recommendations"
+                >
+                  <Sparkles className="h-3 w-3 text-amber-500 shrink-0" />
+                  <span className="text-[10px] font-semibold text-amber-700 group-hover:text-amber-900 transition-colors flex-1">
+                    Recommended Forms
+                  </span>
+                  <ChevronRight className="h-2.5 w-2.5 text-amber-400" />
+                </Link>
+              </div>
+            )}
+
+            {/* Expandable body */}
+            {formsLibraryOpen && (
+              <div className="px-4 pb-3">
+                <FormsLibrary compact />
+              </div>
+            )}
+          </div>
+
           {/* My Businesses — Living Profile cards */}
           <div className="shrink-0 border-t border-slate-100 px-4 py-3 space-y-2">
             <div className="flex items-center justify-between">
@@ -2806,10 +3486,14 @@ export default function ChatPage() {
                         </div>
                       ) : (
                         <>
+                          {/* v31 — clicking the card loads the business AND shows profile view */}
                           <button
-                            onClick={() => handleLoadBusiness(biz)}
+                            onClick={() => {
+                              handleLoadBusiness(biz);
+                              setShowProfileView(true);
+                            }}
                             className={`w-full text-left rounded-xl border px-2.5 py-2 transition-all group pr-14 ${cardBg}`}
-                            title={`Load profile for ${biz.name} (${biz.location})`}
+                            title={`View profile for ${biz.name}`}
                           >
                             {/* Row 1: icon + name + Pro badge + chevron */}
                             <div className="flex items-center gap-2">
@@ -3063,7 +3747,36 @@ export default function ChatPage() {
       )}
 
       {/* ════════════ Chat area ════════════ */}
-      <div className="flex-1 flex flex-col overflow-hidden relative">
+      {/* v31 — When showProfileView is true and a business is loaded, render the
+           full Business Profile View instead of the chat pane. The "Back to Chat"
+           button in BusinessProfileView calls setShowProfileView(false). */}
+      {/* v33 — props updated: recommendedForms + completedDocuments + split edit callbacks */}
+      {/* v39 — onUploadCompletedDoc replaced by onSaveDrafts + onDiscardDrafts */}
+      {/* v40 — onViewCompletedForm routes synthetic doc clicks to PacketScreen */}
+      {/* v41 — live health score ring; auto-open after doc create; FormFiller auto-attach */}
+      {/* v42 — final document visibility on matching form card with green checkmark + clickable filename */}
+      {/* v43 — uploaded documents visible on matching form card with green checkmark + clickable filename + compliance stats */}
+      {/* v44 — uploaded documents now visibly appear on the matching recommended form card with filename + green checkmark */}
+      {/* v45 — Zoning & Address Compliance Checker + fixed document attachment on profile creation */}
+      {/* v50 — Fixed "Attach Zoning Result to Profile" button so result is saved and immediately visible on the business profile */}
+      {showProfileView && loadedBusiness ? (
+        <BusinessProfileView
+          business={loadedBusiness}
+          recommendedForms={profileRecommendedForms}
+          completedDocuments={uploadedDocs.filter(d => d.businessId === loadedBusiness.id)}
+          checklist={checklist}
+          onBackToChat={() => setShowProfileView(false)}
+          onViewDocument={handleViewDocument}
+          onUpdateBusinessName={handleUpdateBusinessNameFromProfile}
+          onLocationChange={handleLocationChangeFromProfile}
+          onSaveDrafts={handleSaveDraftsFromProfile}
+          onDiscardDrafts={handleDiscardDraftsFromProfile}
+          onViewCompletedForm={handleViewCompletedForm}
+          onCheckZoning={handleCheckZoning}
+          onAttachZoningResult={handleAttachZoningResult}
+        />
+      ) : null}
+      <div className={`flex-1 flex flex-col overflow-hidden relative ${showProfileView && loadedBusiness ? "hidden" : ""}`}>
 
         {/* Header bar */}
         <div className="border-b border-slate-200 bg-white px-6 py-3.5 shrink-0 flex items-center justify-between">
@@ -3153,6 +3866,8 @@ export default function ChatPage() {
                               trimmed.startsWith("This is for informational purposes") ||
                               trimmed.startsWith("This information is for general guidance");
                             return (
+                              // v25 — Fix Learn More links: apply BulletLine to paragraph
+                              // lines so [text](url) markdown renders as a real <a> tag.
                               <p
                                 key={i}
                                 className={
@@ -3161,7 +3876,7 @@ export default function ChatPage() {
                                     : "mb-2 text-slate-700"
                                 }
                               >
-                                {trimmed}
+                                <BulletLine text={trimmed} />
                               </p>
                             );
                           }
@@ -3299,12 +4014,18 @@ export default function ChatPage() {
         ) : (
           <div className="px-6 py-4 border-t border-slate-200 bg-white shrink-0">
             <div className="max-w-3xl mx-auto flex gap-2 items-center">
-              {/* Upload button — compact, sits left of the text input */}
+              {/* Upload button — compact, sits left of the text input.
+                  v17: businessId is required for the storage-first path in
+                  DocumentUploadButton (files > 5 MB bypass the API body limit
+                  by uploading directly to Supabase Storage). Without it the
+                  gate falls back to FormData and large PDFs hit Vercel's limit.
+                  Use the business's saved location as AI context so the backend
+                  prompt matches the registered jurisdiction. */}
               <DocumentUploadButton
                 variant="compact"
                 businessId={loadedBusiness?.id}
                 businessName={loadedBusiness?.name ?? "My Business"}
-                location={userLocation}
+                location={loadedBusiness?.location ?? userLocation}
                 checklist={checklist}
                 onAnalysisComplete={handleDocumentAnalysisComplete}
                 disabled={isLoading}
@@ -3336,6 +4057,11 @@ export default function ChatPage() {
         {docAnalysisResult && (
           <div className="absolute inset-x-0 bottom-20 z-30 px-6 pb-2 max-w-3xl mx-auto left-1/2 -translate-x-1/2 w-full pointer-events-none">
             <div className="pointer-events-auto">
+              {/* v31 — Fix Yes Create It Button (Direct Trigger)
+                   onCreateProfileFromDocument now calls createBusinessFromDocument
+                   directly — no chat reply parsing, no refs, no pending state.
+                   The button in the card is the primary trigger; typing "yes" in
+                   the chat remains as a fallback via sendMessage's ref check. */}
               <DocumentAnalysisCard
                 fileName={docAnalysisResult.fileName}
                 analysis={docAnalysisResult.analysis}
@@ -3344,6 +4070,56 @@ export default function ChatPage() {
                   handleApplyDocumentUpdates(matched);
                 }}
                 onDismiss={() => setDocAnalysisResult(null)}
+                hasActiveBusinessProfile={!!loadedBusiness}
+                onCreateProfileFromDocument={() => {
+                  // Direct trigger — create the profile immediately without
+                  // waiting for a "yes" reply in the chat input.
+                  if (docAnalysisResult) createBusinessFromDocument(docAnalysisResult);
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ── v25 — Attach panel: upload completed document without AI analysis ──
+             Triggered by "Attach File" in the Completed Documents section.
+             Uses mode="attach" so no /api/document/analyze call is made. */}
+        {showAttachPanel && (
+          <div
+            className="absolute inset-0 z-30 bg-black/30 backdrop-blur-sm flex items-end justify-center"
+            onClick={e => { if (e.target === e.currentTarget) setShowAttachPanel(false); }}
+          >
+            <div className="bg-white rounded-t-2xl w-full max-w-lg shadow-2xl p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Upload className="h-4 w-4 text-blue-600" />
+                  <h3 className="text-sm font-bold text-slate-900">Upload Completed Document</h3>
+                </div>
+                <button
+                  onClick={() => setShowAttachPanel(false)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                  <XIcon className="h-4 w-4" />
+                </button>
+              </div>
+              {loadedBusiness && (
+                <p className="text-xs text-slate-500">
+                  Attaching to <strong className="text-slate-700">{loadedBusiness.name}</strong>
+                  {" — "}no AI analysis will be run.
+                </p>
+              )}
+              <DocumentUploadButton
+                variant="full"
+                mode="attach"
+                businessId={loadedBusiness?.id}
+                businessName={loadedBusiness?.name ?? "My Business"}
+                location={loadedBusiness?.location ?? userLocation}
+                checklist={checklist}
+                onAnalysisComplete={() => {/* not used in attach mode */}}
+                onAttachComplete={result => {
+                  setShowAttachPanel(false);
+                  handleAttachDocument(result);
+                }}
               />
             </div>
           </div>
@@ -3374,11 +4150,12 @@ export default function ChatPage() {
                   Analyzing for <strong className="text-slate-700">{loadedBusiness.name}</strong>
                 </p>
               )}
+              {/* v17: same as compact — businessId enables storage-first for large files */}
               <DocumentUploadButton
                 variant="full"
                 businessId={loadedBusiness?.id}
                 businessName={loadedBusiness?.name ?? "My Business"}
-                location={userLocation}
+                location={loadedBusiness?.location ?? userLocation}
                 checklist={checklist}
                 onAnalysisComplete={result => {
                   setShowDocUploadPanel(false);
