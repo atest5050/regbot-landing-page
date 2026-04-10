@@ -1,3 +1,5 @@
+// v58 — Strict local link enforcement using LOCAL_FORMS to eliminate 404s
+// v57 — Strengthened hyper-local link rules to eliminate 404s using expanded LOCAL_FORMS
 // v56 — Expanded county/city coverage + stricter hyper-local link rules
 // v55 — All county/city/town level links made accurate and 404-free
 // v54 — Full hyper-local link overhaul using Haiku for accuracy
@@ -36,12 +38,144 @@
 // v50 — Migrated to Anthropic (Claude) — full functionality preserved
 import Anthropic, { APIError } from "@anthropic-ai/sdk";
 import { NextRequest } from "next/server";
+import { LOCAL_FORMS, STATE_FORMS_ALL_50 } from "@/lib/formTemplates";
 
 const MODEL = "claude-haiku-4-5-20251001";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
+
+// ── Build a verified LOCAL_FORMS context block injected into the system prompt ─
+//
+// v58: Injected BEFORE CRITICAL FORMATTING RULES so the model sees it before
+// producing output. Uses strict enforcement language: matching officialUrls must
+// be used; the model must NOT substitute a different URL from memory.
+//
+// Matching priority:
+//   1. County name exact match in countyUrls keys
+//   2. County name in form id or description
+//   3. City/keyword match from location string
+//   4. State abbreviation match in STATE_FORMS_ALL_50
+function buildLocalFormsContext(location: string, county: string | null): string {
+  const loc = location.toLowerCase();
+  const cty = (county ?? "").toLowerCase().trim();
+
+  // Extract city name from "City, ST" pattern
+  const cityMatch = loc.match(/^([^,]+)/);
+  const city = cityMatch?.[1]?.trim() ?? "";
+
+  // Extract state abbreviation from end of location string
+  const stateAbbr = loc.match(/\b([a-z]{2})\s*$/i)?.[1]?.toUpperCase() ?? "";
+
+  // ── Priority 1+2+3: LOCAL_FORMS matching ────────────────────────────────────
+  // Score each entry: higher score = more relevant match
+  interface ScoredEntry { score: number; form: typeof LOCAL_FORMS[number] }
+  const scored: ScoredEntry[] = LOCAL_FORMS.map(f => {
+    let score = 0;
+    const countyKeys = Object.keys(f.countyUrls ?? {}).map(k => k.toLowerCase());
+    const haystack   = `${f.id} ${f.description}`.toLowerCase();
+
+    // Exact county key match (highest confidence)
+    if (cty && countyKeys.some(k => k === cty)) score += 40;
+    // County name contained in countyUrls keys
+    else if (cty && countyKeys.some(k => k.includes(cty) || cty.includes(k))) score += 30;
+    // County name in id or description
+    else if (cty && haystack.includes(cty)) score += 20;
+
+    // City name match (medium confidence)
+    if (city.length > 3 && haystack.includes(city)) score += 15;
+
+    // State abbreviation in form id (e.g. "fl-" prefix, "florida" in description)
+    if (stateAbbr) {
+      const saLc = stateAbbr.toLowerCase();
+      if (f.id.startsWith(saLc + "-") || f.id.includes("-" + saLc + "-")) score += 5;
+    }
+
+    // Penalise entries for other US states when we have a clear state match
+    // (prevents CA entries showing up for FL queries)
+    if (stateAbbr && score === 0) {
+      const otherStatePrefixes = ["fl-","tx-","ca-","ny-","il-","ga-","nc-","or-","mn-","pa-","ut-","la-","nm-","md-","va-","tn-"];
+      const lowerSa = stateAbbr.toLowerCase() + "-";
+      const hasOtherState = otherStatePrefixes
+        .filter(p => p !== lowerSa)
+        .some(p => f.id.startsWith(p));
+      if (hasOtherState) score -= 5;
+    }
+
+    return { score, form: f };
+  });
+
+  const localMatches = scored
+    .filter(s => s.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 25)
+    .map(s => s.form);
+
+  // ── Priority 4: STATE_FORMS_ALL_50 matching ──────────────────────────────────
+  const stateMatches = stateAbbr
+    ? STATE_FORMS_ALL_50.filter(f => {
+        const saLc = stateAbbr.toLowerCase();
+        return f.id.startsWith(saLc + "-") ||
+               f.description.toLowerCase().includes(" " + saLc + " ") ||
+               f.description.toLowerCase().includes("(" + saLc + ")");
+      }).slice(0, 8)
+    : [];
+
+  if (localMatches.length === 0 && stateMatches.length === 0) return "";
+
+  const lines: string[] = [
+    "════════════════════════════════════════",
+    "STRICT LOCAL LINK ENFORCEMENT — mandatory; overrides all other URL guidance",
+    "════════════════════════════════════════",
+    "",
+    "The following URLs are sourced directly from the RegPulse LOCAL_FORMS database.",
+    "They are VERIFIED to be current, official government URLs — not guesses.",
+    "",
+    "PRIORITY ORDER FOR [Learn More] LINKS (apply to every bullet you write):",
+    "  Priority 1 (MANDATORY): If the bullet's form/action matches an entry below,",
+    "    use its officialUrl exactly — do NOT substitute a URL from memory.",
+    "  Priority 2: STATE_FORMS entries below for state-level steps.",
+    "  Priority 3: Official agency homepage from APPROVED DOMAIN SEEDS (root domain only).",
+    "  Priority 4: — verify with [Exact Agency Name] (only if no URL is available above).",
+    "",
+    "NEVER: guess a sub-path, append /permits, /services, or any path to a root domain",
+    "       unless it appears verbatim in a confirmed path below.",
+    "",
+  ];
+
+  if (localMatches.length > 0) {
+    lines.push("── LOCAL / COUNTY / CITY VERIFIED URLS ──────────────────────────────────────");
+    for (const f of localMatches) {
+      lines.push(`  FORM: ${f.name}`);
+      lines.push(`    USE THIS URL: ${f.officialUrl}`);
+      if (f.countyUrls) {
+        for (const [cName, cUrl] of Object.entries(f.countyUrls)) {
+          lines.push(`    FOR ${cName}: ${cUrl}`);
+        }
+      }
+      lines.push(`    applies to: ${f.commonFor.join(", ")}`);
+    }
+    lines.push("");
+  }
+
+  if (stateMatches.length > 0) {
+    lines.push("── STATE VERIFIED URLS ───────────────────────────────────────────────────────");
+    for (const f of stateMatches) {
+      lines.push(`  ${f.name}: ${f.officialUrl}`);
+    }
+    lines.push("");
+  }
+
+  lines.push(
+    "ENFORCEMENT RULE: For any bullet that maps to a form listed above, you MUST use",
+    "the URL shown. Using a different URL from memory when a verified URL exists above",
+    "is a CRITICAL ERROR that will cause a 404 for the user.",
+    "",
+  );
+
+  return lines.join("\n");
+}
 
 const FORM_IDS = [
   "business-license",
@@ -56,7 +190,7 @@ const FORM_IDS = [
 
 const VALID_IDS = new Set<string>(FORM_IDS);
 
-const SYSTEM_PROMPT = (location: string, county?: string | null) => `\
+const SYSTEM_PROMPT = (location: string, county?: string | null, localFormsContext?: string) => `\
 You are RegPulse, a hyper-local US business compliance assistant for ${location}.
 You provide accurate, actionable, and trustworthy compliance guidance grounded in
 real requirements for the user's specific city, county, and state. You are not a
@@ -809,7 +943,7 @@ WHEN IN DOUBT — always use Step 3:
   — verify with [Exact City/County Agency Name] %%form-id%%
   This is ALWAYS correct and always preferred over a broken or guessed county link.
 
-════════════════════════════════════════
+${localFormsContext ?? ""}════════════════════════════════════════
 CRITICAL FORMATTING RULES
 ════════════════════════════════════════
 
@@ -985,10 +1119,13 @@ export async function POST(request: NextRequest) {
     console.log(`[chat] [${requestId}] Using Anthropic model: ${MODEL} | Key prefix: ${process.env.ANTHROPIC_API_KEY.slice(0, 12)}...`);
     console.log(`[chat] [${requestId}] location="${location ?? "unknown"}" county="${county ?? "none"}" messages=${messages?.length ?? 0}`);
 
+    const localFormsContext = buildLocalFormsContext(location || "", county ?? null);
+    console.log(`[chat] [${requestId}] localFormsContext length=${localFormsContext.length} chars`);
+
     const response = await anthropic.messages.create({
       model:      MODEL,
       max_tokens: 2000,
-      system:     SYSTEM_PROMPT(location || "Unknown location", county ?? null),
+      system:     SYSTEM_PROMPT(location || "Unknown location", county ?? null, localFormsContext),
       messages,
     });
 

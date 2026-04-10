@@ -1241,6 +1241,9 @@ export default function ChatPage() {
   // Loaded in the auth bootstrap useEffect above (both Supabase and localStorage paths).
   const [ruleAlerts, setRuleAlerts] = useState<RuleAlert[]>([]);
 
+  // v61 — Review Impact modal: ID of the alert whose detail modal is open (null = closed)
+  const [reviewImpactAlertId, setReviewImpactAlertId] = useState<string | null>(null);
+
   // Generate mock alerts for saved businesses that don't have one yet.
   // Persists to Supabase when signed in, localStorage otherwise.
   useEffect(() => {
@@ -1365,17 +1368,21 @@ export default function ChatPage() {
   // ── Compliance Health Score ───────────────────────────────────────────────
   // Computed from live checklist state on every render (including after
   // handleLoadBusiness) so returning users immediately see their current posture.
+  // v61 — "verified done" excludes self-reported pre-existing items (in-progress status)
+  // so newly-created profiles start at 0% / "No data yet" rather than 100%.
   const healthScore = useMemo(() => {
     if (checklist.length === 0) return null;
     const total    = checklist.length;
+    // v61: only count items that were actually completed (not just self-reported "in-progress")
     const done     = checklist.filter(i => i.status === "done").length;
     const pending  = total - done;
     const score    = Math.round((done / total) * 100);
+    const noData   = done === 0; // v61 — true when nothing has been verified as done yet
     // expiringCount = renewals within 90 days across ALL businesses (not just active one).
     // allRenewals is already computed above; we just filter it here so the health card
     // reflects the full portfolio's urgency, not just the active business.
     const expiringCount = allRenewals.filter(r => r.daysLeft <= 90).length;
-    return { score, pending, expiringCount, total, done };
+    return { score, pending, expiringCount, total, done, noData };
   // allRenewals already depends on checklist, so we include it here.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checklist, allRenewals]);
@@ -2824,8 +2831,176 @@ export default function ChatPage() {
 
   // ── Render ────────────────────────────────────────────────────────────────
 
+  // ── v61: Review Impact modal data ────────────────────────────────────────
+  const reviewImpactAlert = reviewImpactAlertId
+    ? ruleAlerts.find(a => a.id === reviewImpactAlertId) ?? null
+    : null;
+
   return (
     <div className="flex h-screen bg-[#f8f9fb]">
+
+      {/* v61 — Review Impact modal ─────────────────────────────────────── */}
+      {reviewImpactAlert && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(2px)" }}
+          onClick={e => { if (e.target === e.currentTarget) setReviewImpactAlertId(null); }}
+        >
+          <div className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl"
+            style={{ background: "#fff", border: "1px solid #e2e8f0" }}>
+
+            {/* Modal header — amber accent */}
+            <div className="flex items-start justify-between px-5 py-4"
+              style={{ background: "linear-gradient(135deg, #0B1E3F 0%, #1e3a5f 100%)" }}>
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ background: "rgba(251,191,36,0.18)", border: "1px solid rgba(251,191,36,0.35)" }}>
+                  <Zap className="h-4 w-4 text-amber-400" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-amber-400 mb-0.5">
+                    Regulation Update
+                  </p>
+                  <p className="text-sm font-bold text-white leading-snug">{reviewImpactAlert.title}</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">{reviewImpactAlert.businessName}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setReviewImpactAlertId(null)}
+                className="shrink-0 text-slate-400 hover:text-white transition-colors mt-0.5"
+              >
+                <XIcon className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Modal body */}
+            <div className="px-5 py-4 space-y-4 max-h-[60vh] overflow-y-auto">
+
+              {/* What this means */}
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-[#0B1E3F] mb-1.5">
+                  What This Means
+                </p>
+                <p className="text-sm text-slate-700 leading-relaxed">
+                  {reviewImpactAlert.description}
+                </p>
+              </div>
+
+              {/* Affected forms with status */}
+              {reviewImpactAlert.affectedForms.length > 0 && (() => {
+                const affected = reviewImpactAlert.affectedForms.map(formId => {
+                  const form = ALL_FORMS[formId];
+                  const clItem = checklist.find(c => c.formId === formId);
+                  return { formId, name: form?.name ?? formId, clItem };
+                });
+                return (
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-[#0B1E3F] mb-1.5">
+                      Affected Filings
+                    </p>
+                    <div className="space-y-1.5">
+                      {affected.map(({ formId, name, clItem }) => (
+                        <div key={formId}
+                          className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg"
+                          style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <FileText className="h-3.5 w-3.5 text-[#0B1E3F] shrink-0" />
+                            <span className="text-xs text-slate-800 font-medium truncate">{name}</span>
+                          </div>
+                          {clItem ? (
+                            <span className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                              clItem.status === "done"
+                                ? "text-green-700 bg-green-50 border-green-200"
+                                : clItem.status === "in-progress"
+                                  ? "text-amber-700 bg-amber-50 border-amber-200"
+                                  : "text-slate-500 bg-slate-50 border-slate-200"
+                            }`}>
+                              {clItem.status === "done" ? "Completed" : clItem.status === "in-progress" ? "In Progress" : "To Do"}
+                            </span>
+                          ) : (
+                            <span className="shrink-0 text-[10px] font-semibold text-slate-400 bg-slate-50 border border-slate-200 rounded-full px-2 py-0.5">
+                              Not tracked
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* What to do next */}
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-[#0B1E3F] mb-1.5">
+                  What To Do Next
+                </p>
+                <ul className="space-y-2">
+                  {reviewImpactAlert.affectedForms.map(formId => {
+                    const name = ALL_FORMS[formId]?.name ?? formId;
+                    const done = checklist.find(c => c.formId === formId && c.status === "done");
+                    return done ? (
+                      <li key={formId} className="flex items-start gap-2 text-xs text-slate-700">
+                        <span className="text-[#00C2CB] mt-0.5 shrink-0">✓</span>
+                        Re-review your {name} to confirm it still meets the updated requirements.
+                      </li>
+                    ) : (
+                      <li key={formId} className="flex items-start gap-2 text-xs text-slate-700">
+                        <span className="text-amber-500 mt-0.5 shrink-0">→</span>
+                        File or update your {name} to comply with the new rules.
+                      </li>
+                    );
+                  })}
+                  <li className="flex items-start gap-2 text-xs text-slate-700">
+                    <span className="text-slate-400 mt-0.5 shrink-0">→</span>
+                    Check your renewal dates — late filing after a regulation change may incur penalties.
+                  </li>
+                  <li className="flex items-start gap-2 text-xs text-slate-700">
+                    <span className="text-slate-400 mt-0.5 shrink-0">→</span>
+                    Contact the issuing agency directly if you are unsure whether you are affected.
+                  </li>
+                </ul>
+              </div>
+
+              {/* Deadline risk */}
+              <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg"
+                style={{ background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.25)" }}>
+                <Bell className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+                <p className="text-[11px] text-amber-800 leading-relaxed">
+                  <strong>Deadline risk:</strong> Failure to update affected permits before your next renewal date
+                  may result in fines or permit revocation. Act before the next renewal cycle.
+                </p>
+              </div>
+            </div>
+
+            {/* Modal footer */}
+            <div className="px-5 py-3 flex gap-2"
+              style={{ borderTop: "1px solid #e2e8f0", background: "#f8fafc" }}>
+              <button
+                onClick={() => {
+                  setReviewImpactAlertId(null);
+                  checklistTopRef.current?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold text-white transition-colors"
+                style={{ background: "#0B1E3F" }}
+                onMouseEnter={e => (e.currentTarget.style.background = "#1e3a5f")}
+                onMouseLeave={e => (e.currentTarget.style.background = "#0B1E3F")}
+              >
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Go to Checklist
+              </button>
+              <button
+                onClick={() => {
+                  dismissAlert(reviewImpactAlert.id);
+                  setReviewImpactAlertId(null);
+                }}
+                className="px-3 py-2 rounded-lg text-xs font-semibold text-slate-500 border border-slate-200 hover:border-slate-300 hover:text-slate-700 bg-white transition-colors"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ════════════ Sidebar ════════════ */}
       <div className="w-72 border-r border-slate-200 bg-white flex flex-col shrink-0">
@@ -3062,22 +3237,27 @@ export default function ChatPage() {
 
           {/* ── Compliance Health Score card ──────────────────────────────── */}
           {healthScore && (() => {
-            const { score, pending, expiringCount } = healthScore;
+            const { score, pending, expiringCount, noData } = healthScore;
             const RING_R    = 20;
             const RING_CIRC = 2 * Math.PI * RING_R;
             const offset    = RING_CIRC * (1 - score / 100);
-            const ringStroke =
-              score >= 80 ? "#16a34a" :
-              score >= 50 ? "#d97706" : "#dc2626";
-            const textColor =
-              score >= 80 ? "text-green-700" :
-              score >= 50 ? "text-amber-700" : "text-red-700";
-            const bgColor =
-              score >= 80 ? "bg-green-50 border-green-200" :
-              score >= 50 ? "bg-amber-50 border-amber-200" : "bg-red-50 border-red-200";
-            const label =
-              score >= 80 ? "Looking good" :
-              score >= 50 ? "Needs attention" : "At risk";
+            // v61 — noData (0 forms verified done) shows slate "No data yet" state
+            const ringStroke = noData
+              ? "#94a3b8"
+              : score >= 80 ? "#16a34a"
+              : score >= 50 ? "#d97706" : "#dc2626";
+            const textColor = noData
+              ? "text-slate-500"
+              : score >= 80 ? "text-green-700"
+              : score >= 50 ? "text-amber-700" : "text-red-700";
+            const bgColor = noData
+              ? "bg-slate-50 border-slate-200"
+              : score >= 80 ? "bg-green-50 border-green-200"
+              : score >= 50 ? "bg-amber-50 border-amber-200" : "bg-red-50 border-red-200";
+            const label = noData
+              ? "Complete forms to track progress"
+              : score >= 80 ? "Looking good"
+              : score >= 50 ? "Needs attention" : "At risk";
             return (
               <div
                 className={`mx-4 mb-2 rounded-xl border p-3 cursor-pointer transition-shadow hover:shadow-sm shrink-0 ${bgColor}`}
@@ -3089,20 +3269,22 @@ export default function ChatPage() {
                   <div className="shrink-0 relative">
                     <svg width="56" height="56" viewBox="0 0 56 56">
                       <circle cx="28" cy="28" r={RING_R} fill="none" stroke="#e2e8f0" strokeWidth="6" />
-                      <circle
-                        cx="28" cy="28" r={RING_R}
-                        fill="none"
-                        stroke={ringStroke}
-                        strokeWidth="6"
-                        strokeDasharray={RING_CIRC}
-                        strokeDashoffset={offset}
-                        strokeLinecap="round"
-                        transform="rotate(-90 28 28)"
-                        style={{ transition: "stroke-dashoffset 0.6s ease, stroke 0.4s ease" }}
-                      />
+                      {!noData && (
+                        <circle
+                          cx="28" cy="28" r={RING_R}
+                          fill="none"
+                          stroke={ringStroke}
+                          strokeWidth="6"
+                          strokeDasharray={RING_CIRC}
+                          strokeDashoffset={offset}
+                          strokeLinecap="round"
+                          transform="rotate(-90 28 28)"
+                          style={{ transition: "stroke-dashoffset 0.6s ease, stroke 0.4s ease" }}
+                        />
+                      )}
                     </svg>
                     <span className={`absolute inset-0 flex items-center justify-center text-[11px] font-bold tabular-nums ${textColor}`}>
-                      {score}%
+                      {noData ? "—" : `${score}%`}
                     </span>
                   </div>
 
@@ -3114,12 +3296,13 @@ export default function ChatPage() {
                         Compliance Health
                       </span>
                     </div>
+                    {/* v61 — show "No data yet" when nothing is verified as done */}
                     <p className={`text-xs font-semibold ${textColor}`}>
-                      {score}% compliant
+                      {noData ? "No data yet" : `${score}% compliant`}
                     </p>
                     <p className="text-[10px] text-slate-500 leading-tight mt-0.5">
                       {label}
-                      {pending > 0 && ` · ${pending} item${pending !== 1 ? "s" : ""} pending`}
+                      {!noData && pending > 0 && ` · ${pending} item${pending !== 1 ? "s" : ""} pending`}
                     </p>
                     {expiringCount > 0 && (
                       <button
@@ -3311,8 +3494,9 @@ export default function ChatPage() {
                             month: "short", day: "numeric",
                           })}
                         </span>
+                        {/* v61 — opens Review Impact modal instead of just scrolling */}
                         <button
-                          onClick={() => checklistTopRef.current?.scrollIntoView({ behavior: "smooth" })}
+                          onClick={() => setReviewImpactAlertId(alert.id)}
                           className="flex items-center gap-1 text-[10px] font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-lg px-2 py-0.5 transition-colors"
                         >
                           <FileText className="h-2.5 w-2.5" />
@@ -4010,6 +4194,22 @@ export default function ChatPage() {
             skipPayment={true}
             initialFormData={activeFormInitialData}
             isRenewal={activeFormIsRenewal}
+            businessProfile={loadedBusiness ? {
+              name:         loadedBusiness.name,
+              location:     loadedBusiness.location,
+              businessType: loadedBusiness.businessType,
+            } : null}
+            onSaveDocument={(filename, _base64) => {
+              // v60 — update the synthetic document record with the real filename so the
+              // matching form card in BusinessProfileView shows the actual file name
+              // with a green "Completed" badge instead of the generic placeholder.
+              if (!activeTemplate) return;
+              setUploadedDocs(prev => prev.map(d =>
+                d.formId === activeTemplate.id && d.id.startsWith("form-complete-")
+                  ? { ...d, originalName: filename }
+                  : d
+              ));
+            }}
           />
         ) : (
           <div className="px-6 py-4 border-t border-slate-200 bg-white shrink-0">

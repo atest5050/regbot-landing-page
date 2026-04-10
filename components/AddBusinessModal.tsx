@@ -7,8 +7,9 @@
  *
  * "Starting New" tab  — guides the user to start a chat and save from there.
  * "Existing Business" tab — form: name, location, industry, existing permits.
- *   Selected permits are added to the checklist as "done" items with renewal dates
- *   pre-calculated from getSuggestedRenewalDate(). The business is saved immediately
+ *   Selected permits are added as "in-progress" items (v61: changed from "done" to
+ *   prevent false 100% health scores on unverified pre-existing claims). Renewal dates
+ *   are pre-calculated from getSuggestedRenewalDate(). The business is saved immediately
  *   and set as the active business profile.
  *
  * Props:
@@ -175,17 +176,20 @@ export default function AddBusinessModal({ onAdd, onClose, onStartChat }: AddBus
         id:          `pre-${formId}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
         text:        tpl ? tpl.name : (PERMIT_LABELS[formId] ?? formId),
         fee:         tpl?.fee,
-        status:      "done" as const,
+        // v61 — use "in-progress" instead of "done" so self-reported permits don't
+        // inflate the health score to 100%. User can mark as done after verifying.
+        status:      "in-progress" as const,
         formId,
         createdAt:   now,
         renewalDate,
-        completedVia: "Pre-existing business — verify current status with issuing agency",
+        completedVia: "Self-reported — verify with issuing agency and update status",
       };
     });
 
     const totalForms = checklist.length;
-    const doneForms  = checklist.filter(i => i.status === "done").length;
-    const healthScore = totalForms > 0 ? Math.round((doneForms / totalForms) * 100) : 0;
+    // v61 — items are now "in-progress"; verified done is 0 until user confirms them
+    const doneForms  = 0;
+    const healthScore = 0;
 
     const biz: SavedBusiness = {
       id:                  `${Date.now()}-${Math.random().toString(36).slice(2)}`,

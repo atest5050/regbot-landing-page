@@ -1,7 +1,11 @@
 "use client";
 
-// BusinessProfileView — v45: Zoning & Address Compliance Checker
+// BusinessProfileView — v61: Fix "View completed zoning check" button
 //
+// v61 — "View completed zoning check" now opens an inline modal reconstructed
+//        from the synthetic UploadedDocument's analysis fields, instead of
+//        routing through onViewCompletedForm (which had no handler for zoning).
+//        viewDoc() detects zoning docs by docType or formId and sets zoningViewDoc state.
 // v46 — Added detailed logging and specific error messages to Zoning Checker
 // v45 — Zoning & Address Compliance Checker (major moat feature)
 //        • "Check Zoning" button in header opens a full panel
@@ -238,10 +242,16 @@ export default function BusinessProfileView({
   onAttachZoningResult,
 }: Props) {
 
-  // v40 — unified view handler: routes synthetic docs (storagePath="", formId set)
-  // to onViewCompletedForm (PacketScreen), and real docs to onViewDocument (signed URL).
+  // v61 — state for inline zoning result view modal
+  const [zoningViewDoc, setZoningViewDoc] = useState<UploadedDocument | null>(null);
+
+  // v40/v61 — unified view handler: routes zoning docs to inline modal,
+  // synthetic form-completion docs to onViewCompletedForm (PacketScreen),
+  // and real docs to onViewDocument (signed URL).
   const viewDoc = useCallback((doc: UploadedDocument) => {
-    if (!doc.storagePath && doc.formId && onViewCompletedForm) {
+    if (doc.analysis?.docType === "Zoning Compliance Check" || doc.formId === "zoning-check") {
+      setZoningViewDoc(doc); // v61 — show inline zoning result modal
+    } else if (!doc.storagePath && doc.formId && onViewCompletedForm) {
       onViewCompletedForm(doc.formId);
     } else {
       onViewDocument(doc);
@@ -611,6 +621,118 @@ export default function BusinessProfileView({
           </div>
         </div>
       )}
+
+      {/* ── v61 — Zoning result view modal ───────────────────────────────── */}
+      {zoningViewDoc && (() => {
+        const raw = zoningViewDoc.analysis?.rawExtracted as Record<string, string> | undefined;
+        const statusKey = (raw?.status ?? "unknown") as ZoningResult["status"];
+        const cfg = ZONING_STATUS[statusKey] ?? ZONING_STATUS.unknown;
+        const { Icon } = cfg;
+        const zoneType = raw?.zone_type ?? zoningViewDoc.analysis?.issuingAuthority ?? "Unknown zone";
+        const address  = raw?.address ?? zoningViewDoc.analysis?.rawExtracted?.address ?? business.location;
+        const bizType  = raw?.business_type ?? business.businessType ?? "";
+        const notes    = (zoningViewDoc.analysis?.summary as string | undefined) ?? "";
+        const restrictions: string[] = Array.isArray(zoningViewDoc.analysis?.suggestions)
+          ? zoningViewDoc.analysis!.suggestions as string[]
+          : [];
+        const checkedAt = zoningViewDoc.uploadedAt ?? "";
+        return (
+          <div
+            className="absolute inset-0 z-[110] flex items-start justify-center overflow-y-auto py-6 px-4"
+            style={{ background: "rgba(0,0,0,0.75)" }}
+            onClick={e => { if (e.target === e.currentTarget) setZoningViewDoc(null); }}
+          >
+            <div
+              className="w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl"
+              style={{ background: "#0d1b35", border: "1px solid rgba(34,211,238,0.22)" }}
+            >
+              {/* Modal header */}
+              <div
+                className="px-6 py-5 flex items-center gap-3"
+                style={{ borderBottom: "1px solid rgba(34,211,238,0.15)" }}
+              >
+                <div
+                  className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0"
+                  style={{ background: "rgba(34,211,238,0.12)", border: "1px solid rgba(34,211,238,0.25)" }}
+                >
+                  <Search className="h-4 w-4 text-cyan-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-sm font-bold text-white leading-tight">Zoning Compliance Check</h2>
+                  <p className="text-xs text-slate-400 leading-tight truncate">{address}</p>
+                </div>
+                <button
+                  onClick={() => setZoningViewDoc(null)}
+                  className="h-7 w-7 flex items-center justify-center rounded-lg border border-white/15 text-slate-400 hover:text-white hover:border-white/30 transition-colors shrink-0"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="px-6 py-5 space-y-4">
+                {/* Status badge */}
+                <div
+                  className="flex items-center gap-3 rounded-xl px-4 py-3"
+                  style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}
+                >
+                  <Icon className={`h-5 w-5 shrink-0 ${cfg.color}`} />
+                  <div>
+                    <p className={`text-sm font-bold ${cfg.color}`}>{cfg.label}</p>
+                    <p className="text-xs text-slate-400">{zoneType}{bizType ? ` · ${bizType}` : ""}</p>
+                  </div>
+                </div>
+
+                {/* Notes */}
+                {notes && (
+                  <div>
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Summary</p>
+                    <p className="text-sm text-slate-300 leading-relaxed">{notes}</p>
+                  </div>
+                )}
+
+                {/* Restrictions */}
+                {restrictions.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Restrictions</p>
+                    <ul className="space-y-1.5">
+                      {restrictions.map((r, i) => (
+                        <li key={i} className="flex items-start gap-2 text-xs text-slate-300">
+                          <ChevronRight className="h-3.5 w-3.5 text-cyan-400 shrink-0 mt-0.5" />
+                          {r}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Checked at */}
+                {checkedAt && (
+                  <p className="text-[10px] text-slate-500">
+                    Checked {formatDate(checkedAt)}
+                  </p>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div
+                className="px-6 py-4"
+                style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}
+              >
+                <button
+                  onClick={() => setZoningViewDoc(null)}
+                  className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-colors"
+                  style={{ background: "#0e7490" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "#0891b2"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "#0e7490"; }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── v45 — Zoning & Address Compliance Panel ──────────────────────── */}
       {showZoningPanel && (
