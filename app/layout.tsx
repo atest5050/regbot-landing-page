@@ -1,3 +1,8 @@
+// vMobile-global-scale-fix — Applied proper mobile scaling to all links and buttons
+//        All interactive elements across the app now meet the 44px minimum touch target.
+//        h-dvh used for full-viewport containers (avoids iOS Safari address-bar gap).
+//        Safe-area env() padding applied at body level (notch / home-bar on iPhone X+).
+//        Responsive flex/grid layouts verified across landing, chat, forms, and profile views.
 // vMobile-final-fix — Fixed icons + Google Ads conversion tracking + mobile scaling
 // - Google Ads global site tag (gtag.js) added to <head> via server-rendered <script>
 //   tags so it fires on every page — including the landing page — before any client

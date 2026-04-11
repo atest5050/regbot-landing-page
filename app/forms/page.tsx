@@ -1,3 +1,7 @@
+// vMobile-global-scale-fix — Applied proper mobile scaling to all links and buttons
+//   "Back to compliance assistant" link: added min-h-[44px] inline-flex items-center py-3 px-3
+//   so it meets the 44px minimum touch target on phones.
+//   min-h-screen → min-h-dvh: avoids iOS Safari address-bar gap on full-viewport layout.
 // app/forms/page.tsx — v22: Full Dedicated Forms Library Page
 //
 // A standalone public route at /forms that renders the complete Forms Library
@@ -23,7 +27,8 @@ export const metadata = {
 
 export default function FormsPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    // vMobile-global-scale-fix: min-h-dvh instead of min-h-screen (avoids iOS address-bar gap)
+    <div className="min-h-dvh flex flex-col bg-white">
       <Navbar />
 
       {/* ── Hero ───────────────────────────────────────────────────────────── */}
@@ -41,11 +46,11 @@ export default function FormsPage() {
             Browse, download, and track the federal and state compliance forms your business needs — all in one place.
           </p>
 
-          {/* Back to chat CTA */}
-          <div className="mt-6">
+          {/* Back to chat CTA — vMobile-global-scale-fix: min-h-[44px] touch target */}
+          <div className="mt-6 flex justify-center">
             <Link
               href="/chat"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+              className="inline-flex items-center gap-1.5 min-h-[44px] py-3 px-3 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors rounded-lg hover:bg-blue-50"
             >
               ← Back to compliance assistant
             </Link>

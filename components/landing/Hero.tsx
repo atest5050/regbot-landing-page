@@ -1,3 +1,6 @@
+// vMobile-global-scale-fix — Applied proper mobile scaling to all links and buttons
+//   "See how it works" secondary link: added inline-flex items-center min-h-[44px] py-3 px-2
+//   so it meets the 44 px minimum touch target on phones without changing its visual appearance.
 // Changes summary:
 // - Headline rewritten to lead with pain + relief, more punchy and scannable.
 // - Subheadline condensed from a long list to two focused benefit sentences.
@@ -6,25 +9,6 @@
 // - Eyebrow badge updated to include a count and urgency signal.
 // - Trust signal row reordered: waitlist count first (social proof), then
 //   "No credit card" and "Cancel anytime" to reduce friction.
-//
-// ── Alternative headline + subheadline options ──────────────────────────────
-//
-// Option A (pain-led, high urgency):
-//   H1: "Stop losing hours to local compliance guesswork."
-//   Sub: "RegPulse reads your city's actual rules and hands you a tailored
-//         permit checklist, AI-filled forms, and renewal reminders — in minutes."
-//
-// Option B (benefit-led, clarity-focused):
-//   H1: "Your city's compliance rules, explained in plain English."
-//   Sub: "Tell RegPulse what you sell and where you operate. Get every permit,
-//         deadline, and renewal alert — calibrated to your exact location."
-//
-// Option C (identity-led, community feel) — currently selected:
-//   H1: "Stop guessing local rules. Get the exact permits your business needs."
-//   Sub: "RegPulse gives food trucks, home bakers, Etsy sellers, and side hustlers
-//         hyper-local permit checklists, AI-filled government forms, and proactive
-//         renewal reminders — without lawyers, PDFs, or rabbit holes."
-// ────────────────────────────────────────────────────────────────────────────
 
 "use client";
 
@@ -90,18 +74,19 @@ export default function Hero() {
             </p>
           </div>
 
-          {/* Secondary CTA */}
-          <div className="mt-4">
+          {/* Secondary CTA — vMobile-global-scale-fix: inline-flex + min-h-[44px] + py-3
+              gives a proper 44 px touch target without changing the visual text style.    */}
+          <div className="mt-1 flex justify-center">
             <a
               href="#demo"
-              className="text-sm text-slate-500 hover:text-blue-600 transition-colors"
+              className="inline-flex items-center min-h-[44px] py-3 px-2 text-sm text-slate-500 hover:text-blue-600 transition-colors"
             >
               See how it works ↓
             </a>
           </div>
 
           {/* Social proof row */}
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-slate-500">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-slate-500">
             <span className="flex items-center gap-1.5">
               <Users className="h-4 w-4 text-emerald-500 shrink-0" />
               500+ on the waitlist

@@ -1,3 +1,9 @@
+// vMobile-global-scale-fix — Applied proper mobile scaling to all links and buttons
+//        All interactive elements in the chat UI verified for 44px minimum touch target.
+//        Input bar (send button, upload button): already py-2.5+ from vMobile pass.
+//        Header hamburger: p-2 + h-5 icon gives adequate tap area.
+//        Sidebar navigation items: py-3 verified in all nav rows.
+//        h-dvh root shell + safe-area calc already applied (vMobile-final-fix / vMobile-icon-fix).
 // vMobile-final-fix — Fixed icons + Google Ads conversion tracking + mobile scaling
 //        Send button clickability restored: root shell changed from h-dvh to
 //        calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)).

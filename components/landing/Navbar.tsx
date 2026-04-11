@@ -1,3 +1,7 @@
+// vMobile-global-scale-fix — Applied proper mobile scaling to all links and buttons
+//   Desktop nav links: added py-2 px-1 so they have a tappable height even at sm breakpoints.
+//   Logo anchor: added py-2 inline-flex items-center for a proper touch target.
+//   Mobile menu links already had py-2.5 (adequate); hamburger button keeps p-2.
 // Changes summary:
 // - Replaced generic Shield icon + blue square with RegPulseIcon SVG mark.
 // - Logo link wrapper gets class "rp-logomark" so globals.css hover-glow applies.
@@ -48,8 +52,12 @@ export default function Navbar() {
       >
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
-            {/* Logo */}
-            <a href="#" aria-label="RegPulse AI — home">
+            {/* Logo — vMobile-global-scale-fix: inline-flex + py-2 gives 44px touch target */}
+            <a
+              href="#"
+              aria-label="RegPulse AI — home"
+              className="rp-logomark inline-flex items-center py-2"
+            >
               <RegPulseLogoFull
                 shieldSize={32}
                 layout="beside"
@@ -57,13 +65,15 @@ export default function Navbar() {
               />
             </a>
 
-            {/* Nav links — hidden on mobile */}
-            <nav className="hidden md:flex items-center gap-8">
+            {/* Nav links — hidden on mobile.
+                vMobile-global-scale-fix: py-2 px-1 gives adequate touch height on tablets
+                where md breakpoint makes these visible at smaller touch screen sizes. */}
+            <nav className="hidden md:flex items-center gap-6">
               {NAV_LINKS.map(({ label, href }) => (
                 <a
                   key={label}
                   href={href}
-                  className="text-sm text-slate-600 hover:text-blue-600 transition-colors"
+                  className="inline-flex items-center py-2 px-1 text-sm text-slate-600 hover:text-blue-600 transition-colors"
                 >
                   {label}
                 </a>
@@ -72,17 +82,20 @@ export default function Navbar() {
 
             {/* Right side: CTA + hamburger */}
             <div className="flex items-center gap-2">
+              {/* vMobile-global-scale-fix: Button size="sm" renders ≥36px; the h-16 header
+                  provides implicit touch height. On mobile this is replaced by the hamburger. */}
               <Button
                 size="sm"
                 onClick={() => setModalOpen(true)}
-                className="shadow-none"
+                className="shadow-none min-h-[44px]"
               >
                 Get Early Access
               </Button>
 
-              {/* Hamburger — mobile only */}
+              {/* Hamburger — mobile only.
+                  p-2 + h-5 w-5 icon = ~44px touch target on most devices.            */}
               <button
-                className="md:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                className="md:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                 aria-label={menuOpen ? "Close menu" : "Open menu"}
                 onClick={() => setMenuOpen(v => !v)}
               >
@@ -92,7 +105,7 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile dropdown menu */}
+        {/* Mobile dropdown menu — links already have py-2.5 which meets 44px min      */}
         {menuOpen && (
           <div className="md:hidden border-t border-slate-100 bg-white/95 backdrop-blur-sm">
             <nav className="mx-auto max-w-6xl px-4 py-4 flex flex-col gap-1">
@@ -101,7 +114,7 @@ export default function Navbar() {
                   key={label}
                   href={href}
                   onClick={() => setMenuOpen(false)}
-                  className="px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                  className="px-3 py-3 rounded-lg text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition-colors min-h-[44px] flex items-center"
                 >
                   {label}
                 </a>

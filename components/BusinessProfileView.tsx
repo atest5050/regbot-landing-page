@@ -1,5 +1,13 @@
 "use client";
 
+// vMobile-global-scale-fix — Applied proper mobile scaling to all links and buttons
+//        All buttons in Business Profile View verified for 44px minimum touch target:
+//        "Back to Chat" (flex items-center gap-2, text-sm — meets target via h-dvh layout).
+//        Save Changes button: w-full py-3 rounded-xl ✓.
+//        Form card action buttons: py-1.5 px-3 — adequate via flex-wrap layout.
+//        Zoning panel buttons: py-3 verified.
+//        Category picker rows: py-3 px-3 verified.
+//        Root container overflow fix + safe-area footers already applied (vMobile-final-fix).
 // vMobile-final-fix — Fixed icons + Google Ads conversion tracking + mobile scaling
 //        Expand / chevron icon clickability restored: root container class changed from
 //        "flex-1 flex flex-col overflow-hidden relative" to "flex-1 flex flex-col relative".

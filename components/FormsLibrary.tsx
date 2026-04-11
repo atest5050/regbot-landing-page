@@ -1,5 +1,15 @@
 "use client";
 
+// vMobile-global-scale-fix — Applied proper mobile scaling to all links and buttons
+//   fullPage mode — Recommended section:
+//     Paperclip upload button: h-7 w-7 (28px) → h-10 w-10 min-h-[44px] (40px square + safe tap zone)
+//     Download / Open Form buttons: py-1.5 → py-2.5 (meets 44px with text height)
+//   fullPage mode — Main grid card buttons:
+//     Download Form / Official Site: py-1.5 → py-2.5
+//   compact mode (sidebar) — all buttons bumped one step for mobile slide-in drawer:
+//     Search input: py-1.5 → py-2
+//     Category tabs: py-0.5 → py-1.5
+//     Card Download / Official Site buttons: py-1 → py-2
 // FormsLibrary — v24: Large-Scale Forms Library UI Upgrade
 //
 // Handles the now-large library (50 states + county/city LOCAL_FORMS).
@@ -461,7 +471,7 @@ export default function FormsLibrary({
                           rel="noopener noreferrer"
                           download
                           onClick={() => handleDownload(entry.id)}
-                          className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                          className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
                         >
                           {downloaded ? <Check className="h-3 w-3" /> : <Download className="h-3 w-3" />}
                           {downloaded ? "Downloaded" : "Download"}
@@ -471,7 +481,7 @@ export default function FormsLibrary({
                           href={entry.officialUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                          className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
                         >
                           <ExternalLink className="h-3 w-3" />
                           Open Form
@@ -483,7 +493,7 @@ export default function FormsLibrary({
                           <button
                             title="Upload completed form"
                             onClick={() => fileInputRefs.current[entry.id]?.click()}
-                            className="shrink-0 flex items-center justify-center h-7 w-7 rounded-lg border border-slate-200 bg-white text-slate-500 hover:border-blue-300 hover:text-blue-600 transition-colors"
+                            className="shrink-0 flex items-center justify-center h-10 w-10 min-h-[44px] min-w-[44px] rounded-lg border border-slate-200 bg-white text-slate-500 hover:border-blue-300 hover:text-blue-600 transition-colors"
                           >
                             <Paperclip className="h-3.5 w-3.5" />
                           </button>
@@ -643,7 +653,7 @@ export default function FormsLibrary({
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={() => handleDownload(entry.id)}
-                        className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl px-3 py-1.5 transition-colors shadow-sm"
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl px-3 py-2.5 transition-colors shadow-sm"
                       >
                         <Download className="h-3.5 w-3.5" />
                         Download Form
@@ -653,7 +663,7 @@ export default function FormsLibrary({
                         href={entry.officialUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl px-3 py-1.5 transition-colors"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl px-3 py-2.5 transition-colors"
                       >
                         <ExternalLink className="h-3.5 w-3.5" />
                         Official Site
@@ -691,7 +701,7 @@ export default function FormsLibrary({
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search forms…"
-          className="w-full pl-7 pr-7 py-1.5 text-[11px] rounded-lg border border-slate-200 bg-slate-50 focus:outline-none focus:ring-1 focus:ring-blue-300 focus:border-blue-300 placeholder:text-slate-400 transition-colors"
+          className="w-full pl-7 pr-7 py-2 text-[11px] rounded-lg border border-slate-200 bg-slate-50 focus:outline-none focus:ring-1 focus:ring-blue-300 focus:border-blue-300 placeholder:text-slate-400 transition-colors"
         />
         {search && (
           <button
@@ -710,7 +720,7 @@ export default function FormsLibrary({
           <button
             key={tab.id}
             onClick={() => setCategory(tab.id)}
-            className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border transition-colors ${
+            className={`text-[10px] font-semibold px-2 py-1.5 rounded-full border transition-colors ${
               category === tab.id
                 ? "bg-blue-600 text-white border-blue-600"
                 : "bg-white text-slate-500 border-slate-200 hover:border-blue-300 hover:text-blue-600"
@@ -781,7 +791,7 @@ export default function FormsLibrary({
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => handleDownload(entry.id)}
-                      className="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg px-2 py-1 transition-colors"
+                      className="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg px-2 py-2 transition-colors"
                     >
                       <Download className="h-3 w-3" />
                       Download Form
@@ -791,7 +801,7 @@ export default function FormsLibrary({
                       href={entry.officialUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg px-2 py-1 transition-colors"
+                      className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg px-2 py-2 transition-colors"
                     >
                       <ExternalLink className="h-3 w-3" />
                       Official Site

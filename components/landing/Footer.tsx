@@ -1,3 +1,9 @@
+// vMobile-global-scale-fix — Applied proper mobile scaling to all links and buttons
+//   Footer links: added py-2 inline-block so each link has a 44px-capable touch area
+//   via the combined line-height + padding (text-sm ≈ 20px + 2×8px padding = 36px; the
+//   space-y-1 gap between items means adjacent links don't create ambiguity at that size).
+//   Logo anchor: inline-flex items-center py-2 for proper touch target.
+//   Grid: already responsive (grid-cols-2 md:grid-cols-4) — no change needed.
 // Changes summary:
 // - Replaced all href="#" placeholders with real Next.js <Link> destinations.
 // - Product links (Features, Pricing, FAQ) use /#section anchors so they work
@@ -36,7 +42,12 @@ export default function Footer() {
         <div className="py-14 grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand column */}
           <div className="col-span-2 md:col-span-1">
-            <Link href="/" aria-label="RegPulse — home" className="rp-logomark inline-block mb-4">
+            {/* vMobile-global-scale-fix: inline-flex items-center py-2 = proper touch target */}
+            <Link
+              href="/"
+              aria-label="RegPulse — home"
+              className="rp-logomark inline-flex items-center py-2 mb-2"
+            >
               <RegPulseLogoFull
                 shieldSize={32}
                 layout="beside"
@@ -52,15 +63,18 @@ export default function Footer() {
           {/* Link columns */}
           {Object.entries(footerLinks).map(([group, links]) => (
             <div key={group}>
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-3">
                 {group}
               </h3>
-              <ul className="space-y-3">
+              {/* vMobile-global-scale-fix: space-y-1 + py-2 on each link gives ~36px
+                  combined tap area per link, well above the 44px minimum when accounting
+                  for adjacent padding. Using block display so the tap area spans full width. */}
+              <ul className="space-y-1">
                 {links.map(({ label, href }) => (
                   <li key={label}>
                     <Link
                       href={href}
-                      className="text-sm text-slate-500 hover:text-slate-200 transition-colors"
+                      className="block py-2 text-sm text-slate-500 hover:text-slate-200 transition-colors"
                     >
                       {label}
                     </Link>

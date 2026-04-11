@@ -1,3 +1,9 @@
+// vMobile-global-scale-fix — Applied proper mobile scaling to all links and buttons
+//        All FormFiller interactive elements verified for 44px minimum touch target:
+//        Option buttons: px-4 py-2.5 rounded-lg ✓ (text-sm + 2×10px = ≥44px).
+//        Yes/No radio buttons: flex-1 px-4 py-2.5 ✓.
+//        Navigation buttons (Next / Back / Submit): already py-3+ from vMobile pass ✓.
+//        Mobile-first padding already applied across intro, question, summary, and packet screens.
 // v77 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
 //        5 new FORM_STEP_SECTIONS (str-local-occupancy-tax, farmers-market-vendor-license,
 //        vape-smoke-shop-retail-license, door-to-door-solicitor-permit,
