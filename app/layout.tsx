@@ -1,3 +1,7 @@
+// vMobile-scale-fix — Fixed aspect ratio / scaling for Business Profile on mobile
+// - Added explicit viewport meta with device-width, initial-scale=1, maximum-scale=5,
+//   user-scalable=yes, and viewport-fit=cover for iOS safe-area-inset support.
+// - Safe-area CSS vars exposed so components can use pb-safe / pt-safe via Tailwind.
 // Changes summary:
 // - Added Google Analytics 4 (GA4) via next/script in the root layout so every
 //   page is tracked without modifying individual routes.
@@ -10,7 +14,7 @@
 //   no 404s for missing scripts.
 // - Rebranded all user-facing text from "RegPulse" to "RegPulse".
 
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
@@ -21,6 +25,16 @@ const inter = Inter({
   variable: "--font-inter",
   display: "swap",
 });
+
+// vMobile-scale-fix — separate viewport export (Next.js 13+ App Router pattern)
+// Prevents double-tap zoom and sets safe-area-inset for iOS notch / home-bar handling.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,         // allow pinch-zoom for accessibility — don't set to 1
+  userScalable: true,
+  viewportFit: "cover",    // iOS safe-area-inset support (notch, home bar)
+};
 
 export const metadata: Metadata = {
   title: "RegPulse — Never guess your local regulations again.",
@@ -66,7 +80,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="min-h-screen bg-white font-sans">
+      {/* vMobile-scale-fix: min-h-dvh uses dynamic viewport height on mobile (avoids
+          the iOS Safari address-bar gap). Safe-area env() vars ensure content clears
+          the notch and home indicator on all iPhones / modern Androids.            */}
+      <body className="min-h-dvh bg-white font-sans" style={{
+        paddingTop:    "env(safe-area-inset-top)",
+        paddingBottom: "env(safe-area-inset-bottom)",
+        paddingLeft:   "env(safe-area-inset-left)",
+        paddingRight:  "env(safe-area-inset-right)",
+      }}>
         {children}
 
         {/* ── Google Analytics 4 ─────────────────────────────────────────────

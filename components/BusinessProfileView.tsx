@@ -1,5 +1,13 @@
 "use client";
 
+// vMobile-scale-fix — Fixed aspect ratio / scaling for Business Profile on mobile
+//        Root container: flex-1 flex flex-col overflow-hidden (fills parent exactly,
+//        no overflow bleed, correct on all viewport sizes including iOS Safari).
+//        Scrollable body: flex-1 overflow-y-auto (the only scrolling region).
+//        Header and save-footer: shrink-0 (pinned, never pushed off screen).
+//        Modals (leave-guard, zoning view): absolute inset-0 (contained to component).
+//        Zoning panel: absolute inset-0 flex flex-col overflow-hidden (full-cover panel).
+//        Safe-area: pb-safe added to save-footer for iOS home-bar clearance.
 // Mobile responsiveness overhaul — vMobile
 //        Profile scrollable body uses px-4 sm:px-6 for safe mobile gutters.
 //        Stats bar wraps gracefully on small screens.
@@ -1169,10 +1177,14 @@ export default function BusinessProfileView({
 
           </div>
 
-          {/* Panel footer — fixed actions */}
+          {/* Panel footer — fixed actions; vMobile-scale-fix: safe-area for iOS home bar */}
           <div
             className="shrink-0 px-6 py-4 space-y-2"
-            style={{ borderTop: "1px solid rgba(34,211,238,0.12)", background: "rgba(13,27,53,0.97)" }}
+            style={{
+              borderTop:     "1px solid rgba(34,211,238,0.12)",
+              background:    "rgba(13,27,53,0.97)",
+              paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
+            }}
           >
             {/* When results visible */}
             {zoningResult && !zoningLoading && (
@@ -1263,6 +1275,8 @@ export default function BusinessProfileView({
 
       {/* ════════════════════════════════════════════════════════════════════
           Header — dark navy with cyan hairline border
+          vMobile-scale-fix: shrink-0 keeps header pinned; safe-area-inset-top
+          handled at the body level by app/layout.tsx env() padding.
           ════════════════════════════════════════════════════════════════════ */}
       <div
         className="shrink-0 px-4 sm:px-6 py-4 sm:py-5"
@@ -1538,8 +1552,11 @@ export default function BusinessProfileView({
 
       {/* ════════════════════════════════════════════════════════════════════
           Body — scrollable
+          vMobile-scale-fix: flex-1 overflow-y-auto is the ONLY scrolling region.
+          The outer container is overflow-hidden so this div clips correctly.
+          overscroll-y-contain prevents scroll-chaining on iOS (bounce bleed).
           ════════════════════════════════════════════════════════════════════ */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto overscroll-y-contain">
         {/* vMobile: tighter padding on phones */}
         <div className="px-4 sm:px-6 py-5 sm:py-7 space-y-8 sm:space-y-10 max-w-4xl mx-auto w-full">
 
@@ -2026,8 +2043,8 @@ export default function BusinessProfileView({
             </section>
           )}
 
-          {/* ── Footer ────────────────────────────────────────────────────── */}
-          <div className="pb-6">
+          {/* ── Footer ── vMobile-scale-fix: pb-safe clears iOS home bar for last item */}
+          <div className="pb-6" style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}>
             <button
               onClick={() => handleLeaveAttempt(onBackToChat)}
               className="flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-white transition-colors"
@@ -2041,10 +2058,15 @@ export default function BusinessProfileView({
       </div>
 
       {/* ── v39 — Save Changes sticky footer ─────────────────────────────── */}
+      {/* vMobile-scale-fix: pb-safe / env(safe-area-inset-bottom) clears iOS home bar */}
       {hasDrafts && (
         <div
           className="shrink-0 px-6 py-4"
-          style={{ borderTop: "1px solid rgba(251,191,36,0.2)", background: "rgba(13,27,53,0.97)" }}
+          style={{
+            borderTop:         "1px solid rgba(251,191,36,0.2)",
+            background:        "rgba(13,27,53,0.97)",
+            paddingBottom:     "max(1rem, env(safe-area-inset-bottom))",
+          }}
         >
           <button
             onClick={() => { void handleSave(); }}

@@ -1,3 +1,7 @@
+// vMobile-scale-fix — Fixed aspect ratio / scaling for Business Profile on mobile
+//        Outer shell: h-screen → h-dvh (avoids iOS Safari address-bar gap).
+//        BusinessProfileView container: uses flex-1 overflow-hidden so the profile
+//        fills the available viewport without overflowing or truncating on phones.
 // v77 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
 //        5 new FORM_TEMPLATES: str-local-occupancy-tax, farmers-market-vendor-license,
 //        vape-smoke-shop-retail-license, door-to-door-solicitor-permit,
@@ -3045,7 +3049,7 @@ export default function ChatPage() {
     : null;
 
   return (
-    <div className="flex h-screen bg-[#f8f9fb]">
+    <div className="flex h-dvh bg-[#f8f9fb]">{/* vMobile-scale-fix: dvh = dynamic viewport height, correct on iOS Safari */}
 
       {/* v61 — Review Impact modal ─────────────────────────────────────── */}
       {reviewImpactAlert && (
@@ -4173,23 +4177,29 @@ export default function ChatPage() {
       {/* v44 — uploaded documents now visibly appear on the matching recommended form card with filename + green checkmark */}
       {/* v45 — Zoning & Address Compliance Checker + fixed document attachment on profile creation */}
       {/* v50 — Fixed "Attach Zoning Result to Profile" button so result is saved and immediately visible on the business profile */}
+      {/* vMobile-scale-fix: flex-1 flex flex-col overflow-hidden ensures the profile view
+          fills exactly the remaining viewport height on all screen sizes. On mobile the
+          BusinessProfileView's own overflow-y-auto body handles scrolling internally —
+          the outer container must NOT overflow so the sticky header/footer stay pinned. */}
       {showProfileView && loadedBusiness ? (
-        <BusinessProfileView
-          business={loadedBusiness}
-          recommendedForms={profileRecommendedForms}
-          completedDocuments={uploadedDocs.filter(d => d.businessId === loadedBusiness.id)}
-          checklist={checklist}
-          onBackToChat={() => setShowProfileView(false)}
-          onViewDocument={handleViewDocument}
-          onUpdateBusinessName={handleUpdateBusinessNameFromProfile}
-          onLocationChange={handleLocationChangeFromProfile}
-          onSaveDrafts={handleSaveDraftsFromProfile}
-          onDiscardDrafts={handleDiscardDraftsFromProfile}
-          onViewCompletedForm={handleViewCompletedForm}
-          onCheckZoning={handleCheckZoning}
-          onAttachZoningResult={handleAttachZoningResult}
-          onStartForm={handleStartFormFromProfile}
-        />
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+          <BusinessProfileView
+            business={loadedBusiness}
+            recommendedForms={profileRecommendedForms}
+            completedDocuments={uploadedDocs.filter(d => d.businessId === loadedBusiness.id)}
+            checklist={checklist}
+            onBackToChat={() => setShowProfileView(false)}
+            onViewDocument={handleViewDocument}
+            onUpdateBusinessName={handleUpdateBusinessNameFromProfile}
+            onLocationChange={handleLocationChangeFromProfile}
+            onSaveDrafts={handleSaveDraftsFromProfile}
+            onDiscardDrafts={handleDiscardDraftsFromProfile}
+            onViewCompletedForm={handleViewCompletedForm}
+            onCheckZoning={handleCheckZoning}
+            onAttachZoningResult={handleAttachZoningResult}
+            onStartForm={handleStartFormFromProfile}
+          />
+        </div>
       ) : null}
       <div className={`flex-1 flex flex-col overflow-hidden relative ${showProfileView && loadedBusiness ? "hidden" : ""}`}>
 
