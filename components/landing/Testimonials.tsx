@@ -1,3 +1,5 @@
+// Mobile responsiveness overhaul — vMobile
+// - Section padding: px-6 → px-4 sm:px-6 for smaller phones.
 // Changes summary:
 // - Full rewrite of the prior Testimonials component (which used @/components/ui/card,
 //   had 3 personas, no waitlist CTA, and was placed after FeaturesSection).
@@ -79,7 +81,7 @@ export default function Testimonials() {
   return (
     <>
       <section className="bg-white py-20 border-b border-slate-100">
-        <div className="mx-auto max-w-5xl px-6">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6">
           {/* Heading */}
           <div className="text-center mb-12">
             <p className="text-xs font-semibold uppercase tracking-widest text-blue-600 mb-3">

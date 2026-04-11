@@ -1,3 +1,5 @@
+// Mobile responsiveness overhaul — vMobile
+// - Card padding reduced on mobile: p-8 → p-5 sm:p-8.
 // Changes summary:
 // - Pro price updated from $9/mo → $19/mo to match the in-app implementation.
 // - Business plan price updated from $29/mo → $39/mo to maintain tier separation.
@@ -93,7 +95,7 @@ export default function Pricing() {
               <div
                 key={name}
                 className={cn(
-                  "relative rounded-2xl border p-8 transition-shadow duration-200",
+                  "relative rounded-2xl border p-5 sm:p-8 transition-shadow duration-200",
                   highlight
                     ? "border-blue-500 bg-blue-600 shadow-xl shadow-blue-100 md:-translate-y-2"
                     : "border-slate-200 bg-white hover:shadow-md"

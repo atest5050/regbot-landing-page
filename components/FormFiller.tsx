@@ -1,3 +1,96 @@
+// v77 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_STEP_SECTIONS (str-local-occupancy-tax, farmers-market-vendor-license,
+//        vape-smoke-shop-retail-license, door-to-door-solicitor-permit,
+//        hair-braiding-natural-hair-license).
+//        13 new LOCAL_FORMS: Omaha/Douglas NE, Baton Rouge LA, Birmingham/Jefferson AL,
+//        Wichita/Sedgwick KS, Spokane WA, Tacoma/Pierce WA, Madison/Dane WI,
+//        Riverside CA, San Bernardino CA, Bakersfield/Kern CA, Colorado Springs CO,
+//        Anchorage AK, Greenville/Greenville SC.
+//        FIELD_SKIP_CONDITIONS: platformRemitsTax, vendorProductType, vapeProductTypes,
+//        hasDisplayRestrictions, solicitorType, trainingHoursCompleted.
+//        buildZoningSeed deepened: STR zones → occupancy tax pre-fill;
+//        commercial zones → vape/smoke shop and solicitor permit hints.
+// Mobile responsiveness overhaul — vMobile
+//        All FormFiller phases now use mobile-first padding (p-3 sm:p-5).
+//        Intro, question, summary, and packet screens are full-width on phones.
+//        Button rows wrap gracefully; option grids and review lists scroll on small screens.
+// v76 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_STEP_SECTIONS (painting-contractor-license, masonry-contractor-license,
+//        commercial-pool-health-permit, cosmetologist-individual-license,
+//        towing-company-license).
+//        13 new LOCAL_FORMS: Chandler AZ, Henderson NV, Irvine CA, Plano TX, Hialeah FL,
+//        Fort Lauderdale FL, Chula Vista CA, Fremont CA, Gilbert AZ, Garland TX,
+//        Springfield MO, Peoria IL, Yonkers/Westchester NY.
+//        FIELD_SKIP_CONDITIONS expanded for pool health and towing forms.
+//        buildZoningSeed deepened: residential zone → home-based form pre-fills;
+//        commercial zone → pool/salon/towing compliance pre-fills.
+// v75 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_STEP_SECTIONS (funeral-home-license, pharmacy-permit,
+//        social-worker-practice-license, real-estate-broker-license,
+//        alcohol-catering-endorsement).
+//        13 new LOCAL_FORMS: Boise/Ada ID, Des Moines/Polk IA, Spokane WA, Winston-Salem NC,
+//        Knoxville TN, Lexington KY, Albuquerque NM, Aurora CO, Anaheim CA,
+//        Corpus Christi TX, Killeen TX, Beaumont TX, Santa Ana CA.
+//        FIELD_SKIP_CONDITIONS expanded for funeral home and pharmacy fields.
+// v74 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_STEP_SECTIONS (childcare-center-license, pool-spa-contractor-license,
+//        landscape-contractor-license, security-guard-company-license, food-manufacturer-license)
+//        13 new LOCAL_FORMS: Reno/Washoe NV, Portland ME, Manchester NH, Tallahassee FL,
+//        Pensacola FL, Huntsville AL, Savannah GA, Montgomery AL, Macon GA,
+//        Sioux Falls SD, Modesto/Stanislaus CA, Salinas/Monterey CA, Lafayette LA.
+//        FIELD_SKIP_CONDITIONS expanded for childcare capacity, food manufacturer facility.
+// v73 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_STEP_SECTIONS (plumbing-contractor-license, hvac-contractor-license,
+//        pest-control-license, vehicle-repair-shop-license, roofing-contractor-license)
+//        13 new LOCAL_FORMS for metros: Syracuse/Onondaga NY, Grand Rapids/Kent MI,
+//        Fayetteville/Cumberland NC, Akron/Summit OH, Fort Collins/Larimer CO,
+//        Stockton/San Joaquin CA, Cape Coral/Lee FL, Paterson/Passaic NJ, Hampton VA,
+//        Amarillo/Potter TX, Laredo/Webb TX, Oxnard/Ventura CA, Santa Cruz CA.
+//        FIELD_SKIP_CONDITIONS expanded for trades (numBays, hasEnvironmentalCompliance, etc.)
+// v72 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_STEP_SECTIONS (barbershop-cosmetology-salon-permit, tattoo-body-art-studio-permit,
+//        electrical-contractor-license, pet-grooming-salon-license, commercial-kitchen-shared-permit)
+//        13 new LOCAL_FORMS for major metros (Boston MA, Seattle WA, Denver CO, Pittsburgh PA,
+//        Cleveland OH, Detroit MI, Memphis TN, Salt Lake City UT, Providence RI, Omaha NE,
+//        Milwaukee WI, Tulsa OK, Anchorage AK). Deepened Zoning integration: buildZoningSeed
+//        now maps zoneType keywords to recommended form pre-fills and zoningComplianceConfirmed
+//        values for cosmetology, electrical, and pet-care permits.
+// v71 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_STEP_SECTIONS (notary-public-commission, auto-dealer-license,
+//        charitable-solicitation-registration, food-truck-city-permit, event-alcohol-permit)
+//        11 new LOCAL_FORMS for mid-size metros (Jersey City NJ, Newark NJ, Rochester NY,
+//        New Haven CT, Chattanooga TN, Little Rock AR, Columbia SC, Augusta GA,
+//        Shreveport LA, Mobile AL, Jackson MS)
+// v70 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_STEP_SECTIONS (short-term-rental-permit, tobacco-retail-license,
+//        food-facility-annual-renewal, massage-establishment-permit, secondhand-dealer-license).
+//        Deepened Zoning integration: buildZoningSeed now pre-fills propertyAddress, proposedBusinessUse,
+//        and zoningComplianceConfirmed from attached zoning result. New category-aware skip conditions
+//        (strType, hasBond, willBuyFromPublic). PROFILE_FIELD_MAP gets physicalAddress + numBedrooms.
+// v69 — Expanded business category selection system for better hyper-local accuracy
+//        Category-aware FIELD_SKIP_CONDITIONS: skip food/liquor/childcare fields based on businessType.
+// v68 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_STEP_SECTIONS (special-event-permit, outdoor-dining-permit, catering-license,
+//        childcare-home-license, professional-license-registration). 14 new LOCAL_FORMS for
+//        underserved metros. Expanded FIELD_SKIP_CONDITIONS for all new forms.
+// v66 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_STEP_SECTIONS (food-service-plan-review, employer-withholding-registration,
+//        business-personal-property-tax, zoning-compliance-letter-request, health-dept-inspection-checklist).
+//        Expanded FIELD_SKIP_CONDITIONS for all new forms.
+// v65 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_STEP_SECTIONS (building-permit, food-manager-certification, resale-certificate,
+//        workers-comp-exemption, dba-county-registration). Expanded PROFILE_FIELD_MAP +
+//        FIELD_SKIP_CONDITIONS for all new forms.
+// v64 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        7 new FORM_STEP_SECTIONS (temporary-food-vendor, cottage-food, liquor-license,
+//        sign-permit, fire-inspection, alarm-permit, sidewalk-vending).
+//        Zoning variance suggestion callout: when zoningProfile.status is conditional/prohibited
+//        and the current form is not already the variance form, show an advisory chip.
+// v63 — Aggressive Form Assistant expansion for hyper-local regulations with more local forms + Zoning integration
+//        zoningProfile prop pre-populates zone-aware fields (zone type, zoning status)
+//        New FORM_STEP_SECTIONS for zoning-variance-application + commissary-agreement-worksheet
+// v62 — Expanded Form Assistant with more federal/state/local forms + improved PDF pre-filling
+//        Automatic business profile creation from Form Filler when no profile exists
 // v60 — Real PDF pre-filling engine with actual government form templates
 // Changes from v59:
 // - Added onSaveDocument prop: called with (filename, base64) after PDF generation so the
@@ -44,6 +137,18 @@ export interface BusinessProfileHint {
   email?: string;
 }
 
+// ── Zoning profile hint — extracted from an attached zoning check result ──────
+// v63 — Used to pre-populate zone-aware fields in the guided wizard and show
+//       a contextual advisory banner on the intro screen.
+export interface ZoningProfileHint {
+  /** "allowed" | "conditional" | "prohibited" | "unknown" */
+  status?: string;
+  zoneType?: string;
+  restrictions?: string[];
+  /** True when this zoning check is for the current business location */
+  address?: string;
+}
+
 interface FormFillerProps {
   template: FormTemplate;
   location: string;
@@ -84,6 +189,18 @@ interface FormFillerProps {
    *   - Optionally upload to Supabase Storage
    */
   onSaveDocument?: (filename: string, base64: string) => void;
+  /**
+   * v62 — Called when a form is completed but no business profile exists yet.
+   * The parent should create a new business profile, attach the completed form
+   * as a synthetic document, and open the Business Profile View.
+   */
+  onFormCompleteWithoutProfile?: (formData: Record<string, string>, completedFormId: string) => void;
+  /**
+   * v63 — Zoning result extracted from the attached zoning check document.
+   * When provided, zone-aware fields (currentZoneType, requestedVarianceType, etc.)
+   * are pre-seeded and a contextual advisory banner is shown on the intro screen.
+   */
+  zoningProfile?: ZoningProfileHint | null;
 }
 
 type FillerPhase =
@@ -104,27 +221,59 @@ function generateFormKey(): string {
 // value (when available) before the user starts the Q&A session.
 const PROFILE_FIELD_MAP: Record<string, keyof BusinessProfileHint> = {
   // Business name fields
-  businessName:       'name',
-  legalName:          'name',
-  fictitiousName:     'name',  // pre-fill as a starting point; user may override
+  businessName:         'name',
+  legalName:            'name',
+  fictitiousName:       'name',  // pre-fill as a starting point; user may override
+  entityName:           'name',
+  entityLegalName:      'name',
+  applicantLegalName:   'name',
+  legalBusinessName:    'name',
+  businessLegalName:    'name',
+  payerBusinessName:    'name',
+  establishmentName:    'name',
   // Address / location fields
-  businessAddress:    'location',
-  principalAddress:   'location',
-  physicalAddress:    'location',
-  businessLocation:   'location',
-  homeAddress:        'location',
+  businessAddress:      'location',
+  principalAddress:     'location',
+  physicalAddress:      'location',
+  businessLocation:     'location',
+  homeAddress:          'location',
+  homeBusinessAddress:  'location',
+  operatingCity:        'location',
   // Business type
-  businessType:       'businessType',
+  businessType:         'businessType',
+  licenseClassType:     'businessType',
   // Owner
-  ownerFullName:      'ownerName',
-  ownerName:          'ownerName',
+  ownerFullName:        'ownerName',
+  ownerName:            'ownerName',
   responsiblePartyName: 'ownerName',
+  applicantName:        'ownerName',
+  ownerLegalName:       'ownerName',
   // EIN
-  fein:               'ein',
-  ein:                'ein',
+  fein:                 'ein',
+  ein:                  'ein',
+  payerFein:            'ein',
   // Contact
-  businessPhone:      'phone',
-  businessEmail:      'email',
+  businessPhone:        'phone',
+  businessEmail:        'email',
+  applicantPhone:       'phone',
+  applicantEmail:       'email',
+  ownerPhone:           'phone',
+  ownerEmail:           'email',
+  // v64 — additional mappings for new form types
+  propertyAddress:      'location',
+  installationAddress:  'location',
+  premisesAddress:      'location',
+  eventLocation:        'location',  // seed event location from business address as a hint
+  vendorName:           'name',
+  sellerName:           'name',
+  contractorName:       'name',
+  // v65 — additional mappings for new form types
+  stateTaxId:           'ein',  // resale cert — EIN seeds state tax ID field as starting point
+  projectAddress:       'location', // building permit — project address from business location
+  // v70 — additional mappings for new form types (physicalAddress, propertyAddress already mapped above)
+  // v77 — additional mappings for new form types
+  marketAddress:    'location',  // farmers market vendor — seed market address from business location as hint
+  trainingSchool:   'name',      // hair braiding — school name seeds from business name as hint
 };
 
 // ── Form step sections — groups field IDs into named sections per form ─────────
@@ -170,9 +319,365 @@ const FORM_STEP_SECTIONS: Record<string, Array<{ label: string; fieldIds: string
     { label: 'Sales Activity',       fieldIds: ['businessDescription', 'startDate', 'estimatedMonthlySales', 'sellsPhysicalGoods'] },
   ],
   'home-occupation-permit': [
-    { label: 'Property & Owner',     fieldIds: ['ownerFullName', 'homeAddress', 'ownershipType', 'ownerPhone'] },
-    { label: 'Business Details',     fieldIds: ['businessName', 'businessType', 'businessDescription'] },
-    { label: 'Operations',           fieldIds: ['clientVisits', 'nonResidentEmployees', 'externalSigns', 'equipmentOrVehicles', 'storageOfInventory'] },
+    { label: 'Property & Owner',     fieldIds: ['applicantName', 'ownerFullName', 'homeAddress', 'ownershipType', 'ownerPhone', 'applicantPhone', 'applicantEmail'] },
+    { label: 'Business Details',     fieldIds: ['businessName', 'businessType', 'businessDescription', 'ownershipStatus'] },
+    { label: 'Operations',           fieldIds: ['clientVisits', 'customersAtHome', 'nonResidentEmployees', 'employeesAtHome', 'externalSigns', 'externalSignage', 'equipmentOrVehicles', 'storageOfInventory', 'squareFootageUsed'] },
+  ],
+  // v77 — 5 new guided wizard forms
+  'str-local-occupancy-tax': [
+    { label: 'Property & Contact',    fieldIds: ['ownerFullName', 'businessEmail', 'businessPhone', 'propertyAddress', 'apnNumber'] },
+    { label: 'Rental Details',        fieldIds: ['strType', 'existingLicenseNumber', 'platformsListed', 'platformRemitsTax'] },
+    { label: 'Revenue & Insurance',   fieldIds: ['estimatedAnnualRevenue'] },
+  ],
+  'farmers-market-vendor-license': [
+    { label: 'Vendor & Business',     fieldIds: ['businessName', 'ownerFullName', 'businessPhone', 'businessEmail', 'homeAddress'] },
+    { label: 'Products & Market',     fieldIds: ['vendorProductType', 'marketName', 'marketAddress', 'operatingDays'] },
+    { label: 'Existing Permits',      fieldIds: ['hasExistingLicense', 'existingLicenseNumber', 'liabilityInsurer', 'liabilityPolicyNum'] },
+  ],
+  'vape-smoke-shop-retail-license': [
+    { label: 'Store & Owner',         fieldIds: ['businessName', 'ownerFullName', 'physicalAddress', 'businessPhone', 'businessEmail', 'fein'] },
+    { label: 'Products & Compliance', fieldIds: ['vapeProductTypes', 'hasAgeVerification', 'hasDisplayRestrictions'] },
+    { label: 'License Status',        fieldIds: ['existingLicenseNumber', 'isRenewal', 'liabilityInsurer'] },
+  ],
+  'door-to-door-solicitor-permit': [
+    { label: 'Applicant & Business',  fieldIds: ['applicantLegalName', 'businessName', 'homeAddress', 'businessPhone', 'businessEmail'] },
+    { label: 'Activity Details',      fieldIds: ['vendorProductType', 'solicitorType', 'operatingArea'] },
+    { label: 'Bond & Status',         fieldIds: ['hasCriminalHistory', 'bondAmount', 'vehicleLicensePlate', 'isRenewal'] },
+  ],
+  'hair-braiding-natural-hair-license': [
+    { label: 'Applicant',             fieldIds: ['applicantLegalName', 'physicalAddress', 'businessPhone', 'businessEmail'] },
+    { label: 'License & Training',    fieldIds: ['licenseType', 'trainingHoursCompleted', 'trainingSchool', 'isRenewal'] },
+    { label: 'History & Salon',       fieldIds: ['existingLicenseNumber', 'businessName', 'hasCriminalHistory'] },
+  ],
+  // v76 — 5 new guided wizard forms
+  'painting-contractor-license': [
+    { label: 'Contractor & Business',   fieldIds: ['applicantLegalName', 'businessName', 'physicalAddress', 'businessPhone', 'businessEmail', 'fein'] },
+    { label: 'License & Certification', fieldIds: ['licenseType', 'yearsExperience', 'hasCertification', 'hasLeadCert'] },
+    { label: 'Insurance & Bond',        fieldIds: ['liabilityInsurer', 'liabilityPolicyNum', 'bondAmount'] },
+  ],
+  'masonry-contractor-license': [
+    { label: 'Contractor & Business',   fieldIds: ['applicantLegalName', 'businessName', 'physicalAddress', 'businessPhone', 'businessEmail', 'fein'] },
+    { label: 'Specialty & Experience',  fieldIds: ['licenseType', 'masonrySpecialty', 'yearsExperience', 'hasCertification'] },
+    { label: 'Insurance & Bond',        fieldIds: ['liabilityInsurer', 'liabilityPolicyNum', 'bondAmount'] },
+  ],
+  'commercial-pool-health-permit': [
+    { label: 'Facility & Contact',      fieldIds: ['businessName', 'ownerFullName', 'physicalAddress', 'businessPhone', 'businessEmail'] },
+    { label: 'Pool Details',            fieldIds: ['facilityType', 'numPoolUnits', 'hasLifeguard', 'hasDrainCover', 'hasADACompliance'] },
+    { label: 'Water Safety & Renewal',  fieldIds: ['waterTestFrequency', 'existingLicenseNumber'] },
+  ],
+  'cosmetologist-individual-license': [
+    { label: 'Applicant',               fieldIds: ['applicantLegalName', 'physicalAddress', 'businessPhone', 'businessEmail'] },
+    { label: 'License & Status',        fieldIds: ['licenseType', 'existingLicenseNumber', 'isRenewal', 'hasCertification'] },
+    { label: 'Employment & History',    fieldIds: ['businessName', 'hasCriminalHistory'] },
+  ],
+  'towing-company-license': [
+    { label: 'Company & Owner',         fieldIds: ['businessName', 'ownerFullName', 'physicalAddress', 'businessPhone', 'businessEmail', 'fein'] },
+    { label: 'Operations & Fleet',      fieldIds: ['licenseType', 'numVehicles', 'hasInsurancePerVehicle'] },
+    { label: 'Insurance & Bond',        fieldIds: ['liabilityInsurer', 'liabilityPolicyNum', 'bondAmount'] },
+  ],
+  // v75 — 5 new guided wizard forms
+  'funeral-home-license': [
+    { label: 'Business & Director',    fieldIds: ['businessName', 'ownerFullName', 'physicalAddress', 'businessPhone', 'businessEmail', 'fein'] },
+    { label: 'Services & License',     fieldIds: ['facilityType', 'existingLicenseNumber', 'hasCrematorium'] },
+    { label: 'Pre-Need & Insurance',   fieldIds: ['hasPreNeedLicense', 'liabilityInsurer', 'liabilityPolicyNum'] },
+  ],
+  'pharmacy-permit': [
+    { label: 'Pharmacy & PIC',         fieldIds: ['businessName', 'ownerFullName', 'physicalAddress', 'businessPhone', 'businessEmail', 'fein'] },
+    { label: 'License & DEA',          fieldIds: ['licenseType', 'existingLicenseNumber', 'hasCertification'] },
+    { label: 'Controlled Substances',  fieldIds: ['hasControlledSubstances'] },
+  ],
+  'social-worker-practice-license': [
+    { label: 'Practitioner & Practice',fieldIds: ['applicantLegalName', 'businessName', 'physicalAddress', 'businessPhone', 'businessEmail'] },
+    { label: 'License & Status',       fieldIds: ['licenseType', 'existingLicenseNumber', 'isRenewal', 'hasCriminalHistory'] },
+    { label: 'Insurance',              fieldIds: ['liabilityInsurer', 'liabilityPolicyNum'] },
+  ],
+  'real-estate-broker-license': [
+    { label: 'Broker & Business',      fieldIds: ['applicantLegalName', 'businessName', 'physicalAddress', 'businessPhone', 'businessEmail', 'fein'] },
+    { label: 'License & Experience',   fieldIds: ['licenseType', 'existingLicenseNumber', 'yearsExperience', 'hasCertification'] },
+    { label: 'E&O Insurance',          fieldIds: ['liabilityInsurer', 'liabilityPolicyNum'] },
+  ],
+  'alcohol-catering-endorsement': [
+    { label: 'Business & Owner',       fieldIds: ['businessName', 'ownerFullName', 'businessAddress', 'businessPhone', 'businessEmail', 'fein'] },
+    { label: 'Alcohol & Events',       fieldIds: ['existingLicenseNumber', 'alcoholTypes', 'estimatedAnnualRevenue'] },
+    { label: 'Liquor Liability',       fieldIds: ['liabilityInsurer', 'liabilityPolicyNum'] },
+  ],
+  // v74 — 5 new guided wizard forms
+  'childcare-center-license': [
+    { label: 'Center & Director',       fieldIds: ['businessName', 'ownerFullName', 'physicalAddress', 'businessPhone', 'businessEmail'] },
+    { label: 'License Type & Capacity', fieldIds: ['licenseType', 'maxCapacity', 'ageGroupServed', 'squareFootagePerChild'] },
+    { label: 'Safety & Background',     fieldIds: ['hasBackgroundCheck', 'hasFirstAid'] },
+  ],
+  'pool-spa-contractor-license': [
+    { label: 'Contractor & Business',   fieldIds: ['applicantLegalName', 'businessName', 'physicalAddress', 'businessPhone', 'businessEmail', 'fein'] },
+    { label: 'License & Experience',    fieldIds: ['licenseType', 'yearsExperience', 'hasCertification'] },
+    { label: 'Insurance & Bond',        fieldIds: ['liabilityInsurer', 'liabilityPolicyNum', 'bondAmount'] },
+  ],
+  'landscape-contractor-license': [
+    { label: 'Business & Owner',        fieldIds: ['businessName', 'ownerFullName', 'physicalAddress', 'businessPhone', 'businessEmail', 'fein'] },
+    { label: 'Services & Certification',fieldIds: ['licenseType', 'hasCertification', 'existingLicenseNumber'] },
+    { label: 'Insurance',               fieldIds: ['liabilityInsurer', 'liabilityPolicyNum'] },
+  ],
+  'security-guard-company-license': [
+    { label: 'Company & Owner',         fieldIds: ['businessName', 'ownerFullName', 'physicalAddress', 'businessPhone', 'businessEmail', 'fein'] },
+    { label: 'Services & Credentials',  fieldIds: ['licenseType', 'existingLicenseNumber', 'hasCriminalHistory'] },
+    { label: 'Insurance & Bond',        fieldIds: ['liabilityInsurer', 'liabilityPolicyNum', 'bondAmount'] },
+  ],
+  'food-manufacturer-license': [
+    { label: 'Business & Owner',        fieldIds: ['businessName', 'ownerFullName', 'physicalAddress', 'businessPhone', 'businessEmail', 'fein'] },
+    { label: 'Products & Facility',     fieldIds: ['licenseType', 'facilityType', 'estimatedAnnualRevenue'] },
+    { label: 'Labeling Compliance',     fieldIds: ['hasRequiredLabeling'] },
+  ],
+  // v73 — 5 new guided wizard forms
+  'plumbing-contractor-license': [
+    { label: 'Contractor & Business',   fieldIds: ['applicantLegalName', 'businessName', 'physicalAddress', 'businessPhone', 'businessEmail', 'fein'] },
+    { label: 'License & Experience',    fieldIds: ['licenseType', 'yearsExperience', 'hasCertification'] },
+    { label: 'Insurance & Bond',        fieldIds: ['liabilityInsurer', 'liabilityPolicyNum', 'bondAmount'] },
+  ],
+  'hvac-contractor-license': [
+    { label: 'Contractor & Business',   fieldIds: ['applicantLegalName', 'businessName', 'physicalAddress', 'businessPhone', 'businessEmail', 'fein'] },
+    { label: 'License & Certification', fieldIds: ['licenseType', 'yearsExperience', 'hasCertification'] },
+    { label: 'Insurance & Bond',        fieldIds: ['liabilityInsurer', 'liabilityPolicyNum', 'bondAmount'] },
+  ],
+  'pest-control-license': [
+    { label: 'Business & Owner',        fieldIds: ['businessName', 'ownerFullName', 'physicalAddress', 'businessPhone', 'businessEmail', 'fein'] },
+    { label: 'Service Category',        fieldIds: ['licenseType', 'existingLicenseNumber', 'hasCriminalHistory'] },
+    { label: 'Insurance & Bond',        fieldIds: ['liabilityInsurer', 'liabilityPolicyNum', 'bondAmount'] },
+  ],
+  'vehicle-repair-shop-license': [
+    { label: 'Shop & Owner',            fieldIds: ['businessName', 'ownerFullName', 'physicalAddress', 'businessPhone', 'businessEmail', 'fein'] },
+    { label: 'Services & Facility',     fieldIds: ['facilityType', 'numBays', 'hasEnvironmentalCompliance'] },
+    { label: 'Insurance',               fieldIds: ['liabilityInsurer', 'liabilityPolicyNum'] },
+  ],
+  'roofing-contractor-license': [
+    { label: 'Contractor & Business',   fieldIds: ['applicantLegalName', 'businessName', 'physicalAddress', 'businessPhone', 'businessEmail', 'fein'] },
+    { label: 'License & Experience',    fieldIds: ['licenseType', 'yearsExperience', 'hasCertification'] },
+    { label: 'Insurance & Bond',        fieldIds: ['liabilityInsurer', 'liabilityPolicyNum', 'bondAmount'] },
+  ],
+  // v72 — 5 new guided wizard forms
+  'barbershop-cosmetology-salon-permit': [
+    { label: 'Salon & Owner',           fieldIds: ['businessName', 'ownerFullName', 'physicalAddress', 'businessPhone', 'businessEmail'] },
+    { label: 'Establishment Type',      fieldIds: ['licenseType', 'numChairs', 'numLicensedEmployees'] },
+    { label: 'Renewal Status',          fieldIds: ['existingLicenseNumber'] },
+  ],
+  'tattoo-body-art-studio-permit': [
+    { label: 'Studio & Owner',          fieldIds: ['businessName', 'ownerFullName', 'physicalAddress', 'businessPhone', 'businessEmail', 'fein'] },
+    { label: 'Services & Staffing',     fieldIds: ['servicesOffered', 'numArtists'] },
+    { label: 'Safety & Sterilization',  fieldIds: ['hasSterilizationEquipment', 'hasDisposableNeedles'] },
+  ],
+  'electrical-contractor-license': [
+    { label: 'Contractor & Business',   fieldIds: ['applicantLegalName', 'businessName', 'physicalAddress', 'businessPhone', 'businessEmail', 'fein'] },
+    { label: 'License & Experience',    fieldIds: ['licenseType', 'yearsExperience', 'hasCertification'] },
+    { label: 'Insurance & Bond',        fieldIds: ['liabilityInsurer', 'liabilityPolicyNum', 'bondAmount'] },
+  ],
+  'pet-grooming-salon-license': [
+    { label: 'Business & Owner',        fieldIds: ['businessName', 'ownerFullName', 'physicalAddress', 'businessPhone', 'businessEmail'] },
+    { label: 'Facility Type',           fieldIds: ['facilityType', 'numAnimalCapacity'] },
+    { label: 'Facilities & Policy',     fieldIds: ['hasGroomingStations', 'hasOutdoorRuns', 'vaccinationPolicy'] },
+  ],
+  'commercial-kitchen-shared-permit': [
+    { label: 'Facility & Owner',        fieldIds: ['businessName', 'ownerFullName', 'physicalAddress', 'businessPhone', 'businessEmail', 'fein'] },
+    { label: 'Kitchen Details',         fieldIds: ['numKitchenUnits', 'hoursOfOperation', 'memberCount'] },
+    { label: 'Equipment & Compliance',  fieldIds: ['hasHoodSystem', 'hasThreeCompartmentSink'] },
+  ],
+  // v71 — 5 new guided wizard forms
+  'notary-public-commission': [
+    { label: 'Applicant Info',        fieldIds: ['applicantLegalName', 'physicalAddress', 'businessPhone', 'businessEmail', 'county'] },
+    { label: 'Commission Details',    fieldIds: ['notaryTerm', 'existingLicenseNumber', 'hasCriminalHistory'] },
+    { label: 'Bond & Surety',         fieldIds: ['notaryBondCompany', 'bondAmount'] },
+  ],
+  'auto-dealer-license': [
+    { label: 'Dealer Info',           fieldIds: ['businessName', 'ownerFullName', 'physicalAddress', 'businessPhone', 'businessEmail', 'fein'] },
+    { label: 'Dealer & Lot Details',  fieldIds: ['dealerType', 'lotSquareFootage', 'hasCriminalHistory'] },
+    { label: 'Bond & Insurance',      fieldIds: ['bondAmount', 'notaryBondCompany', 'liabilityInsurer', 'liabilityPolicyNum'] },
+  ],
+  'charitable-solicitation-registration': [
+    { label: 'Organization Info',     fieldIds: ['businessName', 'ownerFullName', 'physicalAddress', 'businessPhone', 'businessEmail', 'fein'] },
+    { label: 'Charitable Activity',   fieldIds: ['charitablePurpose', 'isExempt501c3', 'grossRevenuePriorYear'] },
+    { label: 'Fundraising Details',   fieldIds: ['fundraisingGoal', 'usesProfessionalFundraiser'] },
+  ],
+  'food-truck-city-permit': [
+    { label: 'Business & Owner',      fieldIds: ['businessName', 'ownerFullName', 'businessAddress', 'businessPhone', 'businessEmail'] },
+    { label: 'Vehicle Details',       fieldIds: ['vehicleVIN', 'vehicleLicensePlate', 'vehicleMake', 'vehicleYear'] },
+    { label: 'Vending Operations',    fieldIds: ['vendingZone', 'operatingHours', 'existingLicenseNumber'] },
+  ],
+  'event-alcohol-permit': [
+    { label: 'Business & Contact',    fieldIds: ['businessName', 'ownerFullName', 'businessAddress', 'businessPhone', 'businessEmail'] },
+    { label: 'Event Details',         fieldIds: ['eventDate', 'eventStartTime', 'eventEndTime', 'expectedAttendance', 'eventType'] },
+    { label: 'Alcohol Details',       fieldIds: ['alcoholTypes', 'hasExistingLicense', 'existingLicenseNumber'] },
+  ],
+  // v70 — 5 new guided wizard forms
+  'short-term-rental-permit': [
+    { label: 'Property & Contact',      fieldIds: ['ownerFullName', 'businessEmail', 'businessPhone', 'propertyAddress', 'mailingAddress'] },
+    { label: 'Rental Details',          fieldIds: ['strType', 'numBedrooms', 'maxOccupancy', 'platformsListed', 'isPrimaryResidence', 'estimatedNightsPerYear'] },
+    { label: 'Insurance & Compliance',  fieldIds: ['liabilityInsurer', 'liabilityPolicyNum', 'liabilityAmount'] },
+  ],
+  'tobacco-retail-license': [
+    { label: 'Business & Owner',        fieldIds: ['businessName', 'ownerFullName', 'physicalAddress', 'businessPhone', 'businessEmail', 'fein'] },
+    { label: 'Product & Business Type', fieldIds: ['tobaccoProductTypes', 'businessType'] },
+    { label: 'License Status',          fieldIds: ['isRenewal', 'existingLicenseNumber'] },
+  ],
+  'food-facility-annual-renewal': [
+    { label: 'Establishment Info',      fieldIds: ['businessName', 'ownerFullName', 'physicalAddress', 'businessPhone', 'businessEmail'] },
+    { label: 'Current Permit',          fieldIds: ['existingLicenseNumber', 'expirationDate', 'facilityType', 'seatingCapacity'] },
+    { label: 'Certification & Changes', fieldIds: ['certificationNumber', 'hasChanges', 'changeDescription'] },
+  ],
+  'massage-establishment-permit': [
+    { label: 'Business & Owner',        fieldIds: ['businessName', 'ownerFullName', 'physicalAddress', 'businessPhone', 'businessEmail'] },
+    { label: 'Facility Details',        fieldIds: ['numTherapists', 'numTreatmentRooms', 'servicesOffered'] },
+    { label: 'Insurance & Zoning',      fieldIds: ['liabilityInsurer', 'liabilityPolicyNum', 'zoningComplianceConfirmed'] },
+  ],
+  'secondhand-dealer-license': [
+    { label: 'Business & Owner',        fieldIds: ['businessName', 'ownerFullName', 'physicalAddress', 'businessPhone', 'businessEmail', 'fein'] },
+    { label: 'Dealer Type',             fieldIds: ['dealerType', 'willBuyFromPublic'] },
+    { label: 'Bond & Compliance',       fieldIds: ['hasBond', 'bondAmount'] },
+  ],
+  // v68 — 5 new guided wizard forms
+  'special-event-permit': [
+    { label: 'Business & Organizer',   fieldIds: ['businessName', 'ownerFullName', 'businessAddress', 'businessPhone', 'businessEmail'] },
+    { label: 'Event Details',          fieldIds: ['eventType', 'eventDate', 'eventStartTime', 'eventEndTime', 'expectedAttendance'] },
+    { label: 'Operations & Compliance',fieldIds: ['hasLiveMusic', 'hasAlcohol', 'hasTemporaryStructures'] },
+  ],
+  'outdoor-dining-permit': [
+    { label: 'Business Info',          fieldIds: ['businessName', 'ownerFullName', 'businessAddress', 'businessPhone', 'businessEmail'] },
+    { label: 'Seating Details',        fieldIds: ['seatingAreaType', 'numOutdoorSeats', 'squareFootage', 'hasEnclosure'] },
+    { label: 'Compliance & Safety',    fieldIds: ['hasBarService', 'propertyOwnerConsent', 'hasHeaters'] },
+  ],
+  'catering-license': [
+    { label: 'Business Info',          fieldIds: ['businessName', 'ownerFullName', 'businessAddress', 'businessPhone', 'businessEmail'] },
+    { label: 'Catering Operations',    fieldIds: ['cateringType', 'vehicleCount', 'servesAlcohol'] },
+    { label: 'Commissary & Staffing',  fieldIds: ['hasCommissary', 'commissaryName', 'commissaryAddress', 'commissaryLicenseNumber', 'foodManagerCertNumber'] },
+  ],
+  'childcare-home-license': [
+    { label: 'Provider Info',          fieldIds: ['ownerFullName', 'businessName', 'homeAddress', 'businessPhone', 'businessEmail'] },
+    { label: 'Facility & Capacity',    fieldIds: ['licenseType', 'maxCapacity', 'ageGroupServed', 'squareFootagePerChild'] },
+    { label: 'Certification & Safety', fieldIds: ['hasBackgroundCheck', 'hasFirstAid'] },
+  ],
+  'professional-license-registration': [
+    { label: 'Applicant Info',         fieldIds: ['applicantLegalName', 'businessName', 'businessAddress', 'businessPhone', 'businessEmail'] },
+    { label: 'License Details',        fieldIds: ['licenseType', 'stateOfIssuance'] },
+    { label: 'Renewal Status',         fieldIds: ['isRenewal', 'existingLicenseNumber', 'expirationDate'] },
+  ],
+  // v66 — 5 new guided wizard forms
+  'food-service-plan-review': [
+    { label: 'Business Info',          fieldIds: ['businessName', 'ownerFullName', 'businessAddress', 'businessPhone', 'businessEmail'] },
+    { label: 'Facility Details',       fieldIds: ['facilityType', 'seatingCapacity', 'squareFootage', 'openingDate'] },
+    { label: 'Equipment & Systems',    fieldIds: ['hasGreaseTrap', 'waterHeaterCapacity', 'architectOrDesigner'] },
+  ],
+  'employer-withholding-registration': [
+    { label: 'Business Info',          fieldIds: ['businessName', 'fein', 'businessAddress', 'businessPhone', 'businessEmail'] },
+    { label: 'Entity & Ownership',     fieldIds: ['entityType', 'ownerFullName'] },
+    { label: 'Payroll Details',        fieldIds: ['firstHireDate', 'numEmployees', 'payrollFrequency', 'businessType'] },
+  ],
+  'business-personal-property-tax': [
+    { label: 'Business Info',          fieldIds: ['businessName', 'ownerFullName', 'businessAddress', 'businessPhone', 'fein'] },
+    { label: 'Business Classification',fieldIds: ['businessType'] },
+    { label: 'Asset Values',           fieldIds: ['equipmentValue', 'furnitureValue', 'leaseholdValue', 'inventoryValue', 'taxYear'] },
+  ],
+  'zoning-compliance-letter-request': [
+    { label: 'Applicant & Property',   fieldIds: ['applicantLegalName', 'businessAddress', 'parcelNumber', 'currentZoneType'] },
+    { label: 'Request Details',        fieldIds: ['proposedBusinessUse', 'purposeOfRequest'] },
+    { label: 'Contact & Delivery',     fieldIds: ['businessPhone', 'businessEmail', 'deliveryPreference'] },
+  ],
+  'health-dept-inspection-checklist': [
+    { label: 'Establishment Info',     fieldIds: ['businessName', 'businessAddress', 'ownerFullName', 'businessPhone'] },
+    { label: 'Staff & Management',     fieldIds: ['hasCertifiedManager'] },
+    { label: 'Facility Compliance',    fieldIds: ['hasHandwashingSinks', 'tempControlsWorking', 'hotHoldingTemp', 'noPestEvidence'] },
+    { label: 'Food Safety',            fieldIds: ['foodFromApprovedSource', 'threeCompartmentSinkClean', 'sanitizerConcentration', 'personalHygieneCompliant', 'inspectionDate'] },
+  ],
+  // v65 — 5 new guided wizard forms
+  'building-permit': [
+    { label: 'Business & Contact',    fieldIds: ['businessName', 'ownerFullName', 'businessAddress', 'businessPhone', 'businessEmail'] },
+    { label: 'Project Details',       fieldIds: ['workType', 'projectDescription', 'estimatedProjectCost', 'squareFootageAffected'] },
+    { label: 'Contractor Info',       fieldIds: ['contractorName', 'contractorLicenseNumber', 'startDate'] },
+  ],
+  'food-manager-certification': [
+    { label: 'Business Info',         fieldIds: ['businessName', 'ownerFullName', 'businessAddress', 'businessPhone'] },
+    { label: 'Certification Details', fieldIds: ['certProvider', 'examDate', 'certificationNumber', 'expirationDate'] },
+    { label: 'Staffing',              fieldIds: ['numCertifiedManagers'] },
+  ],
+  'resale-certificate': [
+    { label: 'Your Business',         fieldIds: ['businessName', 'ownerFullName', 'businessAddress', 'businessPhone', 'fein', 'stateTaxId'] },
+    { label: 'Purchase Details',      fieldIds: ['businessType', 'goodsPurchased'] },
+    { label: 'Supplier (Optional)',   fieldIds: ['sellerName', 'sellerAddress'] },
+  ],
+  'workers-comp-exemption': [
+    { label: 'Business Info',         fieldIds: ['businessName', 'fein', 'businessAddress', 'businessPhone'] },
+    { label: 'Exemption Details',     fieldIds: ['entityType', 'exemptionType', 'ownerFullName', 'ownerTitle', 'ownershipPercentage'] },
+    { label: 'Employees',             fieldIds: ['numEmployees'] },
+  ],
+  'dba-county-registration': [
+    { label: 'DBA Name & Owner',      fieldIds: ['fictitiousName', 'ownerFullName', 'entityType'] },
+    { label: 'Business Address',      fieldIds: ['businessAddress', 'mailingAddress', 'county'] },
+    { label: 'Contact & Operations',  fieldIds: ['businessPhone', 'businessEmail', 'businessType', 'requiresNewspaperPublication'] },
+  ],
+  // v64 — 7 new guided wizard forms
+  'temporary-food-vendor-permit': [
+    { label: 'Operator Info',         fieldIds: ['businessName', 'ownerFullName', 'businessAddress', 'businessPhone', 'businessEmail'] },
+    { label: 'Event Details',         fieldIds: ['eventName', 'eventLocation', 'eventDates', 'foodTypes'] },
+    { label: 'Food Handling',         fieldIds: ['foodPrepMethod', 'waterSource', 'foodManagerCert'] },
+  ],
+  'cottage-food-registration': [
+    { label: 'Your Information',      fieldIds: ['businessName', 'ownerFullName', 'homeAddress', 'businessPhone', 'businessEmail'] },
+    { label: 'Products & Sales',      fieldIds: ['productTypes', 'salesChannels', 'estimatedAnnualRevenue'] },
+    { label: 'Compliance',            fieldIds: ['hasRequiredLabeling'] },
+  ],
+  'liquor-license-application': [
+    { label: 'Business & Owner',      fieldIds: ['businessName', 'ownerFullName', 'businessAddress', 'businessPhone', 'businessEmail', 'fein'] },
+    { label: 'License Details',       fieldIds: ['licenseType', 'premiseType', 'seatingCapacity', 'alcoholSalesPercent'] },
+    { label: 'Security',              fieldIds: ['hasSecurityPlan'] },
+  ],
+  'sign-permit': [
+    { label: 'Business & Location',   fieldIds: ['businessName', 'ownerFullName', 'businessAddress', 'businessPhone'] },
+    { label: 'Sign Specifications',   fieldIds: ['signType', 'signDimensions', 'signMaterial', 'isIlluminated', 'illuminationType'] },
+    { label: 'Installation',          fieldIds: ['installerName'] },
+  ],
+  'fire-inspection-certificate': [
+    { label: 'Business & Premises',   fieldIds: ['businessName', 'ownerFullName', 'businessAddress', 'businessPhone'] },
+    { label: 'Space Details',         fieldIds: ['squareFootage', 'occupancyType', 'maxOccupancy'] },
+    { label: 'Fire Safety Systems',   fieldIds: ['hasSprinklers', 'hasFireAlarm', 'exitCount'] },
+  ],
+  'alarm-permit': [
+    { label: 'Business Info',         fieldIds: ['businessName', 'ownerFullName', 'businessAddress', 'businessPhone'] },
+    { label: 'Alarm System',          fieldIds: ['alarmType', 'alarmCompany', 'alarmCompanyPhone'] },
+    { label: 'Emergency Contacts',    fieldIds: ['emergencyContactName', 'emergencyContactPhone', 'emergencyContact2Name', 'emergencyContact2Phone'] },
+  ],
+  'sidewalk-vending-permit': [
+    { label: 'Vendor Info',           fieldIds: ['businessName', 'ownerFullName', 'businessAddress', 'businessPhone', 'businessEmail'] },
+    { label: 'Vending Details',       fieldIds: ['vendingLocation', 'vendingType', 'operatingHours', 'cartDimensions'] },
+    { label: 'Insurance',             fieldIds: ['hasLiabilityInsurance'] },
+  ],
+  // v63 — new hyper-local forms
+  'zoning-variance-application': [
+    { label: 'Applicant & Property',  fieldIds: ['applicantLegalName', 'propertyAddress', 'parcelNumber', 'currentZoneType'] },
+    { label: 'Variance Details',      fieldIds: ['requestedVarianceType', 'proposedBusinessUse', 'hardshipJustification', 'neighborImpactStatement'] },
+    { label: 'Contact',               fieldIds: ['ownerFullName', 'businessPhone', 'businessEmail'] },
+  ],
+  'commissary-agreement-worksheet': [
+    { label: 'Your Food Truck',       fieldIds: ['businessName', 'ownerFullName', 'businessAddress', 'businessPhone'] },
+    { label: 'Commissary Details',    fieldIds: ['commissaryName', 'commissaryAddress', 'commissaryLicenseNumber', 'commissaryContactName', 'commissaryPhone', 'commissaryServicesUsed'] },
+    { label: 'Vehicle Info',          fieldIds: ['vehicleVIN', 'vehicleLicensePlate'] },
+  ],
+  // v62 — new forms
+  'annual-report': [
+    { label: 'Entity Information',   fieldIds: ['entityName', 'entityType', 'stateOfFormation'] },
+    { label: 'Principal Address',    fieldIds: ['principalAddress', 'registeredAgentName', 'registeredAgentAddress'] },
+    { label: 'Officer / Manager',    fieldIds: ['ownerFullName', 'ownerTitle', 'businessEmail', 'businessPhone'] },
+    { label: 'Changes',              fieldIds: ['hasChanged'] },
+  ],
+  'boi-report': [
+    { label: 'Reporting Company',    fieldIds: ['entityLegalName', 'entityTradeName', 'fein', 'formationState', 'principalAddress'] },
+    { label: 'Beneficial Owner',     fieldIds: ['ownerFullName', 'ownerDateOfBirth', 'ownerAddress', 'ownerIdType', 'ownerIdNumber', 'ownerIdState'] },
+    { label: 'Additional Details',   fieldIds: ['additionalOwners', 'isNewCompany'] },
+  ],
+  'contractor-license': [
+    { label: 'Business & Applicant', fieldIds: ['applicantLegalName', 'ownerFullName', 'businessAddress', 'businessPhone', 'businessEmail'] },
+    { label: 'License Details',      fieldIds: ['licenseClassType', 'yearsExperience', 'businessType', 'fein', 'hasPassedExam'] },
+    { label: 'Insurance & Bond',     fieldIds: ['liabilityInsurer', 'liabilityPolicyNum', 'liabilityAmount', 'hasWorkersComp', 'bondAmount'] },
+  ],
+  'w9-collection': [
+    { label: 'Contractor Info',      fieldIds: ['contractorLegalName', 'contractorBizName', 'contractorTaxClass', 'contractorAddress', 'contractorTIN'] },
+    { label: 'Your Business',        fieldIds: ['payerBusinessName', 'payerFein'] },
+    { label: 'Payment Details',      fieldIds: ['contractorStartDate', 'estimatedPayment'] },
   ],
 };
 
@@ -196,7 +701,379 @@ const FIELD_SKIP_CONDITIONS: Record<string, SkipCondition> = {
   // Mobile food vendor: skip commissary fields if business says no commissary needed
   commissaryLicenseNumber: (d) =>
     (d.commissaryName ?? "").trim().length === 0,
-};
+
+  // v68 — new skip conditions
+
+  // Catering: skip commissary details when not yet secured
+  commissaryAddress: (d) =>
+    (d.hasCommissary ?? "").startsWith("No"),
+
+  // Catering: skip vehicle count for drop-off only (still relevant for drop-off, always show)
+  vehicleCount: () => false, // always show — important for health dept compliance
+
+  // Professional license: skip existing license number for new applications
+  existingLicenseNumber: (d) =>
+    d.isRenewal === "New application",
+
+  // Professional license: skip expiration date for new applications
+  // (expirationDate is already used in food-manager-cert; it can apply here too)
+
+  // Outdoor dining: skip heaters question (always show — relevant for compliance)
+  hasHeaters: () => false,
+
+  // Childcare: skip square footage per child (always show — critical threshold)
+  squareFootagePerChild: () => false,
+
+  // v66 — new skip conditions
+
+  // Food service plan review: skip grease trap capacity if no grease trap
+  waterHeaterCapacity: (d) =>
+    d.hasGreaseTrap === "No" || d.hasGreaseTrap === "false",
+
+  // Business personal property tax: skip inventory value if state exempts inventory
+  inventoryValue: (d) => {
+    const addr = (d.businessAddress ?? "").toLowerCase();
+    // Florida exempts inventory from TPP tax
+    return addr.includes(", fl") || addr.includes(",fl") || addr.includes("florida");
+  },
+
+  // Zoning compliance letter: skip delivery preference (optional — always show)
+  deliveryPreference: () => false,
+
+  // Health dept inspection: skip hot-holding temp check for cold-only operations
+  hotHoldingTemp: (d) => {
+    const ft = (d.facilityType ?? "").toLowerCase();
+    return ft.includes("cold") || ft.includes("produce") || ft.includes("market");
+  },
+
+  // v65 — new skip conditions
+
+  // Building permit: skip contractor fields if owner-builder
+  contractorLicenseNumber: (d) =>
+    (d.contractorName ?? "").trim().length === 0 ||
+    (d.contractorName ?? "").toLowerCase().includes("owner"),
+
+  // Food manager cert: skip expiration date if not yet certified
+  expirationDate: (d) =>
+    (d.certificationNumber ?? "").trim().length === 0 && !d.examDate,
+
+  // Resale cert: skip seller address (optional — only some states need per-seller cert)
+  sellerAddress: (d) =>
+    (d.sellerName ?? "").trim().length === 0,
+
+  // Workers comp: skip ownership percentage for sole prop (always 100%)
+  ownershipPercentage: (d) =>
+    d.exemptionType === "Sole Proprietor (self only — no employees)",
+
+  // DBA: skip mailing address if same as business
+  mailingAddress: () => false, // always show — user can skip by leaving blank
+
+  // DBA: skip newspaper publication field for most users
+  requiresNewspaperPublication: () => false, // always show — important compliance info
+
+  // v64 — new skip conditions
+
+  // Temporary food vendor: skip water source for pre-packaged food only
+  waterSource: (d) =>
+    d.foodPrepMethod === "Pre-packaged / shelf-stable only (no on-site cooking)",
+
+  // Temporary food vendor: skip food manager cert for pre-packaged only
+  foodManagerCert: (d) =>
+    d.foodPrepMethod === "Pre-packaged / shelf-stable only (no on-site cooking)",
+
+  // Cottage food: skip annual revenue if not required (FYI field)
+  estimatedAnnualRevenue: () => false, // always show — important threshold info
+
+  // Liquor license: skip seating capacity for off-premise (retail) licenses
+  seatingCapacity: (d) => {
+    const lt = (d.licenseType ?? "").toLowerCase();
+    return lt.includes("off-premise") || lt.includes("retail");
+  },
+
+  // Liquor license: skip security plan for retail (non-bar) premises
+  hasSecurityPlan: (d) => {
+    const pt = (d.premiseType ?? "").toLowerCase();
+    return !pt.includes("bar") && !pt.includes("nightclub") && !pt.includes("club");
+  },
+
+  // Sign permit: skip illumination type if not illuminated
+  illuminationType: (d) => d.isIlluminated !== "Yes",
+
+  // Fire inspection: skip max occupancy for office/warehouse (calculated by inspector)
+  maxOccupancy: () => false, // always show — applicant can leave blank if unknown
+
+  // Alarm permit: skip 2nd emergency contact (optional)
+  emergencyContact2Name:  () => false,
+  emergencyContact2Phone: () => false,
+
+  // v62 — new skip conditions
+
+  // Annual report: skip change details if no changes reported
+  registeredAgentAddress: (d) =>
+    d.hasChanged === "No changes — confirming existing information",
+
+  // BOI: skip company applicant section for pre-2024 entities
+  isNewCompany: () => false, // always show this field so user can self-identify
+  ownerIdState: (d) => !d.ownerIdType, // skip until ID type selected
+
+  // Contractor: skip exam status if listed as exempt via reciprocal license
+  hasPassedExam: () => false, // always show
+
+  // Contractor: skip workers comp fields if sole owner exempt
+  hasWorkersComp: () => false, // always show
+
+  // W-9 collection: skip contractor start date (optional field)
+  contractorStartDate: () => false, // optional — never forced-skipped
+
+  // v77 — new skip conditions for STR occupancy tax, farmers market, vape, solicitor, hair braiding
+
+  // STR occupancy tax: skip APN if platform remits all taxes
+  apnNumber: (d) =>
+    (d.platformRemitsTax ?? "").startsWith("Yes — platform collects"),
+
+  // STR occupancy tax: always show platform remits tax — critical for compliance
+  platformRemitsTax: () => false,
+
+  // Farmers market: skip insurance details for first-time vendors (helpful guidance — always show)
+  // liabilityInsurer already defined — always show (reuse)
+  marketAddress: () => false, // always show — health dept needs exact market address
+  operatingDays: () => false, // always show
+  marketName:    () => false, // always show
+
+  // Farmers market: skip existing license number if no prior licenses
+  // (existingLicenseNumber already handled by isRenewal condition — reuse)
+
+  // Farmers market: product type always shown — determines which health dept permits apply
+  vendorProductType: () => false,
+
+  // Vape shop: always show age verification and display restrictions — federal compliance required
+  hasAgeVerification:   () => false,
+  hasDisplayRestrictions: () => false,
+
+  // Vape shop: products type always shown — determines which licenses apply
+  vapeProductTypes: () => false,
+
+  // Solicitor permit: skip vehicle plate for non-vehicle solicitors
+  // (vehicleLicensePlate already exists — repurpose condition)
+
+  // Solicitor: solicitor type always shown — determines permit category
+  solicitorType: () => false,
+  operatingArea: () => false, // always shown
+
+  // Hair braiding: skip training hours and school for states that don't require training
+  trainingHoursCompleted: (d) =>
+    (d.licenseType ?? "").includes("No state license required"),
+
+  trainingSchool: (d) =>
+    (d.licenseType ?? "").includes("No state license required"),
+
+  // Hair braiding: skip criminal history for states that don't require background check
+  // (hasCriminalHistory already defined — keep existing condition)
+
+  // v76 — new skip conditions for painting, masonry, pool health, cosmetologist, towing
+
+  // Painting / masonry: skip lead cert for contractors who only work on new construction
+  hasLeadCert: (d) =>
+    (d.hasCertification ?? "").toLowerCase().includes("not required"),
+
+  // Pool health permit: skip lifeguard field for private/residential facilities
+  hasLifeguard: (d) =>
+    (d.facilityType ?? "").toLowerCase().includes("private") ||
+    (d.facilityType ?? "").toLowerCase().includes("residential"),
+
+  // Pool health: drain cover is always required (VGB Act applies to all pools)
+  hasDrainCover: () => false,
+
+  // Pool health: ADA pool lift always shown — federal ADA requirement
+  hasADACompliance: () => false,
+
+  // Pool health: water test frequency always shown — core health dept question
+  waterTestFrequency: () => false,
+
+  // Pool health: numPoolUnits always shown
+  numPoolUnits: () => false,
+
+  // Masonry: specialty always shown
+  masonrySpecialty: () => false,
+
+  // Towing: skip numVehicles if licenseType is "Repo / repossession" (repo is different)
+  numVehicles: (d) =>
+    (d.licenseType ?? "").toLowerCase().includes("repo"),
+
+  // Towing: skip per-vehicle insurance question if fleet policy selected
+  hasInsurancePerVehicle: () => false, // always show — critical compliance question
+
+  // v75 — new skip conditions for funeral home, pharmacy, social worker, real estate, alcohol catering
+
+  // Funeral home: skip pre-need license question for facilities that only do body transport
+  hasPreNeedLicense: (d) =>
+    (d.facilityType ?? "").toLowerCase().includes("transport") ||
+    (d.facilityType ?? "").toLowerCase().includes("cremation only"),
+
+  // Funeral home: always show crematorium question — critical for facility classification
+  hasCrematorium: () => false,
+
+  // Pharmacy: skip controlled substances question only if DEA registration is explicitly "None / Not applicable"
+  hasControlledSubstances: (d) =>
+    (d.hasCertification ?? "").toLowerCase().includes("not applicable") ||
+    (d.hasCertification ?? "").toLowerCase().includes("none"),
+
+  // v74 — new skip conditions for childcare, pool/spa, landscape, security, food manufacturer
+
+  // Childcare center: squareFootagePerChild always required — inspector checks this
+  // (squareFootagePerChild already has a "() => false" rule in v68, reuse that)
+
+  // Pool/spa: always show all fields — all critical for licensing
+
+  // Landscape: skip pesticide license number if no pesticides used
+  // (existingLicenseNumber skip already handled per isRenewal; add landscape-specific)
+  // hasCertification always show for landscape — critical compliance question
+
+  // Security: skip bond for alarm-monitoring-only companies in some states
+  // (bondAmount already has existing skip rule from secondhand; leave as-is)
+
+  // Food manufacturer: skip labeling compliance for cottage-food / direct-sale only
+  hasRequiredLabeling: (d) =>
+    d.facilityType === "Home kitchen — applying for home food manufacturer permit" &&
+    (d.estimatedAnnualRevenue ?? "").replace(/[$,]/g, "").trim() === "",
+
+  // estimatedAnnualRevenue: already defined in v64 as () => false — always show
+
+  // v73 — new skip conditions for plumbing, hvac, pest-control, vehicle-repair, roofing
+
+  // Plumbing / HVAC / Roofing: shared skip rules for contractor license trio
+  // licenseType: always show (critical field)
+  // yearsExperience: always show
+  // All three use hasCertification — already defined in v72, no duplicate needed
+
+  // Pest control: skip bond for businesses using only general-use pesticides (some states exempt)
+  // hasCriminalHistory: already defined — always show
+
+  // Vehicle repair: skip num bays for mobile-only services
+  numBays: (d) =>
+    (d.facilityType ?? "").toLowerCase().includes("mobile"),
+
+  // Vehicle repair: always show environmental compliance — critical for inspection
+  hasEnvironmentalCompliance: () => false,
+
+  // Roofing / plumbing / hvac: skip bond if state doesn't require it
+  // (bondAmount already has existing condition — leave it as-is, just show for all)
+
+  // v72 — new skip conditions for cosmetology, tattoo, electrical, pet grooming, shared kitchen
+
+  // Cosmetology: skip renewal license number for new establishments
+  numLicensedEmployees: () => false, // always show — critical for inspections
+  numChairs:            () => false, // always show
+
+  // Tattoo: skip sterilization equipment question if mobile/home-visit only
+  numArtists:           () => false, // always show
+
+  // Electrical: skip exam status if license type is journeyman (they pass exam)
+  hasCertification:     () => false, // always show — important disclosure
+
+  // Electrical: skip bond for low-voltage only contractors (some states don't require)
+  // bondAmount: already handled above — always show
+
+  // Pet grooming: skip outdoor runs for mobile grooming
+  hasOutdoorRuns: (d) =>
+    d.facilityType === "Mobile pet grooming (van/trailer)",
+
+  // Pet grooming: skip grooming stations for boarding-only kennel
+  hasGroomingStations: (d) =>
+    d.facilityType === "Dog / cat boarding kennel (overnight)",
+
+  // Shared kitchen: skip member count (optional at application time)
+  memberCount: () => false, // always show — helpful for health dept review
+
+  // Shared kitchen: always show hood and sink questions — critical health dept fields
+  hasHoodSystem:           () => false,
+  hasThreeCompartmentSink: () => false,
+
+  // v71 — new skip conditions for notary, auto-dealer, charitable, food-truck, event-alcohol
+
+  // Notary: skip existing commission number for new applicants
+  notaryTerm: () => false, // always show
+
+  // Notary / auto-dealer: skip bond company if no bond required
+  notaryBondCompany: (d) =>
+    d.bondAmount === "N/A" || d.bondAmount === "0" || d.bondAmount === "",
+
+  // Auto-dealer: skip lot size for wholesale-only dealers
+  lotSquareFootage: (d) =>
+    d.dealerType === "Wholesale (dealer-to-dealer only, no retail lot)",
+
+  // Charitable: skip professional fundraiser question for small orgs
+  usesProfessionalFundraiser: (d) => {
+    const rev = parseFloat(d.grossRevenuePriorYear ?? "0");
+    return !isNaN(rev) && rev < 5000;
+  },
+
+  // Event alcohol: skip existing license number for first-time applicants
+  hasExistingLicense: () => false, // always show
+
+  // Food truck city permit: vendingZone always shown; existingLicenseNumber skipped for new
+  vendingZone: () => false, // always show
+
+  // v70 — new skip conditions for STR, tobacco, food renewal, massage, secondhand
+
+  // STR: skip mailing address if same as property (always show — user can skip by leaving blank)
+  // mailingAddress: already defined above as () => false — always show
+
+  // STR: skip estimated nights if entire home / non-primary (optional field)
+  estimatedNightsPerYear: (d) =>
+    d.isPrimaryResidence === "No — this is an investment/secondary property",
+
+  // Tobacco: skip existing license number for new applications
+  // (existingLicenseNumber already handled by v68 condition for professional-license)
+
+  // Food renewal: skip change description if no changes
+  changeDescription: (d) =>
+    d.hasChanges === "No changes — all information is the same as last year",
+
+  // Secondhand: skip bond amount if not bonded
+  bondAmount: (d) =>
+    d.hasBond === "No — not required for my business type" ||
+    d.hasBond === "N/A — not a pawn shop",
+
+  // Secondhand: skip bond question for online-only resellers (no physical location)
+  hasBond: (d) =>
+    d.dealerType === "Online reseller (eBay, Mercari, Facebook Marketplace)",
+
+  // Massage: zoningComplianceConfirmed — always show (critical for permit approval)
+  zoningComplianceConfirmed: () => false,
+
+  // v69 — Category-aware skip conditions based on businessType (category id)
+
+  // Skip liquor / alcohol fields for non-food/non-bar categories
+  servesAlcohol: (d) => {
+    const bt = (d.businessType ?? "").toLowerCase();
+    // Only relevant for food service, catering, events — skip for office/service businesses
+    return !bt.includes("food") && !bt.includes("restaurant") && !bt.includes("cafe") &&
+           !bt.includes("bar") && !bt.includes("brewery") && !bt.includes("catering") &&
+           !bt.includes("event") && !bt.includes("hotel");
+  },
+
+  // Skip outdoor seating fields for businesses that clearly operate indoors only
+  hasOutdoorSeating: (d) => {
+    const bt = (d.businessType ?? "").toLowerCase();
+    return bt.includes("online") || bt.includes("ecommerce") || bt.includes("home-office") ||
+           bt.includes("consulting") || bt.includes("accounting") || bt.includes("legal");
+  },
+
+  // Skip delivery/fleet fields for non-delivery / non-transport categories
+  numDeliveryVehicles: (d) => {
+    const bt = (d.businessType ?? "").toLowerCase();
+    return !bt.includes("truck") && !bt.includes("delivery") && !bt.includes("catering") &&
+           !bt.includes("freight") && !bt.includes("courier") && !bt.includes("transport");
+  },
+
+  // Skip childcare-specific fields for non-childcare categories
+  ageGroupServed: (d) => {
+    const bt = (d.businessType ?? "").toLowerCase();
+    return !bt.includes("daycare") && !bt.includes("childcare") && !bt.includes("preschool") &&
+           !bt.includes("after-school") && !bt.includes("child");
+  },
+}
 
 // ── Section helpers ───────────────────────────────────────────────────────────
 function getSectionForField(formId: string, fieldId: string): string | null {
@@ -235,6 +1112,160 @@ function buildProfileSeed(
       seed[field.id] = value.trim();
     }
   }
+  return seed;
+}
+
+// v63 — Zoning seed helper ────────────────────────────────────────────────────
+// Pre-seeds zone-aware fields from a zoning check result attached to the business.
+// v70 — Extended to pre-fill propertyAddress, proposedBusinessUse, and
+//        zoningComplianceConfirmed for relevant permit forms (STR, massage, etc.)
+// Only seeds fields that have not already been set by the profile seed.
+function buildZoningSeed(
+  zoningProfile: ZoningProfileHint | null | undefined,
+  existingSeed: Record<string, string>,
+): Record<string, string> {
+  if (!zoningProfile) return existingSeed;
+  const seed = { ...existingSeed };
+
+  // Zone type → currentZoneType (zoning variance, compliance letter)
+  if (zoningProfile.zoneType && !seed.currentZoneType) {
+    seed.currentZoneType = zoningProfile.zoneType;
+  }
+
+  // Zoning address → propertyAddress (STR permit, zoning variance, compliance letter)
+  if (zoningProfile.address && !seed.propertyAddress) {
+    seed.propertyAddress = zoningProfile.address;
+  }
+
+  // v70 — Zoning status → zoningComplianceConfirmed (massage establishment permit)
+  if (!seed.zoningComplianceConfirmed && zoningProfile.status) {
+    if (zoningProfile.status === "allowed") {
+      seed.zoningComplianceConfirmed = "Yes — zoning permits massage/personal care at this location";
+    } else if (zoningProfile.status === "conditional") {
+      seed.zoningComplianceConfirmed = "Yes — in a mixed-use commercial zone";
+    } else if (zoningProfile.status === "prohibited") {
+      seed.zoningComplianceConfirmed = "Unsure — need to verify with city/county planning";
+    }
+  }
+
+  // v70 — Zoning address → businessAddress for forms that use businessAddress
+  if (zoningProfile.address && !seed.businessAddress) {
+    seed.businessAddress = zoningProfile.address;
+  }
+
+  // For variance type: suggest home occupation if zoning status is conditional/prohibited
+  if (!seed.requestedVarianceType) {
+    if (zoningProfile.status === "conditional") {
+      seed.requestedVarianceType = "Special Exception / Conditional Use Permit";
+    } else if (zoningProfile.status === "prohibited") {
+      seed.requestedVarianceType = "Use Variance (use not permitted by right)";
+    }
+  }
+
+  // v70 — Zoning restrictions → proposedBusinessUse hint (zoning compliance letter)
+  if (!seed.proposedBusinessUse && zoningProfile.zoneType) {
+    seed.proposedBusinessUse = zoningProfile.zoneType;
+  }
+
+  // v72 — Deeper zoning integration: map zoneType keywords to form-specific pre-fills
+
+  // If zone is residential/home, pre-fill home-occupation related fields
+  if (zoningProfile.zoneType) {
+    const zt = zoningProfile.zoneType.toLowerCase();
+
+    // Residential zoning → suggest home occupation type for relevant forms
+    if ((zt.includes("residential") || zt.includes("r-1") || zt.includes("r-2") ||
+         zt.includes("r-3") || zt.includes("r-sf") || zt.includes("single-family")) &&
+        !seed.ownershipStatus) {
+      seed.ownershipStatus = "Owner-occupied primary residence";
+    }
+
+    // Commercial zoning → pre-fill zoningComplianceConfirmed for cosmetology / tattoo / electrical
+    if ((zt.includes("commercial") || zt.includes("c-1") || zt.includes("c-2") ||
+         zt.includes("c-3") || zt.includes("b-2") || zt.includes("b-3") ||
+         zt.includes("mixed-use") || zt.includes("mu")) && !seed.zoningComplianceConfirmed) {
+      seed.zoningComplianceConfirmed = "Yes — commercial/mixed-use zoning permits this business use";
+    }
+
+    // Industrial / light industrial → pre-fill for shared kitchen and auto dealer
+    if ((zt.includes("industrial") || zt.includes("i-1") || zt.includes("i-2") ||
+         zt.includes("light industrial") || zt.includes("warehouse")) && !seed.zoningComplianceConfirmed) {
+      seed.zoningComplianceConfirmed = "Yes — industrial/light industrial zone permits this business use";
+    }
+  }
+
+  // v76 — Deeper zoning integration: residential → home-based pre-fills; commercial → pool/salon hints
+
+  if (zoningProfile.zoneType) {
+    const zt = zoningProfile.zoneType.toLowerCase();
+
+    // Residential zones: pre-fill home occupation permit fields
+    if ((zt.includes("residential") || zt.includes("r-1") || zt.includes("r-2") ||
+         zt.includes("r-3") || zt.includes("r-sf") || zt.includes("single-family") ||
+         zt.includes("r-a") || zt.includes("ag-residential")) && !seed.businessAddress) {
+      seed.businessAddress = zoningProfile.address ?? "";
+    }
+
+    // Commercial / mixed-use zones: pre-fill pool facility compliance hint
+    if ((zt.includes("commercial") || zt.includes("mixed-use") || zt.includes("c-1") ||
+         zt.includes("c-2") || zt.includes("c-3")) && !seed.zoningComplianceConfirmed) {
+      seed.zoningComplianceConfirmed = "Yes — commercial/mixed-use zoning permits this business use";
+    }
+
+    // Neighborhood commercial or B zones: suggest home-occupation for personal-service permits
+    if ((zt.includes("neighborhood commercial") || zt.includes("n-c") ||
+         zt.includes("b-1") || zt.includes("office")) && !seed.facilityType) {
+      seed.facilityType = "Commercial — operating from a permanent commercial address";
+    }
+  }
+
+  // v76 — Pre-fill zoning status as ADA compliance hint for pool permits
+  if (zoningProfile.status === "allowed" && !seed.hasADACompliance) {
+    seed.hasADACompliance = "Yes — ADA-compliant pool lift installed";
+  }
+
+  // v77 — Deeper zoning integration: STR zones → occupancy tax pre-fill;
+  //        commercial/retail zones → vape shop and solicitor permit hints.
+  if (zoningProfile.zoneType) {
+    const zt = zoningProfile.zoneType.toLowerCase();
+
+    // Short-term rental zones (vacation overlay, resort, STR district): pre-fill STR type
+    if ((zt.includes("vacation") || zt.includes("resort") || zt.includes("str") ||
+         zt.includes("tourist") || zt.includes("overlay")) && !seed.strType) {
+      seed.strType = "Entire home / apartment";
+    }
+
+    // Retail / B-1 / neighborhood commercial: suggest farmer's market or vape shop compliance
+    if ((zt.includes("retail") || zt.includes("b-1") || zt.includes("neighborhood commercial") ||
+         zt.includes("strip commercial")) && !seed.vendorProductType) {
+      seed.vendorProductType = "Other services or products";
+    }
+
+    // Pre-fill propertyAddress for STR occupancy tax from zoning address
+    if (zoningProfile.address && !seed.propertyAddress) {
+      seed.propertyAddress = zoningProfile.address;
+    }
+
+    // Transient/mobile zone (outdoor market, vending district): suggest solicitor type
+    if ((zt.includes("market") || zt.includes("vending") || zt.includes("outdoor") ||
+         zt.includes("festival")) && !seed.solicitorType) {
+      seed.solicitorType = "Transient merchant (no fixed location)";
+    }
+  }
+
+  // v72 — Pre-fill county from zoning address if county field is empty
+  if (zoningProfile.address && !seed.county) {
+    // Extract county hint from address (best-effort: look for ", County" or state suffix)
+    const addrParts = zoningProfile.address.split(",").map(p => p.trim());
+    if (addrParts.length >= 2) {
+      // Use second-to-last segment as a city/county hint if it looks like a location name
+      const locationHint = addrParts[addrParts.length - 2];
+      if (locationHint && locationHint.length > 1 && !locationHint.match(/^\d{5}/)) {
+        seed.county = locationHint;
+      }
+    }
+  }
+
   return seed;
 }
 
@@ -321,14 +1352,17 @@ export default function FormFiller({
   isRenewal,
   businessProfile,
   onSaveDocument,
+  onFormCompleteWithoutProfile,
+  zoningProfile,
 }: FormFillerProps) {
   const [phase, setPhase] = useState<FillerPhase>("intro");
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Seed formData: priority = initialFormData (renewal) > profile auto-fill > empty
+  // Seed formData: priority = initialFormData (renewal) > profile auto-fill > zoning pre-fill > empty
   const [formData, setFormData] = useState<Record<string, string>>(() => {
     if (initialFormData && Object.keys(initialFormData).length > 0) return initialFormData;
-    return buildProfileSeed(template.fields, businessProfile);
+    const profileSeed = buildProfileSeed(template.fields, businessProfile);
+    return buildZoningSeed(zoningProfile, profileSeed);
   });
 
   const [currentAnswer, setCurrentAnswer] = useState("");
@@ -570,7 +1604,7 @@ export default function FormFiller({
 
     return (
       <div className="border-t bg-white">
-        <div className="max-w-2xl mx-auto p-5">
+        <div className="max-w-2xl mx-auto p-3 sm:p-5">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-xl bg-[#0B1E3F]/10 flex items-center justify-center shrink-0">
@@ -611,6 +1645,60 @@ export default function FormFiller({
               <p className="text-xs text-amber-800">
                 <strong>{profileSeedCount} field{profileSeedCount !== 1 ? 's' : ''} auto-filled</strong> from your business profile.
                 Just confirm or update each answer as you go.
+              </p>
+            </div>
+          )}
+
+          {/* v63 — Zoning advisory banner: shown when a zoning result is attached */}
+          {zoningProfile && zoningProfile.status && (
+            <div className={`flex items-start gap-2 rounded-xl px-3 py-2 mb-3 border ${
+              zoningProfile.status === "allowed"
+                ? "bg-green-50 border-green-200"
+                : zoningProfile.status === "conditional"
+                ? "bg-amber-50 border-amber-200"
+                : zoningProfile.status === "prohibited"
+                ? "bg-red-50 border-red-200"
+                : "bg-slate-50 border-slate-200"
+            }`}>
+              <AlertCircle className={`h-4 w-4 shrink-0 mt-0.5 ${
+                zoningProfile.status === "allowed" ? "text-green-500"
+                : zoningProfile.status === "conditional" ? "text-amber-500"
+                : zoningProfile.status === "prohibited" ? "text-red-500"
+                : "text-slate-400"
+              }`} />
+              <p className={`text-xs ${
+                zoningProfile.status === "allowed" ? "text-green-800"
+                : zoningProfile.status === "conditional" ? "text-amber-800"
+                : zoningProfile.status === "prohibited" ? "text-red-800"
+                : "text-slate-600"
+              }`}>
+                <strong>Zoning: {zoningProfile.zoneType ?? zoningProfile.status}</strong>
+                {zoningProfile.status === "conditional" && " — Conditional use; a variance or special exception may be required."}
+                {zoningProfile.status === "prohibited" && " — Business use not permitted by right; a use variance is likely required."}
+                {zoningProfile.status === "allowed" && " — Business use is permitted in this zone. No variance needed."}
+                {zoningProfile.restrictions && zoningProfile.restrictions.length > 0 && (
+                  <span className="block mt-0.5 text-[10px] opacity-80">
+                    Restrictions: {zoningProfile.restrictions.slice(0, 2).join("; ")}
+                  </span>
+                )}
+              </p>
+            </div>
+          )}
+
+          {/* v64 — Zoning variance suggestion: shown when zoning is conditional/prohibited
+                    and the user is NOT already in the variance form itself */}
+          {zoningProfile &&
+            (zoningProfile.status === "conditional" || zoningProfile.status === "prohibited") &&
+            template.id !== "zoning-variance-application" && (
+            <div className="flex items-center gap-2 bg-[#0B1E3F]/5 border border-[#0B1E3F]/20 rounded-xl px-3 py-2 mb-3">
+              <Sparkles className="h-3.5 w-3.5 text-[#0B1E3F] shrink-0" />
+              <p className="text-[11px] text-[#0B1E3F] leading-snug">
+                <strong>Variance may be required.</strong>{" "}
+                Based on your zoning check, complete the{" "}
+                <span className="underline underline-offset-2 font-semibold">
+                  Zoning Variance / Special Exception Application
+                </span>{" "}
+                after this form. RegPulse can pre-fill it with your zone data.
               </p>
             </div>
           )}
@@ -750,7 +1838,7 @@ export default function FormFiller({
   if (phase === "pdf-loading") {
     return (
       <div className="border-t bg-white">
-        <div className="max-w-2xl mx-auto p-5 text-center">
+        <div className="max-w-2xl mx-auto p-3 sm:p-5 text-center">
           <Loader2 className="h-8 w-8 text-[#0B1E3F] animate-spin mx-auto mb-3" />
           <p className="font-semibold text-slate-800 mb-1">Fetching the official form…</p>
           <p className="text-sm text-slate-500">
@@ -768,7 +1856,7 @@ export default function FormFiller({
 
     return (
       <div className="border-t bg-white">
-        <div className="max-w-2xl mx-auto p-5">
+        <div className="max-w-2xl mx-auto p-3 sm:p-5">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-2.5">
               <div className="h-9 w-9 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
@@ -875,7 +1963,7 @@ export default function FormFiller({
 
     return (
       <div className="border-t bg-white">
-        <div className="max-w-2xl mx-auto p-5">
+        <div className="max-w-2xl mx-auto p-3 sm:p-5">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs text-slate-500">{stepLabel}</span>
@@ -984,13 +2072,14 @@ export default function FormFiller({
             {fieldError && <p className="text-red-500 text-xs mt-1">{fieldError}</p>}
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* vMobile: button row wraps on narrow screens */}
+          <div className="flex items-center gap-2 flex-wrap">
             {currentIndex > 0 && (
               <Button variant="outline" size="sm" onClick={handleBack}>
                 <ChevronLeft className="h-4 w-4 mr-1" /> Back
               </Button>
             )}
-            <Button className="flex-1 bg-[#0B1E3F] hover:bg-[#0B1E3F]/90" onClick={handleNext}>
+            <Button className="flex-1 min-w-[120px] bg-[#0B1E3F] hover:bg-[#0B1E3F]/90" onClick={handleNext}>
               {currentIndex < activeFields.length - 1 ? (
                 <><span>Next</span><ChevronRight className="h-4 w-4 ml-1" /></>
               ) : (
@@ -1017,7 +2106,11 @@ export default function FormFiller({
       if (skipPayment) {
         // v60 — two-step: first click generates + downloads; second click (after confirmation) calls onComplete.
         if (generatedFilename) {
-          // PDF already generated — user is confirming/continuing
+          // PDF already generated — user is confirming/continuing.
+          // v62 — if no business profile exists, trigger automatic profile creation.
+          if (!businessProfile) {
+            onFormCompleteWithoutProfile?.(formData, template.id);
+          }
           onComplete(formData, template);
           return;
         }
@@ -1051,7 +2144,7 @@ export default function FormFiller({
 
     return (
       <div className="border-t bg-white max-h-[480px] overflow-y-auto">
-        <div className="max-w-2xl mx-auto p-5">
+        <div className="max-w-2xl mx-auto p-3 sm:p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="font-semibold text-slate-900">Review &amp; Generate PDF</p>
@@ -1176,7 +2269,7 @@ export default function FormFiller({
   if (phase === "payment") {
     return (
       <div className="border-t bg-white">
-        <div className="max-w-2xl mx-auto p-5">
+        <div className="max-w-2xl mx-auto p-3 sm:p-5">
           <div className="flex items-center justify-between mb-5">
             <p className="font-semibold text-slate-900">Confirm & Download</p>
             <button onClick={onDismiss} className="text-slate-400 hover:text-slate-600 p-1">
@@ -1242,7 +2335,7 @@ export default function FormFiller({
   if (phase === "redirecting") {
     return (
       <div className="border-t bg-white">
-        <div className="max-w-2xl mx-auto p-5 text-center">
+        <div className="max-w-2xl mx-auto p-3 sm:p-5 text-center">
           <Loader2 className="h-8 w-8 text-[#0B1E3F] animate-spin mx-auto mb-3" />
           <p className="font-semibold text-slate-800 mb-1">Redirecting to secure checkout...</p>
           <p className="text-sm text-slate-500">

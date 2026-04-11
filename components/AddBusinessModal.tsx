@@ -1,6 +1,11 @@
 "use client";
 
 /**
+ * Mobile responsiveness overhaul — vMobile
+ * - Overlay: px-4 already set; modal uses max-w-lg which fits narrow phones.
+ * - "Existing Business" tab body: px-6 → px-4 sm:px-6, py-5 unchanged.
+ * - "Starting New" tab body: px-6 → px-4 sm:px-6.
+ *
  * AddBusinessModal
  *
  * Two-tab modal for adding businesses to the RegPulse compliance dashboard:
@@ -251,7 +256,7 @@ export default function AddBusinessModal({ onAdd, onClose, onStartChat }: AddBus
 
         {/* ── "Starting New" tab ─────────────────────────────────────────────── */}
         {tab === "new" && (
-          <div className="px-6 py-6 space-y-4">
+          <div className="px-4 sm:px-6 py-6 space-y-4">
             <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl p-4">
               <MessageSquare className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
               <div>
@@ -294,7 +299,7 @@ export default function AddBusinessModal({ onAdd, onClose, onStartChat }: AddBus
 
         {/* ── "Existing Business" tab ───────────────────────────────────────── */}
         {tab === "existing" && (
-          <div className="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
+          <div className="px-4 sm:px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
 
             {/* Business Name */}
             <div>

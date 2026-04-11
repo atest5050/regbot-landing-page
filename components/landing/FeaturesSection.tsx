@@ -1,3 +1,5 @@
+// Mobile responsiveness overhaul — vMobile
+// Already uses grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 and px-4 sm:px-6 lg:px-8.
 import { MessageSquare, ClipboardList, FileSearch, Bell, Scale } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 

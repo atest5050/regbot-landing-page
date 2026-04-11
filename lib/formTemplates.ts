@@ -1,3 +1,73 @@
+// v77 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_TEMPLATES: str-local-occupancy-tax, farmers-market-vendor-license,
+//        vape-smoke-shop-retail-license, door-to-door-solicitor-permit,
+//        hair-braiding-natural-hair-license.
+//        13 new LOCAL_FORMS: Omaha/Douglas NE, Baton Rouge/East Baton Rouge LA,
+//        Birmingham/Jefferson AL, Wichita/Sedgwick KS, Spokane city WA, Tacoma/Pierce WA,
+//        Madison/Dane WI, Riverside/Riverside CA, San Bernardino/San Bernardino CA,
+//        Bakersfield/Kern CA, Colorado Springs/El Paso CO, Anchorage AK, Greenville/Greenville SC.
+// v76 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_TEMPLATES: painting-contractor-license, masonry-contractor-license,
+//        commercial-pool-health-permit, cosmetologist-individual-license,
+//        towing-company-license.
+//        13 new LOCAL_FORMS: Chandler AZ, Henderson NV, Irvine/Orange CA, Plano/Collin TX,
+//        Hialeah/Miami-Dade FL, Fort Lauderdale/Broward FL, Chula Vista/San Diego CA,
+//        Fremont/Alameda CA, Gilbert AZ, Garland/Dallas TX, Springfield/Greene MO,
+//        Peoria IL, Yonkers/Westchester NY.
+// v75 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_TEMPLATES: funeral-home-license, pharmacy-permit,
+//        social-worker-practice-license, real-estate-broker-license,
+//        alcohol-catering-endorsement.
+//        13 new LOCAL_FORMS: Boise/Ada ID, Des Moines/Polk IA, Spokane-city WA,
+//        Winston-Salem/Forsyth NC, Knoxville/Knox TN, Lexington/Fayette KY,
+//        Albuquerque/Bernalillo NM, Aurora CO, Anaheim/Orange CA, Santa Ana/Orange CA,
+//        Corpus Christi/Nueces TX, Killeen/Bell TX, Beaumont/Jefferson TX.
+// v74 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_TEMPLATES: childcare-center-license, pool-spa-contractor-license,
+//        landscape-contractor-license, security-guard-company-license, food-manufacturer-license.
+//        13 new LOCAL_FORMS: Reno/Washoe NV, Portland/Cumberland ME, Manchester/Hillsborough NH,
+//        Tallahassee/Leon FL, Pensacola/Escambia FL, Huntsville/Madison AL, Savannah/Chatham GA,
+//        Montgomery/Montgomery AL, Macon/Bibb GA, Sioux Falls/Minnehaha SD,
+//        Modesto/Stanislaus CA, Salinas/Monterey CA, Lafayette/Lafayette LA.
+// v73 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_TEMPLATES: plumbing-contractor-license, hvac-contractor-license,
+//        pest-control-license, vehicle-repair-shop-license, roofing-contractor-license.
+//        13 new LOCAL_FORMS: Syracuse/Onondaga NY, Grand Rapids/Kent MI, Fayetteville/
+//        Cumberland NC, Akron/Summit OH, Fort Collins/Larimer CO, Stockton/San Joaquin CA,
+//        Cape Coral/Lee FL, Paterson/Passaic NJ, Hampton VA, Amarillo/Potter TX,
+//        Laredo/Webb TX, Oxnard/Ventura CA, Santa Cruz/Santa Cruz CA.
+// v71 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_TEMPLATES: notary-public-commission, auto-dealer-license,
+//        charitable-solicitation-registration, food-truck-city-permit, event-alcohol-permit.
+//        13 new LOCAL_FORMS: St. Louis MO, Cincinnati/Hamilton OH, Jersey City/Hudson NJ,
+//        Newark/Essex NJ, Rochester/Monroe NY, New Haven CT, Chattanooga/Hamilton TN,
+//        Little Rock/Pulaski AR, Columbia/Richland SC, Augusta GA, Shreveport/Caddo LA,
+//        Mobile/Mobile AL, Jackson/Hinds MS.
+// v70 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_TEMPLATES: short-term-rental-permit, tobacco-retail-license,
+//        food-facility-annual-renewal, massage-establishment-permit, secondhand-dealer-license.
+//        14 new LOCAL_FORMS for high-volume metros: Phoenix AZ, San Antonio TX, Nashville TN,
+//        Indianapolis IN, Columbus OH, Jacksonville FL, Tampa city FL, Louisville KY, Buffalo NY,
+//        Tucson AZ, El Paso TX, Austin/Travis TX, Sacramento CA, Portland OR / Multnomah County,
+//        Virginia Beach VA. Deepened zoning pre-fill in formTemplates locale overrides.
+// v69 — Expanded business category selection system for better hyper-local accuracy
+//        BusinessCategory interface, BUSINESS_CATEGORIES array (52 categories across 10 groups),
+//        getRecommendedFormsForCategory() exported helper.
+// v66 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_TEMPLATES: food-service-plan-review, employer-withholding-registration,
+//        business-personal-property-tax, zoning-compliance-letter-request,
+//        health-dept-inspection-checklist. 13 new LOCAL_FORMS for underserved metros.
+// v65 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_TEMPLATES: building-permit, food-manager-certification, resale-certificate,
+//        workers-comp-exemption, dba-county-registration. 13 new LOCAL_FORMS for underserved metros.
+// v64 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        7 new FORM_TEMPLATES: temporary-food-vendor-permit, cottage-food-registration,
+//        liquor-license-application, sign-permit, fire-inspection-certificate, alarm-permit,
+//        sidewalk-vending-permit. 14 new LOCAL_FORMS entries for underserved metros.
+// v62 — Expanded Form Assistant: 4 new FORM_TEMPLATES (annual-report, boi-report,
+//        contractor-license, w9-collection) with accurate official URLs, detailed
+//        fields with officialFieldName annotations, and full FORM_STEP_SECTIONS data.
+//        Improved fieldMap coverage for PDF pre-filling accuracy on all forms.
 // v56 — Massive county/city/town level expansion (50+ new entries)
 // - Added FL metros: Hillsborough, Pinellas, Orange, Duval/Jacksonville, Sarasota, Collier,
 //   Volusia, Seminole, Polk, city of Tampa, city of Orlando, city of Miami
@@ -1430,6 +1500,204 @@ export const FORM_TEMPLATES: Record<string, FormTemplate> = {
 
   // ── Home Occupation Permit ────────────────────────────────────────────────
 
+  // ── Annual Report / Biennial Statement (LLC/Corp) ────────────────────────
+  // v62 — new template
+
+  'annual-report': {
+    id: 'annual-report',
+    defaultRenewalMonths: 12, // Annual in most states; biennial in some
+    name: 'State Annual / Biennial Report',
+    description:
+      'Required by most states for LLCs, corporations, and other registered entities to ' +
+      'confirm or update their registered agent, principal address, and officer/manager ' +
+      'information with the Secretary of State each year (or every two years). ' +
+      'Failure to file can result in administrative dissolution and loss of legal standing. ' +
+      'Fees range from $0 to $500 depending on the state.',
+    fee: '$0–$500 (varies by state and entity type)',
+    submitUrl: 'https://www.sba.gov/business-guide/launch-your-business/register-your-business',
+    submitInstructions:
+      'File online with your state Secretary of State portal. Most states send a reminder ' +
+      'notice before the due date. Search "[your state] LLC annual report" to find your ' +
+      'Secretary of State portal. Filing is typically due on the anniversary of formation ' +
+      'or a fixed state deadline (e.g. May 1 in FL, April 1 in GA, May 15 in TX).',
+    requiredDocs: [
+      'Current registered agent name and in-state physical address',
+      'Principal office address',
+      'Names and titles of all managers, members, officers, or directors',
+      'Payment for state filing fee',
+    ],
+    fields: [
+      { id: 'entityName',              label: 'Entity Legal Name',                          type: 'text',    placeholder: 'Exact name as registered with the state',     required: true,  officialFieldName: 'Annual Report: Legal name of entity' },
+      { id: 'entityType',              label: 'Entity Type',                                type: 'select',  options: ['LLC (Limited Liability Company)', 'S-Corporation', 'C-Corporation', 'Limited Partnership', 'Non-Profit Corporation'], required: true, officialFieldName: 'Annual Report: Entity type' },
+      { id: 'stateOfFormation',        label: 'State of Formation',                         type: 'text',    placeholder: 'e.g., Florida',                               required: true,  officialFieldName: 'Annual Report: State / jurisdiction of formation' },
+      { id: 'principalAddress',        label: 'Principal Office Address',                   type: 'address', placeholder: '123 Main St, City, State ZIP',                required: true,  officialFieldName: 'Annual Report: Principal place of business address' },
+      { id: 'registeredAgentName',     label: 'Registered Agent Full Name',                 type: 'text',    placeholder: 'Name of registered agent',                    required: true,  officialFieldName: 'Annual Report: Registered agent name' },
+      { id: 'registeredAgentAddress',  label: 'Registered Agent Address (in-state street)', type: 'address', placeholder: 'Physical street address in state (no P.O. Box)', required: true, officialFieldName: 'Annual Report: Registered agent street address' },
+      { id: 'ownerFullName',           label: 'Owner / Manager / Officer Name',             type: 'text',    placeholder: 'Primary member, manager, or president',       required: true,  officialFieldName: 'Annual Report: Name of manager / officer / director' },
+      { id: 'ownerTitle',              label: 'Title',                                      type: 'select',  options: ['Managing Member', 'Member', 'Manager', 'President', 'CEO', 'Secretary', 'Treasurer', 'Director', 'Other'], required: true, officialFieldName: 'Annual Report: Title of officer / manager' },
+      { id: 'businessEmail',           label: 'Contact Email Address',                      type: 'email',   placeholder: 'you@yourbusiness.com',                        required: true,  officialFieldName: 'Annual Report: Email address (for state correspondence)' },
+      { id: 'businessPhone',           label: 'Contact Phone Number',                       type: 'phone',   placeholder: '(555) 555-0100',                              required: false, officialFieldName: 'Annual Report: Daytime phone number' },
+      { id: 'hasChanged',              label: 'Any changes to report since last filing?',   type: 'select',  options: ['No changes — confirming existing information', 'Yes — address changed', 'Yes — registered agent changed', 'Yes — officers/members changed', 'Yes — multiple changes'], required: true },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://dos.fl.gov/sunbiz', submitPortalUrl: 'https://dos.fl.gov/sunbiz/manage-your-business/annual-reports/', officialFormNumber: 'Florida Annual Report', submitInstructions: 'File online at Sunbiz.org between January 1 and May 1. Fee: $138.75 for LLCs, $138.75 for corporations (late fee of $400 after May 1). Your entity number is printed on your formation documents. Processing is immediate.' },
+      TX: { submitUrl: 'https://comptroller.texas.gov/taxes/franchise/', submitPortalUrl: 'https://comptroller.texas.gov/taxes/franchise/', officialFormNumber: 'Texas Franchise Tax Report / Public Information Report', submitInstructions: 'File the Texas Franchise Tax Report (or No Tax Due Report) plus the Public Information Report (PIR) with the Texas Comptroller by May 15. Most single-member LLCs and small businesses file a "No Tax Due" report free. Use the WebFile system at comptroller.texas.gov.' },
+      CA: { submitUrl: 'https://bizfileonline.sos.ca.gov', submitPortalUrl: 'https://bizfileonline.sos.ca.gov', officialFormNumber: 'Statement of Information (SI-200 LLC or SI-550 Corp)', submitInstructions: 'File a Statement of Information with the California Secretary of State at bizfileonline.sos.ca.gov. LLCs: every 2 years, $20 fee, due within 90 days of formation anniversary. Corporations: annually, $25 fee. Failure to file results in entity suspension.' },
+      NY: { submitUrl: 'https://ecorp.dos.ny.gov', submitPortalUrl: 'https://ecorp.dos.ny.gov', officialFormNumber: 'Biennial Statement (LLCs) / Annual Report (Corporations)', submitInstructions: 'LLCs: File a Biennial Statement with the NY Department of State at ecorp.dos.ny.gov every 2 years. $9 fee. Corporations: file an annual report. The Department of State sends a reminder email before the filing window opens.' },
+      GA: { submitUrl: 'https://ecorp.sos.ga.gov', submitPortalUrl: 'https://ecorp.sos.ga.gov', officialFormNumber: 'Georgia Annual Registration', submitInstructions: 'File the Annual Registration with the Georgia Secretary of State at ecorp.sos.ga.gov by April 1. Fee: $50. File online to avoid the paper processing fee.' },
+      IL: { submitUrl: 'https://www.ilsos.gov/annualreport/', submitPortalUrl: 'https://www.ilsos.gov/annualreport/', officialFormNumber: 'Illinois Annual Report', submitInstructions: 'File the Annual Report with the Illinois Secretary of State at ilsos.gov before the first day of the anniversary month. Fee: $75 for LLCs and domestic corporations.' },
+      WA: { submitUrl: 'https://ccfs.sos.wa.gov', submitPortalUrl: 'https://ccfs.sos.wa.gov', officialFormNumber: 'Washington Annual Report', submitInstructions: 'File the Annual Report with the Washington Secretary of State at ccfs.sos.wa.gov. Due by the anniversary of the filing date each year. Fees: $60 for LLCs, $60 for corporations (online).' },
+      CO: { submitUrl: 'https://mybiz.sos.state.co.us', submitPortalUrl: 'https://mybiz.sos.state.co.us', officialFormNumber: 'Colorado Periodic Report', submitInstructions: 'File a Periodic Report with the Colorado Secretary of State at mybiz.sos.state.co.us by the anniversary of the formation date. Fee: $10. Filing is online-only.' },
+    },
+  },
+
+  // ── BOI Report — Beneficial Ownership Information ─────────────────────────
+  // v62 — new template
+
+  'boi-report': {
+    id: 'boi-report',
+    defaultRenewalMonths: null, // One-time initial filing; updates required within 30 days of changes
+    name: 'FinCEN Beneficial Ownership Information (BOI) Report',
+    officialFormNumber: 'FinCEN BOI Report',
+    description:
+      'Required under the Corporate Transparency Act for most LLCs, corporations, and ' +
+      'similar entities formed or registered in the US. Reports the beneficial owners — ' +
+      'individuals with substantial control or at least 25% ownership — to FinCEN. ' +
+      'Businesses formed before January 1, 2024 had a deadline to file; new businesses ' +
+      'must file within 90 days of formation. Updates required within 30 days of any ' +
+      'ownership or address change. Penalties: up to $500/day for willful non-compliance.',
+    fee: 'Free',
+    submitUrl: 'https://boiefiling.fincen.gov',
+    submitPortalUrl: 'https://boiefiling.fincen.gov',
+    submitInstructions:
+      'File online at boiefiling.fincen.gov. No fee. The filing system accepts information ' +
+      'for all beneficial owners and company applicants (for entities formed after 1/1/2024). ' +
+      'You will need a government-issued ID (driver\'s license or passport) for each ' +
+      'beneficial owner. You can save a draft and return. Amendments must be filed within ' +
+      '30 days of any reportable change.',
+    requiredDocs: [
+      'Federal EIN of the reporting company',
+      'Government-issued photo ID (driver\'s license or passport) for each beneficial owner',
+      'Current residential address for each beneficial owner',
+      'Date of birth for each beneficial owner',
+    ],
+    fields: [
+      { id: 'entityLegalName',         label: 'Reporting Company Legal Name',              type: 'text',    placeholder: 'Exact name as filed with the state',           required: true,  officialFieldName: 'BOI Report: Full legal name of reporting company' },
+      { id: 'entityTradeName',         label: 'Trade Name / DBA (if any)',                 type: 'text',    placeholder: 'Leave blank if same as legal name',             required: false, officialFieldName: 'BOI Report: Any alternative name or DBA' },
+      { id: 'fein',                    label: 'Federal EIN',                               type: 'text',    placeholder: 'XX-XXXXXXX',                                   required: true,  officialFieldName: 'BOI Report: Employer Identification Number (EIN)' },
+      { id: 'formationState',          label: 'State / Jurisdiction of Formation',         type: 'text',    placeholder: 'e.g., Florida',                                required: true,  officialFieldName: 'BOI Report: Jurisdiction of formation or registration' },
+      { id: 'principalAddress',        label: 'Current US Street Address (Principal Place of Business)', type: 'address', placeholder: '123 Main St, City, State ZIP', required: true, officialFieldName: 'BOI Report: Address of principal place of business (US only)' },
+      { id: 'ownerFullName',           label: 'Beneficial Owner #1 Full Legal Name',       type: 'text',    placeholder: 'First, middle (if any), last name',            required: true,  officialFieldName: 'BOI Report: Full legal name of beneficial owner' },
+      { id: 'ownerDateOfBirth',        label: 'Beneficial Owner #1 Date of Birth',         type: 'date',    required: true,                                              officialFieldName: 'BOI Report: Date of birth of beneficial owner (MM/DD/YYYY)' },
+      { id: 'ownerAddress',            label: 'Beneficial Owner #1 Residential Address',   type: 'address', placeholder: 'Current home address (not business address)', required: true,  officialFieldName: 'BOI Report: Residential street address of beneficial owner' },
+      { id: 'ownerIdType',             label: 'Beneficial Owner #1 ID Document Type',      type: 'select',  options: ['US Driver\'s License', 'US State-Issued ID', 'US Passport', 'Foreign Passport'], required: true, officialFieldName: 'BOI Report: Identifying document type' },
+      { id: 'ownerIdNumber',           label: 'Beneficial Owner #1 ID Number',             type: 'text',    placeholder: 'Document number from ID',                      required: true,  officialFieldName: 'BOI Report: Identifying document number' },
+      { id: 'ownerIdState',            label: 'ID Issuing Jurisdiction',                   type: 'text',    placeholder: 'State or country that issued the ID',          required: true,  officialFieldName: 'BOI Report: Issuing jurisdiction for identifying document' },
+      { id: 'additionalOwners',        label: 'Additional beneficial owners?',             type: 'select',  options: ['No — I am the only beneficial owner', 'Yes — there are 2 beneficial owners', 'Yes — there are 3+ beneficial owners'], required: true, officialFieldName: 'BOI Report: Additional beneficial owners' },
+      { id: 'isNewCompany',            label: 'Was this entity formed on or after Jan 1, 2024?', type: 'select', options: ['No — formed before January 1, 2024', 'Yes — formed in 2024 or later'], required: true, officialFieldName: 'BOI Report: Is reporting company a newly formed entity?' },
+    ],
+  },
+
+  // ── Contractor / Trade License ────────────────────────────────────────────
+  // v62 — new template
+
+  'contractor-license': {
+    id: 'contractor-license',
+    defaultRenewalMonths: 24, // Most states renew every 1–2 years
+    name: "General Contractor / Trade License Application",
+    description:
+      'Required in most states for general contractors, specialty trade contractors ' +
+      '(electrical, plumbing, HVAC, roofing), and home improvement contractors performing ' +
+      'work above a set dollar threshold. Typically requires proof of experience, a written ' +
+      'exam, general liability insurance, workers\' compensation, and a surety bond. ' +
+      'Some states license at the state level; others delegate to the county or city.',
+    fee: '$100–$500 + exam fees and surety bond (varies by state and license class)',
+    submitUrl: 'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply through your state Contractors State License Board or equivalent licensing ' +
+      'agency. Most states require passing a written trade exam, submitting proof of ' +
+      'insurance and a surety bond, and providing verifiable work experience. ' +
+      'Search "[your state] contractor license application" to find your state board portal.',
+    requiredDocs: [
+      'Proof of work experience (letters from employers or project list)',
+      'General liability insurance certificate ($500,000–$1M minimum)',
+      'Workers\' compensation insurance certificate or exemption',
+      'Surety bond (amount varies by license class)',
+      'Government-issued photo ID',
+      'Federal EIN',
+      'Exam score report (if already passed state exam)',
+    ],
+    fields: [
+      { id: 'applicantLegalName',   label: 'Applicant / Business Legal Name',                 type: 'text',    placeholder: 'As registered with your state',              required: true,  officialFieldName: 'Contractor License App: Legal name of applicant / business entity' },
+      { id: 'ownerFullName',        label: 'Qualifying Individual Full Name',                  type: 'text',    placeholder: 'Person with qualifying experience/exam',     required: true,  officialFieldName: 'Contractor License App: Name of qualifying individual' },
+      { id: 'businessPhone',        label: 'Business Phone Number',                            type: 'phone',   placeholder: '(555) 555-0100',                             required: true,  officialFieldName: 'Contractor License App: Business telephone number' },
+      { id: 'businessEmail',        label: 'Business Email Address',                           type: 'email',   placeholder: 'you@yourbusiness.com',                       required: true,  officialFieldName: 'Contractor License App: Email address' },
+      { id: 'businessAddress',      label: 'Principal Business Address',                       type: 'address', placeholder: '123 Main St, City, State ZIP',               required: true,  officialFieldName: 'Contractor License App: Business address' },
+      { id: 'licenseClassType',     label: 'License Classification / Trade',                   type: 'select',  options: ['General Contractor', 'Residential Contractor', 'Electrical', 'Plumbing', 'HVAC / Mechanical', 'Roofing', 'Painting', 'Carpentry / Framing', 'Concrete / Masonry', 'Landscaping', 'Swimming Pool', 'Other Specialty Trade'], required: true, officialFieldName: 'Contractor License App: License classification / trade type' },
+      { id: 'yearsExperience',      label: 'Years of Experience in This Trade',                type: 'select',  options: ['Less than 1 year', '1–3 years', '3–5 years', '5–10 years', '10+ years'], required: true, officialFieldName: 'Contractor License App: Years of journeyman or supervisor experience' },
+      { id: 'businessType',         label: 'Business Entity Type',                             type: 'select',  options: ['Sole Proprietor', 'LLC', 'Corporation', 'Partnership'], required: true, officialFieldName: 'Contractor License App: Type of business entity' },
+      { id: 'fein',                 label: 'Federal EIN',                                      type: 'text',    placeholder: 'XX-XXXXXXX',                                 required: true,  officialFieldName: 'Contractor License App: Federal Employer Identification Number' },
+      { id: 'liabilityInsurer',     label: 'General Liability Insurance Carrier',              type: 'text',    placeholder: 'e.g., State Farm, Travelers',                required: true,  officialFieldName: 'Contractor License App: Liability insurance carrier name' },
+      { id: 'liabilityPolicyNum',   label: 'General Liability Policy Number',                  type: 'text',    placeholder: 'Policy number',                              required: true,  officialFieldName: 'Contractor License App: Liability insurance policy number' },
+      { id: 'liabilityAmount',      label: 'General Liability Coverage Amount',                type: 'select',  options: ['$300,000', '$500,000', '$1,000,000', '$2,000,000', 'Other'], required: true, officialFieldName: 'Contractor License App: Amount of general liability coverage' },
+      { id: 'hasWorkersComp',       label: 'Workers\' Compensation Insurance',                 type: 'select',  options: ['Yes — active policy', 'No employees — filing exemption', 'Sole owner exempt under state law'], required: true, officialFieldName: 'Contractor License App: Workers\' compensation status' },
+      { id: 'bondAmount',           label: 'Surety Bond Amount',                               type: 'select',  options: ['$5,000', '$10,000', '$15,000', '$25,000', '$50,000', '$75,000 or more'], required: true, officialFieldName: 'Contractor License App: Surety bond amount' },
+      { id: 'hasPassedExam',        label: 'Have you passed the state trade exam?',            type: 'select',  options: ['Yes — exam passed', 'No — not yet taken', 'Exempt — reciprocal license from another state'], required: true, officialFieldName: 'Contractor License App: Examination status' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.myfloridalicense.com', submitPortalUrl: 'https://www.myfloridalicense.com/DBPR/construction/', officialFormNumber: 'Florida DBPR Contractor License Application', submitInstructions: 'Apply through the Florida DBPR Division of Professions — Construction Industry Licensing Board at myfloridalicense.com. Florida has multiple license categories (Certified vs. Registered). Certified contractors work anywhere in the state; Registered contractors work only in the counties where they passed the local exam. Exam administered by PSI.' },
+      TX: { submitUrl: 'https://www.tdlr.texas.gov', submitPortalUrl: 'https://www.tdlr.texas.gov/contractor/', officialFormNumber: 'TDLR Contractor License Application', submitInstructions: 'In Texas, most construction licensing is handled at the city or county level (no unified statewide general contractor license). Electricians, plumbers, and HVAC contractors must be licensed by the Texas Department of Licensing and Regulation (TDLR) at tdlr.texas.gov. Roofers and general contractors are typically licensed at the city level.' },
+      CA: { submitUrl: 'https://www.cslb.ca.gov', submitPortalUrl: 'https://www.cslb.ca.gov/online_services/apply_for_license/', officialFormNumber: 'CSLB Contractor License Application', submitInstructions: 'Apply with the California Contractors State License Board (CSLB) at cslb.ca.gov. All contractors in California performing work of $500 or more (labor + materials) must be licensed. Exam required for most classifications. Application fee: $450. Takes 3–6 months.' },
+      NY: { submitUrl: 'https://www.dos.ny.gov', submitPortalUrl: 'https://www.dos.ny.gov/licensing/home_improvement/', officialFormNumber: 'NY Home Improvement Contractor Registration', submitInstructions: 'New York does not have a statewide general contractor license. Home Improvement Contractors must register with the NYS Department of State at dos.ny.gov. NYC requires separate licensing through the NYC Department of Consumer and Worker Protection (DCWP). Electricians and plumbers are licensed by local authorities.' },
+    },
+  },
+
+  // ── W-9 Collection Prep (Request for TIN) ────────────────────────────────
+  // v62 — new template: guides business owners on collecting W-9s from contractors
+
+  'w9-collection': {
+    id: 'w9-collection',
+    defaultRenewalMonths: null, // Collected per contractor; no periodic renewal
+    name: 'Contractor W-9 Collection Worksheet',
+    officialFormNumber: 'IRS Form W-9',
+    description:
+      'Required when paying any independent contractor, freelancer, or vendor $600 or more ' +
+      'in a calendar year. The W-9 provides the payee\'s legal name, address, and Taxpayer ' +
+      'Identification Number (TIN) so you can issue a Form 1099-NEC at year-end. ' +
+      'Collect a W-9 from every contractor before the first payment to avoid mandatory ' +
+      '24% backup withholding. Retain completed W-9s for at least 4 years.',
+    fee: 'Free',
+    submitUrl: 'https://www.irs.gov/forms-pubs/about-form-w-9',
+    submitPortalUrl: 'https://www.irs.gov/forms-pubs/about-form-w-9',
+    submitInstructions:
+      'This form is completed BY the contractor and given TO you (the payer). ' +
+      'Download the blank W-9 from IRS.gov and send it to your contractor. ' +
+      'Once you receive a completed W-9, retain it in your records. ' +
+      'If a contractor refuses to provide a W-9, withhold 24% backup withholding from payments. ' +
+      'Use the completed W-9 information to prepare Form 1099-NEC by January 31.',
+    requiredDocs: [
+      'Contractor\'s legal name (as shown on their federal tax return)',
+      'Contractor\'s business name / DBA (if different)',
+      'Federal tax classification (Individual, LLC, Corporation, etc.)',
+      'Contractor\'s address',
+      'Contractor\'s Social Security Number or Federal EIN',
+    ],
+    fields: [
+      { id: 'contractorLegalName',  label: 'Contractor\'s Legal Name',                type: 'text',    placeholder: 'As shown on contractor\'s federal tax return',   required: true,  officialFieldName: 'W-9 Line 1: Name (as shown on income tax return)' },
+      { id: 'contractorBizName',    label: 'Business Name / DBA (if different)',       type: 'text',    placeholder: 'Leave blank if same as legal name',               required: false, officialFieldName: 'W-9 Line 2: Business name / disregarded entity name (if different from above)' },
+      { id: 'contractorTaxClass',   label: 'Federal Tax Classification',               type: 'select',  options: ['Individual / Sole Proprietor', 'Single-Member LLC (treated as individual)', 'Multi-Member LLC (treated as partnership)', 'C Corporation', 'S Corporation', 'Partnership', 'Trust / Estate', 'Other'], required: true, officialFieldName: 'W-9 Line 3: Federal tax classification' },
+      { id: 'contractorAddress',    label: 'Contractor\'s Address',                    type: 'address', placeholder: '123 Main St, City, State ZIP',                   required: true,  officialFieldName: 'W-9 Lines 5–6: Address (number, street, apt/suite); City, State, ZIP' },
+      { id: 'contractorTIN',        label: 'Social Security Number or Federal EIN',    type: 'text',    placeholder: 'XXX-XX-XXXX or XX-XXXXXXX', hint: 'Required for 1099 issuance', required: true, officialFieldName: 'W-9 Part I: Taxpayer Identification Number (SSN or EIN)' },
+      { id: 'payerBusinessName',    label: 'Your Business Name (Requester)',            type: 'text',    placeholder: 'The business collecting this W-9',               required: true  },
+      { id: 'payerFein',            label: 'Your Federal EIN',                         type: 'text',    placeholder: 'XX-XXXXXXX',                                     required: true  },
+      { id: 'contractorStartDate',  label: 'Contractor\'s First Payment Date',         type: 'date',    required: false, hint: 'For your records — helps track 1099 threshold ($600/year)' },
+      { id: 'estimatedPayment',     label: 'Estimated Total Annual Payments to Contractor', type: 'select', options: ['Less than $600 (1099 not required)', '$600–$2,000', '$2,000–$10,000', 'More than $10,000'], required: true, hint: 'A 1099-NEC is required if you pay $600 or more in a calendar year' },
+    ],
+  },
+
+  // ── Home Occupation Permit ────────────────────────────────────────────────
+  // (existing template below — kept intact)
+
   'home-occupation-permit': {
     id: 'home-occupation-permit',
     defaultRenewalMonths: 12, // Most cities/counties require annual renewal
@@ -1536,6 +1804,4794 @@ export const FORM_TEMPLATES: Record<string, FormTemplate> = {
         submitPortalUrl: 'https://dor.wa.gov/open-business/apply-business-license',
         submitInstructions: 'In King County, home occupation permits are issued by your city (Seattle, Bellevue, etc.) or by King County for unincorporated areas. The WA Business Licensing Service at dor.wa.gov can help identify requirements.',
       },
+    },
+  },
+
+  // v77 — New guided wizard forms ──────────────────────────────────────────────
+
+  'str-local-occupancy-tax': {
+    id:          'str-local-occupancy-tax',
+    name:        'Short-Term Rental Transient Occupancy Tax Registration',
+    description:
+      'Most cities and counties require short-term rental hosts to register for and collect ' +
+      'Transient Occupancy Tax (TOT), Hotel/Motel Tax, or Tourist Development Tax. This is ' +
+      'separate from the STR operating permit. Hosts must register before collecting any payments, ' +
+      'then file and remit tax monthly or quarterly. Rates typically range from 8–15% of rental revenue.',
+    fee:         '$0–$50 registration; TOT rate 8–15% of rental revenue (remitted monthly/quarterly)',
+    defaultRenewalMonths: 12,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Register with your city or county finance/tax department. Once registered, you will receive ' +
+      'a TOT account number and remittance schedule. Most jurisdictions now offer online filing. ' +
+      'If you list on Airbnb or VRBO, those platforms may collect and remit TOT on your behalf ' +
+      'in some jurisdictions — verify whether a separate registration is still required.',
+    requiredDocs: [
+      'Short-Term Rental permit number (from the operating permit application)',
+      'Property address and APN (Assessor\'s Parcel Number)',
+      'Owner or agent contact information',
+      'Platform(s) used (Airbnb, VRBO, Booking.com, etc.)',
+      'Government-issued photo ID',
+      'Bank account for remittance setup (some jurisdictions)',
+    ],
+    fields: [
+      { id: 'ownerFullName',      label: 'Owner / Applicant Full Name',        type: 'text',   placeholder: 'Full legal name',             required: true  },
+      { id: 'businessEmail',      label: 'Contact Email',                       type: 'email',  placeholder: 'you@email.com',               required: true  },
+      { id: 'businessPhone',      label: 'Contact Phone',                       type: 'phone',  placeholder: '(555) 555-0100',              required: true  },
+      { id: 'propertyAddress',    label: 'Rental Property Address',             type: 'address',placeholder: '123 Main St, City, State ZIP', required: true  },
+      { id: 'apnNumber',          label: 'Assessor\'s Parcel Number (APN)',     type: 'text',   placeholder: 'e.g. 012-345-678',            required: false },
+      { id: 'existingLicenseNumber', label: 'Existing STR Permit Number',       type: 'text',   placeholder: 'From your STR operating permit', required: false },
+      { id: 'strType',            label: 'Rental Type',                         type: 'select', options: ['Entire home / apartment', 'Private room in owner-occupied home', 'Accessory dwelling unit (ADU)', 'Vacation condo'], required: true },
+      { id: 'platformsListed',    label: 'Platforms Used',                      type: 'select', options: ['Airbnb', 'VRBO / HomeAway', 'Booking.com', 'Multiple platforms', 'Direct booking only'], required: true },
+      { id: 'platformRemitsTax',  label: 'Does platform collect TOT on your behalf?', type: 'select', options: ['Yes — platform collects and remits TOT', 'No — I collect and remit directly', 'Partial — platform remits for some jurisdictions'], required: true },
+      { id: 'estimatedAnnualRevenue', label: 'Estimated Annual Rental Revenue', type: 'text',   placeholder: 'e.g. $24,000',               required: false },
+    ],
+    localeUrls: {
+      CA: { submitUrl: 'https://www.cdtfa.ca.gov', submitPortalUrl: 'https://onlineservices.cdtfa.ca.gov', officialFormNumber: 'TOT Registration (varies by county)', submitInstructions: 'In California, TOT is administered by the city or county — not the state. Register directly with your local finance department. San Francisco: sf.gov/tbt. Los Angeles: finance.lacity.org. San Diego: sandiego.gov. Some cities have authorized Airbnb and VRBO to collect and remit on your behalf — verify with your local agency.' },
+      FL: { submitUrl: 'https://floridarevenue.com', submitPortalUrl: 'https://taxapps.floridarevenue.com', officialFormNumber: 'DR-1 (Tourist Development Tax Registration)', submitInstructions: 'In Florida, Tourist Development Tax (TDT) is collected by individual counties. Register with your county Tax Collector. Miami-Dade: miamidade.gov/finance. Broward: broward.org/Revenue. Palm Beach: pbcgov.org. Orange County: octaxcol.com. Hillsborough: hillstax.org. Florida also collects 6% sales tax on short-term rentals — register at floridarevenue.com.' },
+      TX: { submitUrl: 'https://comptroller.texas.gov', submitPortalUrl: 'https://mycpa.cpa.state.tx.us', officialFormNumber: 'AP-201 (Texas Sales and Use Tax Permit)', submitInstructions: 'Texas imposes a 6% Hotel Occupancy Tax (HOT) on short-term rentals. Register at comptroller.texas.gov. Many cities also impose an additional local HOT (Austin: 9%, San Antonio: 9%, Houston: 7%). Airbnb and VRBO collect and remit state HOT on behalf of hosts in Texas — confirm local HOT requirements with your city.' },
+      TN: { submitUrl: 'https://www.tn.gov/revenue', submitPortalUrl: 'https://tnpays.tn.gov', officialFormNumber: 'Revenue Online Services Registration', submitInstructions: 'Tennessee imposes a 9.25% sales tax on short-term rentals plus local occupancy tax. Nashville imposes an additional Occupancy Tax. Register at tn.gov/revenue. Nashville/Davidson County STR hosts should also register with Nashville Metro Finance Department.' },
+      AZ: { submitUrl: 'https://azdor.gov', submitPortalUrl: 'https://aztaxes.gov', officialFormNumber: 'Transaction Privilege Tax (TPT) Registration', submitInstructions: 'Arizona requires STR hosts to collect Transaction Privilege Tax (TPT) at the state + county + city level. Register at aztaxes.gov for combined state/county/city filing. Phoenix: phoenix.gov/pdd. Scottsdale: scottsdaleaz.gov. Airbnb and VRBO collect and remit AZ TPT for hosts — still register for local-only rates if your city requires it separately.' },
+      CO: { submitUrl: 'https://www.colorado.gov/revenue', submitPortalUrl: 'https://mybiz.colorado.gov', officialFormNumber: 'Lodging and Travel Tax Registration', submitInstructions: 'Colorado requires STR hosts to collect and remit state lodging tax plus local Lodger\'s Tax in many municipalities. Denver: denvergov.org/lodgers-tax. Boulder: bouldercolorado.gov. Colorado Springs: coloradosprings.gov. Register at mybiz.colorado.gov for state registration, then separately with your city for local lodger\'s tax.' },
+      NY: { submitUrl: 'https://www.tax.ny.gov', submitPortalUrl: 'https://onlineservices.tax.ny.gov', officialFormNumber: 'DTF-17 (Sales Tax Certificate of Authority)', submitInstructions: 'New York requires STR hosts to collect sales tax (4%) on rentals under 90 days plus local hotel taxes. NYC imposes an additional 5.875% City Hotel Tax and $1.50/night per unit fee. Register at tax.ny.gov. Note: NYC has strict STR laws — most rentals of entire apartments are prohibited; verify local rules before listing.' },
+    },
+  },
+
+  'farmers-market-vendor-license': {
+    id:          'farmers-market-vendor-license',
+    name:        'Farmers Market / Craft Fair Vendor License',
+    description:
+      'Vendors selling at farmers markets, craft fairs, flea markets, and similar temporary retail events ' +
+      'typically need a temporary or seasonal vendor permit or license in addition to a general business license. ' +
+      'Requirements vary significantly: some jurisdictions require each vendor to hold their own permit; ' +
+      'others permit the market organizer to hold a master permit covering all vendors.',
+    fee:         '$25–$150/year or per-event; varies significantly by jurisdiction',
+    defaultRenewalMonths: 12,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply with your city or county business licensing office. Many jurisdictions also require ' +
+      'a separate Health Department permit if you sell food. Confirm whether the market organizer ' +
+      'holds a master permit (you may only need to register with the organizer), or whether you ' +
+      'need your own permit. Always obtain your home state\'s seller\'s permit/sales tax number first.',
+    requiredDocs: [
+      'Government-issued photo ID',
+      'Business license or registration (if applicable)',
+      'Seller\'s permit / Sales tax registration (if selling taxable goods)',
+      'Food handler\'s permit / Food service permit (for food vendors)',
+      'Product list or menu',
+      'Proof of liability insurance (most markets require $1M general liability)',
+      'Market organizer\'s name and location address',
+    ],
+    fields: [
+      { id: 'businessName',       label: 'Business / Vendor Name',              type: 'text',   placeholder: 'e.g. Fresh Fields Farm, Artisan Pottery Co.', required: true  },
+      { id: 'ownerFullName',      label: 'Owner / Vendor Full Name',            type: 'text',   placeholder: 'First and last name',         required: true  },
+      { id: 'businessPhone',      label: 'Business Phone',                      type: 'phone',  placeholder: '(555) 555-0100',              required: true  },
+      { id: 'businessEmail',      label: 'Business Email',                      type: 'email',  placeholder: 'you@yourbusiness.com',        required: true  },
+      { id: 'homeAddress',        label: 'Mailing / Home Address',              type: 'address',placeholder: '123 Main St, City, State ZIP', required: true  },
+      { id: 'vendorProductType',  label: 'What type of products do you sell?',  type: 'select', options: ['Fresh produce / farm products', 'Prepared food / food products', 'Baked goods / cottage food', 'Crafts / handmade goods', 'Plants / nursery products', 'Clothing / accessories', 'Mixed products'], required: true },
+      { id: 'businessType',       label: 'Vendor Business Structure',           type: 'select', options: ['Sole proprietor / individual', 'LLC or Partnership', 'Corporation', 'Farmer / agricultural producer'], required: true },
+      { id: 'marketName',         label: 'Market / Event Name',                 type: 'text',   placeholder: 'e.g. Downtown Farmers Market', required: true  },
+      { id: 'marketAddress',      label: 'Market Location Address',             type: 'address',placeholder: 'Address of the market/fair',  required: true  },
+      { id: 'operatingDays',      label: 'Proposed Days of Operation',          type: 'select', options: ['Saturdays only', 'Sundays only', 'Saturdays and Sundays', 'Weekdays only', 'Multiple days per week', 'Seasonal (summer/fall only)'], required: true },
+      { id: 'hasExistingLicense', label: 'Do you have a current business license or seller\'s permit?', type: 'select', options: ['Yes — I have a valid business license', 'Yes — I have a seller\'s permit / resale certificate', 'Both — business license and seller\'s permit', 'No — this is my first vendor permit'], required: true },
+      { id: 'existingLicenseNumber', label: 'Existing License / Permit Number (if any)', type: 'text', placeholder: 'Leave blank if not yet obtained', required: false },
+      { id: 'liabilityInsurer',   label: 'Liability Insurance Provider',        type: 'text',   placeholder: 'Insurance company name',      required: false },
+      { id: 'liabilityPolicyNum', label: 'Policy Number',                       type: 'text',   placeholder: 'Insurance policy number',     required: false },
+    ],
+    localeUrls: {
+      CA: { submitUrl: 'https://www.cdfa.ca.gov', officialFormNumber: 'County Environmental Health Temporary Food Permit (food vendors)', submitInstructions: 'In California, food vendors at farmers markets must obtain a Temporary Food Facility (TFF) permit from the county Environmental Health Department for each county where they operate. Non-food vendors need a city or county business license. The California Department of Food and Agriculture (CDFA) certifies agricultural producers.' },
+      FL: { submitUrl: 'https://www.fdacs.gov', officialFormNumber: 'FDACS Division of Food Safety — Cottage Food or Temporary Event Permit', submitInstructions: 'Florida food vendors at farmers markets need a Florida Department of Agriculture and Consumer Services (FDACS) license if selling perishable items. Cottage food vendors may sell directly at markets without a FDACS license under the Cottage Food Exemption (gross sales under $50,000/yr). Check with your county health department for local requirements.' },
+      TX: { submitUrl: 'https://www.dshs.texas.gov', officialFormNumber: 'DSHS Temporary Food Establishment Permit', submitInstructions: 'Texas farmers market food vendors operating at temporary events need a Temporary Food Establishment permit from the local health authority (city or county). Cottage food vendors may sell directly to consumers without a permit (up to $50,000/yr gross). Non-food crafters need a state Sales and Use Tax Permit from the TX Comptroller.' },
+      NY: { submitUrl: 'https://agriculture.ny.gov', officialFormNumber: 'NY Ag & Markets — Temporary Retail Food Establishment Permit', submitInstructions: 'New York farmers market food vendors need a Temporary Retail Food Establishment permit from the NY Department of Agriculture & Markets. In New York City, contact the NYC Dept. of Health. Cottage food vendors are generally exempt if selling directly and labeling correctly. Non-food vendors need a Sales Tax Certificate of Authority (DTF-17) from the Tax Dept.' },
+      IL: { submitUrl: 'https://www.idph.state.il.us', officialFormNumber: 'IDPH Temporary Food Service License', submitInstructions: 'Illinois food vendors at farmers markets need a Temporary Food Service License from the Illinois Department of Public Health or the local health department. Cottage food vendors may sell directly at farmers markets under the Illinois Food Handling Regulation Enforcement Act (up to $50,000/yr). Non-food vendors need a Retailers\' Occupation Tax (ROT) registration from the IL Dept. of Revenue.' },
+      GA: { submitUrl: 'https://agr.georgia.gov', officialFormNumber: 'Georgia Dept. of Agriculture — Cottage Food or Temporary Food Service', submitInstructions: 'Georgia cottage food vendors may sell at farmers markets without a state license (gross annual sales under $50,000). Food vendors selling potentially hazardous foods must obtain a Georgia Dept. of Agriculture Food Sales Establishment License. Non-food vendors need a business license from their city/county.' },
+    },
+  },
+
+  'vape-smoke-shop-retail-license': {
+    id:          'vape-smoke-shop-retail-license',
+    name:        'Vape / Smoke Shop Retail License',
+    description:
+      'Retailers selling electronic cigarettes, vaping products, e-liquids, or tobacco paraphernalia ' +
+      'must obtain a specialty retail license in most states and many cities — separate from the general ' +
+      'tobacco retail license. Federal requirements include FDA retailer registration for stores selling ' +
+      'deemed tobacco products. Some cities additionally impose local "vape shop" permit requirements.',
+    fee:         '$50–$500/year (varies significantly by state and city)',
+    defaultRenewalMonths: 12,
+    submitUrl:   'https://www.fda.gov/tobacco-products/retail-sales-tobacco-products/retailer-registration',
+    submitInstructions:
+      'Step 1: Register with the FDA as a tobacco/vaping product retailer at fda.gov. ' +
+      'Step 2: Obtain your state tobacco/vape retail license from the state revenue or health department. ' +
+      'Step 3: Check for city or county vape shop permit requirements — many jurisdictions added ' +
+      'additional licensing after 2019. Age verification protocols (21+) are federally required.',
+    requiredDocs: [
+      'Government-issued photo ID',
+      'Business license / general business registration',
+      'State tobacco retail license application',
+      'FDA retailer registration confirmation',
+      'Proof of age verification policy (21+ Tobacco 21)',
+      'Floor plan (some cities require for vape shop permits)',
+      'Proof of distance from schools/youth centers (some jurisdictions)',
+    ],
+    fields: [
+      { id: 'businessName',         label: 'Store / Business Name',                type: 'text',   placeholder: 'e.g. Cloud9 Vape Shop',       required: true  },
+      { id: 'ownerFullName',        label: 'Owner Full Name',                      type: 'text',   placeholder: 'Full legal name',             required: true  },
+      { id: 'physicalAddress',      label: 'Store Address',                        type: 'address',placeholder: '123 Main St, City, State ZIP', required: true  },
+      { id: 'businessPhone',        label: 'Business Phone',                       type: 'phone',  placeholder: '(555) 555-0100',              required: true  },
+      { id: 'businessEmail',        label: 'Business Email',                       type: 'email',  placeholder: 'you@store.com',               required: true  },
+      { id: 'fein',                 label: 'Federal EIN',                          type: 'text',   placeholder: 'XX-XXXXXXX',                  required: false },
+      { id: 'vapeProductTypes',     label: 'Products Sold',                        type: 'select', options: ['E-cigarettes / vape devices only', 'E-liquids / vape juice', 'Both devices and e-liquids', 'Tobacco products + vape products', 'CBD / hemp products', 'Full smoke shop (tobacco, vape, accessories)'], required: true },
+      { id: 'hasAgeVerification',   label: 'Age Verification Policy in Place?',   type: 'select', options: ['Yes — ID check for all customers under 30', 'Yes — ID scan system', 'Yes — manual ID check at point of sale', 'No — need to implement policy'], required: true },
+      { id: 'hasDisplayRestrictions', label: 'Products stored behind counter / out of customer reach?', type: 'select', options: ['Yes — all vape products stored behind counter', 'Yes — locked display cases', 'No — products on open shelves (check local law)'], required: true },
+      { id: 'existingLicenseNumber',  label: 'Existing Tobacco Retail License # (if any)', type: 'text', placeholder: 'State license number',    required: false },
+      { id: 'isRenewal',            label: 'Application Type',                    type: 'select', options: ['New license application', 'Renewal — same ownership and location', 'Transfer — new owner / new location'], required: true },
+      { id: 'liabilityInsurer',     label: 'Business Liability Insurance Provider', type: 'text', placeholder: 'Insurance company name',      required: false },
+    ],
+    localeUrls: {
+      CA: { submitUrl: 'https://www.cdtfa.ca.gov', officialFormNumber: 'Cigarette and Tobacco Products Retailer\'s License (CDTFA-400-R)', submitInstructions: 'California requires all tobacco and vape retailers to obtain a Cigarette and Tobacco Products Retailer\'s License from the CDTFA (California Department of Tax and Fee Administration). Fee: $265/year per location. Additionally, many CA cities (San Francisco, Los Angeles, Sacramento) have passed local Tobacco Retailer Permit ordinances with stricter requirements, caps on permits, and proximity restrictions.' },
+      FL: { submitUrl: 'https://www.fdacs.gov/Business-Services/Tobacco', officialFormNumber: 'FDACS Tobacco Permit', submitInstructions: 'Florida requires a Tobacco Permit from the Florida Department of Agriculture and Consumer Services (FDACS) for all tobacco/vape retailers. Fee: $50/year. Some FL cities impose additional local vape shop regulations — check with your city business licensing office, particularly in Miami-Dade, Broward, and Palm Beach counties.' },
+      TX: { submitUrl: 'https://comptroller.texas.gov/taxes/cigarettes/permits.php', officialFormNumber: 'Texas Cigarette and Tobacco Retailer Permit', submitInstructions: 'Texas requires a Cigarette and Tobacco Products Retailer Permit from the Texas Comptroller of Public Accounts. Fee: $180 per location for cigarette retailers. Some Texas cities have adopted additional vaping ordinances — verify requirements with your city.' },
+      NY: { submitUrl: 'https://www.tax.ny.gov/bus/cigarette/cig_top.htm', officialFormNumber: 'New York State Cigarette Retail Dealer Certificate (DTF-716)', submitInstructions: 'New York requires a Cigarette Retail Dealer Certificate from the NY Department of Taxation and Finance. NYC additionally requires a NYC Cigarette Retail Dealer License from the NYC Dept. of Finance (heavily restricted, caps on new licenses). Vape products require compliance with NYC\'s e-cigarette regulations.' },
+      IL: { submitUrl: 'https://www.illinois.gov/sites/revenue/tobacco', officialFormNumber: 'Illinois Cigarette Tax Registration', submitInstructions: 'Illinois requires tobacco retailers to register with the IL Dept. of Revenue for cigarette tax purposes. Chicago has a separate and stricter Tobacco Retail License administered by the Chicago Dept. of Business Affairs and Consumer Protection (BACP). Chicago vape shops are subject to additional flavored tobacco regulations.' },
+      AZ: { submitUrl: 'https://azdor.gov', officialFormNumber: 'Arizona Tobacco License (TPT Registration)', submitInstructions: 'Arizona tobacco retailers register through the Transaction Privilege Tax (TPT) system at azdor.gov. There is no separate state-level vape shop license, but retailers must collect TPT on vaping products. Some AZ cities (Tempe, Mesa, Chandler) have additional local ordinances.' },
+    },
+  },
+
+  'door-to-door-solicitor-permit': {
+    id:          'door-to-door-solicitor-permit',
+    name:        'Door-to-Door / Transient Merchant Solicitor Permit',
+    description:
+      'Businesses and individuals selling products or services door-to-door, conducting in-home demonstrations, ' +
+      'or operating as transient merchants (no fixed business location) must obtain a Solicitor\'s Permit or ' +
+      'Transient Merchant License from the city or county. Requirements typically include a background check, ' +
+      'bond, and a photo identification badge. Federal law also requires a 3-day "cooling off" period disclosure.',
+    fee:         '$25–$250 per permit, plus bond ($500–$5,000)',
+    defaultRenewalMonths: 12,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply with your city clerk or county licensing office before any door-to-door sales activity. ' +
+      'Many jurisdictions require fingerprinting and a criminal background check. Once approved, ' +
+      'you must carry the permit ID badge at all times while soliciting and produce it on request. ' +
+      'You must also provide customers with the FTC 3-Day Cooling Off Rule notice for purchases over $25.',
+    requiredDocs: [
+      'Government-issued photo ID (driver\'s license or passport)',
+      'Recent criminal background check results (some jurisdictions)',
+      'Fingerprint card (some jurisdictions)',
+      'Surety bond confirmation (if required)',
+      'Employer letter or business registration (if soliciting on behalf of a company)',
+      'Vehicle information (if operating from a vehicle)',
+      'Sample sales materials or product catalog',
+    ],
+    fields: [
+      { id: 'applicantLegalName',  label: 'Applicant Full Legal Name',           type: 'text',   placeholder: 'First and last name',             required: true  },
+      { id: 'businessName',        label: 'Business / Employer Name',            type: 'text',   placeholder: 'Company the applicant represents', required: false },
+      { id: 'homeAddress',         label: 'Home / Mailing Address',              type: 'address',placeholder: '123 Main St, City, State ZIP',     required: true  },
+      { id: 'businessPhone',       label: 'Phone Number',                        type: 'phone',  placeholder: '(555) 555-0100',                   required: true  },
+      { id: 'businessEmail',       label: 'Email Address',                       type: 'email',  placeholder: 'you@email.com',                    required: true  },
+      { id: 'vendorProductType',   label: 'Type of Goods / Services Sold',       type: 'select', options: ['Home improvement services', 'Pest control / lawn care services', 'Security / alarm systems', 'Food / perishable goods', 'Clothing / accessories', 'Books / publications / media', 'Cleaning products / household goods', 'Other services or products'], required: true },
+      { id: 'solicitorType',       label: 'Type of Activity',                   type: 'select', options: ['Door-to-door sales (residential neighborhoods)', 'Door-to-door sales (commercial/business districts)', 'In-home demonstrations or presentations', 'Transient merchant (no fixed location)', 'Roadside or parking lot sales'], required: true },
+      { id: 'operatingArea',       label: 'Primary Area of Operation',           type: 'text',   placeholder: 'Neighborhood, zip code, or county',  required: true  },
+      { id: 'hasCriminalHistory',  label: 'Any prior criminal convictions?',    type: 'select', options: ['No prior convictions', 'Yes — disclosed and resolved (explain below)', 'Prefer not to disclose (check local requirements)'], required: true },
+      { id: 'bondAmount',          label: 'Surety Bond Amount',                  type: 'select', options: ['$500', '$1,000', '$2,500', '$5,000', 'No bond required in my jurisdiction'], required: false },
+      { id: 'vehicleLicensePlate', label: 'Vehicle License Plate (if selling from vehicle)', type: 'text', placeholder: 'License plate number',         required: false },
+      { id: 'isRenewal',           label: 'Application Type',                    type: 'select', options: ['New permit application', 'Renewal — same business and area', 'Amendment — adding new territory or product'], required: true },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.myfloridalicense.com', officialFormNumber: 'Varies by county/city — contact local city clerk', submitInstructions: 'Florida transient merchant and solicitor permits are issued by individual cities and counties. Miami-Dade: miamidade.gov. Broward: broward.org. Orange County: occompt.com. Many FL cities require solicitor permits with background checks and a $500–$1,000 surety bond.' },
+      TX: { submitUrl: 'https://www.sos.state.tx.us', officialFormNumber: 'Varies by city — contact city clerk', submitInstructions: 'Texas solicitor/peddler permits are issued by individual cities. Houston: houstontx.gov. Dallas: dallascityhall.com. San Antonio: sanantonio.gov. Austin: austintexas.gov. Each city sets its own fee and bond requirements. Texas has no state-level door-to-door solicitor license.' },
+      CA: { submitUrl: 'https://www.ca.gov', officialFormNumber: 'Varies by city — contact city clerk', submitInstructions: 'California solicitor permits are issued at the city level. Los Angeles: finance.lacity.org. San Diego: sandiego.gov. San Jose: sanjoseca.gov. Sacramento: cityofsacramento.org. Most CA cities require a peddler/solicitor permit with a $25–$100 fee and background check.' },
+      GA: { submitUrl: 'https://georgia.gov', officialFormNumber: 'Transient Merchant License / Peddler Permit', submitInstructions: 'Georgia requires transient merchants to register with the county where they plan to do business. Most Georgia counties issue a "Transient Merchant" or "Peddler" license through the county Clerk of Superior Court. Fee: typically $50–$200/year per county.' },
+      IL: { submitUrl: 'https://www.illinois.gov', officialFormNumber: 'Varies by city — contact city clerk or business licensing office', submitInstructions: 'Illinois solicitor permits are issued by individual cities. Chicago: chicagobusiness.org. Rockford: rockfordil.gov. Peoria: peoriaparks.org. Many IL cities require a $50–$250 permit with background check. Chicago requires a City of Chicago Soliciting/Peddling permit.' },
+    },
+  },
+
+  'hair-braiding-natural-hair-license': {
+    id:          'hair-braiding-natural-hair-license',
+    name:        'Hair Braiding / Natural Hair Care Individual License',
+    description:
+      'Many states now distinguish hair braiding and natural hair care (braiding, locs, twists, natural ' +
+      'styling without chemicals) from cosmetology and have created a separate, lower-barrier license category. ' +
+      'Requirements are significantly less burdensome than a full cosmetology license in most states — ' +
+      'typically 100–300 hours of training vs. 1,200+ hours for cosmetology. Some states (e.g., TX, ID) ' +
+      'have fully exempted hair braiding from licensing requirements.',
+    fee:         '$25–$150 for the license; training costs vary significantly by state',
+    defaultRenewalMonths: 24,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply with your state cosmetology or barbering board (even if the license category is separate from ' +
+      'full cosmetology). Complete any required training hours, pass any required exam, and submit proof of ' +
+      'training completion. If operating a salon or booth renting, a separate salon/establishment permit ' +
+      'may be required in addition to the individual license.',
+    requiredDocs: [
+      'Government-issued photo ID',
+      'Proof of required training hours / school completion certificate',
+      'Training school name and address',
+      'High school diploma or GED (some states)',
+      'Passport-style photo (some states)',
+      'Criminal background check (some states)',
+      'Proof of minimum age (typically 16–18)',
+    ],
+    fields: [
+      { id: 'applicantLegalName',  label: 'Applicant Full Legal Name',           type: 'text',   placeholder: 'First and last name',             required: true  },
+      { id: 'physicalAddress',     label: 'Home / Mailing Address',              type: 'address',placeholder: '123 Main St, City, State ZIP',     required: true  },
+      { id: 'businessPhone',       label: 'Phone Number',                        type: 'phone',  placeholder: '(555) 555-0100',                   required: true  },
+      { id: 'businessEmail',       label: 'Email Address',                       type: 'email',  placeholder: 'you@email.com',                    required: true  },
+      { id: 'licenseType',         label: 'License Type Applied For',            type: 'select', options: ['Hair Braiding License', 'Natural Hair Care License', 'Cosmetology License (full)', 'Specialty Cosmetology — Braiding Track', 'No state license required (verify below)'], required: true },
+      { id: 'trainingHoursCompleted', label: 'Training Hours Completed',         type: 'text',   placeholder: 'e.g. 300 hours',                  required: false },
+      { id: 'trainingSchool',      label: 'Training School or Apprenticeship',   type: 'text',   placeholder: 'School name and city',             required: false },
+      { id: 'isRenewal',           label: 'Application Type',                    type: 'select', options: ['New license application', 'Renewal of existing license', 'Reciprocal / out-of-state transfer'], required: true },
+      { id: 'existingLicenseNumber', label: 'Existing License Number (renewal/transfer)', type: 'text', placeholder: 'Current license number',   required: false },
+      { id: 'businessName',        label: 'Salon / Booth Name (if applicable)',  type: 'text',   placeholder: 'Leave blank if working from home', required: false },
+      { id: 'hasCriminalHistory',  label: 'Any prior criminal convictions?',     type: 'select', options: ['No', 'Yes — disclosed (some boards require disclosure; a conviction does not automatically disqualify)'], required: false },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.myfloridalicense.com', officialFormNumber: 'DBPR Form COSME-1 (Hair Braiding)', submitInstructions: 'Florida issues a separate Hair Braiding specialty license through the Dept. of Business & Professional Regulation (DBPR). Requirements: 16 hours of coursework (9 hrs practical braiding, 7 hrs theory). Fee: $50. Apply at myfloridalicense.com under "Cosmetology." Salon owners also need a Cosmetology Salon license.' },
+      TX: { submitUrl: 'https://www.tdlr.texas.gov', officialFormNumber: 'Hair Braiding License — TDLR', submitInstructions: 'Texas issues a Hair Braiding license through the Texas Department of Licensing and Regulation (TDLR). Requirements: No training hours required (Texas removed the requirement in 2019). Fee: $50. Apply at tdlr.texas.gov. Note: If you use hair extensions with adhesives or chemicals, a full cosmetology license may be required.' },
+      CA: { submitUrl: 'https://www.barbercosmo.ca.gov', officialFormNumber: 'Cosmetologist License or Braider Exemption', submitInstructions: 'California does not yet have a separate hair braiding license — most braiders must obtain a full Cosmetologist license (1,600 hours) or a Cosmetologist — Specialty license. However, CA Assembly Bill 1822 (signed 2023) created a Hair Braiding Exemption from licensing for braiders who do not use chemicals, heat, or extensions with adhesives. Verify current requirements at barbercosmo.ca.gov.' },
+      NY: { submitUrl: 'https://www.dos.ny.gov/licensing', officialFormNumber: 'Natural Hair Styling License — NYS DOS', submitInstructions: 'New York issues a Natural Hair Styling license through the Dept. of State. Requirements: 80 hours of approved training. Fee: $40 application + $40 license. This covers braiding, locs, twists, and natural styling. Apply at dos.ny.gov. Salon owners need a separate Salon Establishment registration.' },
+      GA: { submitUrl: 'https://sos.ga.gov/licensing', officialFormNumber: 'Georgia Hair Design License', submitInstructions: 'Georgia hair braiders must obtain a Hair Design license or the separate Natural Hair Care license through the Georgia Board of Cosmetology and Barbers at sos.ga.gov. Natural Hair Care: 1,500 hours training. Hair Design (includes braiding with extensions): 1,500 hours. Georgia is working on reduced requirements for natural braiders — verify current rules.' },
+      IL: { submitUrl: 'https://idfpr.illinois.gov', officialFormNumber: 'Illinois Cosmetology License or Natural Hair Braiding Registration', submitInstructions: 'Illinois passed a law creating a Natural Hair Braiding Registration (HB 220, 2018). Requirements: 300 hours of training. Fee: $25. Apply at idfpr.illinois.gov. Natural hair braiders who perform services beyond braiding (e.g., chemical relaxers) need a full cosmetology license.' },
+      AZ: { submitUrl: 'https://azbbhe.us', officialFormNumber: 'Hairstylist License — AZ Board of Barbering and Cosmetology', submitInstructions: 'Arizona issues a Hairstylist License that covers braiding, styling, and natural hair care (not just chemical services). Requirements: 1,000 hours training. Apply at azbbhe.us. Arizona also has a limited Hair Braiding Certificate for braiders who do not use extensions with adhesives — verify current requirements.' },
+    },
+  },
+
+  // v76 — New guided wizard forms ──────────────────────────────────────────────
+
+  'painting-contractor-license': {
+    id:          'painting-contractor-license',
+    name:        'Painting Contractor License',
+    description:
+      'Commercial and residential painting contractors must obtain a state-issued contractor ' +
+      'license before legally offering painting, coating, or sandblasting services. Most states ' +
+      'require proof of liability insurance ($100,000–$500,000), a surety bond ($5,000–$25,000), ' +
+      'and a qualifying individual who has passed a state contractor exam. California requires ' +
+      'CSLB registration under C-33 (Painting and Decorating). Florida uses a "Limited Specialty" ' +
+      'category. EPA Lead-Safe (RRP) certification is required for work on pre-1978 buildings in ' +
+      'most states. Some municipalities (NYC, Chicago) layer on local registration requirements ' +
+      'on top of the state license.',
+    fee:         '$50–$500/year depending on state and license class',
+    fields: [
+      { id: 'applicantLegalName', label: 'Applicant / Owner Legal Name',   type: 'text',   required: true,  placeholder: 'Full legal name as on state ID' },
+      { id: 'businessName',       label: 'Business / Trade Name',           type: 'text',   required: true,  placeholder: 'DBA or legal company name' },
+      { id: 'physicalAddress',    label: 'Business Address',                type: 'text',   required: true,  placeholder: '123 Main St, City, ST 12345' },
+      { id: 'businessPhone',      label: 'Business Phone',                  type: 'text',   required: true,  placeholder: '(555) 555-5555' },
+      { id: 'businessEmail',      label: 'Business Email',                  type: 'text',   required: false, placeholder: 'owner@business.com' },
+      { id: 'fein',               label: 'Federal EIN (if incorporated)',   type: 'text',   required: false, placeholder: 'XX-XXXXXXX (leave blank if sole prop)' },
+      { id: 'licenseType',        label: 'Application Type',                type: 'select', required: true,  options: ['New Application', 'Renewal', 'Upgrade / Additional Class', 'Transfer of Qualifying Individual'] },
+      { id: 'yearsExperience',    label: 'Years of Experience in Trade',    type: 'text',   required: true,  placeholder: 'e.g. 5' },
+      { id: 'hasCertification',   label: 'State Contractor Exam Status',    type: 'select', required: true,  options: ['Passed — have exam certificate', 'Scheduled — not yet taken', 'Exempt — using existing qualifier', 'Not required in my state'] },
+      { id: 'hasLeadCert',        label: 'EPA Lead-Safe (RRP) Certified?',  type: 'select', required: true,  options: ['Yes — have EPA RRP certificate', 'No — do not work in pre-1978 buildings', 'In process of obtaining'] },
+      { id: 'liabilityInsurer',   label: 'Liability Insurance Company',     type: 'text',   required: true,  placeholder: 'e.g. State Farm, Travelers' },
+      { id: 'liabilityPolicyNum', label: 'Liability Policy Number',         type: 'text',   required: true,  placeholder: 'Policy / certificate number' },
+      { id: 'bondAmount',         label: 'Surety Bond Amount',              type: 'text',   required: true,  placeholder: 'e.g. $10,000' },
+    ],
+    submitUrl: 'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Submit application with proof of insurance, surety bond, exam certificate, and fee to your state contractor licensing board.',
+    requiredDocs: [
+      'Government-issued photo ID',
+      'Proof of liability insurance (certificate of insurance)',
+      'Surety bond documentation',
+      'State contractor exam certificate (if applicable)',
+      'EPA Lead-Safe RRP Certificate (if working on pre-1978 buildings)',
+    ],
+    defaultRenewalMonths: 24,
+    localeUrls: {
+      FL: {
+        submitUrl: 'https://www.myfloridalicense.com/intentions2.asp',
+        submitInstructions: 'Apply via Florida DBPR for Limited Specialty Contractor (painting) license. Class B covers residential; Class A covers commercial. Use the Online Services portal at myfloridalicense.com.',
+      },
+      CA: {
+        submitUrl: 'https://www.cslb.ca.gov/contractors/applicants/',
+        submitInstructions: 'Apply to CSLB for a C-33 Painting and Decorating contractor license. Fingerprinting, exam (if required), and Workers\' Comp certificate required. Apply online at cslb.ca.gov.',
+      },
+      TX: {
+        submitUrl: 'https://www.tdlr.texas.gov/',
+        submitInstructions: 'Texas has no statewide painting contractor license. Register with your city or county, obtain a local business license, and comply with EPA RRP rules for pre-1978 work.',
+      },
+      NY: {
+        submitUrl: 'https://www.dos.ny.gov/licensing/home_improve/home_improve.html',
+        submitInstructions: 'Apply for a New York Home Improvement Contractor license via the Department of State. NYC additionally requires a separate NYC Home Improvement Contractor license from DCA.',
+      },
+      IL: {
+        submitUrl: 'https://idfpr.illinois.gov/',
+        submitInstructions: 'Illinois does not require a statewide painting contractor license. Verify local municipality requirements — Chicago requires city registration for certain work.',
+      },
+      AZ: {
+        submitUrl: 'https://roc.az.gov/licensing',
+        submitInstructions: 'Apply to the Arizona Registrar of Contractors for a C-99 (Painting/Wall Covering) license. Requires exam, insurance certificate, and fingerprint card.',
+      },
+      GA: {
+        submitUrl: 'https://sos.ga.gov/georgia-registrar-contractors',
+        submitInstructions: 'Georgia does not license painting contractors at the state level. Verify local county/city permit requirements for each project.',
+      },
+    },
+  },
+
+  'masonry-contractor-license': {
+    id:          'masonry-contractor-license',
+    name:        'Masonry / Concrete Contractor License',
+    description:
+      'Masonry and concrete contractors (brick, block, stone, stucco, concrete flatwork, ' +
+      'decorative concrete) must be licensed in most states before performing structural or ' +
+      'finish masonry work. California requires a C-29 Masonry license from CSLB. Florida ' +
+      'requires a Specialty Structure Contractor or a Division II (general) contractor license ' +
+      'for structural masonry. Arizona requires a C-4 Masonry license from the Registrar of ' +
+      'Contractors. Most states require liability insurance, a surety bond, and either a ' +
+      'qualifying individual exam or documented field experience. Structural masonry work ' +
+      'typically requires building permits and inspections regardless of license class.',
+    fee:         '$75–$600/year depending on state and license class',
+    fields: [
+      { id: 'applicantLegalName', label: 'Applicant / Owner Legal Name',   type: 'text',   required: true,  placeholder: 'Full legal name as on state ID' },
+      { id: 'businessName',       label: 'Business / Trade Name',           type: 'text',   required: true,  placeholder: 'DBA or legal company name' },
+      { id: 'physicalAddress',    label: 'Business Address',                type: 'text',   required: true,  placeholder: '123 Main St, City, ST 12345' },
+      { id: 'businessPhone',      label: 'Business Phone',                  type: 'text',   required: true,  placeholder: '(555) 555-5555' },
+      { id: 'businessEmail',      label: 'Business Email',                  type: 'text',   required: false, placeholder: 'owner@business.com' },
+      { id: 'fein',               label: 'Federal EIN (if incorporated)',   type: 'text',   required: false, placeholder: 'XX-XXXXXXX (leave blank if sole prop)' },
+      { id: 'licenseType',        label: 'Application Type',                type: 'select', required: true,  options: ['New Application', 'Renewal', 'Upgrade / Additional Class', 'Transfer of Qualifying Individual'] },
+      { id: 'masonrySpecialty',   label: 'Primary Trade Specialty',         type: 'select', required: true,  options: ['Brick / Block Masonry', 'Stone Masonry', 'Stucco / EIFS', 'Concrete Flatwork & Finishing', 'Structural Concrete (foundations, slabs)', 'Decorative Concrete', 'All of the above'] },
+      { id: 'yearsExperience',    label: 'Years of Experience in Trade',    type: 'text',   required: true,  placeholder: 'e.g. 8' },
+      { id: 'hasCertification',   label: 'State Contractor Exam Status',    type: 'select', required: true,  options: ['Passed — have exam certificate', 'Scheduled — not yet taken', 'Exempt — using existing qualifier', 'Not required in my state'] },
+      { id: 'liabilityInsurer',   label: 'Liability Insurance Company',     type: 'text',   required: true,  placeholder: 'e.g. State Farm, Travelers' },
+      { id: 'liabilityPolicyNum', label: 'Liability Policy Number',         type: 'text',   required: true,  placeholder: 'Policy / certificate number' },
+      { id: 'bondAmount',         label: 'Surety Bond Amount',              type: 'text',   required: true,  placeholder: 'e.g. $10,000' },
+    ],
+    submitUrl: 'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Submit application with proof of insurance, surety bond, exam certificate, and licensing fee to your state contractor licensing board.',
+    requiredDocs: [
+      'Government-issued photo ID',
+      'Proof of liability insurance (certificate of insurance)',
+      'Surety bond documentation',
+      'State contractor exam certificate (if applicable)',
+      'Workers\' compensation insurance certificate',
+    ],
+    defaultRenewalMonths: 24,
+    localeUrls: {
+      FL: {
+        submitUrl: 'https://www.myfloridalicense.com/intentions2.asp',
+        submitInstructions: 'Apply via Florida DBPR for a Specialty Structure Contractor (masonry) or Division II General Contractor license. Structural masonry requires a Division I or II license. Apply online.',
+      },
+      CA: {
+        submitUrl: 'https://www.cslb.ca.gov/contractors/applicants/',
+        submitInstructions: 'Apply to CSLB for a C-29 (Masonry) contractor license. Fingerprinting, exam, Workers\' Comp, and insurance required. Apply at cslb.ca.gov.',
+      },
+      TX: {
+        submitUrl: 'https://www.tdlr.texas.gov/',
+        submitInstructions: 'Texas has no statewide masonry contractor license. Register your business locally and pull individual building permits for each structural project.',
+      },
+      NY: {
+        submitUrl: 'https://www.dos.ny.gov/licensing/home_improve/home_improve.html',
+        submitInstructions: 'Apply for a New York Home Improvement Contractor license. NYC requires a NYC Home Improvement Contractor license from DCA for masonry work on existing structures.',
+      },
+      AZ: {
+        submitUrl: 'https://roc.az.gov/licensing',
+        submitInstructions: 'Apply to the Arizona Registrar of Contractors for a C-4 (Masonry) license. Requires exam, insurance, bond, and fingerprint card. Apply online at roc.az.gov.',
+      },
+      IL: {
+        submitUrl: 'https://idfpr.illinois.gov/',
+        submitInstructions: 'Illinois does not require a statewide masonry license. Verify local municipality requirements — structural masonry typically requires building permits and licensed workers.',
+      },
+      GA: {
+        submitUrl: 'https://sos.ga.gov/georgia-registrar-contractors',
+        submitInstructions: 'Georgia licenses general contractors but not specialty masonry separately at the state level. Pull building permits per project and verify local requirements.',
+      },
+    },
+  },
+
+  'commercial-pool-health-permit': {
+    id:          'commercial-pool-health-permit',
+    name:        'Commercial Swimming Pool / Spa Health Permit',
+    description:
+      'Any hotel, apartment complex, fitness center, waterpark, school, campground, or ' +
+      'other public or semi-public facility that operates a swimming pool, spa, wading pool, ' +
+      'or spray pad must obtain an annual health permit from the local or state health ' +
+      'department. Inspectors verify water chemistry (chlorine, pH, alkalinity), drain cover ' +
+      'compliance (Virginia Graeme Baker Act), bather load limits, lifeguard requirements, ' +
+      'emergency equipment, and barrier/fencing compliance. Pools must be drained and ' +
+      'inspected before opening each season. Failure to maintain permit compliance results ' +
+      'in immediate pool closure orders and potential civil penalties.',
+    fee:         '$75–$600/year per pool depending on jurisdiction and pool type',
+    fields: [
+      { id: 'businessName',        label: 'Facility / Property Name',        type: 'text',   required: true,  placeholder: 'Name of hotel, apartment complex, gym, etc.' },
+      { id: 'ownerFullName',       label: 'Owner / Responsible Party',        type: 'text',   required: true,  placeholder: 'Legal name of owner or property manager' },
+      { id: 'physicalAddress',     label: 'Pool Facility Address',            type: 'text',   required: true,  placeholder: '123 Main St, City, ST 12345' },
+      { id: 'businessPhone',       label: 'Contact Phone',                    type: 'text',   required: true,  placeholder: '(555) 555-5555' },
+      { id: 'businessEmail',       label: 'Contact Email',                    type: 'text',   required: false, placeholder: 'owner@property.com' },
+      { id: 'facilityType',        label: 'Pool / Facility Type',             type: 'select', required: true,  options: ['Hotel / Motel pool', 'Apartment / Condo complex pool', 'Fitness center / gym pool', 'Public park pool', 'Waterpark / splash pad', 'School / camp pool', 'Spa / hot tub only', 'Wading pool / kiddie pool', 'Other semi-public pool'] },
+      { id: 'numPoolUnits',        label: 'Number of Pools / Spas on Site',  type: 'text',   required: true,  placeholder: 'e.g. 2 (pool + spa)' },
+      { id: 'hasLifeguard',        label: 'Certified Lifeguard on Duty?',    type: 'select', required: true,  options: ['Yes — lifeguard on duty during all operating hours', 'No lifeguard — "Swim at your own risk" posted', 'Part-time lifeguard — posted hours'] },
+      { id: 'hasDrainCover',       label: 'VGB-Compliant Drain Covers?',     type: 'select', required: true,  options: ['Yes — all drain covers are VGB (anti-entrapment) compliant', 'No — need to update drain covers', 'Unsure — need inspection'] },
+      { id: 'hasADACompliance',    label: 'ADA Pool Lift / Entry Installed?', type: 'select', required: true,  options: ['Yes — ADA-compliant pool lift installed', 'No — applying for variance or not required', 'In process of installation'] },
+      { id: 'waterTestFrequency',  label: 'Water Chemistry Test Frequency',  type: 'select', required: true,  options: ['Daily (before opening)', 'Twice daily', 'Every 2 hours during operation', 'Automated continuous monitoring system'] },
+      { id: 'existingLicenseNumber', label: 'Existing Permit Number (Renewal)', type: 'text', required: false, placeholder: 'Leave blank for new permit' },
+    ],
+    submitUrl: 'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Submit application and fee to your local county health department. A pre-opening inspection is required before the permit is issued. Contact your county environmental health division.',
+    requiredDocs: [
+      'Completed pool/spa permit application',
+      'Site plan showing pool dimensions and safety barriers',
+      'Proof of VGB-compliant drain covers (manufacturer spec sheet)',
+      'Water chemistry test log (for renewals)',
+      'Lifeguard certification(s) if applicable',
+      'ADA compliance documentation or variance approval',
+    ],
+    defaultRenewalMonths: 12,
+    localeUrls: {
+      FL: {
+        submitUrl: 'https://www.floridahealth.gov/environmental-health/recreational-water/index.html',
+        submitInstructions: 'Apply to your county Department of Health for a Public Pool / Bathing Place permit. Florida requires pools to meet 64E-9 FAC standards. Submit annually with inspection fee. Contact your county health department office.',
+      },
+      TX: {
+        submitUrl: 'https://www.dshs.texas.gov/environmental-and-consumer-safety/pools-and-spas',
+        submitInstructions: 'Apply to Texas DSHS (or the local city/county health authority) for a public swimming pool/spa license. New pools require plan review approval before construction. Fee varies by pool capacity.',
+      },
+      CA: {
+        submitUrl: 'https://www.cdph.ca.gov/Programs/CEH/DRSEM/Pages/EMB/RSMD/PublicSwimmingPools.aspx',
+        submitInstructions: 'Apply to your local county environmental health department for a public swimming pool permit. California Health & Safety Code requires annual inspection. Most counties process applications online.',
+      },
+      NY: {
+        submitUrl: 'https://www.health.ny.gov/environmental/outdoors/swimming/',
+        submitInstructions: 'Apply to the New York State Department of Health (NYSDOH) or your local county health department for an Altered or Constructed Bathing Facility permit. NYC requires a NYC DOHMH permit.',
+      },
+      IL: {
+        submitUrl: 'https://dph.illinois.gov/topics-services/environmental-health-protection/swimming-pools.html',
+        submitInstructions: 'Apply to the Illinois Department of Public Health (IDPH) or your local health department. Illinois requires a permit for public and semi-public pools. Annual fee and inspection required.',
+      },
+      AZ: {
+        submitUrl: 'https://www.maricopa.gov/1094/Environmental-Services',
+        submitInstructions: 'Apply to your county environmental services department. In Maricopa County, submit to Maricopa County Environmental Services. Other counties may delegate to ADHS.',
+      },
+      GA: {
+        submitUrl: 'https://dph.georgia.gov/environmental-health/pools-and-spas',
+        submitInstructions: 'Apply to your county board of health for a Public Swimming Pool permit. Georgia requires annual permits and inspections per Chapter 290-5-57 Rules and Regulations.',
+      },
+    },
+  },
+
+  'cosmetologist-individual-license': {
+    id:          'cosmetologist-individual-license',
+    name:        'Cosmetologist / Esthetician / Nail Technician Individual License',
+    description:
+      'Individual practitioners who perform hair cutting, chemical services, esthetics ' +
+      '(facials, waxing, skin care), nail care, or electrology must hold a personal ' +
+      'state-issued cosmetology license separate from the salon establishment license. ' +
+      'Requirements typically include completing a state-approved cosmetology, esthetics, ' +
+      'or nail technology program (600–1,500 hours), passing a state board exam (theory + ' +
+      'practical), and submitting a licensing fee. Licenses must be renewed every 1–2 years ' +
+      'with continuing education. Practicing without a personal license — even inside a ' +
+      'licensed salon — can result in fines and license denial.',
+    fee:         '$25–$150 initial + $25–$100 renewal every 1–2 years',
+    fields: [
+      { id: 'applicantLegalName', label: 'Applicant Full Legal Name',        type: 'text',   required: true,  placeholder: 'Full legal name as on state ID' },
+      { id: 'physicalAddress',    label: 'Home / Mailing Address',           type: 'text',   required: true,  placeholder: '123 Main St, City, ST 12345' },
+      { id: 'businessPhone',      label: 'Phone Number',                     type: 'text',   required: true,  placeholder: '(555) 555-5555' },
+      { id: 'businessEmail',      label: 'Email Address',                    type: 'text',   required: false, placeholder: 'your@email.com' },
+      { id: 'licenseType',        label: 'License Category',                 type: 'select', required: true,  options: ['Full Cosmetologist', 'Esthetician / Skin Care Specialist', 'Nail Technician', 'Hair Braider', 'Electrologist', 'Makeup Artist (if licensed in state)', 'Cosmetology Instructor'] },
+      { id: 'existingLicenseNumber', label: 'Current License # (Renewal Only)', type: 'text', required: false, placeholder: 'Leave blank for new application' },
+      { id: 'isRenewal',          label: 'Application Type',                 type: 'select', required: true,  options: ['New License — completed school and passed board exam', 'Renewal — license expiring soon', 'Reinstatement — license lapsed', 'Reciprocity — licensed in another state'] },
+      { id: 'hasCertification',   label: 'State Board Exam Status',          type: 'select', required: true,  options: ['Passed — have score report', 'Scheduled — waiting for exam date', 'Waived — reciprocity application', 'Not yet taken'] },
+      { id: 'businessName',       label: 'Employing Salon / Employer Name (if known)', type: 'text', required: false, placeholder: 'Name of salon where you will work (optional)' },
+      { id: 'hasCriminalHistory', label: 'Any Criminal History to Disclose?', type: 'select', required: true,  options: ['No', 'Yes — will attach explanation and documentation'] },
+    ],
+    submitUrl: 'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Submit application, school transcripts/hours verification, exam score report, and fee to your state cosmetology licensing board.',
+    requiredDocs: [
+      'Government-issued photo ID',
+      'Official school transcript / certificate of completion (hours log)',
+      'State board exam score report',
+      'Payment of licensing fee',
+      'Passport-style photo (some states)',
+    ],
+    defaultRenewalMonths: 24,
+    localeUrls: {
+      FL: {
+        submitUrl: 'https://www.myfloridalicense.com/intentions2.asp',
+        submitInstructions: 'Apply online via Florida DBPR for a Cosmetologist, Facial Specialist, or Nail Specialist license. Requires 1,200 hours (cosmetology) or 260 hours (facial/nail), board exam, and $50–$85 fee.',
+      },
+      TX: {
+        submitUrl: 'https://www.tdlr.texas.gov/cosmet/cosmetapplicants.htm',
+        submitInstructions: 'Apply online via Texas TDLR for your cosmetology license. Texas requires 1,500 hours (cosmetology), 750 hours (esthetics), or 600 hours (manicurist). Fee is $50–$100.',
+      },
+      CA: {
+        submitUrl: 'https://www.barbercosmo.ca.gov/applicants/',
+        submitInstructions: 'Apply via the California Board of Barbering and Cosmetology (BBC). Requires 1,600 hours (cosmetologist) or 600 hours (esthetician/nail). Exam and fingerprinting required. Apply online at barbercosmo.ca.gov.',
+      },
+      NY: {
+        submitUrl: 'https://www.dos.ny.gov/licensing/cosmetology/cosmetology.html',
+        submitInstructions: 'Apply via the New York DOS for a Cosmetology, Appearance Enhancement, or Nail Specialty license. Requires 1,000 hours, board exam, and $40 fee. Apply online or mail to Albany.',
+      },
+      IL: {
+        submitUrl: 'https://idfpr.illinois.gov/profs/Cosmet.asp',
+        submitInstructions: 'Apply online via Illinois IDFPR for a Cosmetologist, Esthetician, or Nail Technology license. Requires 1,500 hours (cosmetology) or 750 hours (esthetics). Fee is $30–$50.',
+      },
+      GA: {
+        submitUrl: 'https://sos.ga.gov/cosmetology',
+        submitInstructions: 'Apply via the Georgia State Board of Cosmetology. Requires 1,500 hours (cosmetology) or 1,050 hours (esthetics). Board exam and $65–$85 fee required. Apply online at sos.ga.gov.',
+      },
+      AZ: {
+        submitUrl: 'https://www.azbbhe.us/',
+        submitInstructions: 'Apply via the Arizona State Board of Cosmetology (AZBBHE). Requires 1,600 hours (cosmetology) or 600 hours (esthetics). Board exam, fingerprinting, and $100–$150 fee.',
+      },
+    },
+  },
+
+  'towing-company-license': {
+    id:          'towing-company-license',
+    name:        'Towing Company / Wrecker Service License',
+    description:
+      'Towing companies and wrecker services that operate on public roads, perform non-consent ' +
+      '(law enforcement-requested) tows, or store vehicles at an impound facility must obtain ' +
+      'a state or local towing company license. Requirements typically include a Commercial ' +
+      'Driver\'s License (CDL) or chauffeur\'s license for operators, per-vehicle liability ' +
+      'insurance ($100,000–$750,000 per occurrence), a certificate of public convenience and ' +
+      'necessity (in regulated states), vehicle safety inspections, and in many jurisdictions ' +
+      'a maximum towing rate schedule approved by the local government. Non-consent towers are ' +
+      'often subject to additional consumer protection regulations, mandatory receipt issuance, ' +
+      'and a maximum daily storage fee set by state statute.',
+    fee:         '$50–$500/year state/local license + per-vehicle registration fees',
+    fields: [
+      { id: 'businessName',       label: 'Towing Company Name',              type: 'text',   required: true,  placeholder: 'Legal business name' },
+      { id: 'ownerFullName',      label: 'Owner / Responsible Party',        type: 'text',   required: true,  placeholder: 'Full legal name of owner' },
+      { id: 'physicalAddress',    label: 'Business / Dispatch Address',      type: 'text',   required: true,  placeholder: '123 Main St, City, ST 12345' },
+      { id: 'businessPhone',      label: 'Business Phone',                   type: 'text',   required: true,  placeholder: '(555) 555-5555' },
+      { id: 'businessEmail',      label: 'Business Email',                   type: 'text',   required: false, placeholder: 'owner@towcompany.com' },
+      { id: 'fein',               label: 'Federal EIN',                       type: 'text',   required: true,  placeholder: 'XX-XXXXXXX' },
+      { id: 'licenseType',        label: 'Tow Service Type',                 type: 'select', required: true,  options: ['Consent towing only (private property / fleet contracts)', 'Non-consent (law enforcement rotation) towing', 'Both consent and non-consent', 'Repo / repossession service', 'Heavy-duty / commercial vehicle towing'] },
+      { id: 'numVehicles',        label: 'Number of Tow Trucks / Wreckers',  type: 'text',   required: true,  placeholder: 'e.g. 3' },
+      { id: 'hasInsurancePerVehicle', label: 'Liability Insurance Per Vehicle?', type: 'select', required: true, options: ['Yes — each truck is individually insured on commercial auto policy', 'Yes — fleet policy covering all vehicles', 'No — need to obtain coverage'] },
+      { id: 'liabilityInsurer',   label: 'Liability Insurance Company',      type: 'text',   required: true,  placeholder: 'e.g. Progressive Commercial, Nationwide' },
+      { id: 'liabilityPolicyNum', label: 'Policy Number',                    type: 'text',   required: true,  placeholder: 'Policy / certificate number' },
+      { id: 'bondAmount',         label: 'Surety Bond Amount (if required)',  type: 'text',   required: false, placeholder: 'e.g. $25,000 (varies by state)' },
+    ],
+    submitUrl: 'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Submit application and supporting documents to your state motor vehicle department, public utilities commission, or local police/sheriff (varies by state). Attach per-truck insurance certificates.',
+    requiredDocs: [
+      'Government-issued photo ID for owner',
+      'Commercial auto liability insurance certificate (per vehicle or fleet)',
+      'Surety bond documentation (if required by state/locality)',
+      'Vehicle registration and inspection records for each tow truck',
+      'CDL or driver\'s license for all operators',
+      'Impound/storage facility address and hours (for non-consent towers)',
+    ],
+    defaultRenewalMonths: 12,
+    localeUrls: {
+      FL: {
+        submitUrl: 'https://www.flhsmv.gov/',
+        submitInstructions: 'Register with Florida HSMV and your local county sheriff for inclusion on the non-consent tow rotation. Rates are set per county. Vehicles must pass an annual safety inspection. Register each truck separately.',
+      },
+      TX: {
+        submitUrl: 'https://www.tdlr.texas.gov/towing/towingapplicants.htm',
+        submitInstructions: 'Apply online via Texas TDLR for a Vehicle Storage Facility license and/or Towing Company license. Non-consent towers must register for county rotation and comply with maximum rate schedules. Fee: $150–$300.',
+      },
+      CA: {
+        submitUrl: 'https://www.dmv.ca.gov/portal/driver-licenses-identification-cards/motor-carrier/',
+        submitInstructions: 'Apply to California DMV for a Motor Carrier Permit. Non-consent towers in California must comply with maximum rates set by law and register with the CHP. $100 per vehicle per year.',
+      },
+      NY: {
+        submitUrl: 'https://www.dos.ny.gov/licensing/tow/',
+        submitInstructions: 'Apply to New York DOS for a Tow Truck Operator license. NYC requires a separate TLC tow truck license. All tow trucks must be inspected annually. Non-consent rates set by local government.',
+      },
+      IL: {
+        submitUrl: 'https://idfpr.illinois.gov/',
+        submitInstructions: 'Illinois does not have a statewide towing company license. Register with your city/county, maintain commercial auto insurance per vehicle, and comply with local police rotation requirements.',
+      },
+      AZ: {
+        submitUrl: 'https://azdot.gov/',
+        submitInstructions: 'Apply to Arizona DOT for motor carrier authority and comply with local police department rotation requirements in your city/county. Per-vehicle safety inspection required annually.',
+      },
+      GA: {
+        submitUrl: 'https://dps.georgia.gov/motor-carrier-compliance',
+        submitInstructions: 'Register with the Georgia Department of Public Safety (Motor Carrier Compliance Division) and your county sheriff for non-consent rotation. Annual vehicle inspection and insurance required.',
+      },
+    },
+  },
+
+  // v75 — New guided wizard forms ──────────────────────────────────────────────
+
+  'funeral-home-license': {
+    id:          'funeral-home-license',
+    name:        'Funeral Home / Funeral Establishment License',
+    description:
+      'Any business operating a funeral home, mortuary, crematorium, or offering funeral ' +
+      'director services must obtain a Funeral Establishment License from the state\'s ' +
+      'funeral licensing board or Department of Health. This is one of the most heavily ' +
+      'regulated businesses in any state: requirements include a licensed funeral director ' +
+      'on staff, facility standards for preparation rooms (ventilation, refrigeration, ' +
+      'drainage), casket display room minimums, pre-need trust fund compliance, and ' +
+      'mandatory signage disclosing itemized pricing under the FTC Funeral Rule. ' +
+      'Crematoriums require a separate Cremation Authority license and must comply with ' +
+      'air quality permits from the state environmental agency.',
+    fee:         '$100–$500/year state establishment license + individual director license',
+    defaultRenewalMonths: 12,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply through your state\'s funeral licensing board, Board of Funeral Directors ' +
+      'and Embalmers, or Department of Health. Submit the facility inspection request, ' +
+      'qualifying funeral director license, and required documentation at least 60 days ' +
+      'before planned opening. An on-site inspection of the preparation room, refrigeration, ' +
+      'and public areas is required before the license is issued.',
+    requiredDocs: [
+      'Completed Funeral Establishment License application',
+      'Qualifying licensed Funeral Director\'s individual license number',
+      'Facility floor plan (preparation room, arrangement room, display area, public areas)',
+      'Zoning compliance / Certificate of Occupancy for funeral home use',
+      'Proof of compliance with FTC Funeral Rule (itemized General Price List)',
+      'Pre-need seller registration (if offering pre-need funeral contracts)',
+      'Cremation authority license application (if operating a crematorium)',
+      'State air quality permit for crematorium retort (if applicable)',
+      'Business entity registration / LLC',
+      'Federal EIN certificate',
+      'General liability insurance ($1M minimum)',
+    ],
+    fields: [
+      { id: 'businessName',          label: 'Funeral Home / Mortuary Name',               type: 'text',    placeholder: 'e.g. Riverside Funeral Home LLC',           required: true,  officialFieldName: 'Establishment Name' },
+      { id: 'ownerFullName',         label: 'Owner / Qualifying Funeral Director Full Name', type: 'text',  placeholder: 'Full legal name',                           required: true,  officialFieldName: 'Owner / Qualifying Director Name' },
+      { id: 'physicalAddress',       label: 'Funeral Home Address',                        type: 'address', placeholder: '123 Memorial Blvd, City, State ZIP',       required: true,  officialFieldName: 'Premises / Establishment Address' },
+      { id: 'businessPhone',         label: 'Funeral Home Phone',                          type: 'phone',   placeholder: '(555) 555-0100',                            required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',         label: 'Funeral Home Email',                          type: 'email',   placeholder: 'info@funeralhome.com',                      required: false, officialFieldName: 'Contact Email' },
+      { id: 'fein',                  label: 'Federal EIN',                                 type: 'text',    placeholder: '12-3456789',                                required: true,  officialFieldName: 'Federal EIN' },
+      {
+        id: 'facilityType', label: 'Type of Funeral Services Offered', type: 'select',
+        options: [
+          'Full-service funeral home (burial and cremation)',
+          'Funeral home — burial services only',
+          'Cremation-only services (direct cremation)',
+          'Funeral home with on-site crematorium',
+          'Mortuary science facility (embalming, preparation only)',
+          'Green burial / natural burial services',
+        ],
+        required: true, officialFieldName: 'Establishment Type / Services Offered',
+      },
+      { id: 'existingLicenseNumber', label: 'Qualifying Funeral Director\'s License Number', type: 'text',  placeholder: 'State funeral director license #',          required: true,  officialFieldName: 'Qualifying Director License Number' },
+      {
+        id: 'hasPreNeedLicense', label: 'Do You Plan to Sell Pre-Need Funeral Contracts?', type: 'select',
+        options: [
+          'Yes — will apply for pre-need seller registration separately',
+          'No — at-need services only (no pre-need sales)',
+        ],
+        required: true, officialFieldName: 'Pre-Need Seller Status',
+      },
+      {
+        id: 'hasCrematorium', label: 'On-Site Crematorium / Retort?', type: 'select',
+        options: [
+          'Yes — on-site crematorium (separate cremation authority license required)',
+          'No — using a third-party cremation facility',
+        ],
+        required: true, officialFieldName: 'Crematorium / Retort On-Site',
+      },
+      { id: 'liabilityInsurer',      label: 'General Liability Insurance Carrier',         type: 'text',    placeholder: 'Insurance company name',                    required: true,  officialFieldName: 'Liability Insurance Carrier' },
+      { id: 'liabilityPolicyNum',    label: 'Liability Insurance Policy Number',           type: 'text',    placeholder: 'Policy number',                             required: true,  officialFieldName: 'Liability Policy Number' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.myfloridalicense.com/DBPR/funeral-cemetery-consumer-services', submitInstructions: 'Florida: Funeral homes and direct disposers are licensed by the FL Department of Financial Services (DFS) Division of Funeral, Cemetery, and Consumer Services. Apply at myfloridacfo.com. Separate licenses for Funeral Establishment, Cremation, and Pre-Need are required.' },
+      TX: { submitUrl: 'https://tfsc.texas.gov/funeral-establishments', submitInstructions: 'Texas: Funeral establishments are regulated by the Texas Funeral Service Commission (TFSC). Apply at tfsc.texas.gov. A licensed Funeral Director must be named on the application. Pre-need sellers must separately register with TFSC.' },
+      CA: { submitUrl: 'https://www.dca.ca.gov/cemetery_funeral', submitInstructions: 'California: Funeral establishments are licensed by the CA Cemetery and Funeral Bureau (CFB). Apply at dca.ca.gov. Separate licenses: Funeral Establishment, Cremation Establishment, and Cemetery Authority. Pre-need plans require separate DCA registration.' },
+      NY: { submitUrl: 'https://www.dos.ny.gov/licensing/funeral_director/funeral_director.html', submitInstructions: 'New York: Funeral homes are licensed by the NY Department of State Division of Licensing Services. Apply at dos.ny.gov. A licensed Funeral Director must be in charge of the establishment. Funeral establishment licenses are issued by county.' },
+      IL: { submitUrl: 'https://idfpr.illinois.gov/profs/funeral.asp', submitInstructions: 'Illinois: Funeral homes are licensed by the IL Department of Financial and Professional Regulation (IDFPR). Apply at idfpr.illinois.gov. A licensed Funeral Director and Embalmer must be the manager of record. Preneed sales require a separate IL license.' },
+      GA: { submitUrl: 'https://sos.georgia.gov/professional-licensing/funeral-service', submitInstructions: 'Georgia: Funeral homes are licensed by the GA Secretary of State Funeral Service Board. Apply at sos.georgia.gov. A licensed funeral director is required. Crematory authorities are separately licensed.' },
+    },
+  },
+
+  'pharmacy-permit': {
+    id:          'pharmacy-permit',
+    name:        'Pharmacy / Drug Store Permit',
+    description:
+      'Any business that dispenses prescription medications — including retail pharmacies, ' +
+      'specialty pharmacies, compounding pharmacies, mail-order pharmacies, and ' +
+      'telepharmacy operations — must obtain a Pharmacy Permit from the state Board of ' +
+      'Pharmacy. This is separate from the individual Pharmacist license each dispensing ' +
+      'pharmacist must hold. Requirements include a licensed Pharmacist-in-Charge (PIC), ' +
+      'secure DEA-registered storage for controlled substances, a Drug Enforcement ' +
+      'Administration (DEA) registration for the facility, state controlled substance ' +
+      'registration, and compliance with state compounding standards if applicable. ' +
+      'Retail pharmacies co-located in grocery or big-box stores still need a separate ' +
+      'pharmacy permit for that location.',
+    fee:         '$150–$600/year state pharmacy permit + DEA registration ($888/3 years for new)',
+    defaultRenewalMonths: 12,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply through your state\'s Board of Pharmacy. Name your Pharmacist-in-Charge (PIC) ' +
+      'and provide their individual pharmacist license number. Obtain your DEA facility ' +
+      'registration at dea.gov/dea-registration. A facility inspection is typically required ' +
+      'before the permit is issued. Also register with your state\'s Prescription Monitoring ' +
+      'Program (PMP).',
+    requiredDocs: [
+      'Completed Pharmacy Permit application',
+      'Pharmacist-in-Charge (PIC) individual pharmacist license number',
+      'DEA Facility Registration certificate (or pending application)',
+      'State Controlled Substance Registration certificate',
+      'Facility floor plan showing prescription area, controlled substance storage, and public area',
+      'Proof of compliance with HIPAA requirements for PHI handling',
+      'Business entity registration / LLC',
+      'Federal EIN certificate',
+      'Certificate of Occupancy for pharmacy use',
+    ],
+    fields: [
+      { id: 'businessName',          label: 'Pharmacy Name',                               type: 'text',    placeholder: 'e.g. Main Street Pharmacy LLC',             required: true,  officialFieldName: 'Pharmacy / Establishment Name' },
+      { id: 'ownerFullName',         label: 'Pharmacist-in-Charge (PIC) Full Name',        type: 'text',    placeholder: 'Full legal name of PIC',                    required: true,  officialFieldName: 'Pharmacist-in-Charge Name' },
+      { id: 'physicalAddress',       label: 'Pharmacy Address',                            type: 'address', placeholder: '123 Health Ave, City, State ZIP',           required: true,  officialFieldName: 'Pharmacy / Premises Address' },
+      { id: 'businessPhone',         label: 'Pharmacy Phone',                              type: 'phone',   placeholder: '(555) 555-0100',                            required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',         label: 'Pharmacy Email',                              type: 'email',   placeholder: 'rx@pharmacy.com',                           required: false, officialFieldName: 'Contact Email' },
+      { id: 'fein',                  label: 'Federal EIN',                                 type: 'text',    placeholder: '12-3456789',                                required: true,  officialFieldName: 'Federal EIN' },
+      {
+        id: 'licenseType', label: 'Type of Pharmacy', type: 'select',
+        options: [
+          'Retail pharmacy (walk-in dispensing)',
+          'Specialty pharmacy (specialty/high-cost medications)',
+          'Compounding pharmacy (custom drug preparation)',
+          'Mail-order / internet pharmacy',
+          'Long-term care (LTC) pharmacy',
+          'Hospital / institutional pharmacy',
+          'Telepharmacy (remote dispensing)',
+        ],
+        required: true, officialFieldName: 'Pharmacy Type / Category',
+      },
+      { id: 'existingLicenseNumber', label: 'PIC Individual Pharmacist License Number',   type: 'text',    placeholder: 'State pharmacist license #',                required: true,  officialFieldName: 'Pharmacist-in-Charge License Number' },
+      {
+        id: 'hasCertification', label: 'DEA Facility Registration Status', type: 'select',
+        options: [
+          'Approved — DEA facility registration number available',
+          'Pending — DEA application submitted, awaiting approval',
+          'Not yet applied — will apply before opening',
+        ],
+        required: true, officialFieldName: 'DEA Facility Registration Status',
+      },
+      {
+        id: 'hasControlledSubstances', label: 'Will You Dispense Schedule II–V Controlled Substances?', type: 'select',
+        options: [
+          'Yes — state controlled substance registration also required',
+          'No — dispensing non-controlled medications only',
+        ],
+        required: true, officialFieldName: 'Controlled Substance Dispensing',
+      },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.myfloridalicense.com/DBPR/pharmacy', submitInstructions: 'Florida: Pharmacies are permitted by the FL Board of Pharmacy through DBPR. Apply at myfloridalicense.com. A PIC must hold an active FL Pharmacist license. Compounding pharmacies have additional requirements under FL Board of Pharmacy rules.' },
+      TX: { submitUrl: 'https://www.pharmacy.texas.gov/licensing/pharmacy_licensing.asp', submitInstructions: 'Texas: Pharmacies are licensed by the Texas State Board of Pharmacy (TSBP). Apply at pharmacy.texas.gov. Class A (community), Class B (nuclear), Class C (institutional), and Class E (non-resident) pharmacy licenses are available.' },
+      CA: { submitUrl: 'https://www.pharmacy.ca.gov/applicants/pharmacy.shtml', submitInstructions: 'California: Pharmacies are licensed by the CA State Board of Pharmacy. Apply at pharmacy.ca.gov. An Exemptee/PIC must be named. Compounding pharmacies must hold additional sterile or non-sterile compounding authorizations.' },
+      NY: { submitUrl: 'https://www.op.nysed.gov/professions/pharmacy/licensing-requirements', submitInstructions: 'New York: Pharmacies are registered with the NY Department of Education Office of the Professions. Apply at op.nysed.gov. An active NY pharmacist must be designated as Pharmacist-in-Charge.' },
+      IL: { submitUrl: 'https://idfpr.illinois.gov/profs/pharmacy.asp', submitInstructions: 'Illinois: Pharmacies are licensed by the IL Department of Financial and Professional Regulation (IDFPR). Apply at idfpr.illinois.gov. Both a Pharmacy license and an active IL Pharmacist PIC are required.' },
+    },
+  },
+
+  'social-worker-practice-license': {
+    id:          'social-worker-practice-license',
+    name:        'Licensed Clinical Social Worker (LCSW) / Social Work Practice License',
+    description:
+      'Licensed Clinical Social Workers (LCSWs), Licensed Master Social Workers (LMSWs), ' +
+      'and other social work practitioners who open a private practice or counseling ' +
+      'agency must obtain a state Social Work Practice License and may need a separate ' +
+      'professional entity registration for their practice. Telehealth practices serving ' +
+      'clients in multiple states may need licensure in each state where clients reside. ' +
+      'Group practices must ensure all providers are properly supervised and licensed. ' +
+      'Insurance panel credentialing (Medicare, Medicaid, private insurers) requires a ' +
+      'valid state license as a prerequisite. NPI registration with CMS is also required ' +
+      'for any practice that accepts insurance.',
+    fee:         '$50–$300/year state license renewal + $75–$200 initial application fee',
+    defaultRenewalMonths: 24,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply through your state\'s Board of Social Work or Department of Health Professional ' +
+      'Licensing. Submit your graduate transcripts (MSW required for LCSW), supervised ' +
+      'experience hours (typically 2–3 years post-MSW under a licensed clinical supervisor), ' +
+      'passing ASWB exam scores, and references. For a group practice entity, register with ' +
+      'your state\'s licensing board as a supervised practice site.',
+    requiredDocs: [
+      'Completed Social Work License application (LCSW, LMSW, or equivalent)',
+      'Official graduate transcripts from accredited MSW program',
+      'ASWB Clinical Exam passing score verification',
+      'Supervised clinical experience documentation (hours and supervisor attestation)',
+      'Professional liability (malpractice) insurance certificate',
+      'National Provider Identifier (NPI) — apply free at nppes.cms.hhs.gov',
+      'Business entity registration (if operating as a group practice)',
+      'Federal EIN certificate',
+    ],
+    fields: [
+      { id: 'applicantLegalName',    label: 'Practitioner Full Legal Name',                type: 'text',    placeholder: 'Full legal name (as on license)',           required: true,  officialFieldName: 'Applicant / Licensee Full Name' },
+      { id: 'businessName',          label: 'Practice / Agency Name (if applicable)',       type: 'text',    placeholder: 'e.g. Westside Counseling Services LLC',     required: false, officialFieldName: 'Business / Practice Name' },
+      { id: 'physicalAddress',       label: 'Practice Address',                             type: 'address', placeholder: '123 Wellness Way, City, State ZIP',        required: true,  officialFieldName: 'Practice / Office Address' },
+      { id: 'businessPhone',         label: 'Practice Phone',                              type: 'phone',   placeholder: '(555) 555-0100',                            required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',         label: 'Practice Email',                              type: 'email',   placeholder: 'you@counseling.com',                        required: false, officialFieldName: 'Contact Email' },
+      {
+        id: 'licenseType', label: 'Social Work License Level', type: 'select',
+        options: [
+          'LCSW — Licensed Clinical Social Worker (full independent clinical practice)',
+          'LMSW — Licensed Master Social Worker (under clinical supervision)',
+          'LSW — Licensed Social Worker (bachelor level)',
+          'LICSW — Licensed Independent Clinical Social Worker (used in some states)',
+          'LCPC / LPC — Licensed Professional Counselor (non-social work equivalent)',
+        ],
+        required: true, officialFieldName: 'License Type / Level',
+      },
+      { id: 'existingLicenseNumber', label: 'Current State Social Work License Number',    type: 'text',    placeholder: 'State license number',                     required: false, officialFieldName: 'License Number (if currently licensed)' },
+      {
+        id: 'isRenewal', label: 'New License Application or Renewal?', type: 'select',
+        options: ['New license application', 'Renewal of existing license'],
+        required: true, officialFieldName: 'Application Type',
+      },
+      {
+        id: 'hasCriminalHistory', label: 'Any Prior Disciplinary Actions or Criminal History?', type: 'select',
+        options: ['No', 'Yes — full disclosure provided in application'],
+        required: true, officialFieldName: 'Disciplinary / Criminal History Disclosure',
+      },
+      { id: 'liabilityInsurer',      label: 'Professional Liability (Malpractice) Insurance Carrier', type: 'text', placeholder: 'Insurance company name', required: true, officialFieldName: 'Professional Liability Insurance Carrier' },
+      { id: 'liabilityPolicyNum',    label: 'Malpractice Insurance Policy Number',         type: 'text',    placeholder: 'Policy number',                             required: true,  officialFieldName: 'Liability Policy Number' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.myfloridalicense.com/DBPR/clinical-social-work', submitInstructions: 'Florida: Clinical Social Workers (LCSW) are licensed by the FL Board of Clinical Social Work, Marriage & Family Therapy, and Mental Health Counseling through DBPR. Apply at myfloridalicense.com. 2-year renewal cycle.' },
+      TX: { submitUrl: 'https://www.dshs.texas.gov/socialwork', submitInstructions: 'Texas: LMSWs and LCSWs are licensed by the TX State Board of Social Worker Examiners through the TX Department of State Health Services. Apply at dshs.texas.gov. ASWB exam required. 2-year renewal.' },
+      CA: { submitUrl: 'https://www.bbs.ca.gov/applicants/lcsw.html', submitInstructions: 'California: LCSWs are licensed by the CA Board of Behavioral Sciences (BBS). Apply at bbs.ca.gov. 3,200 supervised hours post-MSW required. ASWB Clinical exam required. 2-year renewal.' },
+      NY: { submitUrl: 'https://www.op.nysed.gov/professions/licensed-clinical-social-work', submitInstructions: 'New York: LCSWs are licensed by the NY Office of the Professions. Apply at op.nysed.gov. 3 years of post-MSW supervised experience required. 3-year renewal cycle.' },
+      IL: { submitUrl: 'https://idfpr.illinois.gov/profs/sw.asp', submitInstructions: 'Illinois: LCSWs are licensed by the IL Department of Financial and Professional Regulation (IDFPR). Apply at idfpr.illinois.gov. 2-year renewal. 30 continuing education hours required per renewal.' },
+    },
+  },
+
+  'real-estate-broker-license': {
+    id:          'real-estate-broker-license',
+    name:        'Real Estate Broker / Brokerage License',
+    description:
+      'Any business operating as a real estate brokerage — representing buyers or sellers ' +
+      'in property transactions, managing rentals, or operating a property management ' +
+      'company — must obtain a Real Estate Broker License from the state\'s Real Estate ' +
+      'Commission or Department of Licensing. This is distinct from the individual ' +
+      'salesperson license each agent holds and must be held by the managing broker of ' +
+      'the office. Requirements include proof of active real estate salesperson experience ' +
+      '(typically 2–3 years), a written broker exam, a physical office address in most ' +
+      'states, errors and omissions (E&O) insurance, and a surety bond. Property managers ' +
+      'handling tenant funds must maintain separate trust accounts.',
+    fee:         '$150–$700/year state broker license + E&O insurance ($500–$2,000/year)',
+    defaultRenewalMonths: 24,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply through your state\'s Real Estate Commission. Name the qualifying broker and ' +
+      'provide their salesperson experience documentation. Pass the state broker exam. ' +
+      'Open a dedicated escrow/trust account for client funds (required in most states). ' +
+      'Obtain Errors & Omissions (E&O) insurance before the license is issued.',
+    requiredDocs: [
+      'Completed Real Estate Broker License application',
+      'Proof of qualifying broker experience (years as licensed salesperson)',
+      'State broker exam passing score certificate',
+      'Errors and Omissions (E&O) insurance certificate',
+      'Business entity registration / LLC for the brokerage',
+      'Federal EIN certificate',
+      'Proof of physical office address (brokerage must have an office in most states)',
+      'Surety / trust fund bond (some states require)',
+      'Trust account bank statement (if property management)',
+    ],
+    fields: [
+      { id: 'applicantLegalName',    label: 'Qualifying Broker Full Legal Name',            type: 'text',    placeholder: 'Full legal name of designated broker',     required: true,  officialFieldName: 'Qualifying / Designated Broker Name' },
+      { id: 'businessName',          label: 'Brokerage / Company Name',                     type: 'text',    placeholder: 'e.g. Sunrise Realty Group LLC',             required: true,  officialFieldName: 'Brokerage / Business Name' },
+      { id: 'physicalAddress',       label: 'Principal Office Address',                     type: 'address', placeholder: '123 Realty Blvd, City, State ZIP',          required: true,  officialFieldName: 'Principal Office / Business Address' },
+      { id: 'businessPhone',         label: 'Office Phone',                                 type: 'phone',   placeholder: '(555) 555-0100',                            required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',         label: 'Office Email',                                 type: 'email',   placeholder: 'broker@realty.com',                         required: false, officialFieldName: 'Contact Email' },
+      { id: 'fein',                  label: 'Federal EIN',                                  type: 'text',    placeholder: '12-3456789',                                required: true,  officialFieldName: 'Federal EIN' },
+      {
+        id: 'licenseType', label: 'Type of Real Estate Business', type: 'select',
+        options: [
+          'Residential sales brokerage',
+          'Commercial real estate brokerage',
+          'Property management company',
+          'Mixed residential + commercial brokerage',
+          'Real estate investment / acquisition firm',
+          'Leasing-only office (residential rentals)',
+        ],
+        required: true, officialFieldName: 'Business Type / License Category',
+      },
+      { id: 'existingLicenseNumber', label: 'Current Salesperson License Number (Qualifying Broker)', type: 'text', placeholder: 'Active salesperson license #', required: true, officialFieldName: 'Qualifying Salesperson License Number' },
+      { id: 'yearsExperience',       label: 'Years of Licensed Salesperson Experience',     type: 'text',    placeholder: 'e.g. 3',                                    required: true,  officialFieldName: 'Years of Salesperson Experience' },
+      {
+        id: 'hasCertification', label: 'Have You Passed the State Broker Exam?', type: 'select',
+        options: [
+          'Yes — exam passed, score certificate available',
+          'No — exam scheduled',
+          'Exempt via reciprocal license from another state',
+        ],
+        required: true, officialFieldName: 'Broker Exam Status',
+      },
+      { id: 'liabilityInsurer',      label: 'Errors & Omissions (E&O) Insurance Carrier',  type: 'text',    placeholder: 'E&O insurance company name',                required: true,  officialFieldName: 'E&O Insurance Carrier' },
+      { id: 'liabilityPolicyNum',    label: 'E&O Insurance Policy Number',                  type: 'text',    placeholder: 'Policy number',                             required: true,  officialFieldName: 'E&O Policy Number' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.myfloridalicense.com/DBPR/real-estate', submitInstructions: 'Florida: Real estate brokers are licensed by the FL Real Estate Commission (FREC) through DBPR. Apply at myfloridalicense.com. 2 years of active salesperson experience required. Broker exam via Pearson VUE. 2-year license renewal.' },
+      TX: { submitUrl: 'https://www.trec.texas.gov/forms/broker-license-application', submitInstructions: 'Texas: Real estate brokers are licensed by the Texas Real Estate Commission (TREC). Apply at trec.texas.gov. 4 years of active salesperson experience + broker coursework required. 2-year renewal.' },
+      CA: { submitUrl: 'https://www.dre.ca.gov/Licensees/BrokerExamLicensing.html', submitInstructions: 'California: Real estate brokers are licensed by the CA Department of Real Estate (DRE). Apply at dre.ca.gov. 2 years of full-time salesperson experience required. CA DRE broker exam required.' },
+      NY: { submitUrl: 'https://dos.ny.gov/licensing/real_estate/real_estate.html', submitInstructions: 'New York: Real estate brokers are licensed by the NY Department of State Division of Licensing Services. Apply at dos.ny.gov. 2 years of salesperson experience + 45-hour broker course required. 2-year renewal.' },
+      IL: { submitUrl: 'https://idfpr.illinois.gov/profs/realestate.asp', submitInstructions: 'Illinois: Real estate managing brokers are licensed by the IL Department of Financial and Professional Regulation (IDFPR). Apply at idfpr.illinois.gov. 2 years of salesperson experience + 45-hour broker pre-license course required. 2-year renewal.' },
+      AZ: { submitUrl: 'https://www.azre.gov/licensing/broker-license', submitInstructions: 'Arizona: Real estate brokers are licensed by the AZ Department of Real Estate (ADRE). Apply at azre.gov. 3 years of salesperson experience required. 2-year renewal. Designated broker must have an active AZ broker license.' },
+    },
+  },
+
+  'alcohol-catering-endorsement': {
+    id:          'alcohol-catering-endorsement',
+    name:        'Catering Alcohol Endorsement / Caterer\'s Permit',
+    description:
+      'Catering companies, event caterers, and food service businesses that serve alcoholic ' +
+      'beverages at off-site events (client venues, banquet halls, private homes, corporate ' +
+      'offices, weddings) need a separate Caterer\'s Permit or Catering Alcohol ' +
+      'Endorsement from the state Alcoholic Beverage Commission (ABC). This is distinct ' +
+      'from both a restaurant liquor license (which covers on-premises consumption only) ' +
+      'and a single-event temporary permit. A Caterer\'s Permit allows the licensee to ' +
+      'serve alcohol at multiple pre-approved off-site events per year under one permit. ' +
+      'Most states require the caterer to also hold a valid food service license and ' +
+      'food manager certification. Servers must be TIPS/RBS certified in many states.',
+    fee:         '$100–$600/year (caterer\'s permit/endorsement, varies by state)',
+    defaultRenewalMonths: 12,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply through your state\'s Alcoholic Beverage Commission (ABC) or Division of ' +
+      'Alcoholic Beverage Control. Most states require an existing catering or food ' +
+      'service license as a prerequisite, proof of liquor liability insurance ($1M), ' +
+      'and a list of anticipated event locations. Each event may need a separate ' +
+      'notification to the ABC (typically 10–15 days in advance).',
+    requiredDocs: [
+      'Completed Caterer\'s Permit / Alcohol Catering Endorsement application',
+      'Current valid food service / catering license',
+      'Proof of liquor liability insurance ($1M minimum, additional insured endorsement)',
+      'TIPS/RBS server certification for all bartending staff (required in many states)',
+      'Business entity registration / LLC',
+      'Federal EIN certificate',
+      'Copy of existing ABC license (if upgrading an existing license)',
+    ],
+    fields: [
+      { id: 'businessName',          label: 'Catering Company Name',                        type: 'text',    placeholder: 'e.g. Premier Event Catering LLC',           required: true,  officialFieldName: 'Caterer / Business Name' },
+      { id: 'ownerFullName',         label: 'Owner / Applicant Full Name',                  type: 'text',    placeholder: 'Full legal name',                           required: true,  officialFieldName: 'Applicant / Owner Name' },
+      { id: 'businessAddress',       label: 'Principal Business Address',                   type: 'address', placeholder: '123 Main St, City, State ZIP',              required: true,  officialFieldName: 'Principal Business Address' },
+      { id: 'businessPhone',         label: 'Business Phone',                               type: 'phone',   placeholder: '(555) 555-0100',                            required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',         label: 'Business Email',                               type: 'email',   placeholder: 'events@catering.com',                       required: false, officialFieldName: 'Contact Email' },
+      { id: 'fein',                  label: 'Federal EIN',                                  type: 'text',    placeholder: '12-3456789',                                required: true,  officialFieldName: 'Federal EIN' },
+      { id: 'existingLicenseNumber', label: 'Existing Food Service / Catering License Number', type: 'text', placeholder: 'Current catering license #',               required: true,  officialFieldName: 'Existing Food Service License Number' },
+      {
+        id: 'alcoholTypes', label: 'Alcohol Types to Be Served at Events', type: 'select',
+        options: [
+          'Beer and wine only',
+          'Beer, wine, and spirits (full bar)',
+          'Spirits / distilled liquor only',
+          'Wine only',
+          'Beer only',
+        ],
+        required: true, officialFieldName: 'Alcohol Types to Be Served',
+      },
+      { id: 'estimatedAnnualRevenue', label: 'Estimated Number of Catered Events Per Year (Alcohol)', type: 'text', placeholder: 'e.g. 50', required: true, officialFieldName: 'Estimated Annual Events with Alcohol Service' },
+      { id: 'liabilityInsurer',      label: 'Liquor Liability Insurance Carrier',           type: 'text',    placeholder: 'Insurance company name',                    required: true,  officialFieldName: 'Liquor Liability Insurance Carrier' },
+      { id: 'liabilityPolicyNum',    label: 'Liquor Liability Policy Number',               type: 'text',    placeholder: 'Policy number',                             required: true,  officialFieldName: 'Liquor Liability Policy Number' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.myfloridalicense.com/DBPR/alcoholic-beverages-tobacco', submitInstructions: 'Florida: Caterers serving alcohol must hold a Caterer\'s License (2-COP or 2-APS) from the FL Division of Alcoholic Beverages and Tobacco (ABT). Apply at myfloridalicense.com. DBPR food service license also required. Annual renewal.' },
+      TX: { submitUrl: 'https://www.tabc.texas.gov/licenses-permits/types/caterers-permit', submitInstructions: 'Texas: Caterers must hold a TX Alcoholic Beverage Commission (TABC) Caterer\'s Permit (FB permit). Apply at tabc.texas.gov. Food and beverage catering service license from the state health dept also required. Annual renewal.' },
+      CA: { submitUrl: 'https://www.abc.ca.gov/licensing/license-types/type-58', submitInstructions: 'California: Caterers serving alcohol must hold a Type 58 Caterer\'s Permit or be endorsed under a Type 47 or 48 restaurant license with a catering authorization (Type 58). Apply at abc.ca.gov.' },
+      NY: { submitUrl: 'https://www.sla.ny.gov/catering-establishments', submitInstructions: 'New York: Caterers must hold a Catering Establishment License from the NY State Liquor Authority (SLA). Apply at sla.ny.gov. A Catering Establishment license allows alcohol service at on-site banquet events. Off-site caterers apply for a separate catering endorsement.' },
+      IL: { submitUrl: 'https://www2.illinois.gov/LCC/Licenses/pages/LicenseClassifications.aspx', submitInstructions: 'Illinois: Catering alcohol licenses are issued at the local level in IL (city/village). Chicago issues a Retail Food Establishment license + Caterer\'s License from the Chicago City Clerk. Check with your specific municipality.' },
+      GA: { submitUrl: 'https://dor.georgia.gov/alcohol/licensing', submitInstructions: 'Georgia: Caterers serving alcohol must hold a GA Caterer\'s License from the GA Department of Revenue Alcohol and Tobacco Division. Apply at gtc.dor.georgia.gov. Local (county/city) alcohol permit also required.' },
+    },
+  },
+
+  // v74 — New guided wizard forms ──────────────────────────────────────────────
+
+  'childcare-center-license': {
+    id:          'childcare-center-license',
+    name:        'Childcare Center / Preschool Facility License',
+    description:
+      'A Childcare Center License (also called a Child Care Facility License, Day Care ' +
+      'Center License, or Preschool License) is required for any facility caring for ' +
+      'seven or more children outside their own home. This is separate from and more ' +
+      'demanding than a Family Day Care Home license. Requirements include a licensed ' +
+      'facility director with early childhood credentials, staff-to-child ratios, ' +
+      'background checks for all staff, fire and building code compliance, a required ' +
+      'square footage per child, outdoor play area standards, and immunization record ' +
+      'keeping. Inspections by the state child care licensing agency and local fire ' +
+      'marshal are required before the license is issued.',
+    fee:         '$50–$500/year (state licensing fee based on capacity)',
+    defaultRenewalMonths: 12,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply through your state\'s Child Care Licensing office, Department of Children ' +
+      'and Families (DCF), or equivalent agency. Submit the application well in advance ' +
+      '(60–90 days before planned opening). An initial inspection of the facility is ' +
+      'required. All staff must complete background screenings and CPR/First Aid certification.',
+    requiredDocs: [
+      'Completed Childcare Center License application',
+      'Facility floor plan showing all rooms, play areas, and square footage per child',
+      'Certificate of occupancy for childcare use from local building department',
+      'Fire marshal / fire safety inspection certificate',
+      'Health department inspection approval',
+      'Director credentials: degree, early childhood education certifications',
+      'Background check (Level 2 / fingerprint-based) for director and all staff',
+      'Proof of liability and professional liability insurance',
+      'Emergency/disaster preparedness plan',
+      'Staff immunization records and health clearances',
+    ],
+    fields: [
+      { id: 'businessName',          label: 'Childcare Center / Preschool Name',           type: 'text',    placeholder: 'e.g. Sunshine Childcare Academy',          required: true,  officialFieldName: 'Facility Name' },
+      { id: 'ownerFullName',         label: 'Owner / Director Full Name',                   type: 'text',    placeholder: 'Full legal name',                           required: true,  officialFieldName: 'Owner / Director Name' },
+      { id: 'physicalAddress',       label: 'Facility Address',                             type: 'address', placeholder: '123 Main St, City, State ZIP',              required: true,  officialFieldName: 'Facility / Premises Address' },
+      { id: 'businessPhone',         label: 'Facility Phone',                               type: 'phone',   placeholder: '(555) 555-0100',                            required: true,  officialFieldName: 'Facility Phone' },
+      { id: 'businessEmail',         label: 'Facility Email',                               type: 'email',   placeholder: 'director@childcarecenter.com',              required: false, officialFieldName: 'Facility Email' },
+      {
+        id: 'licenseType', label: 'Type of Childcare License Sought', type: 'select',
+        options: [
+          'Childcare Center (7+ children, non-residential facility)',
+          'Preschool / Pre-K Program (ages 3–5)',
+          'Before & After School Program (school-age children)',
+          'Infant & Toddler Center (ages 0–3)',
+          'Full-day / Full-year Childcare Center (all ages)',
+          'Employer-sponsored / Corporate Childcare Center',
+        ],
+        required: true, officialFieldName: 'License Type / Facility Category',
+      },
+      { id: 'maxCapacity',           label: 'Licensed Capacity (Maximum Children)',         type: 'text',    placeholder: 'e.g. 60',                                   required: true,  officialFieldName: 'Licensed / Maximum Capacity' },
+      { id: 'ageGroupServed',        label: 'Age Groups Served',                            type: 'text',    placeholder: 'e.g. Infants 6 weeks – 12 years',          required: true,  officialFieldName: 'Age Range of Children Served' },
+      { id: 'squareFootagePerChild', label: 'Indoor Square Footage Per Child',              type: 'text',    placeholder: 'e.g. 35 sq ft per child',                  required: true,  officialFieldName: 'Indoor Square Footage Per Child' },
+      {
+        id: 'hasBackgroundCheck', label: 'All Staff Background Checks Completed?', type: 'select',
+        options: [
+          'Yes — Level 2 (fingerprint) background checks completed for all staff',
+          'In process — screenings submitted, awaiting results',
+          'No — planning to initiate before opening',
+        ],
+        required: true, officialFieldName: 'Staff Background Check Status',
+      },
+      {
+        id: 'hasFirstAid', label: 'Director / Staff CPR & First Aid Certified?', type: 'select',
+        options: ['Yes — director and required staff are CPR/First Aid certified', 'Scheduled — certifications in progress', 'No — not yet completed'],
+        required: true, officialFieldName: 'CPR / First Aid Certification Status',
+      },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.myflfamilies.com/service-programs/child-care/licensing', submitInstructions: 'Florida: Childcare centers are licensed by the FL Department of Children and Families (DCF). A Child Care Facility License is required for 7+ children. Apply at myflfamilies.com. Background screening through the Clearinghouse is mandatory for all staff.' },
+      TX: { submitUrl: 'https://www.hhs.texas.gov/childcare-licensing', submitInstructions: 'Texas: Child care centers are licensed by the TX Department of Health and Human Services (HHS) Child Care Licensing division. Apply at hhs.texas.gov. Staff background checks through DFPS are required.' },
+      CA: { submitUrl: 'https://www.cdss.ca.gov/inforesources/community-care-licensing/program-types/child-care-licensing', submitInstructions: 'California: Childcare centers are licensed by the CA Department of Social Services (CDSS) Community Care Licensing Division. Apply at cdss.ca.gov. A Child Care Center (CCC) license is required for 6+ children. Fire clearance from the State Fire Marshal is required.' },
+      NY: { submitUrl: 'https://ocfs.ny.gov/main/childcare/licensing.asp', submitInstructions: 'New York: Childcare centers are licensed by the NY Office of Children and Family Services (OCFS). NYC group family day care and centers are regulated by the NYC ACS. Apply at ocfs.ny.gov.' },
+      IL: { submitUrl: 'https://www.illinois.gov/dcfs/brighterfutures/childcare/Pages/Licensing.aspx', submitInstructions: 'Illinois: Child care centers are licensed by the IL Department of Children and Family Services (DCFS). Apply at Illinois.gov/dcfs. A Licensed Day Care Center is required for 7+ children for more than 3 hours/day.' },
+      GA: { submitUrl: 'https://decal.ga.gov/childcarelearningcenters/licensureinformation.aspx', submitInstructions: 'Georgia: Childcare Learning Centers are licensed by the GA Department of Early Care and Learning (DECAL). Apply at decal.ga.gov. A Childcare Learning Center License is required for 4+ children.' },
+    },
+  },
+
+  'pool-spa-contractor-license': {
+    id:          'pool-spa-contractor-license',
+    name:        'Swimming Pool / Spa Contractor License',
+    description:
+      'Businesses installing, renovating, replastering, or servicing residential or ' +
+      'commercial swimming pools, spas, hot tubs, or water features must hold a Swimming ' +
+      'Pool and Spa Contractor License from the state contractor licensing board. In ' +
+      'Florida — the largest pool market in the country — a Certified Pool/Spa Contractor ' +
+      'or Certified Swimming Pool Servicing Contractor license is required. California ' +
+      'requires a C-53 Swimming Pool Contractor classification. Texas pools are regulated ' +
+      'through the TDLR. Performing pool work without a license voids homeowner warranties ' +
+      'and violates state contractor laws.',
+    fee:         '$50–$400/year state license fee + bond',
+    defaultRenewalMonths: 24,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply through your state\'s contractor licensing board (DBPR in FL, CSLB in CA, ' +
+      'TDLR in TX). Most states require a written trade exam, proof of pool construction ' +
+      'or service experience, liability insurance, and a surety bond. Florida has separate ' +
+      'license categories for pool construction and pool servicing.',
+    requiredDocs: [
+      'Completed Pool/Spa Contractor License application',
+      'Proof of swimming pool construction/service experience (2–4 years)',
+      'Passing score from state pool contractor exam',
+      'General liability insurance ($300,000–$1M minimum)',
+      'Workers\' compensation insurance (if employees)',
+      'Surety bond certificate',
+      'Federal EIN certificate',
+      'Business entity registration',
+    ],
+    fields: [
+      { id: 'applicantLegalName',   label: 'Qualifying Agent / Applicant Full Name',      type: 'text',    placeholder: 'Full legal name',                           required: true,  officialFieldName: 'Qualifying Agent / Applicant Name' },
+      { id: 'businessName',         label: 'Pool/Spa Company Name',                        type: 'text',    placeholder: 'e.g. Blue Wave Pool Contractors LLC',       required: true,  officialFieldName: 'Business / Company Name' },
+      { id: 'physicalAddress',      label: 'Business / Office Address',                   type: 'address', placeholder: '123 Main St, City, State ZIP',               required: true,  officialFieldName: 'Business Address' },
+      { id: 'businessPhone',        label: 'Business Phone',                              type: 'phone',   placeholder: '(555) 555-0100',                             required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',        label: 'Business Email',                              type: 'email',   placeholder: 'you@poolcompany.com',                        required: false, officialFieldName: 'Contact Email' },
+      { id: 'fein',                 label: 'Federal EIN',                                 type: 'text',    placeholder: '12-3456789',                                 required: true,  officialFieldName: 'Federal EIN' },
+      {
+        id: 'licenseType', label: 'Pool/Spa License Type', type: 'select',
+        options: [
+          'Pool/Spa Contractor — Construction (new pool installation)',
+          'Pool/Spa Contractor — Servicing (cleaning, chemicals, repairs)',
+          'Pool/Spa Contractor — Construction & Servicing (combined)',
+          'Commercial Pool/Spa Contractor (hotels, condos, HOAs)',
+          'Residential Pool/Spa Contractor only',
+        ],
+        required: true, officialFieldName: 'License Type / Category',
+      },
+      { id: 'yearsExperience',      label: 'Years of Pool/Spa Experience',                type: 'text',    placeholder: 'e.g. 4',                                    required: true,  officialFieldName: 'Qualifying Experience (Years)' },
+      {
+        id: 'hasCertification', label: 'Have You Passed the Required State Pool Contractor Exam?', type: 'select',
+        options: [
+          'Yes — exam passed, score certificate available',
+          'No — planning to test soon',
+          'Exempt via reciprocal license from another state',
+        ],
+        required: true, officialFieldName: 'Exam / Certification Status',
+      },
+      { id: 'liabilityInsurer',     label: 'General Liability Insurance Carrier',         type: 'text',    placeholder: 'Insurance company name',                    required: true,  officialFieldName: 'Liability Insurance Carrier' },
+      { id: 'liabilityPolicyNum',   label: 'Liability Insurance Policy Number',           type: 'text',    placeholder: 'Policy number',                             required: true,  officialFieldName: 'Liability Policy Number' },
+      { id: 'bondAmount',           label: 'Surety Bond Amount',                          type: 'text',    placeholder: 'e.g. $10,000',                              required: true,  officialFieldName: 'Surety Bond Amount' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.myfloridalicense.com/DBPR/pool-spa', submitInstructions: 'Florida: Pool/Spa Contractors are licensed by the FL Construction Industry Licensing Board (CILB). Separate licenses exist: CPC (Certified Pool Contractor) for construction and CPO (Certified Pool/Spa Operator) for servicing. Apply at myfloridalicense.com. Exam required (Pearson VUE).' },
+      TX: { submitUrl: 'https://www.tdlr.texas.gov/swimming-pool', submitInstructions: 'Texas: Public swimming pool and spa contractors are regulated by the Texas Department of Licensing and Regulation (TDLR). A Licensed Swimming Pool and Spa Contractor license is required for commercial pools. Residential pool contractors apply at tdlr.texas.gov.' },
+      CA: { submitUrl: 'https://www.cslb.ca.gov/About_CSLB/Licensing_Classifications/C-53_Swimming_Pool.aspx', submitInstructions: 'California: Pool contractors must hold a C-53 Swimming Pool Contractor License from the CA Contractors State License Board (CSLB). Apply at cslb.ca.gov. State trade exam required. $15,000 bond required. Biennial renewal.' },
+      AZ: { submitUrl: 'https://roc.az.gov/licensing/applying-for-a-license', submitInstructions: 'Arizona: Swimming pool contractors are licensed by the AZ Registrar of Contractors (ROC). CR-6 (Commercial Pool) or R-6 (Residential Pool) classifications. Apply at roc.az.gov. A bond of $100,000+ is required for commercial pool work.' },
+    },
+  },
+
+  'landscape-contractor-license': {
+    id:          'landscape-contractor-license',
+    name:        'Landscape / Lawn Care Contractor License',
+    description:
+      'Landscape contractors, lawn care companies, tree services, and irrigation ' +
+      'installation businesses may require state or local licensing depending on ' +
+      'the services offered. In Florida, landscape contractors must be licensed through ' +
+      'the FL Department of Business and Professional Regulation if they apply pesticides ' +
+      'or install irrigation. Businesses applying pesticides (herbicides, fertilizers ' +
+      'with restricted use) must have a Licensed Pest Control Operator or Certified ' +
+      'Pesticide Applicator on staff. Many cities also require a local business license ' +
+      'and contractor registration for any landscaping company doing work on commercial ' +
+      'properties. Tree trimming within proximity to power lines may also require ' +
+      'separate OSHA certification.',
+    fee:         '$25–$300/year depending on services and state',
+    defaultRenewalMonths: 12,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply through your state\'s Department of Agriculture (for pesticide application), ' +
+      'contractor licensing board (for irrigation installation), or local business licensing ' +
+      'office. If you apply any pesticides — including weed killers, fertilizers with ' +
+      'restricted-use ingredients, or insecticides — a Certified Pesticide Applicator ' +
+      'license is separately required.',
+    requiredDocs: [
+      'Completed Landscape Contractor / Business License application',
+      'Business entity registration / LLC / DBA',
+      'Federal EIN certificate',
+      'Certified Pesticide Applicator license (if applying any pesticides)',
+      'General liability insurance ($500K–$1M minimum)',
+      'Workers\' compensation insurance (if employees)',
+      'Proof of equipment (trucks, mowers, trailers) — commercial vehicle registration',
+    ],
+    fields: [
+      { id: 'businessName',         label: 'Landscape / Lawn Care Company Name',           type: 'text',    placeholder: 'e.g. Green Thumb Landscape LLC',            required: true,  officialFieldName: 'Business Name' },
+      { id: 'ownerFullName',        label: 'Owner / Applicant Full Name',                   type: 'text',    placeholder: 'Full legal name',                            required: true,  officialFieldName: 'Owner / Applicant Name' },
+      { id: 'physicalAddress',      label: 'Business / Office Address',                    type: 'address', placeholder: '123 Main St, City, State ZIP',               required: true,  officialFieldName: 'Business Address' },
+      { id: 'businessPhone',        label: 'Business Phone',                               type: 'phone',   placeholder: '(555) 555-0100',                             required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',        label: 'Business Email',                               type: 'email',   placeholder: 'you@landscaping.com',                        required: false, officialFieldName: 'Contact Email' },
+      { id: 'fein',                 label: 'Federal EIN',                                  type: 'text',    placeholder: '12-3456789',                                 required: true,  officialFieldName: 'Federal EIN' },
+      {
+        id: 'licenseType', label: 'Primary Services Offered', type: 'select',
+        options: [
+          'Lawn mowing / maintenance only (no pesticides)',
+          'Landscape design and installation (plants, trees, hardscape)',
+          'Irrigation system installation and repair',
+          'Landscape + pesticide application (weed control, fertilization)',
+          'Tree trimming / arborist services',
+          'Full service (all of the above)',
+          'Snow removal (winter services)',
+        ],
+        required: true, officialFieldName: 'Services / License Category',
+      },
+      {
+        id: 'hasCertification', label: 'Certified Pesticide Applicator on Staff?', type: 'select',
+        options: [
+          'Yes — state-certified pesticide applicator on staff (license number available)',
+          'No — we do not apply pesticides (mowing/maintenance only)',
+          'In process — applicator exam scheduled',
+        ],
+        required: true, officialFieldName: 'Pesticide Applicator Certification Status',
+      },
+      { id: 'existingLicenseNumber',label: 'Pesticide Applicator License Number (if applicable)', type: 'text', placeholder: 'State cert/license number', required: false, officialFieldName: 'Certified Applicator License Number' },
+      { id: 'liabilityInsurer',     label: 'General Liability Insurance Carrier',          type: 'text',    placeholder: 'Insurance company name',                     required: true,  officialFieldName: 'Liability Insurance Carrier' },
+      { id: 'liabilityPolicyNum',   label: 'Liability Insurance Policy Number',            type: 'text',    placeholder: 'Policy number',                              required: true,  officialFieldName: 'Liability Policy Number' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.fdacs.gov/Business-Services/Pest-Control', submitInstructions: 'Florida: Landscape companies applying pesticides or herbicides must be licensed by FDACS as a Pest Control Business. Irrigation contractors need a FL irrigation license through DBPR. Lawn-only businesses need a local business license but no state landscape license.' },
+      TX: { submitUrl: 'https://www.tda.texas.gov/pesticide-programs', submitInstructions: 'Texas: Landscape companies applying pesticides need a Texas Department of Agriculture (TDA) Commercial Pesticide Applicator License. Irrigation contractors apply to TDLR for an Irrigator license. Lawn-only businesses need only a local business license.' },
+      CA: { submitUrl: 'https://www.cslb.ca.gov/About_CSLB/Licensing_Classifications/C-27_Landscaping.aspx', submitInstructions: 'California: Landscape contractors performing work over $500 must hold a C-27 Landscaping Contractor License from the CA CSLB. Apply at cslb.ca.gov. $15,000 bond required. Pest control applicators need a separate CDPR license.' },
+      AZ: { submitUrl: 'https://roc.az.gov/licensing/applying-for-a-license', submitInstructions: 'Arizona: Landscaping contractors are licensed by the AZ Registrar of Contractors (ROC) under classification L-4 (Landscape). Apply at roc.az.gov. Pesticide applicators also need an AZ Department of Agriculture Pest Management license.' },
+    },
+  },
+
+  'security-guard-company-license': {
+    id:          'security-guard-company-license',
+    name:        'Private Security Guard Company License',
+    description:
+      'Any business providing contract security guard services — uniformed guards, ' +
+      'patrol services, alarm response, access control, or armed security — must hold ' +
+      'a Private Security Agency / Security Guard Company License from the state. This ' +
+      'is separate from the individual security officer license each guard must carry. ' +
+      'The company license is issued by the state\'s Department of State, Department of ' +
+      'Licensing, or Private Investigator / Security Licensing Board. Requirements ' +
+      'include a qualifying agent (licensed security officer), background checks, ' +
+      'liability insurance, and a surety bond. Armed security operations require ' +
+      'additional licensing and firearm permits.',
+    fee:         '$150–$600/year state company license + individual officer licenses ($25–$100/officer)',
+    defaultRenewalMonths: 12,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply through your state\'s licensing authority for private security agencies. ' +
+      'Most states require a qualifying manager/agent who holds an active Security Officer ' +
+      'license. Background checks for the owner and all guards are required. Armed guard ' +
+      'operations require separate firearms licensing through the state.',
+    requiredDocs: [
+      'Completed Private Security Agency / Company License application',
+      'Qualifying manager\'s active individual security officer license',
+      'Background check results for all principals and qualifying agents',
+      'Proof of general liability insurance ($1M minimum)',
+      'Surety bond certificate ($10,000–$25,000)',
+      'Business entity registration / LLC / DBA',
+      'Federal EIN certificate',
+      'Armed Security endorsement (if providing armed guards)',
+    ],
+    fields: [
+      { id: 'businessName',         label: 'Security Company Name',                        type: 'text',    placeholder: 'e.g. Shield Security Services LLC',         required: true,  officialFieldName: 'Agency / Company Name' },
+      { id: 'ownerFullName',        label: 'Owner / Qualifying Manager Full Name',          type: 'text',    placeholder: 'Full legal name',                            required: true,  officialFieldName: 'Owner / Qualifying Agent Name' },
+      { id: 'physicalAddress',      label: 'Business / Office Address',                    type: 'address', placeholder: '123 Main St, City, State ZIP',               required: true,  officialFieldName: 'Business Address' },
+      { id: 'businessPhone',        label: 'Business Phone',                               type: 'phone',   placeholder: '(555) 555-0100',                             required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',        label: 'Business Email',                               type: 'email',   placeholder: 'you@securitycompany.com',                    required: false, officialFieldName: 'Contact Email' },
+      { id: 'fein',                 label: 'Federal EIN',                                  type: 'text',    placeholder: '12-3456789',                                 required: true,  officialFieldName: 'Federal EIN' },
+      {
+        id: 'licenseType', label: 'Type of Security Services Provided', type: 'select',
+        options: [
+          'Unarmed security guards only',
+          'Armed security guards (requires additional firearms endorsement)',
+          'Both armed and unarmed security',
+          'Alarm monitoring / alarm response only',
+          'Executive protection / bodyguard services',
+          'Mobile patrol services only',
+        ],
+        required: true, officialFieldName: 'Security Services Category',
+      },
+      { id: 'existingLicenseNumber',label: 'Qualifying Manager\'s Individual Security Officer License Number', type: 'text', placeholder: 'State security officer license #', required: true, officialFieldName: 'Qualifying Agent Security License Number' },
+      {
+        id: 'hasCriminalHistory', label: 'Have Any Principals Been Convicted of a Felony or Crime Involving Dishonesty?', type: 'select',
+        options: ['No', 'Yes — full disclosure provided in application'],
+        required: true, officialFieldName: 'Criminal History Disclosure',
+      },
+      { id: 'liabilityInsurer',     label: 'General Liability Insurance Carrier ($1M min)',  type: 'text',   placeholder: 'Insurance company name',                     required: true,  officialFieldName: 'Liability Insurance Carrier' },
+      { id: 'liabilityPolicyNum',   label: 'Liability Insurance Policy Number',             type: 'text',    placeholder: 'Policy number',                              required: true,  officialFieldName: 'Liability Policy Number' },
+      { id: 'bondAmount',           label: 'Surety Bond Amount',                            type: 'text',    placeholder: 'e.g. $10,000',                               required: true,  officialFieldName: 'Surety Bond Amount' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.myfloridalicense.com/DBPR/unarmed-security', submitInstructions: 'Florida: Security agencies are licensed by the FL Department of Agriculture and Consumer Services (FDACS). A Class BB Security Agency License is required for unarmed guard agencies; armed agencies need a Class AA. Apply at freshfromflorida.com or fdacs.gov.' },
+      TX: { submitUrl: 'https://www.tdlr.texas.gov/security/security.htm', submitInstructions: 'Texas: Private security companies are licensed by the Texas Department of Licensing and Regulation (TDLR). A Security Services Contractor license is required. Apply at tdlr.texas.gov. Both company and individual guard licenses are required.' },
+      CA: { submitUrl: 'https://www.bsis.ca.gov/forms_pubs/bsis_guide.pdf', submitInstructions: 'California: Private patrol operators (PPO) and security guard companies are licensed by the CA Bureau of Security and Investigative Services (BSIS). Apply at bsis.ca.gov. All guards must hold individual CA Guard Cards. Armed guards need a Firearm Permit.' },
+      NY: { submitUrl: 'https://www.dos.ny.gov/licensing/security_guard/security_guard.html', submitInstructions: 'New York: Security guard companies and individual security guards are regulated by the NY Department of State. A Security Guard Company license is required. Apply at dos.ny.gov.' },
+      IL: { submitUrl: 'https://idfpr.illinois.gov/profs/security.asp', submitInstructions: 'Illinois: Private security contractor agencies are licensed by the IL Department of Financial and Professional Regulation (IDFPR). A Private Security Contractor Agency license is required. Individual Security Officers also need state licenses. Apply at idfpr.illinois.gov.' },
+    },
+  },
+
+  'food-manufacturer-license': {
+    id:          'food-manufacturer-license',
+    name:        'Food Manufacturer / Specialty Food Producer License',
+    description:
+      'Businesses that manufacture, process, pack, or hold food products for wholesale ' +
+      'or retail sale — including sauces, baked goods, candies, jams, beverages, spice ' +
+      'blends, pickled products, or packaged snacks — must obtain a Food Manufacturer ' +
+      'or Food Processing Establishment License from the state Department of Agriculture ' +
+      'or Health. This is distinct from the retail food service permit (restaurants) and ' +
+      'from cottage food registration (very small-scale home kitchen operations). ' +
+      'Products sold across state lines are subject to FDA oversight and may require ' +
+      'registration with FDA as a food facility. All packaged products must comply with ' +
+      'FDA labeling requirements including nutrition facts, allergen declarations, and ' +
+      'net weight.',
+    fee:         '$100–$800/year (state food manufacturing license, tiered by volume)',
+    defaultRenewalMonths: 12,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply to your state Department of Agriculture or Health for a Food Manufacturing ' +
+      'Establishment License. A facility inspection is required before the license is ' +
+      'issued. If selling across state lines, register your facility with the FDA Food ' +
+      'Facility Registry (free, via fda.gov/food). Labeling must comply with FDA 21 CFR ' +
+      'Part 101 requirements.',
+    requiredDocs: [
+      'Completed Food Manufacturer / Food Processing License application',
+      'Facility floor plan showing production, storage, and packaging areas',
+      'List of all products to be manufactured with ingredients',
+      'Proof of commercial kitchen or licensed production facility',
+      'Food Safety Plan (HACCP or HARPC for FDA-regulated facilities)',
+      'Labeling proofs for all packaged products (FDA compliant)',
+      'List of all suppliers and source ingredients',
+      'Federal EIN certificate',
+      'Business entity registration',
+    ],
+    fields: [
+      { id: 'businessName',         label: 'Food Company / Brand Name',                    type: 'text',    placeholder: 'e.g. Sunrise Sauces LLC',                    required: true,  officialFieldName: 'Establishment / Business Name' },
+      { id: 'ownerFullName',        label: 'Owner / Applicant Full Name',                   type: 'text',    placeholder: 'Full legal name',                            required: true,  officialFieldName: 'Owner / Applicant Name' },
+      { id: 'physicalAddress',      label: 'Production Facility / Kitchen Address',         type: 'address', placeholder: '123 Industrial Way, City, State ZIP',        required: true,  officialFieldName: 'Facility / Production Address' },
+      { id: 'businessPhone',        label: 'Business Phone',                               type: 'phone',   placeholder: '(555) 555-0100',                             required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',        label: 'Business Email',                               type: 'email',   placeholder: 'you@foodbrand.com',                          required: false, officialFieldName: 'Contact Email' },
+      { id: 'fein',                 label: 'Federal EIN',                                  type: 'text',    placeholder: '12-3456789',                                 required: true,  officialFieldName: 'Federal EIN' },
+      {
+        id: 'licenseType', label: 'Type of Food Manufacturing / Processing', type: 'select',
+        options: [
+          'Bakery / confectionery (breads, pastries, cakes, candies)',
+          'Sauces, condiments, and packaged dips',
+          'Jams, jellies, and fruit preserves',
+          'Pickled / fermented products (shelf-stable)',
+          'Beverages (juices, kombucha, coffee, tea, non-alcoholic)',
+          'Spice blends and dry mixes',
+          'Packaged snacks (chips, granola, trail mix, nuts)',
+          'Frozen foods and meal kits',
+          'Dietary supplements / nutraceuticals',
+          'Other packaged food product',
+        ],
+        required: true, officialFieldName: 'Product Type / Manufacturing Category',
+      },
+      {
+        id: 'facilityType', label: 'Production Facility Type', type: 'select',
+        options: [
+          'Dedicated commercial production kitchen (owned)',
+          'Shared commercial kitchen / co-packer (rented)',
+          'Commissary / incubator kitchen',
+          'Home kitchen — applying for home food manufacturer permit',
+          'Industrial food processing facility',
+        ],
+        required: true, officialFieldName: 'Production / Kitchen Facility Type',
+      },
+      { id: 'estimatedAnnualRevenue',label: 'Estimated Annual Gross Sales (Year 1)',       type: 'text',    placeholder: 'e.g. $75,000',                               required: true,  officialFieldName: 'Estimated Annual Gross Sales' },
+      {
+        id: 'hasRequiredLabeling', label: 'Do Your Product Labels Include All Required FDA Elements?', type: 'select',
+        options: [
+          'Yes — labels include nutrition facts, ingredient list, allergens, net weight, manufacturer name/address',
+          'Labels in development — working with designer/nutritionist',
+          'No — not yet labeled; products sold direct to consumer only (cottage food exemption)',
+        ],
+        required: true, officialFieldName: 'FDA Labeling Compliance Status',
+      },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.fdacs.gov/Business-Services/Food-Safety', submitInstructions: 'Florida: Food manufacturers are licensed by the FL Department of Agriculture and Consumer Services (FDACS). A Food Permit (formerly "Food Business License") is required for manufacturing, packing, and holding food for resale. Apply at fdacs.gov. The FL Cottage Food law (FS 500.80) exempts direct-sale home bakers under $50K/year.' },
+      TX: { submitUrl: 'https://www.dshs.texas.gov/food-manufacturers', submitInstructions: 'Texas: Food manufacturers are licensed by the TX Department of State Health Services (DSHS). A Retail Food Establishment Permit or Food Manufacturing License is required depending on whether products are sold retail or wholesale. Apply at dshs.texas.gov.' },
+      CA: { submitUrl: 'https://www.cdfa.ca.gov/FDB/manufactures.html', submitInstructions: 'California: Food manufacturers are licensed by the CA Department of Public Health (CDPH) Food and Drug Branch. A Food Processor License is required for most packaged food manufacturers. Cottage food operators have a separate Class A or Class B permit. Apply at cdph.ca.gov.' },
+      NY: { submitUrl: 'https://www.agriculture.ny.gov/food-safety/food-processing-facilities', submitInstructions: 'New York: Food processors and manufacturers need a Food Processing Establishment License from the NY Department of Agriculture and Markets. Apply at agriculture.ny.gov. Home processors (cottage food) may qualify for a limited exemption for direct-to-consumer sales.' },
+      IL: { submitUrl: 'https://www2.illinois.gov/sites/agr/Business/FoodIndustry/Pages/default.aspx', submitInstructions: 'Illinois: Food manufacturers and processors must obtain a Food Business License from the IL Department of Agriculture. Apply at agriculture.illinois.gov. Chicago additionally requires a Food Business Sanitation Certificate from the Chicago Department of Public Health.' },
+    },
+  },
+
+  // v73 — New guided wizard forms ──────────────────────────────────────────────
+
+  'plumbing-contractor-license': {
+    id:          'plumbing-contractor-license',
+    name:        'Plumbing Contractor License / Permit',
+    description:
+      'Any business performing plumbing work — pipe installation, drain cleaning, water ' +
+      'heater installation, gas line work, or septic/sewer connections — must hold a ' +
+      'state Plumbing Contractor License. This is separate from an electrical or general ' +
+      'contractor license and is issued by the state\'s plumbing licensing board or ' +
+      'Department of Business and Professional Regulation. Requirements typically include ' +
+      'proof of journeyman plumber experience (2–4 years), a written exam, liability ' +
+      'insurance, workers\' compensation, and a surety bond. Performing plumbing work ' +
+      'without a license is a criminal offense in most states and voids homeowner insurance.',
+    fee:         '$50–$400/year state license fee + exam fee + bond',
+    defaultRenewalMonths: 24,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply through your state\'s plumbing licensing board or contractor licensing agency. ' +
+      'Most states require passing a state plumbing exam (often through PSI or Pearson VUE), ' +
+      'proof of journeyman or master plumber experience, and current liability and ' +
+      'workers\' compensation insurance. Some states have municipal licensing in addition ' +
+      'to the state license (e.g., Chicago, NYC).',
+    requiredDocs: [
+      'Completed Plumbing Contractor License application',
+      'Proof of plumbing experience (affidavit from prior licensed employer or union records)',
+      'Passing score certificate from state plumbing exam (master or journeyman)',
+      'General liability insurance certificate ($300,000–$1M minimum)',
+      'Workers\' compensation insurance certificate (if employees)',
+      'Surety bond certificate (amount varies by state)',
+      'Federal EIN certificate',
+      'Business entity registration / LLC / DBA',
+      'Government-issued photo ID',
+    ],
+    fields: [
+      { id: 'applicantLegalName',   label: 'Qualifying Plumber / Applicant Full Name',   type: 'text',    placeholder: 'Full legal name of licensed master plumber', required: true,  officialFieldName: 'Qualifying Agent / Applicant Name' },
+      { id: 'businessName',         label: 'Plumbing Company Name',                       type: 'text',    placeholder: 'e.g. Ace Plumbing Services LLC',            required: true,  officialFieldName: 'Business / Company Name' },
+      { id: 'physicalAddress',      label: 'Business / Office Address',                   type: 'address', placeholder: '123 Main St, City, State ZIP',               required: true,  officialFieldName: 'Business Address' },
+      { id: 'businessPhone',        label: 'Business Phone',                              type: 'phone',   placeholder: '(555) 555-0100',                             required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',        label: 'Business Email',                              type: 'email',   placeholder: 'you@plumbing.com',                           required: false, officialFieldName: 'Contact Email' },
+      { id: 'fein',                 label: 'Federal EIN',                                 type: 'text',    placeholder: '12-3456789',                                 required: true,  officialFieldName: 'Federal EIN' },
+      {
+        id: 'licenseType', label: 'Plumbing License Type', type: 'select',
+        options: [
+          'Master Plumber / Plumbing Contractor (full scope)',
+          'Journeyman Plumber (working under licensed contractor)',
+          'Residential Plumbing Contractor (single-family homes only)',
+          'Underground Utility / Water & Sewer Contractor',
+          'Gas Piping / Medical Gas Contractor',
+          'Irrigation / Landscape Irrigation Contractor',
+        ],
+        required: true, officialFieldName: 'License Type / Category',
+      },
+      { id: 'yearsExperience',      label: 'Years of Plumbing Experience',                type: 'text',    placeholder: 'e.g. 5',                                     required: true,  officialFieldName: 'Qualifying Experience (Years)' },
+      {
+        id: 'hasCertification', label: 'Have You Passed the Required State Plumbing Exam?', type: 'select',
+        options: [
+          'Yes — exam passed, certificate available',
+          'No — planning to test soon',
+          'Exempt via reciprocal license from another state',
+          'License by endorsement / out-of-state experience',
+        ],
+        required: true, officialFieldName: 'Exam / Certification Status',
+      },
+      { id: 'liabilityInsurer',     label: 'General Liability Insurance Carrier',         type: 'text',    placeholder: 'Insurance company name',                     required: true,  officialFieldName: 'Liability Insurance Carrier' },
+      { id: 'liabilityPolicyNum',   label: 'Liability Insurance Policy Number',           type: 'text',    placeholder: 'Policy number',                              required: true,  officialFieldName: 'Liability Policy Number' },
+      { id: 'bondAmount',           label: 'Surety Bond Amount',                          type: 'text',    placeholder: 'e.g. $10,000',                               required: true,  officialFieldName: 'Surety Bond Amount' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.myfloridalicense.com/DBPR/plumbing', submitInstructions: 'Florida: Plumbing contractors are licensed by the FL Construction Industry Licensing Board (CILB) through DBPR. Apply at myfloridalicense.com. Exam required (Pearson VUE). State license valid statewide.' },
+      TX: { submitUrl: 'https://www.tdlr.texas.gov/plumbing/plumbing.htm', submitInstructions: 'Texas: Plumbers are licensed by the Texas State Board of Plumbing Examiners (TSBPE). A Master Plumber license is required to hold a Plumbing Contractor endorsement. Apply at tsbpe.texas.gov.' },
+      CA: { submitUrl: 'https://www.cslb.ca.gov/About_CSLB/Licensing_Classifications/C-36_Plumbing.aspx', submitInstructions: 'California: Plumbing contractors must hold a C-36 Plumbing Contractor License from the CA Contractors State License Board (CSLB). Apply at cslb.ca.gov. Requires state trade exam. $15,000 bond required. Biennial renewal.' },
+      NY: { submitUrl: 'https://www.dos.ny.gov/licensing/plumber/plumber.html', submitInstructions: 'New York: Master Plumber and Journeyman Plumber licenses are issued at the local level in NY (NYC, Buffalo, Albany, etc.). NYC requires a NYC Master Plumber license from the NYC Department of Buildings. Outside NYC, check your city or county licensing authority.' },
+      IL: { submitUrl: 'https://idfpr.illinois.gov/profs/plumber.asp', submitInstructions: 'Illinois: Plumbers are licensed by the IL Department of Financial and Professional Regulation (IDFPR). Both a Plumber License and a Plumbing Contractor License are required. Apply at idfpr.illinois.gov.' },
+      AZ: { submitUrl: 'https://roc.az.gov/licensing/applying-for-a-license', submitInstructions: 'Arizona: Plumbing contractors are licensed by the AZ Registrar of Contractors (ROC). CR-37 (Commercial Plumbing) or R-37 (Residential Plumbing) classifications apply. Apply at roc.az.gov.' },
+    },
+  },
+
+  'hvac-contractor-license': {
+    id:          'hvac-contractor-license',
+    name:        'HVAC / Air Conditioning Contractor License',
+    description:
+      'Any business installing, servicing, or replacing heating, ventilation, and air ' +
+      'conditioning (HVAC) systems — including residential AC units, commercial rooftop ' +
+      'units, heat pumps, ductwork, boilers, and refrigeration equipment — must hold an ' +
+      'HVAC Contractor License from the state licensing board. Federal EPA Section 608 ' +
+      'Certification is required for any work involving refrigerants (R-22, R-410A). ' +
+      'Some states combine HVAC with mechanical licensing; others issue separate ' +
+      'categories for residential vs. commercial. Working without a license voids ' +
+      'warranties and can result in criminal charges.',
+    fee:         '$50–$400/year state license + EPA 608 certification ($20–$100 exam)',
+    defaultRenewalMonths: 24,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply through your state\'s HVAC, mechanical, or contractor licensing board. ' +
+      'Most states require an exam, proof of EPA 608 certification, liability insurance, ' +
+      'and a surety bond. Some states (FL, TX, CA, AZ) have statewide contractor ' +
+      'licensing; others (NY, IL) do licensing at the local level.',
+    requiredDocs: [
+      'Completed HVAC / Mechanical Contractor License application',
+      'EPA Section 608 Universal certification card (for refrigerant work)',
+      'Proof of HVAC experience (2–4 years journeyman experience)',
+      'Passing score certificate from state HVAC/mechanical exam',
+      'General liability insurance certificate ($300,000–$1M minimum)',
+      'Workers\' compensation insurance (if employees)',
+      'Surety bond certificate',
+      'Federal EIN certificate',
+      'Business entity registration',
+    ],
+    fields: [
+      { id: 'applicantLegalName',   label: 'Qualifying HVAC Tech / Applicant Full Name',  type: 'text',    placeholder: 'Full legal name',                           required: true,  officialFieldName: 'Qualifying Agent / Applicant Name' },
+      { id: 'businessName',         label: 'HVAC Company Name',                           type: 'text',    placeholder: 'e.g. Cool Air HVAC Services LLC',            required: true,  officialFieldName: 'Business / Company Name' },
+      { id: 'physicalAddress',      label: 'Business / Office Address',                   type: 'address', placeholder: '123 Main St, City, State ZIP',               required: true,  officialFieldName: 'Business Address' },
+      { id: 'businessPhone',        label: 'Business Phone',                              type: 'phone',   placeholder: '(555) 555-0100',                             required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',        label: 'Business Email',                              type: 'email',   placeholder: 'you@hvaccompany.com',                        required: false, officialFieldName: 'Contact Email' },
+      { id: 'fein',                 label: 'Federal EIN',                                 type: 'text',    placeholder: '12-3456789',                                 required: true,  officialFieldName: 'Federal EIN' },
+      {
+        id: 'licenseType', label: 'HVAC License Type / Scope', type: 'select',
+        options: [
+          'HVAC Contractor — Residential (residential systems only)',
+          'HVAC Contractor — Commercial (commercial and residential)',
+          'Mechanical Contractor (HVAC + plumbing + refrigeration)',
+          'Refrigeration Contractor (commercial refrigeration)',
+          'Sheet Metal / Ductwork Contractor',
+          'Boiler Installation & Service Contractor',
+        ],
+        required: true, officialFieldName: 'License Type / Scope',
+      },
+      { id: 'yearsExperience',      label: 'Years of HVAC Experience',                   type: 'text',    placeholder: 'e.g. 4',                                     required: true,  officialFieldName: 'Qualifying Experience (Years)' },
+      {
+        id: 'hasCertification', label: 'EPA Section 608 Universal Certification Status', type: 'select',
+        options: [
+          'Yes — EPA 608 Universal certified (all refrigerant types)',
+          'Yes — EPA 608 Type I & II only (small appliances and high-pressure)',
+          'No — working on getting certified',
+          'N/A — no refrigerant work performed',
+        ],
+        required: true, officialFieldName: 'EPA 608 Certification Status',
+      },
+      { id: 'liabilityInsurer',     label: 'General Liability Insurance Carrier',         type: 'text',    placeholder: 'Insurance company name',                     required: true,  officialFieldName: 'Liability Insurance Carrier' },
+      { id: 'liabilityPolicyNum',   label: 'Liability Insurance Policy Number',           type: 'text',    placeholder: 'Policy number',                              required: true,  officialFieldName: 'Liability Policy Number' },
+      { id: 'bondAmount',           label: 'Surety Bond Amount',                          type: 'text',    placeholder: 'e.g. $10,000',                               required: true,  officialFieldName: 'Surety Bond Amount' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.myfloridalicense.com/DBPR/air-conditioning', submitInstructions: 'Florida: HVAC contractors are licensed by the FL Construction Industry Licensing Board (CILB) as Air Conditioning Contractors. Class A (unlimited) and Class B (residential) licenses available. Apply at myfloridalicense.com.' },
+      TX: { submitUrl: 'https://www.tdlr.texas.gov/ac/ac.htm', submitInstructions: 'Texas: Air conditioning and refrigeration contractors are licensed by the Texas Department of Licensing and Regulation (TDLR). A Class A or Class B ACR Contractor license is required. Apply at tdlr.texas.gov.' },
+      CA: { submitUrl: 'https://www.cslb.ca.gov/About_CSLB/Licensing_Classifications/C-20_Warm-Air.aspx', submitInstructions: 'California: HVAC contractors must hold a C-20 Warm-Air Heating, Ventilating and Air-Conditioning Contractor License from the CA CSLB. Apply at cslb.ca.gov. $15,000 bond required. Biennial renewal.' },
+      NY: { submitUrl: 'https://www.dos.ny.gov/licensing/hvac/hvac.html', submitInstructions: 'New York: HVAC contractor licensing is primarily at the local level in NY. NYC requires an HVAC Master Mechanic or Fire Suppression Piping license from the NYC DOB. Other cities issue their own licenses. Check your specific jurisdiction.' },
+      AZ: { submitUrl: 'https://roc.az.gov/licensing/applying-for-a-license', submitInstructions: 'Arizona: HVAC contractors are licensed by the AZ Registrar of Contractors (ROC). CR-39 (Commercial HVAC) or R-39 (Residential HVAC) classifications. Apply at roc.az.gov.' },
+      GA: { submitUrl: 'https://sos.georgia.gov/professional-licensing/conditioned-air-contractor', submitInstructions: 'Georgia: HVAC / conditioned air contractors are licensed by the GA Secretary of State Professional Licensing Boards Division. Class II (unrestricted) or Class IV (residential) HVAC contractor license required. Apply at sos.georgia.gov.' },
+    },
+  },
+
+  'pest-control-license': {
+    id:          'pest-control-license',
+    name:        'Pest Control / Exterminator Business License',
+    description:
+      'Any business providing pest control services — including treatment for roaches, ' +
+      'rodents, termites, bed bugs, mosquitoes, lawn pests, or wildlife — must hold a ' +
+      'state Pest Control Business License and their applicators must be individually ' +
+      'licensed as Certified Pesticide Applicators. The business license is issued by ' +
+      'the state Department of Agriculture or a dedicated pest management regulatory ' +
+      'board. In Florida and the South, separate categories exist for general pest, ' +
+      'termite (WDO), lawn & ornamental, and fumigation. Using restricted-use pesticides ' +
+      'without a license is a federal and state violation.',
+    fee:         '$50–$400/year state business license + $25–$150/year per applicator license',
+    defaultRenewalMonths: 12,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply through your state\'s Department of Agriculture, Division of Plant Industry, ' +
+      'or Structural Pest Control Board. The business entity license is separate from ' +
+      'individual applicator licenses (which require exams and CEUs for renewal). ' +
+      'Most states also require proof of general liability insurance and a surety bond.',
+    requiredDocs: [
+      'Completed Pest Control / Structural Pest Management Business License application',
+      'Certified Pesticide Applicator license(s) for qualifying employee(s)',
+      'Proof of general liability insurance ($300,000–$1M)',
+      'Surety bond certificate',
+      'Federal EIN certificate',
+      'Business entity registration',
+      'List of all certified applicators employed by the company',
+    ],
+    fields: [
+      { id: 'businessName',         label: 'Pest Control Company Name',                   type: 'text',    placeholder: 'e.g. Guardian Pest Solutions LLC',           required: true,  officialFieldName: 'Business / Company Name' },
+      { id: 'ownerFullName',        label: 'Owner / Qualifying Agent Full Name',           type: 'text',    placeholder: 'Full legal name',                            required: true,  officialFieldName: 'Owner / Qualifying Agent Name' },
+      { id: 'physicalAddress',      label: 'Business / Office Address',                   type: 'address', placeholder: '123 Main St, City, State ZIP',               required: true,  officialFieldName: 'Business Address' },
+      { id: 'businessPhone',        label: 'Business Phone',                              type: 'phone',   placeholder: '(555) 555-0100',                             required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',        label: 'Business Email',                              type: 'email',   placeholder: 'you@pestcontrol.com',                        required: false, officialFieldName: 'Contact Email' },
+      { id: 'fein',                 label: 'Federal EIN',                                 type: 'text',    placeholder: '12-3456789',                                 required: true,  officialFieldName: 'Federal EIN' },
+      {
+        id: 'licenseType', label: 'Pest Control Service Category', type: 'select',
+        options: [
+          'General Household Pest (ants, roaches, rodents, spiders, etc.)',
+          'Termite / Wood-Destroying Organism (WDO) Control',
+          'Lawn & Ornamental (turf, landscape, and garden pests)',
+          'Fumigation (enclosed space / structural fumigation)',
+          'Mosquito / Outdoor Pest Control',
+          'Bed Bug Remediation',
+          'Wildlife Removal / Nuisance Animal Control',
+          'Full Service (all categories above)',
+        ],
+        required: true, officialFieldName: 'License Category / Pest Control Type',
+      },
+      { id: 'existingLicenseNumber',label: 'Certified Applicator License Number (Qualifying Employee)', type: 'text', placeholder: 'Applicator cert number', required: true, officialFieldName: 'Qualifying Agent Applicator License Number' },
+      {
+        id: 'hasCriminalHistory', label: 'Have Any Owners Been Convicted of an Environmental or Pesticide Violation?', type: 'select',
+        options: ['No', 'Yes — full disclosure provided in application'],
+        required: true, officialFieldName: 'Criminal / Regulatory Violation Disclosure',
+      },
+      { id: 'liabilityInsurer',     label: 'General Liability Insurance Carrier',         type: 'text',    placeholder: 'Insurance company name',                     required: true,  officialFieldName: 'Liability Insurance Carrier' },
+      { id: 'liabilityPolicyNum',   label: 'Liability Insurance Policy Number',           type: 'text',    placeholder: 'Policy number',                              required: true,  officialFieldName: 'Liability Policy Number' },
+      { id: 'bondAmount',           label: 'Surety Bond Amount',                          type: 'text',    placeholder: 'e.g. $10,000',                               required: false, officialFieldName: 'Surety Bond Amount' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.fdacs.gov/Business-Services/Pest-Control', submitInstructions: 'Florida: Pest control businesses are regulated by the FL Department of Agriculture and Consumer Services (FDACS), Division of Agricultural Environmental Services. A Pest Control Business License is required per location. Categories include General Household Pest, Termite/WDO, Lawn & Ornamental, and Fumigation. Apply at fdacs.gov.' },
+      TX: { submitUrl: 'https://www.tda.texas.gov/pesticide-programs', submitInstructions: 'Texas: Structural pest control businesses are licensed by the Texas Department of Agriculture (TDA) Pesticide Programs Division. A Structural Pest Control Business License and a Licensed Pest Management Professional (LPMP) are both required. Apply at tda.texas.gov.' },
+      CA: { submitUrl: 'https://www.cdpr.ca.gov/docs/license/licinf.htm', submitInstructions: 'California: Pest control businesses are licensed by the CA Department of Pesticide Regulation (CDPR) and county agricultural commissioners. A CA Pest Control Business License and a Qualified Applicator License (QAL) or Certificate (QAC) are required. Apply at cdpr.ca.gov.' },
+      NY: { submitUrl: 'https://www.dec.ny.gov/chemical/309.html', submitInstructions: 'New York: Commercial pesticide applicators and pest control businesses are regulated by the NY DEC Division of Materials Management. Both a NY Pesticide Business Registration and individual Certified Commercial Applicator licenses are required. Apply at dec.ny.gov.' },
+      GA: { submitUrl: 'https://sos.georgia.gov/professional-licensing/pest-control', submitInstructions: 'Georgia: Pest control businesses are regulated by the GA Secretary of State Professional Licensing Division and the GA Department of Agriculture. Both a Business License and a Certified Pest Control Operator are required. Apply at sos.georgia.gov.' },
+    },
+  },
+
+  'vehicle-repair-shop-license': {
+    id:          'vehicle-repair-shop-license',
+    name:        'Auto Repair Shop / Service Garage License',
+    description:
+      'Auto repair shops, tire shops, oil change businesses, body shops, and towing ' +
+      'operations must obtain a Vehicle Repair Shop or Motor Vehicle Service Facility ' +
+      'license from the state\'s motor vehicle agency or Department of Agriculture ' +
+      '(for used oil compliance). Many states also require a city or county business ' +
+      'license and a Certificate of Occupancy for the repair bay space. Shops that ' +
+      'handle refrigerants must have EPA 608 certified technicians. Shops that accept ' +
+      'credit cards for repairs often need a Written Estimate / Customer Authorization ' +
+      'compliance policy posted. Air quality permits may also be required for spray ' +
+      'painting operations.',
+    fee:         '$25–$200/year state registration + local business license fee',
+    defaultRenewalMonths: 12,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply through your state\'s DMV, Department of Consumer Affairs, or Motor ' +
+      'Vehicle Dealer/Repair Licensing Board. Provide proof of business insurance, ' +
+      'proof of zoning compliance for automotive repair use, and a list of services ' +
+      'offered. Some states require a separate registration for each service type ' +
+      '(e.g., body repair vs. mechanical repair vs. tire dealer).',
+    requiredDocs: [
+      'Completed Motor Vehicle Repair Facility / Service Garage License application',
+      'Business entity registration / LLC / DBA',
+      'Federal EIN certificate',
+      'Certificate of Occupancy for repair bay location (auto use zoning required)',
+      'Proof of general liability insurance ($500K minimum)',
+      'Proof of garage keeper\'s legal liability insurance',
+      'List of all services offered and equipment on-site',
+      'ASE certifications for any specialty work (optional but recommended)',
+    ],
+    fields: [
+      { id: 'businessName',         label: 'Repair Shop / Garage Name',                   type: 'text',    placeholder: 'e.g. Main Street Auto Repair',              required: true,  officialFieldName: 'Repair Facility / Business Name' },
+      { id: 'ownerFullName',        label: 'Owner / Operator Full Name',                   type: 'text',    placeholder: 'Full legal name',                            required: true,  officialFieldName: 'Owner / Applicant Name' },
+      { id: 'physicalAddress',      label: 'Repair Shop Address',                         type: 'address', placeholder: '123 Auto Lane, City, State ZIP',             required: true,  officialFieldName: 'Premises / Facility Address' },
+      { id: 'businessPhone',        label: 'Shop Phone',                                  type: 'phone',   placeholder: '(555) 555-0100',                             required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',        label: 'Shop Email',                                  type: 'email',   placeholder: 'you@autorepair.com',                         required: false, officialFieldName: 'Contact Email' },
+      { id: 'fein',                 label: 'Federal EIN',                                 type: 'text',    placeholder: '12-3456789',                                 required: true,  officialFieldName: 'Federal EIN' },
+      {
+        id: 'facilityType', label: 'Type of Auto Repair Services', type: 'select',
+        options: [
+          'General mechanical repair (engine, brakes, transmission, etc.)',
+          'Oil change & lube only',
+          'Tire shop / wheel alignment',
+          'Auto body / collision repair & painting',
+          'Transmission specialist',
+          'Auto electric / diagnostic specialist',
+          'Full service (mechanical + body + diagnostic)',
+          'Towing / wrecker service (with storage yard)',
+          'Classic car / specialty vehicle restoration',
+        ],
+        required: true, officialFieldName: 'Facility Type / Service Category',
+      },
+      { id: 'numBays',              label: 'Number of Service Bays / Lifts',              type: 'text',    placeholder: 'e.g. 4',                                     required: true,  officialFieldName: 'Number of Service Bays' },
+      {
+        id: 'hasEnvironmentalCompliance', label: 'Environmental Compliance', type: 'select',
+        options: [
+          'Yes — registered with state for used oil, coolant, and refrigerant disposal',
+          'No — working on getting registered before opening',
+          'N/A — no oil changes, no refrigerant work performed',
+        ],
+        required: true, officialFieldName: 'Environmental / Hazmat Compliance Status',
+      },
+      { id: 'liabilityInsurer',     label: 'General & Garage Liability Insurance Carrier', type: 'text',   placeholder: 'Insurance company name',                     required: true,  officialFieldName: 'Liability Insurance Carrier' },
+      { id: 'liabilityPolicyNum',   label: 'Insurance Policy Number',                     type: 'text',    placeholder: 'Policy number',                              required: true,  officialFieldName: 'Insurance Policy Number' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.myfloridalicense.com/DBPR/motor-vehicle-repair', submitInstructions: 'Florida: Motor vehicle repair shops must register with the FL Department of Agriculture and Consumer Services (FDACS) — not DBPR. A Motor Vehicle Repair Registration is required before opening. Apply at fdacs.gov/Motor-Vehicles. Annual renewal required.' },
+      TX: { submitUrl: 'https://www.tdlr.texas.gov/mvsa/mvsa.htm', submitInstructions: 'Texas: Auto repair facilities are regulated by the Texas Department of Licensing and Regulation (TDLR) under the Motor Vehicle Safety Inspection program. A Certified Inspection Station License is needed for inspections. Auto dealers and body shops may need additional TDLR licenses.' },
+      CA: { submitUrl: 'https://www.bar.ca.gov/registration/index.html', submitInstructions: 'California: Auto repair shops must register with the CA Bureau of Automotive Repair (BAR) before opening. A CA Automotive Repair Dealer (ARD) Registration is required. Apply at bar.ca.gov. Annual renewal.' },
+      NY: { submitUrl: 'https://dmv.ny.gov/registration/repair-shop-registration', submitInstructions: 'New York: Auto repair shops must register with the NY DMV as a Registered Repair Shop. A NY DMV Repair Shop Registration certificate must be posted. Apply at dmv.ny.gov. Annual renewal.' },
+      IL: { submitUrl: 'https://idfpr.illinois.gov/profs/auto-repair.asp', submitInstructions: 'Illinois: The Illinois Motor Vehicle Franchise Act and related laws regulate auto dealers and service facilities. Chicago requires a local business license. Check with the IL Secretary of State and your local municipality.' },
+    },
+  },
+
+  'roofing-contractor-license': {
+    id:          'roofing-contractor-license',
+    name:        'Roofing Contractor License',
+    description:
+      'Roofing contractors who install, repair, or replace residential or commercial ' +
+      'roofs — including shingle, tile, metal, flat/EPDM, and TPO systems — must hold ' +
+      'a state Roofing Contractor License in many states. Florida is the largest market ' +
+      'and requires a separate Certified Roofing Contractor (CRC) or Registered Roofing ' +
+      'Contractor license. Texas does not require a state roofing license but many TX ' +
+      'municipalities do. California requires a C-39 Roofing contractor classification. ' +
+      'Working without a license and performing unlicensed roofing after a storm is a ' +
+      'major source of consumer complaints and can result in criminal charges.',
+    fee:         '$50–$400/year state license fee + exam fee + bond',
+    defaultRenewalMonths: 24,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply through your state\'s contractor licensing board, DBPR, or Department of ' +
+      'Consumer Affairs. Most states require a written exam, proof of roofing experience, ' +
+      'liability insurance ($300K–$1M), workers\' compensation, and a surety bond. ' +
+      'Some states (like FL) require a separate CRC exam administered by Pearson VUE.',
+    requiredDocs: [
+      'Completed Roofing Contractor License application',
+      'Proof of roofing experience (affidavit or employment records — typically 2+ years)',
+      'Passing score certificate from state roofing/contractor exam',
+      'General liability insurance certificate ($300,000–$1M minimum)',
+      'Workers\' compensation insurance certificate (if employees)',
+      'Surety bond certificate (amount varies by state)',
+      'Federal EIN certificate',
+      'Business entity registration / LLC / DBA',
+    ],
+    fields: [
+      { id: 'applicantLegalName',   label: 'Qualifying Roofer / Applicant Full Name',      type: 'text',    placeholder: 'Full legal name of qualifying roofing contractor', required: true,  officialFieldName: 'Qualifying Agent / Applicant Name' },
+      { id: 'businessName',         label: 'Roofing Company Name',                          type: 'text',    placeholder: 'e.g. Summit Roofing LLC',                      required: true,  officialFieldName: 'Business / Company Name' },
+      { id: 'physicalAddress',      label: 'Business / Office Address',                     type: 'address', placeholder: '123 Main St, City, State ZIP',                 required: true,  officialFieldName: 'Business Address' },
+      { id: 'businessPhone',        label: 'Business Phone',                                type: 'phone',   placeholder: '(555) 555-0100',                               required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',        label: 'Business Email',                                type: 'email',   placeholder: 'you@roofing.com',                              required: false, officialFieldName: 'Contact Email' },
+      { id: 'fein',                 label: 'Federal EIN',                                   type: 'text',    placeholder: '12-3456789',                                   required: true,  officialFieldName: 'Federal EIN' },
+      {
+        id: 'licenseType', label: 'Roofing License Type', type: 'select',
+        options: [
+          'Certified Roofing Contractor — CRC (unlimited scope, commercial + residential)',
+          'Registered Roofing Contractor — limited to one county',
+          'Roofing Subcontractor (works under a licensed GC or CRC)',
+          'Residential Roofing Contractor (single-family homes only)',
+          'Commercial Roofing Contractor (commercial buildings only)',
+        ],
+        required: true, officialFieldName: 'License Type / Classification',
+      },
+      { id: 'yearsExperience',      label: 'Years of Roofing Experience',                  type: 'text',    placeholder: 'e.g. 4',                                       required: true,  officialFieldName: 'Qualifying Experience (Years)' },
+      {
+        id: 'hasCertification', label: 'Have You Passed the Required State Roofing Exam?', type: 'select',
+        options: [
+          'Yes — exam passed, score available',
+          'No — planning to test soon',
+          'Exempt — reciprocal license from another state',
+          'Exam not required in my state',
+        ],
+        required: true, officialFieldName: 'Exam / Certification Status',
+      },
+      { id: 'liabilityInsurer',     label: 'General Liability Insurance Carrier',           type: 'text',    placeholder: 'Insurance company name',                       required: true,  officialFieldName: 'Liability Insurance Carrier' },
+      { id: 'liabilityPolicyNum',   label: 'Liability Insurance Policy Number',             type: 'text',    placeholder: 'Policy number',                                required: true,  officialFieldName: 'Liability Policy Number' },
+      { id: 'bondAmount',           label: 'Surety Bond Amount',                            type: 'text',    placeholder: 'e.g. $10,000',                                 required: true,  officialFieldName: 'Surety Bond Amount' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.myfloridalicense.com/DBPR/roofing', submitInstructions: 'Florida: Roofing contractors are licensed by the FL Construction Industry Licensing Board (CILB). A Certified Roofing Contractor (CRC) license is required for commercial work or working statewide. A Registered Roofing Contractor is limited to one county. Apply at myfloridalicense.com. Exam required (Pearson VUE).' },
+      TX: { submitUrl: 'https://www.tdlr.texas.gov/contractor', submitInstructions: 'Texas: No statewide roofing contractor license exists. However, many TX cities (Austin, San Antonio, Dallas, Houston) require local roofing permits and some require licensed contractors. Austin requires a Building Permit for any roofing replacement. Check your local city requirements.' },
+      CA: { submitUrl: 'https://www.cslb.ca.gov/About_CSLB/Licensing_Classifications/C-39_Roofing.aspx', submitInstructions: 'California: Roofing contractors must hold a C-39 Roofing Contractor License from the CA Contractors State License Board (CSLB). Apply at cslb.ca.gov. State trade exam required. $15,000 bond required. Biennial renewal.' },
+      NY: { submitUrl: 'https://www.dos.ny.gov/licensing/home_improvement/home_improvement.html', submitInstructions: 'New York: Home improvement contractors (including roofers) must be registered as Home Improvement Contractors with the NY Department of State in NYC and surrounding areas. NYC requires a Home Improvement Contractor License. Apply at dos.ny.gov.' },
+      GA: { submitUrl: 'https://sos.georgia.gov/professional-licensing/conditioned-air-contractor', submitInstructions: 'Georgia: Roofing contractors in GA do not need a statewide state license but must obtain a local business license and building permits. Atlanta and other cities require contractor registration. Check with your local building department.' },
+    },
+  },
+
+  // v72 — New guided wizard forms ──────────────────────────────────────────────
+
+  'barbershop-cosmetology-salon-permit': {
+    id:          'barbershop-cosmetology-salon-permit',
+    name:        'Barbershop / Cosmetology Salon Establishment Permit',
+    description:
+      'Every state requires a licensed cosmetology establishment permit — separate from the ' +
+      'individual cosmetologist or barber license — before opening a salon, barbershop, nail ' +
+      'salon, waxing studio, esthetics studio, or blow-dry bar. The establishment permit is ' +
+      'issued by the state Board of Cosmetology or Department of Health and must be posted ' +
+      'visibly in the salon. Inspections are required before initial licensure and annually ' +
+      'thereafter. Failure to obtain an establishment permit can result in immediate closure ' +
+      'and fines regardless of individual licensure status.',
+    fee:         '$25–$200/year (state establishment permit + local business license)',
+    defaultRenewalMonths: 24,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply to your state Board of Cosmetology or Department of Business and Professional ' +
+      'Regulation. Submit the application, floor plan, and payment before opening. ' +
+      'An initial inspection will be scheduled to verify compliance with sanitation, ' +
+      'ventilation, and workstation standards.',
+    requiredDocs: [
+      'Completed establishment permit application form',
+      'Scaled floor plan showing all workstations, sinks, and sterilization areas',
+      'Lease agreement or proof of property ownership for salon location',
+      'List of all licensed cosmetologists / barbers employed',
+      'Certificate of occupancy from local building department',
+      'Proof of general liability insurance',
+      'Payment of state establishment permit fee',
+    ],
+    fields: [
+      { id: 'businessName',         label: 'Salon / Shop Name',                         type: 'text',    placeholder: 'e.g. Glamour Cuts Salon',                 required: true,  officialFieldName: 'Establishment Name' },
+      { id: 'ownerFullName',        label: 'Owner / Licensed Manager Full Name',         type: 'text',    placeholder: 'Full legal name',                         required: true,  officialFieldName: 'Owner / Responsible Manager Name' },
+      { id: 'physicalAddress',      label: 'Salon / Shop Street Address',               type: 'address', placeholder: '123 Main St, City, State ZIP',             required: true,  officialFieldName: 'Premises / Establishment Address' },
+      { id: 'businessPhone',        label: 'Salon Phone',                               type: 'phone',   placeholder: '(555) 555-0100',                           required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',        label: 'Salon Email',                               type: 'email',   placeholder: 'you@salon.com',                            required: false, officialFieldName: 'Contact Email' },
+      {
+        id: 'licenseType', label: 'Type of Cosmetology Establishment', type: 'select',
+        options: [
+          'Full-service beauty salon (cosmetology)',
+          'Barbershop',
+          'Nail salon / nail tech studio',
+          'Esthetics / skin care studio',
+          'Waxing salon',
+          'Blow-dry bar / blowout salon',
+          'Combination salon (barbershop + cosmetology)',
+          'Spa / full-service day spa',
+          'Braiding salon / natural hair care',
+          'Eyelash extension studio',
+        ],
+        required: true, officialFieldName: 'Establishment Type / License Category',
+      },
+      { id: 'numChairs',            label: 'Number of Styling Chairs / Workstations',  type: 'text',    placeholder: 'e.g. 6',                                   required: true,  officialFieldName: 'Number of Stations / Chairs' },
+      { id: 'numLicensedEmployees', label: 'Number of Licensed Cosmetologists / Barbers', type: 'text', placeholder: 'e.g. 4',                                   required: true,  officialFieldName: 'Number of Licensed Employees' },
+      { id: 'existingLicenseNumber',label: 'Existing Establishment License # (if renewal)', type: 'text', placeholder: 'Current license number',                required: false, officialFieldName: 'Current Establishment License Number' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.myfloridalicense.com/DBPR/cosmetology', submitInstructions: 'Florida: Cosmetology salons apply through the FL Department of Business and Professional Regulation (DBPR). A Cosmetology Salon License is required before opening. Apply at myfloridalicense.com. Annual renewal required. FL also requires a separate inspection by the Division of Hotels and Restaurants.' },
+      TX: { submitUrl: 'https://www.tdlr.texas.gov/cosmet/cosmet.htm', submitInstructions: 'Texas: Cosmetology establishments apply through the Texas Department of Licensing and Regulation (TDLR). Submit Form CS-EST. Annual renewal required. Barbershops apply to TDLR Barber Program separately.' },
+      CA: { submitUrl: 'https://www.barbercosmo.ca.gov/licensees/establishments.shtml', submitInstructions: 'California: Cosmetology and barbershop establishments are licensed by the CA Board of Barbering and Cosmetology. Apply at barbercosmo.ca.gov. Biennial renewal. A premises inspection is required before initial licensure.' },
+      NY: { submitUrl: 'https://www.dos.ny.gov/licensing/cosmetology/cosmetology.html', submitInstructions: 'New York: Beauty salons, barbershops, and related establishments are licensed by the NY Department of State Division of Licensing Services. Apply at dos.ny.gov. Biennial renewal required.' },
+      IL: { submitUrl: 'https://idfpr.illinois.gov/profs/cosmt.asp', submitInstructions: 'Illinois: Cosmetology establishments are licensed by the IL Department of Financial and Professional Regulation (IDFPR). Apply at idfpr.illinois.gov. Annual renewal required. A separate City of Chicago Barbershop/Salon license may also be required.' },
+      GA: { submitUrl: 'https://sos.georgia.gov/professional-licensing/cosmetology', submitInstructions: 'Georgia: Cosmetology salons and barbershops are licensed by the GA Secretary of State Cosmetology Division. Apply at sos.georgia.gov. Biennial renewal required.' },
+      AZ: { submitUrl: 'https://azbbhe.us/node/532', submitInstructions: 'Arizona: Cosmetology and barbershop establishments are licensed by the Arizona State Board of Cosmetology. Apply at azbbhe.us. Annual renewal required. An inspection is required before the initial establishment license is issued.' },
+    },
+  },
+
+  'tattoo-body-art-studio-permit': {
+    id:          'tattoo-body-art-studio-permit',
+    name:        'Tattoo Parlor / Body Art Studio Health Permit',
+    description:
+      'Tattoo studios, body piercing shops, microblading studios, and permanent makeup salons ' +
+      'require a Body Art Establishment Permit (or Tattoo Studio Health Permit) issued by ' +
+      'the local or state health department. This permit is separate from the individual ' +
+      'tattoo artist or body piercer license. Requirements focus on infection control: ' +
+      'sterilization equipment (autoclave), single-use needles, proper disposal of sharps, ' +
+      'hand-washing sinks at each station, and documented cleaning protocols. Inspections ' +
+      'are required before opening and may be unannounced thereafter.',
+    fee:         '$50–$300/year (health department establishment permit)',
+    defaultRenewalMonths: 12,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply to your local city or county health department. Some states centralize tattoo ' +
+      'studio permitting at the state health department level. An inspector will review your ' +
+      'sterilization equipment, needle disposal protocols, hand-washing station placement, ' +
+      'and artist licensure before issuing the permit.',
+    requiredDocs: [
+      'Completed tattoo / body art establishment permit application',
+      'Floor plan showing each artist station, hand-washing sinks, and autoclave location',
+      'Autoclave / sterilization equipment documentation (model, sterilization logs)',
+      'List of all tattoo artists / piercers with individual license numbers',
+      'Sharps disposal contract with licensed medical waste hauler',
+      'Infection control / bloodborne pathogen exposure plan',
+      'Certificate of occupancy',
+      'Payment of permit fee',
+    ],
+    fields: [
+      { id: 'businessName',         label: 'Studio / Shop Name',                        type: 'text',    placeholder: 'e.g. Ink & Iron Tattoo Studio',           required: true,  officialFieldName: 'Establishment Name' },
+      { id: 'ownerFullName',        label: 'Owner / Applicant Full Name',                type: 'text',    placeholder: 'Full legal name',                         required: true,  officialFieldName: 'Owner / Operator Name' },
+      { id: 'physicalAddress',      label: 'Studio Street Address',                     type: 'address', placeholder: '123 Main St, City, State ZIP',             required: true,  officialFieldName: 'Premises Address' },
+      { id: 'businessPhone',        label: 'Studio Phone',                              type: 'phone',   placeholder: '(555) 555-0100',                           required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',        label: 'Studio Email',                              type: 'email',   placeholder: 'you@tattoo.com',                           required: false, officialFieldName: 'Contact Email' },
+      { id: 'fein',                 label: 'Federal EIN',                               type: 'text',    placeholder: '12-3456789',                               required: true,  officialFieldName: 'Federal EIN' },
+      {
+        id: 'servicesOffered', label: 'Services Offered', type: 'select',
+        options: [
+          'Tattooing only',
+          'Body piercing only',
+          'Both tattooing and body piercing',
+          'Microblading / permanent makeup only',
+          'Tattooing, piercing, and microblading / PMU',
+          'Scarification / branding (specialty)',
+        ],
+        required: true, officialFieldName: 'Body Art Services Offered',
+      },
+      { id: 'numArtists',           label: 'Number of Artists / Piercers',              type: 'text',    placeholder: 'e.g. 3',                                   required: true,  officialFieldName: 'Number of Licensed Artists / Piercers' },
+      {
+        id: 'hasSterilizationEquipment', label: 'Do You Have an Autoclave / Sterilization Unit On-site?', type: 'select',
+        options: ['Yes — autoclave on-site with logs maintained', 'Yes — using pre-sterilized single-use equipment only (no autoclave)', 'No — planning to acquire before opening'],
+        required: true, officialFieldName: 'Sterilization Equipment Availability',
+      },
+      {
+        id: 'hasDisposableNeedles', label: 'Do You Use Only Single-Use / Disposable Needles?', type: 'select',
+        options: ['Yes — all needles and cartridges are single-use, disposed after each client', 'No — we re-sterilize reusable needles with an autoclave'],
+        required: true, officialFieldName: 'Needle / Equipment Policy',
+      },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.floridahealth.gov/environment/community-sanitation/tattoo-studio.html', submitInstructions: 'Florida: Tattoo studios and body piercing establishments are regulated by the FL Department of Health. A Tattoo/Body Piercing Establishment License is required. Apply at floridahealth.gov. Annual renewal required.' },
+      TX: { submitUrl: 'https://www.dshs.texas.gov/environmental-health/body-art', submitInstructions: 'Texas: Body art facilities (tattoo, piercing, microblading) are regulated by the TX Department of State Health Services (DSHS). Apply at dshs.texas.gov. Annual renewal required. The facility permit is separate from the individual body artist registration.' },
+      CA: { submitUrl: 'https://www.cdph.ca.gov/Programs/CCDPHP/DEODC/OHB/Pages/Tattoo.aspx', submitInstructions: 'California: Tattoo and body piercing establishments are regulated at the county level by local environmental health departments. Most CA counties (LA, San Diego, Orange, Alameda) require a separate Body Art Facility Permit. Apply through your county health department.' },
+      NY: { submitUrl: 'https://www.health.ny.gov/regulations/public_health_law/article_4-c', submitInstructions: 'New York: Body piercing and tattooing establishments are regulated by the NY Department of Health. NYC additionally requires a Tattoo / Body Piercing Establishment Permit from the NYC Department of Health. Apply at health.ny.gov.' },
+      IL: { submitUrl: 'https://idph.illinois.gov/bodybody', submitInstructions: 'Illinois: Body art establishments (tattooing, body piercing) are licensed by the IL Department of Public Health. Apply at idph.illinois.gov. Annual permit renewal required.' },
+    },
+  },
+
+  'electrical-contractor-license': {
+    id:          'electrical-contractor-license',
+    name:        'Electrical Contractor License / Permit',
+    description:
+      'Any business performing electrical work — wiring installations, panel upgrades, ' +
+      'generator hookups, EV charger installation, or any work touching electrical circuits ' +
+      '— must hold a state Electrical Contractor License. This is separate from a general ' +
+      'contractor license and is typically issued by the state\'s electrical licensing board, ' +
+      'Department of Business and Professional Regulation, or the state\'s Department of ' +
+      'Labor. Requirements include proof of journeyman experience (typically 2–4 years), ' +
+      'a written exam, liability insurance, workers\' compensation, and a surety bond. ' +
+      'Performing electrical work without a license is a criminal offense in most states.',
+    fee:         '$50–$400/year state license fee + exam fee ($50–$200) + bond',
+    defaultRenewalMonths: 24,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply through your state\'s electrical licensing board or contractor licensing agency. ' +
+      'Most states require passing a state electrical exam (often through PSI Exams or Prometric), ' +
+      'proof of journeyman or master electrician experience, and current liability and ' +
+      'workers\' compensation insurance. Some states have reciprocity with neighboring states.',
+    requiredDocs: [
+      'Completed Electrical Contractor License application',
+      'Proof of electrical experience (affidavit from prior licensed employer)',
+      'Passing score certificate from state electrical exam',
+      'Liability insurance certificate ($300,000–$1M minimum)',
+      'Workers\' compensation insurance certificate (if employees)',
+      'Surety bond certificate (amount varies by state)',
+      'Federal EIN certificate',
+      'Business entity registration / LLC / DBA',
+      'Government-issued photo ID',
+    ],
+    fields: [
+      { id: 'applicantLegalName',   label: 'Qualifying Agent / Applicant Full Name',    type: 'text',    placeholder: 'Full legal name of qualifying electrician',required: true,  officialFieldName: 'Qualifying Agent / Applicant Name' },
+      { id: 'businessName',         label: 'Electrical Company / Business Name',        type: 'text',    placeholder: 'e.g. Bright Sparks Electric LLC',          required: true,  officialFieldName: 'Business / Company Name' },
+      { id: 'physicalAddress',      label: 'Business / Office Address',                 type: 'address', placeholder: '123 Main St, City, State ZIP',             required: true,  officialFieldName: 'Business Address' },
+      { id: 'businessPhone',        label: 'Business Phone',                            type: 'phone',   placeholder: '(555) 555-0100',                           required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',        label: 'Business Email',                            type: 'email',   placeholder: 'you@electric.com',                         required: false, officialFieldName: 'Contact Email' },
+      { id: 'fein',                 label: 'Federal EIN',                               type: 'text',    placeholder: '12-3456789',                               required: true,  officialFieldName: 'Federal EIN' },
+      {
+        id: 'licenseType', label: 'Electrical License Type', type: 'select',
+        options: [
+          'Electrical Contractor (EC) — full commercial/residential',
+          'Residential Electrical Contractor — residential only',
+          'Journeyman Electrician — employed by licensed EC',
+          'Low-Voltage / Alarm / Data / Telecom Contractor',
+          'Sign / Display Electrical Contractor',
+          'Solar / Photovoltaic Electrical Contractor',
+        ],
+        required: true, officialFieldName: 'License Type / Category',
+      },
+      { id: 'yearsExperience',      label: 'Years of Electrical Experience',            type: 'text',    placeholder: 'e.g. 4',                                   required: true,  officialFieldName: 'Qualifying Experience (Years)' },
+      {
+        id: 'hasCertification', label: 'Have You Passed the Required State Electrical Exam?', type: 'select',
+        options: ['Yes — exam passed, certificate number available', 'No — planning to test soon', 'Exempt via reciprocal license from another state'],
+        required: true, officialFieldName: 'Exam Completion Status',
+      },
+      { id: 'liabilityInsurer',     label: 'General Liability Insurance Carrier',       type: 'text',    placeholder: 'Insurance company name',                   required: true,  officialFieldName: 'Liability Insurance Carrier' },
+      { id: 'liabilityPolicyNum',   label: 'Liability Insurance Policy Number',         type: 'text',    placeholder: 'Policy number',                            required: true,  officialFieldName: 'Liability Policy Number' },
+      { id: 'bondAmount',           label: 'Surety Bond Amount',                        type: 'text',    placeholder: 'e.g. $25,000',                             required: true,  officialFieldName: 'Surety Bond Amount' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.myfloridalicense.com/DBPR/electrical-contractors', submitInstructions: 'Florida: Electrical contractors are licensed by the FL DBPR Electrical Contractors Licensing Board (ECLB). Apply at myfloridalicense.com. Exam required (Pearson VUE). Statewide license is valid across FL with no local exam required.' },
+      TX: { submitUrl: 'https://www.tdlr.texas.gov/electricians/elec.htm', submitInstructions: 'Texas: Electrical contractors are licensed by the Texas Department of Licensing and Regulation (TDLR). Both a Master Electrician and Electrical Contractor license are required to run a company. Apply at tdlr.texas.gov. Annual renewal.' },
+      CA: { submitUrl: 'https://www.cslb.ca.gov/About_CSLB/Licensing_Classifications/C-10_Electrical.aspx', submitInstructions: 'California: Electrical contractors must hold a C-10 Electrical Contractor License from the CA Contractors State License Board (CSLB). Apply at cslb.ca.gov. Requires passing state trade exam. $15,000 bond required. Biennial renewal.' },
+      NY: { submitUrl: 'https://www.dos.ny.gov/licensing/electrician/electrician.html', submitInstructions: 'New York: Electrical contractor licensing in NY is done at the local level — NYC requires a Master Electrician or Special Electrician license from the NYC Department of Buildings. Other municipalities issue their own licenses.' },
+      AZ: { submitUrl: 'https://roc.az.gov/licensing/applying-for-a-license', submitInstructions: 'Arizona: Electrical contractors are licensed by the AZ Registrar of Contractors (ROC). Apply at roc.az.gov. CR-11 (Commercial) or R-11 (Residential) electrical license classifications apply. $100,000 bond required for CR-11.' },
+    },
+  },
+
+  'pet-grooming-salon-license': {
+    id:          'pet-grooming-salon-license',
+    name:        'Pet Grooming Salon / Kennel / Boarding License',
+    description:
+      'Businesses that provide pet grooming, boarding, daycare, training, or retail pet ' +
+      'services typically require a local business license plus a specialized Animal Care ' +
+      'Facility license or Kennel License from the city, county, or state. Some states ' +
+      'also require a veterinary facility endorsement if prescription products are used or ' +
+      'if overnight boarding is offered. Requirements include vaccination verification for ' +
+      'all animals, adequate ventilation, exercise areas, sanitation protocols, and staff ' +
+      'training documentation. Unannounced inspections are common.',
+    fee:         '$25–$300/year (varies by jurisdiction and facility type)',
+    defaultRenewalMonths: 12,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply to your local city or county animal services / animal control department, ' +
+      'or in some states, the state Department of Agriculture. Provide a facility floor plan, ' +
+      'proof of insurance, and vaccination/health screening policies. An initial inspection ' +
+      'is typically required.',
+    requiredDocs: [
+      'Completed Animal Care Facility / Kennel License application',
+      'Facility floor plan showing kennel runs, grooming areas, and exercise areas',
+      'Proof of general liability insurance ($500K minimum)',
+      'Vaccination verification policy for incoming animals',
+      'Written sanitation and emergency protocol',
+      'Certificate of occupancy (if new facility)',
+      'Zoning compliance confirmation for animal care use',
+    ],
+    fields: [
+      { id: 'businessName',         label: 'Business / Salon Name',                     type: 'text',    placeholder: 'e.g. Happy Paws Grooming & Boarding',     required: true,  officialFieldName: 'Business / Establishment Name' },
+      { id: 'ownerFullName',        label: 'Owner / Operator Full Name',                 type: 'text',    placeholder: 'Full legal name',                         required: true,  officialFieldName: 'Owner / Applicant Name' },
+      { id: 'physicalAddress',      label: 'Facility Address',                          type: 'address', placeholder: '123 Main St, City, State ZIP',             required: true,  officialFieldName: 'Facility / Premises Address' },
+      { id: 'businessPhone',        label: 'Business Phone',                            type: 'phone',   placeholder: '(555) 555-0100',                           required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',        label: 'Business Email',                            type: 'email',   placeholder: 'you@petsalon.com',                         required: false, officialFieldName: 'Contact Email' },
+      {
+        id: 'facilityType', label: 'Type of Pet Business', type: 'select',
+        options: [
+          'Pet grooming salon (no overnight boarding)',
+          'Doggy daycare (daytime care, no overnight)',
+          'Dog / cat boarding kennel (overnight)',
+          'Combined grooming + daycare + boarding',
+          'Mobile pet grooming (van/trailer)',
+          'Pet training facility',
+          'Retail pet store (live animals)',
+          'Other animal care facility',
+        ],
+        required: true, officialFieldName: 'Facility / Business Type',
+      },
+      { id: 'numAnimalCapacity',    label: 'Maximum Animal Capacity (at one time)',     type: 'text',    placeholder: 'e.g. 20 dogs',                             required: true,  officialFieldName: 'Maximum Animal Capacity' },
+      {
+        id: 'hasGroomingStations', label: 'Do You Have Dedicated Grooming Stations (baths, dryers)?', type: 'select',
+        options: ['Yes — dedicated grooming stations with proper drainage', 'No — grooming at client\'s home or mobile only'],
+        required: true, officialFieldName: 'Grooming Station Availability',
+      },
+      {
+        id: 'hasOutdoorRuns', label: 'Do You Have Outdoor Play / Exercise Areas?', type: 'select',
+        options: ['Yes — secured fenced outdoor run/yard', 'No — indoor play area only', 'N/A — grooming only, no boarding'],
+        required: true, officialFieldName: 'Outdoor Facilities',
+      },
+      {
+        id: 'vaccinationPolicy', label: 'Vaccination Verification Policy', type: 'select',
+        options: [
+          'Require proof of rabies + DHPP/FVRCP + Bordetella for all animals',
+          'Require rabies proof only',
+          'We verify with owner\'s veterinarian on file',
+          'No formal vaccination policy — working on implementing one',
+        ],
+        required: true, officialFieldName: 'Animal Vaccination / Health Requirements',
+      },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.fdacs.gov/Business-Services/Animals', submitInstructions: 'Florida: Animal boarding kennels and commercial grooming salons may require a license from the FL Department of Agriculture and Consumer Services (FDACS) if boarding animals. Apply at fdacs.gov. Local county animal services may also require a separate kennel permit.' },
+      TX: { submitUrl: 'https://www.tdlr.texas.gov/animalfacility/animalfacility.htm', submitInstructions: 'Texas: Animal boarding facilities and grooming operations with more than 11 animals are licensed by the TX Department of Licensing and Regulation (TDLR) as Animal Boarding Facilities. Apply at tdlr.texas.gov.' },
+      CA: { submitUrl: 'https://www.cdfa.ca.gov/ahfss/animal_health/pet_registration.html', submitInstructions: 'California: Pet grooming and boarding facilities are primarily regulated at the local level. Many CA counties (LA, San Diego, Orange) require a separate Animal Care and Control facility permit. Some cities require a Kennel License from local animal services.' },
+      NY: { submitUrl: 'https://www.agriculture.ny.gov/animals/pet-dealers-and-animal-shelters', submitInstructions: 'New York: Dog kennels and boarding operations are regulated by the NYS Department of Agriculture and Markets. Kennels with 10+ dogs require a Class A or Class B Pet Dealer License. Apply at agriculture.ny.gov.' },
+      IL: { submitUrl: 'https://www2.illinois.gov/sites/agr/Animals/Pages/Animal-Care.aspx', submitInstructions: 'Illinois: Animal boarding facilities and pet groomers with more than 5 animals are regulated by the IL Department of Agriculture. A Class B Animal Control Facility License may be required. Apply at agriculture.illinois.gov.' },
+    },
+  },
+
+  'commercial-kitchen-shared-permit': {
+    id:          'commercial-kitchen-shared-permit',
+    name:        'Shared Commercial Kitchen / Commissary Facility Permit',
+    description:
+      'A Shared Commercial Kitchen (also called a commissary kitchen, incubator kitchen, ' +
+      'or licensed shared-use kitchen) is a permitted commercial food preparation facility ' +
+      'that rents time or space to multiple food businesses — caterers, food truck operators, ' +
+      'cottage food producers, ghost restaurants, and meal-prep services. As the facility ' +
+      'operator, you must hold a Commercial Food Establishment permit from the local health ' +
+      'department that specifically authorizes shared/multi-tenant use. Each renter must be ' +
+      'listed as a sub-permittee. This permit is distinct from and in addition to your own ' +
+      'business license.',
+    fee:         '$200–$1,500/year (health department commercial kitchen permit)',
+    defaultRenewalMonths: 12,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply to your local county or city health department for a Commercial Food ' +
+      'Establishment Permit with shared-use authorization. Provide a detailed facility ' +
+      'layout showing all commercial equipment, hood systems, hand-washing stations, ' +
+      'and storage areas. Each sub-permittee (renter) must apply for their own ' +
+      'commissary agreement/sub-permit through the same health department.',
+    requiredDocs: [
+      'Completed Commercial Food Establishment Permit application (shared kitchen)',
+      'Scaled facility floor plan with all commercial equipment labeled',
+      'List of all commercial equipment (make, model, NSF certification)',
+      'Hood / fire suppression system inspection certificate',
+      'Grease trap / interceptor documentation',
+      'Health department pre-approval or plan review sign-off',
+      'Certificate of occupancy for the kitchen space',
+      'Business entity registration / LLC / DBA',
+      'Federal EIN certificate',
+      'General liability insurance ($1M minimum)',
+    ],
+    fields: [
+      { id: 'businessName',         label: 'Kitchen Facility / Business Name',           type: 'text',    placeholder: 'e.g. The Commissary Co. Kitchen',         required: true,  officialFieldName: 'Establishment / Facility Name' },
+      { id: 'ownerFullName',        label: 'Facility Owner / Operator Full Name',         type: 'text',    placeholder: 'Full legal name',                         required: true,  officialFieldName: 'Owner / Operator Name' },
+      { id: 'physicalAddress',      label: 'Kitchen Facility Address',                   type: 'address', placeholder: '123 Industrial Blvd, City, State ZIP',    required: true,  officialFieldName: 'Facility / Premises Address' },
+      { id: 'businessPhone',        label: 'Facility Phone',                             type: 'phone',   placeholder: '(555) 555-0100',                           required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',        label: 'Facility Email',                             type: 'email',   placeholder: 'you@kitchenfacility.com',                  required: false, officialFieldName: 'Contact Email' },
+      { id: 'fein',                 label: 'Federal EIN',                                type: 'text',    placeholder: '12-3456789',                               required: true,  officialFieldName: 'Federal EIN' },
+      { id: 'numKitchenUnits',      label: 'Number of Distinct Kitchen Units / Bays',   type: 'text',    placeholder: 'e.g. 4 bays',                              required: true,  officialFieldName: 'Number of Kitchen Units / Rental Bays' },
+      { id: 'hoursOfOperation',     label: 'Kitchen Operating Hours',                   type: 'text',    placeholder: 'e.g. 5 AM – 11 PM, 7 days/week',          required: true,  officialFieldName: 'Hours of Operation' },
+      {
+        id: 'hasHoodSystem', label: 'Commercial Hood / Fire Suppression System Installed?', type: 'select',
+        options: [
+          'Yes — Type I hood with Ansul/fire suppression (for cooking with grease)',
+          'Yes — Type II hood (for non-grease cooking / baking only)',
+          'No — prep-only kitchen, no cooking under hood required',
+        ],
+        required: true, officialFieldName: 'Hood / Fire Suppression System Type',
+      },
+      {
+        id: 'hasThreeCompartmentSink', label: '3-Compartment Sink Installed?', type: 'select',
+        options: ['Yes — 3-compartment sink installed and operational', 'No — applying for variance or equipment pending'],
+        required: true, officialFieldName: '3-Compartment Sink Installation',
+      },
+      { id: 'memberCount',          label: 'Number of Kitchen Tenants / Members (at launch)', type: 'text', placeholder: 'e.g. 8',                               required: false, officialFieldName: 'Current Number of Kitchen Members / Sub-Permittees' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.myfloridalicense.com/DBPR/hotels-restaurants', submitInstructions: 'Florida: Shared commercial kitchens require a Culinary Education Facility or Caterer license from the FL Division of Hotels and Restaurants. Apply at myfloridalicense.com. Each renter using the kitchen also needs their own HR license. Annual inspection required.' },
+      TX: { submitUrl: 'https://www.dshs.texas.gov/food-establishments', submitInstructions: 'Texas: Commercial kitchens are permitted as Food Establishments by the TX Department of State Health Services (DSHS) or by local health departments in Austin, Houston, Dallas, and San Antonio. Apply at dshs.texas.gov or your local city health department.' },
+      CA: { submitUrl: 'https://ehservices.publichealth.lacounty.gov/food', submitInstructions: 'California: Shared commercial kitchens are permitted by county environmental health departments. LA County, Orange County, and San Diego County each have their own commissary/shared kitchen permitting. Apply at your county\'s environmental health portal.' },
+      NY: { submitUrl: 'https://www.agriculture.ny.gov/food-safety/food-processing-facilities', submitInstructions: 'New York: Shared commercial kitchens may need a Food Processing Facility License from the NY Department of Agriculture and Markets, as well as a NYC Food Service Establishment permit if in NYC. Apply at agriculture.ny.gov.' },
+      IL: { submitUrl: 'https://www.dph.illinois.gov/topics-services/environmental-health-protection/food-safety', submitInstructions: 'Illinois: Shared commercial kitchen facilities require a Food Service Establishment License from the IL Department of Public Health. Chicago also requires a Chicago Food Service Sanitation Manager Certificate. Apply at dph.illinois.gov.' },
+    },
+  },
+
+  // v71 — New guided wizard forms ──────────────────────────────────────────────
+
+  'notary-public-commission': {
+    id:          'notary-public-commission',
+    name:        'Notary Public Commission Application',
+    description:
+      'A Notary Public commission is required before you can legally notarize documents, ' +
+      'administer oaths, take acknowledgments, or perform other notarial acts. Notaries are ' +
+      'commissioned by the state — most require an application, background check, and a ' +
+      'surety bond ($5,000–$15,000). Some states also require a training course and exam. ' +
+      'Notary commissions are typically valid for 4 years and must be renewed before expiration.',
+    fee:         '$10–$60 state filing fee + $30–$100 surety bond/year',
+    defaultRenewalMonths: 48,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply through your state Secretary of State, Department of State, or Governor\'s office ' +
+      'depending on your state. Bring your surety bond certificate, state-issued photo ID, and ' +
+      'completed application. Some states allow online applications. After appointment, you must ' +
+      'file your oath of office and bond with your county clerk before performing any notarial acts.',
+    requiredDocs: [
+      'Government-issued photo ID (driver\'s license or passport)',
+      'Completed notary public application form',
+      'Surety bond certificate ($5,000–$15,000 depending on state)',
+      'Certificate of completion for required notary course (if applicable)',
+      'Payment of state filing fee',
+      'Oath of office (administered after commission is granted)',
+    ],
+    fields: [
+      { id: 'applicantLegalName',   label: 'Your Full Legal Name (as it will appear on commission)', type: 'text',    placeholder: 'Full legal name',                required: true,  officialFieldName: 'Applicant Full Legal Name' },
+      { id: 'physicalAddress',      label: 'Home / Business Address',                                type: 'address', placeholder: '123 Main St, City, State ZIP',   required: true,  officialFieldName: 'Mailing / Physical Address' },
+      { id: 'businessPhone',        label: 'Contact Phone Number',                                   type: 'phone',   placeholder: '(555) 555-0100',                 required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',        label: 'Contact Email Address',                                  type: 'email',   placeholder: 'you@email.com',                  required: false, officialFieldName: 'Contact Email' },
+      { id: 'county',               label: 'County of Residence',                                    type: 'text',    placeholder: 'Your home county',               required: true,  officialFieldName: 'County of Residence / Appointment' },
+      {
+        id: 'notaryTerm', label: 'New Commission or Renewal?', type: 'select',
+        options: ['New commission application', 'Renewal of existing commission'],
+        required: true, officialFieldName: 'Application Type',
+      },
+      { id: 'existingLicenseNumber',label: 'Existing Commission Number (if renewal)',                type: 'text',    placeholder: 'Current commission number',       required: false, officialFieldName: 'Commission / Certificate Number' },
+      {
+        id: 'hasCriminalHistory', label: 'Have You Ever Been Convicted of a Felony?', type: 'select',
+        options: ['No', 'Yes — details provided on application'],
+        required: true, officialFieldName: 'Criminal History Disclosure',
+      },
+      { id: 'notaryBondCompany',    label: 'Surety Bond Company',                                    type: 'text',    placeholder: 'Name of bonding company',         required: true,  officialFieldName: 'Surety Bond Company Name' },
+      { id: 'bondAmount',           label: 'Surety Bond Amount',                                     type: 'text',    placeholder: 'e.g. $10,000',                    required: true,  officialFieldName: 'Bond Amount' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://dos.myflorida.com/library-archives/services/notaries', submitInstructions: 'Florida: Apply through the Florida Department of State Division of Corporations. The commission is valid for 4 years. Florida requires a $7,500 surety bond. Apply online at dos.myflorida.com.' },
+      TX: { submitUrl: 'https://www.sos.texas.gov/statdoc/notary.shtml', submitInstructions: 'Texas: Notaries are commissioned by the Texas Secretary of State. Commission is valid for 4 years. No state exam required, but a $10,000 surety bond is required. Apply at sos.state.tx.us.' },
+      CA: { submitUrl: 'https://www.sos.ca.gov/notary', submitInstructions: 'California: Notaries are commissioned by the CA Secretary of State. Commission is valid for 4 years. Must complete a state-approved notary education course and pass a written exam. $15,000 bond required. Apply at sos.ca.gov.' },
+      NY: { submitUrl: 'https://www.dos.ny.gov/licensing/notary_public/notary.html', submitInstructions: 'New York: Notaries are licensed by the NY Department of State. Commission valid for 4 years. Applicants must pass a written exam. $10,000 surety bond required for "signature authenticating official" role. Apply at dos.ny.gov.' },
+      IL: { submitUrl: 'https://www.ilsos.gov/departments/business_services/notary', submitInstructions: 'Illinois: Notaries are commissioned by the Illinois Secretary of State. Commission valid for 4 years. $5,000 surety bond required. Apply at ilsos.gov. Must be 18+ and an Illinois resident.' },
+      GA: { submitUrl: 'https://sos.georgia.gov/notaries-public', submitInstructions: 'Georgia: Notaries are appointed by the Superior Court clerk in their county of residence. Commission valid for 4 years. A $500 bond is required. Apply through your county Superior Court clerk\'s office.' },
+      AZ: { submitUrl: 'https://www.azsos.gov/business/notary-public', submitInstructions: 'Arizona: Notaries are commissioned by the Arizona Secretary of State. Commission is valid for 4 years. $5,000 surety bond required. Apply online at azsos.gov. Must be at least 18 and an AZ resident.' },
+    },
+  },
+
+  'auto-dealer-license': {
+    id:          'auto-dealer-license',
+    name:        'Motor Vehicle / Auto Dealer License',
+    description:
+      'Any business that buys, sells, or exchanges more than a state-specified number of ' +
+      'motor vehicles per year must obtain a Motor Vehicle Dealer License from the state ' +
+      'DMV or equivalent agency. This applies to new car dealers, used car dealers, ' +
+      'wholesale dealers, and auto brokers. Requirements typically include a physical ' +
+      'dealership lot, a surety bond, dealer insurance, and background checks for all ' +
+      'owners. Selling without a dealer license is a criminal offense in most states.',
+    fee:         '$100–$700/year (state) + $25,000–$100,000 surety bond',
+    defaultRenewalMonths: 12,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply through your state DMV, Department of Transportation, or Motor Vehicle ' +
+      'Dealer Licensing Board. Most states require a physical inspection of your dealership ' +
+      'lot, an established place of business, a dealer number sign, and proof of zoning ' +
+      'compliance for automotive use.',
+    requiredDocs: [
+      'Business entity registration / LLC / DBA certificate',
+      'Federal EIN certificate',
+      'Surety bond ($25,000–$100,000 depending on state)',
+      'Dealership lot lease or ownership proof (physical location required)',
+      'Zoning approval/certificate of occupancy for automotive sales use',
+      'General liability insurance ($100,000+ minimum)',
+      'Garage/dealer liability insurance',
+      'Background check authorization for all owners/principals',
+      'Photo ID for all owners',
+    ],
+    fields: [
+      { id: 'businessName',         label: 'Dealership / Business Name',               type: 'text',    placeholder: 'e.g. Main Street Auto Sales',           required: true,  officialFieldName: 'Dealership Name' },
+      { id: 'ownerFullName',        label: 'Owner / Principal\'s Full Name',            type: 'text',    placeholder: 'Full legal name',                        required: true,  officialFieldName: 'Owner / Principal Name' },
+      { id: 'physicalAddress',      label: 'Dealership Lot Address',                    type: 'address', placeholder: '123 Auto Row, City, State ZIP',          required: true,  officialFieldName: 'Dealership / Premises Address' },
+      { id: 'businessPhone',        label: 'Dealership Phone',                          type: 'phone',   placeholder: '(555) 555-0100',                         required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',        label: 'Dealership Email',                          type: 'email',   placeholder: 'you@dealership.com',                     required: false, officialFieldName: 'Contact Email' },
+      { id: 'fein',                 label: 'Federal EIN',                               type: 'text',    placeholder: '12-3456789',                             required: true,  officialFieldName: 'Federal EIN' },
+      {
+        id: 'dealerType', label: 'Type of Dealer License', type: 'select',
+        options: [
+          'Retail used motor vehicle dealer',
+          'Retail new motor vehicle dealer (franchised)',
+          'Wholesale dealer (sells only to other dealers)',
+          'Broker / agent (arranges sales, holds no inventory)',
+          'Salvage / rebuilder (buys salvage/junk vehicles)',
+          'Motorcycle dealer',
+          'Recreational vehicle (RV) dealer',
+          'Powersports / ATV dealer',
+        ],
+        required: true, officialFieldName: 'Dealer License Type / Category',
+      },
+      { id: 'lotSquareFootage',     label: 'Dealership Lot Size (sq ft)',               type: 'text',    placeholder: 'e.g. 5,000',                             required: false, officialFieldName: 'Lot / Display Area Size' },
+      { id: 'bondAmount',           label: 'Surety Bond Amount',                        type: 'text',    placeholder: 'e.g. $50,000',                           required: true,  officialFieldName: 'Dealer Bond Amount' },
+      { id: 'notaryBondCompany',    label: 'Surety Bond Company',                       type: 'text',    placeholder: 'Name of bonding company',                required: true,  officialFieldName: 'Bond / Surety Company' },
+      { id: 'liabilityInsurer',     label: 'Dealer / Garage Liability Insurance Carrier', type: 'text',  placeholder: 'Insurance company name',                 required: true,  officialFieldName: 'Insurance Carrier' },
+      { id: 'liabilityPolicyNum',   label: 'Insurance Policy Number',                   type: 'text',    placeholder: 'Policy number',                          required: true,  officialFieldName: 'Insurance Policy Number' },
+      {
+        id: 'hasCriminalHistory', label: 'Have Any Owners Been Convicted of a Crime Involving Fraud or Motor Vehicles?', type: 'select',
+        options: ['No', 'Yes — full disclosure provided in application'],
+        required: true, officialFieldName: 'Criminal History Disclosure',
+      },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.flhsmv.gov/motor-vehicles-tags-titles/dealers', submitInstructions: 'Florida: Motor vehicle dealers are licensed by the Florida Highway Safety and Motor Vehicles (FLHSMV). Apply at flhsmv.gov. $25,000 bond required for independent dealers. Lot inspection required.' },
+      TX: { submitUrl: 'https://www.txdmv.gov/dealers', submitInstructions: 'Texas: Auto dealers are licensed by the Texas DMV Motor Vehicle Division at txdmv.gov. Used dealer bond: $25,000. New dealer bond varies by franchise. GDN (General Distinguishing Number) required for all dealers.' },
+      CA: { submitUrl: 'https://www.dmv.ca.gov/portal/vehicle-industry-services/dealer-industry', submitInstructions: 'California: Auto dealers licensed by the CA DMV Occupational Licensing Branch at dmv.ca.gov. Used dealer bond: $50,000. New vehicle dealer bond: $100,000. Dealer license (OL 11) required per lot.' },
+      NY: { submitUrl: 'https://dmv.ny.gov/registration/dealer-registration', submitInstructions: 'New York: Motor vehicle dealers licensed by the NY DMV. Used dealer registration: Class B. New dealer: Class A. Bond varies by dealer type. Apply at dmv.ny.gov/registration/dealer-registration.' },
+      AZ: { submitUrl: 'https://azdot.gov/mvd/businesses/dealer-licensing', submitInstructions: 'Arizona: Auto dealers licensed by AZ MVD (Motor Vehicle Division). Used car dealer bond: $25,000. Apply at azdot.gov/mvd. Lot inspection required. Open dealer lot required 5 days/week.' },
+    },
+  },
+
+  'charitable-solicitation-registration': {
+    id:          'charitable-solicitation-registration',
+    name:        'Charitable Solicitation / Fundraising Registration',
+    description:
+      'Most states require nonprofits and charities to register with the state Attorney ' +
+      'General or Secretary of State before soliciting donations from the public, even if ' +
+      'they already have federal 501(c)(3) status. This registration — often called a ' +
+      '"charity registration" or "solicitation license" — is separate from your IRS ' +
+      'determination letter and must be renewed annually. Failure to register before ' +
+      'fundraising can result in fines and cease-and-desist orders. About 40 states ' +
+      'require registration; some have exemptions for small organizations (under $25K/year).',
+    fee:         '$0–$200/year (varies by state and gross revenue tier)',
+    defaultRenewalMonths: 12,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/register-your-business',
+    submitInstructions:
+      'Register with your state\'s Attorney General, Secretary of State, or Consumer ' +
+      'Protection Bureau. Most states accept the Unified Registration Statement (URS) ' +
+      'which can be filed in multiple states simultaneously. Attach your IRS determination ' +
+      'letter, most recent financial statements, and Form 990.',
+    requiredDocs: [
+      'IRS 501(c)(3) determination letter (or application if pending)',
+      'Articles of Incorporation / formation documents',
+      'Bylaws of the organization',
+      'Most recent annual financial statements or Form 990',
+      'List of current board of directors and officers',
+      'Description of fundraising activities and programs',
+      'Copies of any professional fundraiser contracts (if applicable)',
+    ],
+    fields: [
+      { id: 'businessName',         label: 'Organization / Charity Name',               type: 'text',    placeholder: 'Full legal name of organization',        required: true,  officialFieldName: 'Organization Name' },
+      { id: 'ownerFullName',        label: 'Executive Director / CEO Full Name',         type: 'text',    placeholder: 'Name of organization director',          required: true,  officialFieldName: 'Principal Officer / Executive Director' },
+      { id: 'physicalAddress',      label: 'Organization\'s Principal Address',          type: 'address', placeholder: '123 Main St, City, State ZIP',           required: true,  officialFieldName: 'Organization Address' },
+      { id: 'businessPhone',        label: 'Organization Phone',                         type: 'phone',   placeholder: '(555) 555-0100',                         required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',        label: 'Organization Email',                         type: 'email',   placeholder: 'info@yourcharity.org',                   required: true,  officialFieldName: 'Contact Email' },
+      { id: 'fein',                 label: 'Federal EIN (Tax ID)',                       type: 'text',    placeholder: '12-3456789',                             required: true,  officialFieldName: 'Federal EIN / TIN' },
+      {
+        id: 'charitablePurpose', label: 'Primary Charitable Purpose', type: 'select',
+        options: [
+          'Human services (food, shelter, clothing, family support)',
+          'Health / medical research',
+          'Education / scholarships',
+          'Religious / faith-based',
+          'Environmental / conservation',
+          'Arts / cultural / humanities',
+          'Animal welfare',
+          'Civil rights / advocacy',
+          'International / foreign aid',
+          'Other public benefit',
+        ],
+        required: true, officialFieldName: 'Charitable Purpose / Program Type',
+      },
+      {
+        id: 'isExempt501c3', label: 'IRS Tax-Exempt Status', type: 'select',
+        options: [
+          'Recognized 501(c)(3) — letter received',
+          '501(c)(3) application pending with IRS',
+          '501(c)(4) or other IRC section exempt',
+          'Not yet applied for IRS exemption',
+        ],
+        required: true, officialFieldName: 'IRS Exemption Status',
+      },
+      { id: 'grossRevenuePriorYear',label: 'Prior-Year Gross Revenue / Contributions',   type: 'text',    placeholder: 'e.g. $50,000 or "First year"',           required: true,  officialFieldName: 'Gross Revenue / Contributions (Prior Year)' },
+      { id: 'fundraisingGoal',      label: 'Estimated Fundraising Goal (This Registration Period)', type: 'text', placeholder: 'e.g. $100,000', required: false, officialFieldName: 'Estimated Annual Solicitation Goal' },
+      {
+        id: 'usesProfessionalFundraiser', label: 'Do You Use a Professional Paid Fundraiser?', type: 'select',
+        options: ['No — fundraising done by volunteers and staff only', 'Yes — we contract with a professional fundraising firm'],
+        required: true, officialFieldName: 'Professional Fundraiser Disclosure',
+      },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.fdacs.gov/Business-Services/Solicitation-of-Contributions', submitInstructions: 'Florida: Charitable organizations must register with the FL Department of Agriculture and Consumer Services (FDACS). Fee: $10–$400 based on prior-year gross receipts. Apply at fdacs.gov/charity.' },
+      TX: { submitUrl: 'https://oag.texas.gov/charities', submitInstructions: 'Texas: Charities must register with the Texas Attorney General Charitable Trust Section if annual contributions exceed $25,000 or if they pay anyone to solicit. Apply at oag.texas.gov. Annual renewal required.' },
+      CA: { submitUrl: 'https://oag.ca.gov/charities', submitInstructions: 'California: All charities soliciting CA residents must register with the CA Attorney General\'s Registry of Charitable Trusts. Fee: $25–$300 based on revenue. File Form CT-1 at oag.ca.gov/charities.' },
+      NY: { submitUrl: 'https://www.charitiesnys.com', submitInstructions: 'New York: Charitable organizations must register with the NY Attorney General\'s Charities Bureau before soliciting in NY. File Form CHAR410. Annual filing of Form CHAR500 required. Fee: $25 for new registration.' },
+      IL: { submitUrl: 'https://www.illinoisattorneygeneral.gov/charities', submitInstructions: 'Illinois: Charitable organizations must file with the IL Attorney General Charitable Trust Bureau. File Form CO-1 for initial registration. Annual Form AG990-IL renewal required.' },
+    },
+  },
+
+  'food-truck-city-permit': {
+    id:          'food-truck-city-permit',
+    name:        'Food Truck / Mobile Vendor City Operating Permit',
+    description:
+      'Separate from the county health department food permit, most cities require a ' +
+      'Food Truck or Mobile Vendor City Operating Permit that governs where, when, and ' +
+      'how long a food truck can operate on city streets, sidewalks, or public property. ' +
+      'City permits often specify approved vending zones, minimum distances from brick-and- ' +
+      'mortar restaurants and schools, hours of operation, and waste disposal requirements. ' +
+      'Some cities issue annual sticker permits; others require a separate permit per event ' +
+      'or location. This is distinct from the county health/food service permit.',
+    fee:         '$50–$500/year (varies widely by city)',
+    defaultRenewalMonths: 12,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply to your city\'s business licensing, public works, or city clerk department. ' +
+      'Many cities maintain a list of approved vending zones and may limit the number of ' +
+      'active food truck permits. Some cities require a monthly or annual lottery for ' +
+      'premium vending locations.',
+    requiredDocs: [
+      'Current county/state food service establishment permit',
+      'Vehicle registration for the food truck',
+      'Current vehicle insurance (commercial auto)',
+      'General liability insurance certificate ($500K–$1M minimum)',
+      'Certificate of commissary agreement',
+      'Business entity registration / DBA',
+      'Copy of food manager certification',
+    ],
+    fields: [
+      { id: 'businessName',         label: 'Food Truck / Business Name',                type: 'text',    placeholder: 'e.g. Sunrise Tacos',                    required: true,  officialFieldName: 'Business / Vendor Name' },
+      { id: 'ownerFullName',        label: 'Owner / Operator Full Name',                type: 'text',    placeholder: 'Full legal name',                       required: true,  officialFieldName: 'Owner / Operator Name' },
+      { id: 'businessAddress',      label: 'Primary Business / Commissary Address',     type: 'address', placeholder: 'Address where truck is based or stored', required: true, officialFieldName: 'Business / Home Base Address' },
+      { id: 'businessPhone',        label: 'Contact Phone',                             type: 'phone',   placeholder: '(555) 555-0100',                        required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',        label: 'Contact Email',                             type: 'email',   placeholder: 'you@foodtruck.com',                     required: false, officialFieldName: 'Contact Email' },
+      { id: 'vehicleVIN',           label: 'Vehicle Identification Number (VIN)',       type: 'text',    placeholder: '17-character VIN',                       required: true,  officialFieldName: 'Vehicle VIN' },
+      { id: 'vehicleLicensePlate',  label: 'Vehicle License Plate Number',              type: 'text',    placeholder: 'Plate number',                           required: true,  officialFieldName: 'Vehicle License Plate' },
+      { id: 'vehicleMake',          label: 'Vehicle Make',                              type: 'text',    placeholder: 'e.g. Ford, Chevy, Mercedes',             required: true,  officialFieldName: 'Vehicle Make' },
+      { id: 'vehicleYear',          label: 'Vehicle Year',                              type: 'text',    placeholder: 'e.g. 2020',                              required: true,  officialFieldName: 'Vehicle Year' },
+      {
+        id: 'vendingZone', label: 'Requested Vending Zone(s) / Operating Area', type: 'select',
+        options: [
+          'Downtown / central business district',
+          'Commercial corridors (specify on application)',
+          'Parks and recreation areas',
+          'Special event locations (event-by-event)',
+          'Private property only (parking lots, business premises)',
+          'City-designated food truck park or zone',
+          'Multiple zones — list on application',
+        ],
+        required: true, officialFieldName: 'Requested Operating Zone(s)',
+      },
+      { id: 'operatingHours',       label: 'Requested Operating Days / Hours',          type: 'text',    placeholder: 'e.g. Mon–Fri 11am–3pm',                 required: true,  officialFieldName: 'Operating Days and Hours' },
+      { id: 'existingLicenseNumber',label: 'County Food Service Permit Number',         type: 'text',    placeholder: 'Your county food permit number',         required: true,  officialFieldName: 'County / State Food Permit Number' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.miamibeach411.com/city-hall/food-trucks', submitInstructions: 'Florida: Food truck city permits vary widely by municipality. Miami requires a vending permit from the city. Tampa requires a Mobile Food Dispensing Vehicle (MFDV) permit from Hillsborough County plus city zoning approval. Check with your specific city.' },
+      TX: { submitUrl: 'https://www.austintexas.gov/department/mobile-food-vendors', submitInstructions: 'Texas: Austin requires a Mobile Food Vendor Permit from Austin Public Health. Houston requires a Mobile Food Unit permit. San Antonio requires a Mobile Food Vendor license. Apply through your city\'s health or code compliance department.' },
+      CA: { submitUrl: 'https://ehservices.publichealth.lacounty.gov/food', submitInstructions: 'California: LA County requires a health permit from the LA County Department of Public Health. Cities like LA, San Diego, and San Jose have additional city-level food truck permits. Some cities require advance route notification.' },
+      NY: { submitUrl: 'https://www.nyc.gov/site/doh/business/food-operators/mobile-food-vending.page', submitInstructions: 'New York City: Mobile food vending requires a NYC Mobile Food Vending License from the NYC Health Department. Carts also need a pushcart/truck permit. Non-NYC vendors apply through the local county health department.' },
+    },
+  },
+
+  'event-alcohol-permit': {
+    id:          'event-alcohol-permit',
+    name:        'Temporary / Event Alcohol Permit (One-Day / Special Event ABC License)',
+    description:
+      'A Temporary Event Alcohol Permit or One-Day ABC License allows businesses, ' +
+      'nonprofits, and event organizers to sell or serve alcoholic beverages at a ' +
+      'specific event — such as a festival, fundraiser, wedding, corporate event, or ' +
+      'pop-up market. This is separate from a permanent liquor license and must be ' +
+      'obtained for each qualifying event. Requirements vary by state; some allow ' +
+      'caterers to serve on a catering endorsement, while others require a separate ' +
+      'per-event permit from the state Alcoholic Beverage Commission (ABC). Apply ' +
+      'at least 30 days before the event.',
+    fee:         '$25–$200 per event (varies by state and event type)',
+    defaultRenewalMonths: null,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply through your state ABC (Alcoholic Beverage Control) board or equivalent ' +
+      'agency. Most states require the event venue address, expected attendance, type ' +
+      'of alcohol, and proof of liability insurance. Some localities also require local ' +
+      'law enforcement notification or approval.',
+    requiredDocs: [
+      'Certificate of general/liquor liability insurance ($1M minimum, venue as additional insured)',
+      'Event contract or venue agreement',
+      'Copy of any existing liquor license (if held)',
+      'Site map showing where alcohol will be served',
+      'Proof of legal age of all servers and bartenders',
+      'Tax ID / EIN',
+    ],
+    fields: [
+      { id: 'businessName',         label: 'Applicant / Organization Name',             type: 'text',    placeholder: 'Your business or organization name',     required: true,  officialFieldName: 'Applicant / Organization Name' },
+      { id: 'ownerFullName',        label: 'Responsible Party / Contact Name',          type: 'text',    placeholder: 'Full legal name',                        required: true,  officialFieldName: 'Responsible Person / Licensee Name' },
+      { id: 'businessAddress',      label: 'Event Location / Venue Address',            type: 'address', placeholder: '123 Main St, City, State ZIP',           required: true,  officialFieldName: 'Event / Premises Address' },
+      { id: 'businessPhone',        label: 'Contact Phone',                             type: 'phone',   placeholder: '(555) 555-0100',                         required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',        label: 'Contact Email',                             type: 'email',   placeholder: 'you@yourevent.com',                      required: false, officialFieldName: 'Contact Email' },
+      { id: 'eventDate',            label: 'Event Date',                                type: 'date',    required: true,  officialFieldName: 'Event Date' },
+      { id: 'eventStartTime',       label: 'Event Start Time',                          type: 'text',    placeholder: 'e.g. 5:00 PM',                           required: true,  officialFieldName: 'Event Start Time' },
+      { id: 'eventEndTime',         label: 'Event End Time',                            type: 'text',    placeholder: 'e.g. 11:00 PM',                          required: true,  officialFieldName: 'Event End Time' },
+      { id: 'expectedAttendance',   label: 'Expected Number of Attendees',              type: 'text',    placeholder: 'e.g. 200',                               required: true,  officialFieldName: 'Expected Attendance' },
+      {
+        id: 'eventType', label: 'Type of Event', type: 'select',
+        options: [
+          'Private party / corporate event (invitation only)',
+          'Public festival / fair / street fair',
+          'Charity / fundraiser event (nonprofit)',
+          'Wedding reception',
+          'Concert / live music event',
+          'Pop-up market / vendor event',
+          'Sporting event / competition',
+          'Other public or semi-public event',
+        ],
+        required: true, officialFieldName: 'Event Type / Description',
+      },
+      {
+        id: 'alcoholTypes', label: 'Type(s) of Alcohol to Be Served', type: 'select',
+        options: [
+          'Beer and wine only',
+          'Beer, wine, and spirits (full bar)',
+          'Spirits / distilled liquor only',
+          'Wine only',
+          'Beer only',
+        ],
+        required: true, officialFieldName: 'Alcohol Type(s) to be Sold / Served',
+      },
+      {
+        id: 'hasExistingLicense', label: 'Does Your Organization Hold a Current ABC/Liquor License?', type: 'select',
+        options: ['Yes — provide license number below', 'No — this is a one-day permit application'],
+        required: true, officialFieldName: 'Existing License Status',
+      },
+      { id: 'existingLicenseNumber',label: 'Existing Liquor License Number (if applicable)', type: 'text', placeholder: 'Current license number', required: false, officialFieldName: 'Existing License Number' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.myfloridalicense.com/DBPR/alcoholic-beverages-tobacco', submitInstructions: 'Florida: Temporary alcohol permits are issued by the FL DBPR Division of Alcoholic Beverages and Tobacco (ABT). A 1-COP or 1-PS temporary license may apply for qualifying events. Apply at myfloridalicense.com.' },
+      TX: { submitUrl: 'https://www.tabc.texas.gov/licenses-permits', submitInstructions: 'Texas: The TX Alcoholic Beverage Commission (TABC) issues temporary licenses for special events. A Temporary Event License or Caterer\'s Permit may be appropriate. Apply at tabc.texas.gov at least 30 days before the event.' },
+      CA: { submitUrl: 'https://www.abc.ca.gov/licensing/license-types/special-permits', submitInstructions: 'California: The CA Department of Alcoholic Beverage Control issues one-day events permits (Type 77 — Special Days License). Apply at abc.ca.gov. Some events qualify under a Type 77 or catering authorization.' },
+      NY: { submitUrl: 'https://www.sla.ny.gov/special-event-permits', submitInstructions: 'New York: The NY State Liquor Authority issues temporary permits for special events. A Catering Permit (Section 99-a) or one-time annual event permit may apply. Apply at sla.ny.gov at least 15 days in advance.' },
+      IL: { submitUrl: 'https://www2.illinois.gov/LCC/pages/default.aspx', submitInstructions: 'Illinois: Special event alcohol permits are issued by local municipalities in Illinois. Chicago and other large cities issue their own one-day liquor licenses. Contact your local city or village clerk for the specific process.' },
+    },
+  },
+
+  // v70 — New guided wizard forms ──────────────────────────────────────────────
+
+  'short-term-rental-permit': {
+    id:          'short-term-rental-permit',
+    name:        'Short-Term Rental (STR) Permit / Airbnb License',
+    description:
+      'Most cities and counties now require a Short-Term Rental (STR) permit or host ' +
+      'registration before listing a property on Airbnb, VRBO, or similar platforms. ' +
+      'Requirements include local registration, proof of primary residence (for homesharing ' +
+      'tiers), safety inspections, transient occupancy tax (TOT) registration, and limits ' +
+      'on the number of nights rented per year. Non-compliance can result in fines up to ' +
+      '$1,000/day and platform deactivation. Apply through your city or county\'s planning ' +
+      'or finance department before your first booking.',
+    fee:         '$50–$500 + annual renewal (varies by jurisdiction)',
+    defaultRenewalMonths: 12,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply to your local city or county planning/finance department. Most jurisdictions ' +
+      'require an annual renewal and proof of liability insurance ($500K–$1M). You must ' +
+      'also register for Transient Occupancy Tax (TOT / hotel tax) collection and remittance.',
+    requiredDocs: [
+      'Proof of property ownership (deed or recent tax bill)',
+      'Government-issued photo ID',
+      'Proof of primary residence if applying as homeshare host (utility bill or voter registration)',
+      'Floor plan or sketch showing bedrooms and total square footage',
+      'Certificate of General Liability Insurance ($500K minimum)',
+      'Fire/carbon monoxide detector certification or inspection',
+      'Payment of registration fee',
+    ],
+    fields: [
+      { id: 'ownerFullName',        label: 'Property Owner / Host Full Name',         type: 'text',    placeholder: 'Full legal name',                       required: true,  officialFieldName: 'Owner / Applicant Name' },
+      { id: 'businessEmail',        label: 'Contact Email',                            type: 'email',   placeholder: 'you@email.com',                         required: true,  officialFieldName: 'Contact Email' },
+      { id: 'businessPhone',        label: 'Contact Phone',                            type: 'phone',   placeholder: '(555) 555-0100',                        required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'propertyAddress',      label: 'Rental Property Address',                  type: 'address', placeholder: '123 Main St, City, State ZIP',          required: true,  officialFieldName: 'Property / Premises Address' },
+      { id: 'mailingAddress',       label: 'Mailing Address (if different)',            type: 'address', placeholder: 'Leave blank if same as property',       required: false, officialFieldName: 'Mailing Address' },
+      {
+        id: 'strType', label: 'STR Type', type: 'select',
+        options: [
+          'Entire home / apartment (owner does not reside on premises)',
+          'Homeshare (owner lives on-site; renting spare bedroom or unit)',
+          'Accessory Dwelling Unit (ADU) / Guest house',
+          'Condo / Co-op unit',
+          'Other',
+        ],
+        required: true, officialFieldName: 'Rental Type / Category',
+      },
+      { id: 'numBedrooms',          label: 'Number of Bedrooms Available for Rent',   type: 'text',    placeholder: 'e.g. 2',                                required: true,  officialFieldName: 'Bedrooms for Rent' },
+      { id: 'maxOccupancy',         label: 'Maximum Guest Occupancy',                  type: 'text',    placeholder: 'e.g. 4',                                required: true,  officialFieldName: 'Maximum Occupancy' },
+      {
+        id: 'platformsListed', label: 'Platform(s) Where Listed', type: 'select',
+        options: ['Airbnb', 'VRBO / HomeAway', 'Booking.com', 'Both Airbnb and VRBO', 'Other platform', 'Not yet listed'],
+        required: true, officialFieldName: 'Listing Platform(s)',
+      },
+      { id: 'liabilityInsurer',     label: 'Liability Insurance Carrier',              type: 'text',    placeholder: 'Insurance company name',                required: true,  officialFieldName: 'Insurance Carrier' },
+      { id: 'liabilityPolicyNum',   label: 'Insurance Policy Number',                  type: 'text',    placeholder: 'Policy number',                         required: true,  officialFieldName: 'Insurance Policy Number' },
+      { id: 'liabilityAmount',      label: 'Coverage Amount',                          type: 'text',    placeholder: '$500,000 or $1,000,000',                 required: true,  officialFieldName: 'Liability Coverage Amount' },
+      {
+        id: 'isPrimaryResidence', label: 'Is This Your Primary Residence?', type: 'select',
+        options: ['Yes — I live here as my primary home', 'No — this is an investment/secondary property'],
+        required: true, officialFieldName: 'Primary Residence Status',
+      },
+      { id: 'estimatedNightsPerYear', label: 'Estimated Rental Nights Per Year',      type: 'text',    placeholder: 'e.g. 60',                               required: false, officialFieldName: 'Annual Rental Nights (Estimate)' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://floridarevenue.com/taxes/taxesfees/Pages/tourist_development_tax.aspx', submitInstructions: 'Florida: STR hosts must register with their county Tourist Development Tax (TDT) office and the FL Department of Revenue for state sales tax. No statewide STR permit, but most FL counties (Miami-Dade, Broward, Palm Beach, Orange, Hillsborough) require local licensing.' },
+      TX: { submitUrl: 'https://comptroller.texas.gov/taxes/hotel', submitInstructions: 'Texas: STR hosts must collect and remit Texas Hotel Occupancy Tax (6%) to the TX Comptroller. Many TX cities (Austin, San Antonio, Dallas, Houston) require a local STR registration and collect an additional city hotel tax.' },
+      CA: { submitUrl: 'https://www.cdtfa.ca.gov/industry/tourism.html', submitInstructions: 'California: STR hosts must register with the CA Department of Tax and Fee Administration (CDTFA) for Transient Occupancy Tax. Many CA cities (LA, SF, San Diego, San Jose) have additional local STR permits and host registration requirements.' },
+      NY: { submitUrl: 'https://www.tax.ny.gov/bus/ads/adidx.htm', submitInstructions: 'New York: NYC has strict STR laws (Local Law 18 — multiple dwelling units cannot be rented when host is not present). Register with NYC Mayor\'s Office of Special Enforcement. Outside NYC, register for NY State hotel and motel tax.' },
+      AZ: { submitUrl: 'https://azdor.gov/business/transaction-privilege-tax/lodging-resources', submitInstructions: 'Arizona: STR hosts must register with the AZ Department of Revenue for Transaction Privilege Tax (TPT) on accommodations. Phoenix, Scottsdale, Tempe, and other cities require a local STR license or short-term lodging permit.' },
+      TN: { submitUrl: 'https://www.tn.gov/revenue/taxes/sales-and-use-tax/hotel-and-motel-tax.html', submitInstructions: 'Tennessee: STR hosts must register with the TN Department of Revenue for Sales and Use Tax. Nashville/Davidson County requires a mandatory STR operator permit from the Metro Codes Department with primary/non-primary residence tiers.' },
+      CO: { submitUrl: 'https://tax.colorado.gov/lodging-services', submitInstructions: 'Colorado: STR hosts must register with CO Department of Revenue for Lodging Services tax. Denver, Boulder, and many ski communities require a local STR license. Denver requires short-term rentals to be primary residences.' },
+      WA: { submitUrl: 'https://dor.wa.gov/open-business/apply-business-license', submitInstructions: 'Washington: STR hosts must register for a WA Business License and collect Retail Sales Tax + applicable lodging taxes. Seattle requires a short-term rental operator license from the Seattle Office of Housing.' },
+    },
+  },
+
+  'tobacco-retail-license': {
+    id:          'tobacco-retail-license',
+    name:        'Tobacco / Vape / Nicotine Product Retail License',
+    description:
+      'Any business selling cigarettes, cigars, chewing tobacco, e-cigarettes, vaping ' +
+      'devices, nicotine pouches, or other tobacco / nicotine products must obtain a ' +
+      'Tobacco Retail License from the state — and often a separate city/county retail ' +
+      'tobacco permit. This license is required even if tobacco products are a small ' +
+      'fraction of sales (e.g. convenience stores, gas stations, pharmacies, grocery stores). ' +
+      'Selling without a valid license can result in fines up to $10,000 and criminal charges ' +
+      'in some states. Most licenses renew annually.',
+    fee:         '$25–$300/year (state) + local permit fees (varies)',
+    defaultRenewalMonths: 12,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply through your state revenue, health, or age-verification agency. ' +
+      'Most states require a separate license per location. Some cities (NYC, LA, San Francisco) ' +
+      'have local tobacco retailer licensing separate from the state permit.',
+    requiredDocs: [
+      'State business license or business registration certificate',
+      'Government-issued photo ID of owner/applicant',
+      'Federal Employer Identification Number (EIN)',
+      'Floor plan showing tobacco product display area',
+      'Signed age-verification compliance statement',
+      'Proof of general liability insurance (required by some jurisdictions)',
+    ],
+    fields: [
+      { id: 'businessName',         label: 'Business / Store Name',                   type: 'text',    placeholder: 'e.g. Main Street Smoke Shop',           required: true,  officialFieldName: 'Business Name' },
+      { id: 'ownerFullName',        label: 'Owner / Applicant Full Name',              type: 'text',    placeholder: 'Full legal name',                       required: true,  officialFieldName: 'Applicant Name' },
+      { id: 'physicalAddress',      label: 'Store / Retail Location Address',          type: 'address', placeholder: '123 Main St, City, State ZIP',          required: true,  officialFieldName: 'Premises / Business Address' },
+      { id: 'businessPhone',        label: 'Business Phone',                           type: 'phone',   placeholder: '(555) 555-0100',                        required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',        label: 'Business Email',                           type: 'email',   placeholder: 'you@store.com',                         required: false, officialFieldName: 'Contact Email' },
+      { id: 'fein',                 label: 'Federal EIN',                              type: 'text',    placeholder: '12-3456789',                            required: true,  officialFieldName: 'Federal EIN / Tax ID' },
+      {
+        id: 'tobaccoProductTypes', label: 'Tobacco / Nicotine Products Sold', type: 'select',
+        options: [
+          'Cigarettes only',
+          'Cigarettes, cigars, and smokeless tobacco',
+          'E-cigarettes / Vaping devices only',
+          'All tobacco products (cigarettes, cigars, smokeless, cigars)',
+          'All tobacco + e-cigarettes / vaping products',
+          'Hookah / shisha only',
+          'Cigars only (cigar lounge or premium tobacconist)',
+        ],
+        required: true, officialFieldName: 'Tobacco Product Category',
+      },
+      {
+        id: 'businessType', label: 'Primary Business Type', type: 'select',
+        options: [
+          'Convenience store / gas station',
+          'Tobacco / smoke shop / vape shop',
+          'Grocery store / supermarket',
+          'Pharmacy / drug store',
+          'Bar / nightclub',
+          'Cigar lounge / hookah lounge',
+          'Other retail store',
+        ],
+        required: true, officialFieldName: 'Business Type / Category',
+      },
+      { id: 'isRenewal',            label: 'New License or Renewal?',                  type: 'select', options: ['New license application', 'Renewal of existing license'], required: true, officialFieldName: 'Application Type' },
+      { id: 'existingLicenseNumber',label: 'Existing Tobacco License Number (if renewal)', type: 'text', placeholder: 'Current license #', required: false, officialFieldName: 'Current License Number' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://floridarevenue.com/taxes/taxesfees/Pages/tobacco.aspx', submitInstructions: 'Florida: The FL Department of Revenue requires a Tobacco Products Tax Dealer Permit for businesses selling tobacco at retail. Apply at floridarevenue.com. Some FL counties/cities require a separate local tobacco retail permit.' },
+      TX: { submitUrl: 'https://comptroller.texas.gov/taxes/cigar-tobacco', submitInstructions: 'Texas: Retailers selling tobacco must obtain a TX Cigar and Tobacco Products Retailer\'s Permit from the TX Comptroller. Apply at comptroller.texas.gov. Cities like Austin and San Antonio may require a local tobacco retail license.' },
+      CA: { submitUrl: 'https://www.cdtfa.ca.gov/industry/tobacco.html', submitInstructions: 'California: All tobacco retailers must obtain a Cigarette and Tobacco Products Retailer\'s License from the CA Department of Tax and Fee Administration (CDTFA) at cdtfa.ca.gov — $265/year per location. Many CA cities (LA, SF, San Diego) have additional local tobacco retail permits.' },
+      NY: { submitUrl: 'https://www.tax.ny.gov/bus/cigarette/cigseller.htm', submitInstructions: 'New York: Tobacco retailers must obtain a Cigarette Retail Dealer License from the NY Department of Taxation and Finance. NYC also requires a separate NYC Tobacco Retail Dealer License from the NYC Department of Consumer and Worker Protection (DCWP).' },
+      IL: { submitUrl: 'https://www.revenue.state.il.us/businesses/business-registration', submitInstructions: 'Illinois: Tobacco retailers must register for a Tobacco Tax license with the IL Department of Revenue. Chicago requires a separate Retail Tobacco Dealer License from the City.' },
+      GA: { submitUrl: 'https://gtc.dor.georgia.gov', submitInstructions: 'Georgia: Tobacco retailers apply through the GA Tax Center (gtc.dor.georgia.gov) for a Tobacco Retailer License. Individual cities like Atlanta or counties like Fulton may have additional local tobacco licensing requirements.' },
+    },
+  },
+
+  'food-facility-annual-renewal': {
+    id:          'food-facility-annual-renewal',
+    name:        'Food Facility / Health Permit Annual Renewal',
+    description:
+      'Most food service businesses — restaurants, food trucks, bakeries, delis, caterers, ' +
+      'convenience stores with prepared food — must renew their food facility permit or ' +
+      'health department permit every 1–2 years. Failure to renew on time can result in ' +
+      'operating permit suspension, mandatory closure, and reinstatement fees. ' +
+      'This renewal wizard collects the information typically required for renewal filings ' +
+      'in most jurisdictions: current contact info, any operational changes, manager ' +
+      'certifications, and payment details.',
+    fee:         '$75–$1,200/year depending on facility type and jurisdiction',
+    defaultRenewalMonths: 12,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Submit renewal to your local county or city health department. Most jurisdictions ' +
+      'send renewal notices 60–90 days before expiration. Pay online, by mail, or in person. ' +
+      'Some jurisdictions require an inspection before renewal is finalized.',
+    requiredDocs: [
+      'Current food facility permit / license number',
+      'Proof of current food manager certification (e.g. ServSafe)',
+      'Any updated floor plan if layout changed since last renewal',
+      'Updated business ownership documents (if ownership changed)',
+      'Payment of annual renewal fee',
+    ],
+    fields: [
+      { id: 'businessName',         label: 'Establishment Name',                       type: 'text',    placeholder: 'Your restaurant / food business name',  required: true,  officialFieldName: 'Establishment Name' },
+      { id: 'physicalAddress',      label: 'Facility / Location Address',               type: 'address', placeholder: '123 Main St, City, State ZIP',          required: true,  officialFieldName: 'Facility Address' },
+      { id: 'ownerFullName',        label: 'Owner / Operator Full Name',                type: 'text',    placeholder: 'Full legal name',                       required: true,  officialFieldName: 'Owner / Operator Name' },
+      { id: 'businessPhone',        label: 'Business Phone',                            type: 'phone',   placeholder: '(555) 555-0100',                        required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',        label: 'Business Email',                            type: 'email',   placeholder: 'you@restaurant.com',                    required: false, officialFieldName: 'Contact Email' },
+      { id: 'existingLicenseNumber',label: 'Current Permit / License Number',           type: 'text',    placeholder: 'Your existing food permit number',      required: true,  officialFieldName: 'Existing Permit / License Number' },
+      { id: 'expirationDate',       label: 'Current Permit Expiration Date',            type: 'date',    required: true,  officialFieldName: 'Current Expiration Date' },
+      {
+        id: 'facilityType', label: 'Facility Type', type: 'select',
+        options: [
+          'Full-service restaurant (dine-in)',
+          'Counter-service / fast food / quick service',
+          'Food truck / mobile food unit',
+          'Bakery / pastry shop',
+          'Deli / sandwich shop',
+          'Caterer',
+          'Grocery / convenience store with deli',
+          'Bar / tavern with food',
+          'Institutional kitchen (school, hospital, care facility)',
+          'Other food facility',
+        ],
+        required: true, officialFieldName: 'Facility / Establishment Type',
+      },
+      { id: 'seatingCapacity',      label: 'Seating Capacity (if applicable)',          type: 'text',    placeholder: 'Number of seats, or N/A',               required: false, officialFieldName: 'Seating Capacity' },
+      { id: 'certificationNumber',  label: 'Food Manager Certification Number',         type: 'text',    placeholder: 'ServSafe or equivalent cert number',    required: false, officialFieldName: 'Manager Certification Number' },
+      {
+        id: 'hasChanges', label: 'Any Changes Since Last Permit?', type: 'select',
+        options: ['No changes — all information is the same as last year', 'Yes — menu / food types changed', 'Yes — layout or equipment changed', 'Yes — ownership or management changed', 'Yes — multiple changes'],
+        required: true, officialFieldName: 'Changes Since Last Permit',
+      },
+      { id: 'changeDescription',    label: 'Describe Changes (if any)',                 type: 'text',    placeholder: 'Brief description of changes',          required: false, officialFieldName: 'Change Description' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.myfloridalicense.com/DBPR/hotels-restaurants', submitInstructions: 'Florida: Food facility permits are issued by the FL DBPR (Hotels and Restaurants Division) for most food facilities and by county Health Departments for certain categories. Renew online at myfloridalicense.com.' },
+      TX: { submitUrl: 'https://www.dshs.texas.gov/food-establishments', submitInstructions: 'Texas: Food establishment permits are issued by local city or county health departments. Renew through your local health authority. TX DSHS maintains statewide oversight at dshs.texas.gov.' },
+      CA: { submitUrl: 'https://www.cdph.ca.gov/Programs/CEH/DRSEM/Pages/FDB/RetailFoodSafety.aspx', submitInstructions: 'California: Food facility permits are issued by county environmental health departments. Renew with your local county EH department. CA CDPH provides oversight at cdph.ca.gov.' },
+      NY: { submitUrl: 'https://www.nyc.gov/site/doh/business/food-operators/food-service-establishment-permit.page', submitInstructions: 'New York City: Food service establishment permits issued by NYC Health Department. Renew online through NYC Business Express. Upstate NY businesses renew with their local county health department.' },
+    },
+  },
+
+  'massage-establishment-permit': {
+    id:          'massage-establishment-permit',
+    name:        'Massage Therapy Establishment / Business Permit',
+    description:
+      'Separate from individual massage therapist licenses, most cities and counties require ' +
+      'a Massage Establishment Permit for the physical business location where massage ' +
+      'services are performed. This permit is required even when all practitioners hold ' +
+      'individual state licenses. Requirements often include health department inspections, ' +
+      'staff certification documentation, facility standards (sinks, linens, etc.), and ' +
+      'zoning compliance for massage establishments in commercial zones. Apply with your ' +
+      'local city or county clerk, health department, or business licensing office.',
+    fee:         '$50–$500/year (varies by city and state)',
+    defaultRenewalMonths: 12,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply to your local city or county government — typically the city clerk, business ' +
+      'licensing office, or health department. Bring copies of all practitioner licenses, ' +
+      'a facility floor plan, and proof of zoning compliance. Many jurisdictions also require ' +
+      'a background check for owners.',
+    requiredDocs: [
+      'Copies of all massage therapist licenses for practitioners on staff',
+      'Government-issued photo ID of owner/applicant',
+      'Facility floor plan (showing therapy rooms, restrooms, reception)',
+      'Proof of zoning compliance or certificate of occupancy',
+      'General liability insurance certificate ($500K–$1M minimum)',
+      'Business entity registration / LLC / DBA paperwork',
+    ],
+    fields: [
+      { id: 'businessName',         label: 'Business / Establishment Name',            type: 'text',    placeholder: 'e.g. Serenity Massage & Spa',            required: true,  officialFieldName: 'Establishment Name' },
+      { id: 'ownerFullName',        label: 'Owner / Applicant Full Name',               type: 'text',    placeholder: 'Full legal name',                        required: true,  officialFieldName: 'Owner / Applicant Name' },
+      { id: 'physicalAddress',      label: 'Massage Business Location Address',         type: 'address', placeholder: '123 Main St, Suite 100, City, State ZIP', required: true, officialFieldName: 'Business / Premises Address' },
+      { id: 'businessPhone',        label: 'Business Phone',                            type: 'phone',   placeholder: '(555) 555-0100',                         required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',        label: 'Business Email',                            type: 'email',   placeholder: 'you@massagebusiness.com',                required: false, officialFieldName: 'Contact Email' },
+      { id: 'numTherapists',        label: 'Number of Licensed Therapists on Staff',    type: 'text',    placeholder: 'Total number (including owner)',          required: true,  officialFieldName: 'Number of Practitioners' },
+      { id: 'numTreatmentRooms',    label: 'Number of Treatment / Therapy Rooms',       type: 'text',    placeholder: 'e.g. 3',                                 required: true,  officialFieldName: 'Number of Treatment Rooms' },
+      {
+        id: 'servicesOffered', label: 'Services Offered', type: 'select',
+        options: [
+          'Swedish and relaxation massage only',
+          'Swedish, deep tissue, and therapeutic massage',
+          'Full massage menu (Swedish, deep tissue, hot stone, sports, reflexology, etc.)',
+          'Massage + ancillary services (facial, body wraps, scrubs)',
+          'Full spa menu (massage + aesthetics/skin care + body treatments)',
+          'Chair massage and corporate/event services only',
+        ],
+        required: true, officialFieldName: 'Services / Therapies Offered',
+      },
+      { id: 'liabilityInsurer',     label: 'Liability Insurance Carrier',               type: 'text',    placeholder: 'Insurance company name',                 required: true,  officialFieldName: 'Insurance Carrier' },
+      { id: 'liabilityPolicyNum',   label: 'Insurance Policy Number',                   type: 'text',    placeholder: 'Policy number',                          required: true,  officialFieldName: 'Insurance Policy Number' },
+      { id: 'zoningComplianceConfirmed', label: 'Is Your Location Zoned for Massage / Personal Care Services?', type: 'select', options: ['Yes — zoning permits massage/personal care at this location', 'Yes — in a mixed-use commercial zone', 'Unsure — need to verify with city/county planning'], required: true, officialFieldName: 'Zoning Compliance Status' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.myfloridalicense.com/DBPR/massage', submitInstructions: 'Florida: Massage establishments are licensed by the FL DBPR (Board of Massage Therapy) at myfloridalicense.com. Both the establishment AND each therapist must hold active DBPR licenses.' },
+      TX: { submitUrl: 'https://www.tdlr.texas.gov/massage', submitInstructions: 'Texas: Massage establishments are licensed by the TX Department of Licensing and Regulation (TDLR). Apply at tdlr.texas.gov. Cities like Austin, Dallas, and San Antonio may impose additional local massage establishment permits.' },
+      CA: { submitUrl: 'https://www.camtc.org', submitInstructions: 'California: Massage therapists are certified by CAMTC (California Massage Therapy Council). Establishments are regulated by local cities — many CA cities require a local massage establishment permit in addition to CAMTC certification.' },
+      NY: { submitUrl: 'https://www.op.nysed.gov/professions/massage-therapy', submitInstructions: 'New York: Licensed Massage Therapists in NY are regulated by the NY Office of the Professions. NYC requires a NYC Massage Therapist license. Many NYC neighborhoods require a Massage Establishment Permit from the NYC Department of Consumer and Worker Protection.' },
+    },
+  },
+
+  'secondhand-dealer-license': {
+    id:          'secondhand-dealer-license',
+    name:        'Secondhand Dealer / Pawn / Resale License',
+    description:
+      'Businesses that buy or sell used goods — thrift stores, consignment shops, pawn shops, ' +
+      'antique dealers, used electronics, vintage clothing, furniture resale, or flea market ' +
+      'vendors — typically require a Secondhand Dealer License or Junk Dealer Permit from the ' +
+      'state and/or local government. This license helps authorities track stolen property. ' +
+      'Most jurisdictions require electronic reporting of acquired items and seller ID checks. ' +
+      'Pawn shops have additional bonding and interest-rate regulations. Apply before purchasing ' +
+      'or selling any secondhand merchandise.',
+    fee:         '$25–$500 (varies by state and business type)',
+    defaultRenewalMonths: 12,
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions:
+      'Apply with your local police department, city clerk, or county sheriff\'s office. ' +
+      'Many jurisdictions also require a state dealer registration. Bring a completed ' +
+      'background check authorization, business registration, and bond documentation for ' +
+      'pawn shop applicants.',
+    requiredDocs: [
+      'Business entity registration / LLC / DBA certificate',
+      'Government-issued photo ID of owner/applicant',
+      'Background check authorization form',
+      'Surety bond certificate (required for pawn shops — typically $5,000–$50,000)',
+      'Floor plan of the retail space',
+      'List of any employees who will be handling secondhand acquisitions',
+    ],
+    fields: [
+      { id: 'businessName',         label: 'Business / Store Name',                    type: 'text',    placeholder: 'e.g. Westside Thrift & Consignment',    required: true,  officialFieldName: 'Business Name' },
+      { id: 'ownerFullName',        label: 'Owner / Applicant Full Name',               type: 'text',    placeholder: 'Full legal name',                        required: true,  officialFieldName: 'Applicant Name' },
+      { id: 'physicalAddress',      label: 'Store / Business Location Address',         type: 'address', placeholder: '123 Main St, City, State ZIP',           required: true,  officialFieldName: 'Business / Premises Address' },
+      { id: 'businessPhone',        label: 'Business Phone',                            type: 'phone',   placeholder: '(555) 555-0100',                         required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',        label: 'Business Email',                            type: 'email',   placeholder: 'you@thriftstore.com',                    required: false, officialFieldName: 'Contact Email' },
+      { id: 'fein',                 label: 'Federal EIN',                               type: 'text',    placeholder: '12-3456789',                             required: true,  officialFieldName: 'Federal EIN' },
+      {
+        id: 'dealerType', label: 'Type of Secondhand Business', type: 'select',
+        options: [
+          'Thrift store / general merchandise',
+          'Consignment shop',
+          'Pawn shop',
+          'Antique dealer',
+          'Used electronics / computers / phones',
+          'Used furniture / appliances',
+          'Vintage / used clothing boutique',
+          'Used auto parts / salvage',
+          'Flea market / swap meet vendor',
+          'Online reseller (eBay, Mercari, Facebook Marketplace)',
+          'Other secondhand retail',
+        ],
+        required: true, officialFieldName: 'Dealer Type / Category',
+      },
+      {
+        id: 'willBuyFromPublic', label: 'Will You Buy Items Directly from the Public?', type: 'select',
+        options: ['Yes — I will purchase items from walk-in sellers', 'No — consignment only (seller retains ownership until sold)', 'Both — buying and consignment'],
+        required: true, officialFieldName: 'Acquisition Method',
+      },
+      {
+        id: 'hasBond', label: 'Do You Have a Surety Bond? (Required for Pawn Shops)', type: 'select',
+        options: ['Yes — bonded (attach certificate)', 'No — not required for my business type', 'N/A — not a pawn shop'],
+        required: true, officialFieldName: 'Surety Bond Status',
+      },
+      { id: 'bondAmount',           label: 'Bond Amount (if applicable)',               type: 'text',    placeholder: 'e.g. $10,000',                           required: false, officialFieldName: 'Bond Amount' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.myfloridalicense.com/DBPR/secondhand-dealers', submitInstructions: 'Florida: Secondhand dealers (including pawn shops) must obtain a license from the FL DBPR. Apply at myfloridalicense.com. Local police departments may also require reporting secondhand acquisitions electronically.' },
+      TX: { submitUrl: 'https://www.tdlr.texas.gov', submitInstructions: 'Texas: Secondhand dealers are regulated by local city ordinances. Most TX cities (Dallas, Houston, San Antonio, Austin) require a Secondhand Dealer Permit from the city police department. Check your city\'s code compliance office.' },
+      CA: { submitUrl: 'https://oag.ca.gov/law/secondhand', submitInstructions: 'California: Secondhand dealers must report transactions to the CA DOJ JusticeTrax system and obtain a local secondhand dealer license from the city or county. Most CA cities require a separate pawnbroker license for pawn operations.' },
+      NY: { submitUrl: 'https://www.dos.ny.gov', submitInstructions: 'New York: Pawnbrokers in NY must obtain a license from the NY Department of State. NYC requires a Secondhand Dealer General / Auto General license from NYC DCWP. Upstate NY dealers are regulated by local municipalities.' },
+      IL: { submitUrl: 'https://idfpr.illinois.gov', submitInstructions: 'Illinois: Pawn dealers are licensed by IDFPR in Illinois. Chicago requires a Secondhand Dealer license from the City of Chicago Business Affairs and Consumer Protection (BACP).' },
+    },
+  },
+
+  // v68 — New guided wizard forms ──────────────────────────────────────────────
+
+  'special-event-permit': {
+    id:          'special-event-permit',
+    name:        'Special Event / Temporary Event Permit',
+    description:
+      'Required by most cities and counties before hosting any public or private event ' +
+      'at a business location or public venue — including outdoor concerts, festivals, ' +
+      'block parties, pop-up markets, charity fundraisers, or large private gatherings. ' +
+      'Some jurisdictions require separate noise, alcohol, and tent/structure permits in ' +
+      'addition to the base special event permit. Apply at least 30–60 days in advance ' +
+      'for large events; some cities require 90+ days for events over 500 attendees.',
+    fee:         '$50–$500 (based on event size and jurisdiction)',
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions: 'Apply to your local city or county parks, public works, or city clerk office. Many jurisdictions have an online event portal. Larger events may require a site map, security plan, and proof of liability insurance naming the city as additional insured.',
+    requiredDocs: ['Certificate of liability insurance ($1M minimum, city as additional insured)', 'Site plan/map showing layout, tents, stages, and exits', 'Vendor list (if food or retail vendors are present)', 'Alcohol permit / license copy (if alcohol is served)', 'Fire marshal approval (if tent or structure >200 sq ft)'],
+    fields: [
+      { id: 'businessName',         label: 'Hosting Business / Organization Name', type: 'text',    placeholder: 'Your business or organization name', required: true,  officialFieldName: 'Applicant / Organization Name' },
+      { id: 'ownerFullName',        label: 'Event Organizer / Contact Name',       type: 'text',    placeholder: 'Full legal name',                    required: true,  officialFieldName: 'Event Organizer Name' },
+      { id: 'businessAddress',      label: 'Event / Venue Location Address',       type: 'address', placeholder: 'Full address where event will be held', required: true, officialFieldName: 'Event Location Address' },
+      { id: 'businessPhone',        label: 'Organizer Phone Number',               type: 'phone',   placeholder: '(555) 555-0100',                     required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',        label: 'Organizer Email Address',              type: 'email',   placeholder: 'you@yourbusiness.com',                required: false, officialFieldName: 'Contact Email' },
+      {
+        id: 'eventType', label: 'Type of Event', type: 'select',
+        options: [
+          'Public festival / fair',
+          'Outdoor concert / live music event',
+          'Block party / street festival',
+          'Farmers market / pop-up market',
+          'Charity / fundraiser event',
+          'Private party / corporate gathering',
+          'Sporting event / competition',
+          'Trade show / expo',
+          'Cultural / religious celebration',
+          'Other special event',
+        ],
+        required: true, officialFieldName: 'Type of Event',
+      },
+      { id: 'eventDate',            label: 'Event Date',                           type: 'date',    required: true,  officialFieldName: 'Event Date' },
+      { id: 'eventStartTime',       label: 'Event Start Time',                     type: 'text',    placeholder: 'e.g. 10:00 AM', required: true,  officialFieldName: 'Start Time' },
+      { id: 'eventEndTime',         label: 'Event End Time',                       type: 'text',    placeholder: 'e.g. 8:00 PM',  required: true,  officialFieldName: 'End Time' },
+      { id: 'expectedAttendance',   label: 'Expected Attendance (number of guests)', type: 'text',  placeholder: 'e.g. 150', required: true, officialFieldName: 'Expected Attendance / Crowd Size' },
+      { id: 'hasLiveMusic',         label: 'Will There Be Live Music or Amplified Sound?', type: 'select', options: ['Yes', 'No'], required: true, officialFieldName: 'Live Music / Amplified Sound' },
+      { id: 'hasAlcohol',           label: 'Will Alcohol Be Served?',              type: 'select',
+        options: ['Yes — licensed bar / caterer', 'Yes — BYOB (no sale)', 'No'],
+        required: true, officialFieldName: 'Alcohol Service',
+      },
+      { id: 'hasTemporaryStructures', label: 'Tents, Stages, or Temporary Structures?', type: 'select', options: ['Yes', 'No'], required: true, officialFieldName: 'Temporary Structures' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits', submitInstructions: 'Florida: Special event permits are issued by individual city or county governments. Contact your local city clerk or parks department. Miami-Dade events: miamidade.gov/events. Broward County: broward.org/special-events.' },
+      TX: { submitUrl: 'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits', submitInstructions: 'Texas: Special events are permitted at the city level. Austin: austintexas.gov/department/special-events. Houston: houstontx.gov/specialevents. Dallas: dallasparks.org.' },
+      CA: { submitUrl: 'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits', submitInstructions: 'California: Special event permits vary by city/county. Los Angeles: laparks.org. San Francisco: sfrecpark.org. San Diego: sandiego.gov/park-and-recreation.' },
+      NY: { submitUrl: 'https://www.nyc.gov/site/cecm/permitting/special-events.page', submitInstructions: 'New York City: Special event permits from the Mayor\'s Office of Citywide Event Coordination and Management (CECM) at nyc.gov/events. Upstate NY events: contact your city or town clerk.' },
+      IL: { submitUrl: 'https://www.chicago.gov/city/en/depts/dca/provdrs/events.html', submitInstructions: 'Chicago: Special event permits from the Chicago Department of Cultural Affairs and Special Events (DCASE). Apply at chicago.gov/specialevents. Suburban events: contact your village or township office.' },
+      GA: { submitUrl: 'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits', submitInstructions: 'Georgia: Special events permitted at the city/county level. Atlanta: atlantaga.gov/government/parks-recreation. Fulton County: fultonco.org.' },
+    },
+  },
+
+  'outdoor-dining-permit': {
+    id:          'outdoor-dining-permit',
+    name:        'Outdoor Dining / Sidewalk Café Seating Permit',
+    description:
+      'Required by most cities and counties before a food service establishment adds ' +
+      'outdoor seating to a patio, sidewalk, rooftop, courtyard, or parking area. ' +
+      'Requirements vary widely: some jurisdictions require right-of-way permits for ' +
+      'sidewalk seating, ADA-compliant pathways, barrier requirements, and proof of ' +
+      'landlord or property owner consent. Alcohol service in outdoor areas may require ' +
+      'a separate license amendment or extended premises permit from the state liquor ' +
+      'authority. Seasonal permits may be issued in northern climates.',
+    fee:         '$75–$500 (varies by jurisdiction and seating area size)',
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions: 'Apply to your city or county planning, zoning, or public works department. Attach a site plan showing the outdoor seating area, accessible pathways, and any proposed structures. If seating is on public right-of-way, a sidewalk café agreement with the city may be required.',
+    requiredDocs: ['Site/floor plan showing outdoor seating dimensions and layout', 'Property owner or landlord consent letter (if leasing)', 'Certificate of liability insurance', 'ADA accessibility plan showing unobstructed pedestrian path', 'Liquor license amendment approval (if serving alcohol outdoors)'],
+    defaultRenewalMonths: 12,
+    fields: [
+      { id: 'businessName',       label: 'Restaurant / Establishment Name', type: 'text',    placeholder: 'Your restaurant or café name',     required: true,  officialFieldName: 'Establishment Name' },
+      { id: 'ownerFullName',      label: 'Owner / Operator Name',           type: 'text',    placeholder: 'Full legal name',                  required: true,  officialFieldName: 'Owner / Operator' },
+      { id: 'businessAddress',    label: 'Restaurant / Business Address',   type: 'address', placeholder: 'Physical address of establishment', required: true,  officialFieldName: 'Premises Address' },
+      { id: 'businessPhone',      label: 'Contact Phone Number',            type: 'phone',   placeholder: '(555) 555-0100',                   required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',      label: 'Contact Email Address',           type: 'email',   placeholder: 'you@yourbusiness.com',              required: false, officialFieldName: 'Contact Email' },
+      {
+        id: 'seatingAreaType', label: 'Type of Outdoor Seating Area', type: 'select',
+        options: [
+          'Sidewalk café (on public right-of-way)',
+          'Private patio (on private property)',
+          'Rooftop seating',
+          'Parking area / parklet',
+          'Courtyard / garden',
+          'Deck or terrace',
+        ],
+        required: true, officialFieldName: 'Outdoor Seating Type',
+      },
+      { id: 'numOutdoorSeats',    label: 'Number of Outdoor Seats',         type: 'text',    placeholder: 'e.g. 24', required: true,  officialFieldName: 'Outdoor Seating Capacity' },
+      { id: 'squareFootage',      label: 'Outdoor Seating Area (sq ft)',    type: 'text',    placeholder: 'e.g. 400 sq ft', required: true, officialFieldName: 'Area Square Footage' },
+      { id: 'hasEnclosure',       label: 'Enclosed or Covered Structure?',  type: 'select',  options: ['Yes — permanent roof/walls', 'Yes — seasonal tent or canopy', 'No — open air'], required: true, officialFieldName: 'Enclosure / Structure Type' },
+      { id: 'hasBarService',      label: 'Alcohol Served in Outdoor Area?', type: 'select',  options: ['Yes', 'No'], required: true, officialFieldName: 'Outdoor Alcohol Service' },
+      { id: 'propertyOwnerConsent', label: 'Property Owner / Landlord Consent Obtained?', type: 'select', options: ['Yes — have written consent', 'N/A — I own the property', 'No — pending'], required: true, officialFieldName: 'Landlord / Property Owner Authorization' },
+      { id: 'hasHeaters',         label: 'Outdoor Heaters Proposed?',       type: 'select',  options: ['Yes', 'No'], required: false, officialFieldName: 'Outdoor Heating Equipment' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits', submitInstructions: 'Florida: Outdoor seating permits are issued by individual city/county governments. Miami-Dade: miamidade.gov/building. City of Miami: miamigov.com. Orlando: orlando.gov. Tampa: tampagov.net.' },
+      TX: { submitUrl: 'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits', submitInstructions: 'Texas: Outdoor dining permits are city-issued. Austin: austintexas.gov/department/development-services. Houston: houstontx.gov. Dallas: dallascityhall.com.' },
+      CA: { submitUrl: 'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits', submitInstructions: 'California: Outdoor dining permits issued by cities. LA: planning.lacity.org. SF: sfplanning.org. San Diego: sandiego.gov/development-services.' },
+      NY: { submitUrl: 'https://www.nyc.gov/site/dca/businesses/sidewalk-cafe-licenses.page', submitInstructions: 'NYC: Sidewalk café licenses from the Department of Consumer and Worker Protection (DCWP) at nyc.gov/dca. Both unenclosed and enclosed sidewalk café licenses available. Processing takes 45–120 days.' },
+      IL: { submitUrl: 'https://www.chicago.gov/city/en/depts/bacp/supp_info/sidewalk_cafes.html', submitInstructions: 'Chicago: Sidewalk café licenses from the Department of Business Affairs and Consumer Protection (BACP). Apply at chicago.gov. Includes pedestrian walkway compliance review.' },
+      WA: { submitUrl: 'https://www.seattle.gov/transportation/permits-and-services/permits/right-of-way-use-permits', submitInstructions: 'Seattle: Street use permits for sidewalk seating from SDOT at seattle.gov/transportation. King County Liquor and Cannabis Board approval also required for outdoor alcohol service.' },
+    },
+  },
+
+  'catering-license': {
+    id:          'catering-license',
+    name:        'Catering / Off-Premise Food Service License',
+    description:
+      'Required for businesses that prepare, transport, and serve food at locations other ' +
+      'than their licensed kitchen or restaurant (weddings, corporate events, catered meals, ' +
+      'meal delivery services). Most states require a separate catering license or endorsement ' +
+      'in addition to the base food service permit. A licensed commissary or base kitchen is ' +
+      'typically required. Food manager certification, adequate vehicle sanitation, and ' +
+      'temperature control records are standard requirements.',
+    fee:         '$75–$350 (varies by state and jurisdiction)',
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions: 'Apply to your county or city health department. Provide your commissary/base kitchen information and food manager certification. Most health departments require an on-site inspection of your commissary kitchen and catering vehicles before issuance.',
+    requiredDocs: ['Commissary agreement or proof of licensed base kitchen', 'Food manager certification (must be current)', 'Vehicle registration for all catering vehicles', 'Vehicle inspection proof (temperature control equipment)', 'Menu of foods to be catered'],
+    defaultRenewalMonths: 12,
+    fields: [
+      { id: 'businessName',           label: 'Catering Business Name',              type: 'text',    placeholder: 'Your catering company name',    required: true,  officialFieldName: 'Business / Establishment Name' },
+      { id: 'ownerFullName',          label: 'Owner / Operator Name',               type: 'text',    placeholder: 'Full legal name',               required: true,  officialFieldName: 'Owner / Operator' },
+      { id: 'businessAddress',        label: 'Business Mailing Address',            type: 'address', placeholder: 'Your business or home address',  required: true,  officialFieldName: 'Business Address' },
+      { id: 'businessPhone',          label: 'Contact Phone Number',                type: 'phone',   placeholder: '(555) 555-0100',                required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',          label: 'Contact Email Address',               type: 'email',   placeholder: 'you@yourbusiness.com',           required: false, officialFieldName: 'Contact Email' },
+      {
+        id: 'cateringType', label: 'Type of Catering Services', type: 'select',
+        options: [
+          'Full-service catering (on-site preparation and service)',
+          'Drop-off catering (food delivered, no on-site service)',
+          'Event catering with alcohol service',
+          'Meal prep / meal delivery service',
+          'Corporate / office catering',
+          'Wedding and private event catering',
+        ],
+        required: true, officialFieldName: 'Catering Service Type',
+      },
+      { id: 'hasCommissary',          label: 'Do You Have a Licensed Commissary Kitchen?', type: 'select', options: ['Yes — I have a commissary agreement', 'Yes — I own the commissary kitchen', 'No — currently looking for commissary'], required: true, officialFieldName: 'Commissary / Base Kitchen' },
+      { id: 'commissaryName',         label: 'Commissary / Base Kitchen Name',      type: 'text',    placeholder: 'Name of licensed commissary',   required: false, officialFieldName: 'Commissary Name' },
+      { id: 'commissaryAddress',      label: 'Commissary Address',                  type: 'address', placeholder: 'Full address of commissary',     required: false, officialFieldName: 'Commissary Address' },
+      { id: 'commissaryLicenseNumber',label: 'Commissary Health Permit Number',     type: 'text',    placeholder: 'Permit or license number of commissary', required: false, officialFieldName: 'Commissary License No.' },
+      { id: 'foodManagerCertNumber',  label: 'Food Manager Certification Number',   type: 'text',    placeholder: 'ServSafe / ANAB cert number',   required: true,  officialFieldName: 'Food Manager Cert. Number' },
+      { id: 'vehicleCount',           label: 'Number of Catering Vehicles',         type: 'text',    placeholder: 'e.g. 2', required: true, officialFieldName: 'Number of Vehicles' },
+      { id: 'servesAlcohol',          label: 'Will You Serve Alcohol at Events?',   type: 'select',  options: ['Yes — have or will obtain liquor catering permit', 'No'], required: true, officialFieldName: 'Alcohol Service' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.floridahealth.gov/environmental-health/food-hygiene', submitInstructions: 'Florida: Catering licenses issued by the Florida Department of Health county environmental health offices. Commissary must be licensed by DOH. Apply at your county health department.' },
+      TX: { submitUrl: 'https://www.dshs.texas.gov/food-establishments', submitInstructions: 'Texas: Catering establishments require a Food Establishment Permit from the TX DSHS. Apply at your local health authority (city or county). Alcohol catering requires a TABC Mixed Beverage Caterer\'s Permit.' },
+      CA: { submitUrl: 'https://www.cdph.ca.gov/Programs/CEH/DFDCS/CDRF/Pages/FoodSafetyProgram.aspx', submitInstructions: 'California: Catering businesses need a county health department food facility permit. Contact your county environmental health department. Bay Area: use local county portal.' },
+      NY: { submitUrl: 'https://www.agriculture.ny.gov/food/food-safety', submitInstructions: 'New York: Catered food operations fall under the NYS Agriculture & Markets Food Safety program. Apply at the county health department for the county where your commissary kitchen is located.' },
+      IL: { submitUrl: 'https://www.chicago.gov/city/en/depts/cdph/provdrs/environmental_health/svcs/food_safety_and_sanitation.html', submitInstructions: 'Illinois: Catering businesses need a food service sanitation certificate from IDPH and, in Cook County / Chicago, from the Chicago or Cook County health department.' },
+    },
+  },
+
+  'childcare-home-license': {
+    id:          'childcare-home-license',
+    name:        'Home Daycare / Family Child Care License',
+    description:
+      'Required in all states before operating a child care program in a private home. ' +
+      'Family Child Care Homes (FCCH) typically serve 4–6 children; Group Family Child Care ' +
+      'Homes can serve 7–12 children with an assistant. Requirements universally include: ' +
+      'criminal background checks for all household members over 18, first aid / CPR ' +
+      'certification, home safety inspection, and minimum square footage per child. Most ' +
+      'states also require food program participation if meals are provided, and annual ' +
+      'training hours for continuing education.',
+    fee:         '$25–$200 (varies by state)',
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions: 'Apply to your state childcare licensing agency (varies by state: Child Protective Services, Office of Child Care, or Department of Early Education). A home inspection is required before a license is issued. Plan for 4–12 weeks processing time.',
+    requiredDocs: ['Criminal background check results for all household members 18+', 'First aid and infant/child CPR certification', 'Home inspection approval', 'Proof of current homeowners or renters insurance', 'Emergency contact list and emergency preparedness plan', 'Child enrollment records template'],
+    defaultRenewalMonths: 24,
+    fields: [
+      { id: 'ownerFullName',       label: 'Provider / Operator Full Name',       type: 'text',    placeholder: 'Full legal name of childcare provider', required: true,  officialFieldName: 'Provider / Applicant Name' },
+      { id: 'businessName',        label: 'Daycare / Program Name (if any)',      type: 'text',    placeholder: 'e.g. Sunshine Family Daycare',          required: false, officialFieldName: 'Program / Facility Name' },
+      { id: 'homeAddress',         label: 'Home / Facility Address',             type: 'address', placeholder: 'Residential address where care is provided', required: true, officialFieldName: 'Facility / Home Address' },
+      { id: 'businessPhone',       label: 'Provider Phone Number',                type: 'phone',   placeholder: '(555) 555-0100',                        required: true,  officialFieldName: 'Provider Phone' },
+      { id: 'businessEmail',       label: 'Provider Email Address',              type: 'email',   placeholder: 'you@email.com',                          required: false, officialFieldName: 'Provider Email' },
+      {
+        id: 'licenseType', label: 'License / Program Type', type: 'select',
+        options: [
+          'Family Child Care Home (up to 6 children)',
+          'Group Family Child Care Home (7–12 children)',
+          'Large Family Child Care Home (12+ children)',
+          'In-Home Child Care (nanny / au pair arrangement)',
+        ],
+        required: true, officialFieldName: 'License Type / Program Type',
+      },
+      { id: 'maxCapacity',         label: 'Maximum Number of Children to Be Served', type: 'text',  placeholder: 'e.g. 6', required: true, officialFieldName: 'Licensed Capacity' },
+      {
+        id: 'ageGroupServed', label: 'Age Group(s) to Be Served', type: 'select',
+        options: ['Infants (0–12 months)', 'Toddlers (1–3 years)', 'Preschool (3–5 years)', 'School-age (5–12 years)', 'Mixed ages (birth through 12)'],
+        required: true, officialFieldName: 'Age Group',
+      },
+      { id: 'hasBackgroundCheck',  label: 'Background Checks Completed for All Household Members 18+?', type: 'select', options: ['Yes — completed', 'In progress', 'No — not yet completed'], required: true, officialFieldName: 'Background Check Status' },
+      { id: 'hasFirstAid',         label: 'First Aid / CPR Certification Current?', type: 'select', options: ['Yes', 'No — not yet'], required: true, officialFieldName: 'First Aid / CPR Certification' },
+      { id: 'squareFootagePerChild', label: 'Available Indoor Play Space (sq ft)', type: 'text', placeholder: 'Total indoor usable space, e.g. 400 sq ft', required: false, officialFieldName: 'Indoor Activity Space Square Footage', hint: 'Most states require at least 35 sq ft per child of indoor usable space.' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.myflfamilies.com/services/childcare', submitInstructions: 'Florida: Family Child Care Homes licensed by the Florida Department of Children and Families (DCF). Apply through the DCF licensing portal at myflfamilies.com. Miami-Dade and Broward: contact the local DCF office for pre-application orientation requirements.' },
+      TX: { submitUrl: 'https://www.hhs.texas.gov/providers/protective-services-providers/child-care-licensing', submitInstructions: 'Texas: Home daycare providers licensed by the Texas Health and Human Services Commission (HHSC) Child Care Licensing. Apply online at texaschildcarelicensing.com. Processing typically takes 60–90 days.' },
+      CA: { submitUrl: 'https://www.cdss.ca.gov/inforesources/community-care-licensing/facility-types/child-care-centers/family-child-care-homes', submitInstructions: 'California: Family Child Care Homes licensed by the CA Department of Social Services Community Care Licensing (CCL). Apply through your local CCL regional office at cdss.ca.gov.' },
+      NY: { submitUrl: 'https://ocfs.ny.gov/programs/childcare/licensing', submitInstructions: 'New York: Family and Group Family Day Care Homes regulated by the NYS Office of Children and Family Services (OCFS). Apply through your OCFS regional office at ocfs.ny.gov.' },
+      IL: { submitUrl: 'https://www.ilchildcarelicensing.com', submitInstructions: 'Illinois: Family child care homes licensed by the Illinois Department of Children and Family Services (DCFS). Apply through the DCFS licensing portal. Chicago homes: contact the DCFS Chicago South or North office.' },
+      GA: { submitUrl: 'https://decal.ga.gov/BrightFromTheStart/ChildCareInfo.aspx', submitInstructions: 'Georgia: Family child care learning homes licensed by Bright from the Start (BFTS), GA Department of Early Care and Learning. Apply at decal.ga.gov.' },
+      WA: { submitUrl: 'https://www.dcyf.wa.gov/services/early-learning/licensing', submitInstructions: 'Washington: Family home child care providers licensed by the WA Department of Children, Youth, and Families (DCYF). Apply at dcyf.wa.gov/licensing.' },
+    },
+  },
+
+  'professional-license-registration': {
+    id:          'professional-license-registration',
+    name:        'Professional / Occupational License Registration',
+    description:
+      'Many service-based businesses require their practitioners to hold an individual ' +
+      'state-issued professional or occupational license before operating. This includes ' +
+      'cosmetologists, barbers, nail technicians, estheticians, massage therapists, tattoo ' +
+      'artists, veterinary technicians, real estate agents, home inspectors, and hundreds ' +
+      'of other licensed occupations. Requirements vary significantly by state and profession ' +
+      '— this guided form helps you identify your state\'s licensing board, prepare your ' +
+      'application documents, and track your renewal schedule.',
+    fee:         '$25–$400 (varies by profession and state)',
+    submitUrl:   'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions: 'Apply to your state\'s licensing board for the specific profession. Most boards have online applications. You will need proof of completed training/education hours, a passing exam score, and identity verification. Processing takes 2–8 weeks after all documents are received.',
+    requiredDocs: ['Proof of completed training hours or education (transcript)', 'State licensing exam passing score or certification', 'Government-issued photo ID', 'Professional liability insurance (some professions)', 'Background check results (many professions)'],
+    defaultRenewalMonths: 24,
+    fields: [
+      { id: 'applicantLegalName',   label: 'Applicant Full Legal Name',           type: 'text',    placeholder: 'Your full legal name (must match ID)', required: true,  officialFieldName: 'Applicant Full Name' },
+      { id: 'businessName',         label: 'Business / Salon / Studio Name',       type: 'text',    placeholder: 'Name of business where you practice',  required: false, officialFieldName: 'Business / Employer Name' },
+      { id: 'businessAddress',      label: 'Practice / Business Address',          type: 'address', placeholder: 'Address where you will practice',       required: true,  officialFieldName: 'Practice Location Address' },
+      { id: 'businessPhone',        label: 'Contact Phone Number',                 type: 'phone',   placeholder: '(555) 555-0100',                        required: true,  officialFieldName: 'Contact Phone' },
+      { id: 'businessEmail',        label: 'Contact Email Address',                type: 'email',   placeholder: 'you@yourbusiness.com',                   required: false, officialFieldName: 'Contact Email' },
+      {
+        id: 'licenseType', label: 'Type of Professional License', type: 'select',
+        options: [
+          'Cosmetology License',
+          'Barber License',
+          'Nail Technician (Manicurist) License',
+          'Esthetician / Facialist License',
+          'Massage Therapist License',
+          'Tattoo Artist / Body Art License',
+          'Hair Braider License',
+          'Electrologist License',
+          'Real Estate Salesperson License',
+          'Home Inspector License',
+          'Veterinary Technician License',
+          'Pharmacy Technician License',
+          'Other licensed profession',
+        ],
+        required: true, officialFieldName: 'License / Credential Type',
+      },
+      { id: 'isRenewal',            label: 'Is This a Renewal or a New Application?', type: 'select', options: ['New application', 'Renewal of existing license'], required: true, officialFieldName: 'Application Type' },
+      { id: 'existingLicenseNumber',label: 'Existing License Number (if renewal)', type: 'text',   placeholder: 'Your current license number', required: false, officialFieldName: 'Current License Number' },
+      { id: 'expirationDate',       label: 'Current License Expiration Date (if renewal)', type: 'date', required: false, officialFieldName: 'License Expiration Date' },
+      { id: 'stateOfIssuance',      label: 'State Where License Is (Will Be) Issued', type: 'text', placeholder: 'e.g. FL, TX, CA', required: true, officialFieldName: 'Issuing State' },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.myfloridalicense.com', submitInstructions: 'Florida: All professional licenses managed by the Florida Department of Business and Professional Regulation (DBPR) at myfloridalicense.com. Cosmetology, barbers, massage, real estate, and more — all on one portal.' },
+      TX: { submitUrl: 'https://www.license.state.tx.us', submitInstructions: 'Texas: Licensed professions regulated by agencies under the TX Department of Licensing and Regulation (TDLR) at license.state.tx.us. Cosmetology, massage, real estate (TREC), and others have separate boards.' },
+      CA: { submitUrl: 'https://www.breeze.ca.gov', submitInstructions: 'California: Most professional licenses managed through the CA Department of Consumer Affairs BREEZE portal at breeze.ca.gov. Includes BPPE, Board of Barbering and Cosmetology, Massage Therapy Council, and BRE.' },
+      NY: { submitUrl: 'https://eservices.op.nysed.gov/professions', submitInstructions: 'New York: Professional licenses issued by the NY Office of the Professions at op.nysed.gov. Cosmetology, barbering, massage, and real estate regulated by the Division of Licensing Services.' },
+      IL: { submitUrl: 'https://idfpr.illinois.gov', submitInstructions: 'Illinois: Professional licenses issued by the Illinois Department of Financial and Professional Regulation (IDFPR) at idfpr.illinois.gov. Online applications available for cosmetology, massage, real estate, and more.' },
+      GA: { submitUrl: 'https://verify.sos.ga.gov/verification', submitInstructions: 'Georgia: Professional licenses managed by the Georgia Secretary of State Professional Licensing Boards at sos.ga.gov/professional-licensing. Includes cosmetology, massage, barber boards.' },
+      CT: { submitUrl: 'https://www.elicense.ct.gov', submitInstructions: 'Connecticut: Professional licenses managed by the CT Department of Consumer Protection at elicense.ct.gov. Cosmetology, barbering, massage, real estate, and many more licensed professions.' },
+    },
+  },
+
+  // v66 — New guided wizard forms ──────────────────────────────────────────────
+
+  'food-service-plan-review': {
+    id:          'food-service-plan-review',
+    name:        'Food Service Facility Plan Review Application',
+    description:
+      'Required in most jurisdictions before a new food service establishment opens, ' +
+      'undergoes major renovation, or changes ownership. The health department reviews ' +
+      'your floor plan, equipment layout, ventilation, plumbing, and food storage to ' +
+      'ensure the facility can be operated safely before issuing a food service permit. ' +
+      'Submit this application 4–8 weeks before your planned opening. A plan review ' +
+      'approval is typically required before a Certificate of Occupancy and food permit ' +
+      'are issued.',
+    submitUrl:    'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions: 'Submit to your local county or city health department. Include scaled floor plans, equipment list, and menu. Processing takes 2–6 weeks; schedule a follow-up inspection after approval.',
+    requiredDocs: ['Scaled floor plan of the kitchen and service areas (1/4" = 1 ft minimum)', 'Equipment specification sheets for all food equipment', 'Menu or list of food items to be prepared', 'Grease trap / interceptor information (if applicable)', 'Three-compartment sink and handwashing sink placement plan'],
+    fee:         '$100–$800 (based on facility size and jurisdiction)',
+    fields: [
+      {
+        id: 'businessName', label: 'Establishment Name', type: 'text',
+        placeholder: 'Restaurant or food business name', required: true,
+        officialFieldName: 'Establishment / Applicant Name',
+      },
+      {
+        id: 'ownerFullName', label: 'Owner / Operator Name', type: 'text',
+        placeholder: 'Full legal name of owner or authorized agent', required: true,
+        officialFieldName: 'Owner / Operator Name',
+      },
+      {
+        id: 'businessAddress', label: 'Facility Address', type: 'address',
+        placeholder: 'Physical address of the food facility', required: true,
+        officialFieldName: 'Facility / Premises Address',
+      },
+      {
+        id: 'businessPhone', label: 'Contact Phone', type: 'phone',
+        placeholder: '(555) 555-0100', required: true,
+        officialFieldName: 'Applicant Phone',
+      },
+      {
+        id: 'businessEmail', label: 'Contact Email', type: 'email',
+        placeholder: 'you@yourbusiness.com', required: false,
+        officialFieldName: 'Applicant Email',
+      },
+      {
+        id: 'facilityType', label: 'Type of Food Facility', type: 'select',
+        options: [
+          'Full-service restaurant (dine-in)',
+          'Fast food / counter service',
+          'Bakery / pastry shop',
+          'Catering kitchen',
+          'Grocery store with prepared foods',
+          'Deli / sandwich shop',
+          'Coffee shop / café',
+          'Food truck commissary / base of operations',
+          'Ghost kitchen / delivery only',
+          'School or institutional kitchen',
+          'Bar / tavern with food service',
+        ],
+        required: true,
+        officialFieldName: 'Type of Establishment',
+      },
+      {
+        id: 'seatingCapacity', label: 'Total Seating Capacity', type: 'text',
+        placeholder: 'Number of seats (0 if takeout/delivery only)', required: false,
+        officialFieldName: 'Seating Capacity',
+      },
+      {
+        id: 'squareFootage', label: 'Total Square Footage of Kitchen Area', type: 'text',
+        placeholder: 'e.g. 400 sq ft kitchen, 800 sq ft total', required: true,
+        officialFieldName: 'Kitchen / Facility Square Footage',
+      },
+      {
+        id: 'openingDate', label: 'Planned Opening Date', type: 'date',
+        placeholder: 'MM/DD/YYYY', required: false,
+        officialFieldName: 'Proposed Opening Date',
+        hint: 'Plan review approval typically takes 2–6 weeks. Schedule accordingly.',
+      },
+      {
+        id: 'hasGreaseTrap', label: 'Does the facility have a grease trap / interceptor?', type: 'checkbox',
+        required: true,
+        officialFieldName: 'Grease Trap / Interceptor',
+        hint: 'Required for most commercial kitchens. Check with your local utility and health department.',
+      },
+      {
+        id: 'waterHeaterCapacity', label: 'Water Heater Capacity (gallons)', type: 'text',
+        placeholder: 'e.g. 50 gallons, 80 gallons', required: false,
+        officialFieldName: 'Water Heater Capacity',
+        hint: 'Most health departments require hot water at 110°F+ at sinks and 180°F at dishwashers.',
+      },
+      {
+        id: 'architectOrDesigner', label: 'Architect / Designer Name (if applicable)', type: 'text',
+        placeholder: 'Name of person who prepared the floor plans', required: false,
+        officialFieldName: 'Plan Preparer / Architect',
+      },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://floridahealth.gov', submitInstructions: 'In Florida, food facility plan reviews are conducted by the county Florida Department of Health office before a permit is issued. Contact your county DOH (e.g. miamidade.floridahealth.gov, broward.floridahealth.gov).' },
+      TX: { submitUrl: 'https://dshs.texas.gov/food-establishments', submitInstructions: 'In Texas, plan reviews are conducted by the local city or county health department. Houston: houstontx.gov/health. Austin: austintexas.gov. Dallas: dallascityhall.com.' },
+      CA: { submitUrl: 'https://www.cdph.ca.gov', submitInstructions: 'In California, plan reviews are required by your county Environmental Health Department before a food facility permit is issued. Contact your county EHD.' },
+      NY: { submitUrl: 'https://www.nyc.gov/site/doh/business/food-establishment-permits.page', submitInstructions: 'In NYC, plan review is part of the food service establishment permitting process through DOHMH. Apply at nyc.gov/health.' },
+      IL: { submitUrl: 'https://www.chicago.gov/city/en/depts/cdph', submitInstructions: 'In Chicago, food establishment plan reviews are required by the Chicago Department of Public Health (CDPH) before a food service establishment license is issued.' },
+      GA: { submitUrl: 'https://www.fultonhealth.org', submitInstructions: 'In Atlanta/Fulton County, plan reviews for new food establishments are required by the Fulton County Board of Health at fultonhealth.org.' },
+    },
+  },
+
+  'employer-withholding-registration': {
+    id:          'employer-withholding-registration',
+    name:        'State Employer / Payroll Tax Registration',
+    description:
+      'Any business that pays employees must register as an employer with the state to ' +
+      'withhold and remit state income tax (if applicable) and pay State Unemployment ' +
+      'Insurance (SUI/SUTA) taxes. This registration is separate from your federal EIN ' +
+      'and must typically be completed within 30 days of hiring your first employee. ' +
+      'Most states allow online registration. Failure to register results in penalties ' +
+      'on all wages paid.',
+    submitUrl:    'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions: 'Register with your state\'s Department of Revenue (for withholding) and Department of Labor / Employment Security (for SUI). Both are usually done online through your state\'s unified business portal.',
+    requiredDocs: ['Federal EIN (required)', 'Business entity registration documents', 'Date of first employee hire (or anticipated date)'],
+    fee:         'No fee (registration only)',
+    fields: [
+      {
+        id: 'businessName', label: 'Legal Business Name', type: 'text',
+        placeholder: 'Exact legal name as registered', required: true,
+        officialFieldName: 'Employer Legal Name',
+      },
+      {
+        id: 'fein', label: 'Federal EIN', type: 'text',
+        placeholder: 'XX-XXXXXXX', required: true,
+        officialFieldName: 'Federal Employer Identification Number (FEIN)',
+      },
+      {
+        id: 'businessAddress', label: 'Principal Business Address', type: 'address',
+        placeholder: 'Physical address of the business', required: true,
+        officialFieldName: 'Business / Employer Address',
+      },
+      {
+        id: 'businessPhone', label: 'Business Phone', type: 'phone',
+        placeholder: '(555) 555-0100', required: true,
+        officialFieldName: 'Employer Phone',
+      },
+      {
+        id: 'businessEmail', label: 'Business Email', type: 'email',
+        placeholder: 'payroll@yourbusiness.com', required: false,
+        officialFieldName: 'Employer Email',
+      },
+      {
+        id: 'entityType', label: 'Business Entity Type', type: 'select',
+        options: [
+          'Sole Proprietorship',
+          'Partnership',
+          'Limited Liability Company (LLC)',
+          'S-Corporation',
+          'C-Corporation',
+          'Nonprofit Organization',
+        ],
+        required: true,
+        officialFieldName: 'Entity Type',
+      },
+      {
+        id: 'ownerFullName', label: 'Owner / Principal Officer Name', type: 'text',
+        placeholder: 'Full legal name', required: true,
+        officialFieldName: 'Principal Owner / Officer',
+      },
+      {
+        id: 'firstHireDate', label: 'Date of First Employee Hire (or Anticipated Date)', type: 'date',
+        placeholder: 'MM/DD/YYYY', required: true,
+        officialFieldName: 'Date First Employee Hired',
+        hint: 'Registration must typically be completed within 15–30 days of this date.',
+      },
+      {
+        id: 'numEmployees', label: 'Total Number of Employees (at time of registration)', type: 'text',
+        placeholder: 'e.g. 1, 5, 12', required: true,
+        officialFieldName: 'Number of Employees',
+      },
+      {
+        id: 'payrollFrequency', label: 'Payroll Frequency', type: 'select',
+        options: [
+          'Weekly',
+          'Bi-weekly (every 2 weeks)',
+          'Semi-monthly (twice a month)',
+          'Monthly',
+        ],
+        required: true,
+        officialFieldName: 'Pay Period Frequency',
+      },
+      {
+        id: 'businessType', label: 'Industry / Nature of Business', type: 'text',
+        placeholder: 'e.g. restaurant, retail, construction, professional services', required: true,
+        officialFieldName: 'Industry / Nature of Business (SIC/NAICS)',
+      },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://floridarevenue.com/taxes/eservices/pages/registerNewBusiness.aspx', submitInstructions: 'Florida: Register for Reemployment Tax (SUI) with the FL Department of Revenue at floridarevenue.com. Florida has no state income tax, so no withholding registration is needed.' },
+      TX: { submitUrl: 'https://www.twc.texas.gov/businesses/employer-registration', submitInstructions: 'Texas: Register for Unemployment Tax with the Texas Workforce Commission (TWC) at twc.texas.gov. Texas has no state income tax.' },
+      CA: { submitUrl: 'https://edd.ca.gov/en/payroll_taxes/e-file-and-e-pay/', submitInstructions: 'California: Register with the CA Employment Development Department (EDD) for payroll taxes (SDI, UI, PIT) at edd.ca.gov. Use e-Services for Business.' },
+      NY: { submitUrl: 'https://www.labor.ny.gov/ui/employerinfo/registering-for-unemployment-insurance.shtm', submitInstructions: 'New York: Register for UI with NY Department of Labor at labor.ny.gov. Also register for withholding tax with the NY Department of Taxation at tax.ny.gov.' },
+      IL: { submitUrl: 'https://www2.illinois.gov/ides/employers/Pages/Register-as-an-Employer.aspx', submitInstructions: 'Illinois: Register for UI with IDES at ides.illinois.gov and for withholding with IDOR at mytax.illinois.gov.' },
+      GA: { submitUrl: 'https://dol.georgia.gov/employers/employer-registration', submitInstructions: 'Georgia: Register for UI with the GA Department of Labor at dol.georgia.gov/employers. Also register for withholding with the GA Department of Revenue at dor.georgia.gov.' },
+      WA: { submitUrl: 'https://esd.wa.gov/taxes-and-insurance/employer-registration', submitInstructions: 'Washington: Register for UI with WA Employment Security at esd.wa.gov. Washington has no state income tax.' },
+    },
+  },
+
+  'business-personal-property-tax': {
+    id:          'business-personal-property-tax',
+    name:        'Business Personal Property Tax Return',
+    description:
+      'Most counties require businesses to annually report the value of business-owned ' +
+      'personal property — computers, machinery, equipment, office furniture, vehicles, ' +
+      'inventory (in some states), and leasehold improvements. This is a separate tax from ' +
+      'real property (real estate) taxes. Returns are typically due in January–April each ' +
+      'year. Failure to file results in the county estimating your property value (usually ' +
+      'unfavorably). Many businesses are unaware of this requirement and receive surprise ' +
+      'tax bills or penalties.',
+    submitUrl:    'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions: 'File with your county Property Appraiser, Assessor, or Tax Commissioner by the annual deadline (typically January 1 – April 1). Many counties offer online filing.',
+    requiredDocs: ['Depreciation schedule or asset list from prior year tax return', 'Invoices for major equipment purchased during the year', 'Prior year\'s Business Personal Property Tax Return (if available)'],
+    fee:         'No filing fee; tax assessed based on declared value (rate typically 1–3% of assessed value)',
+    fields: [
+      {
+        id: 'businessName', label: 'Business Name', type: 'text',
+        placeholder: 'Legal business name as registered', required: true,
+        officialFieldName: 'Business / Account Name',
+      },
+      {
+        id: 'ownerFullName', label: 'Owner / Officer Name', type: 'text',
+        placeholder: 'Full legal name of owner or officer', required: true,
+        officialFieldName: 'Owner / Responsible Person',
+      },
+      {
+        id: 'businessAddress', label: 'Business Physical Address', type: 'address',
+        placeholder: 'Location where property is kept', required: true,
+        officialFieldName: 'Situs Address (Property Location)',
+      },
+      {
+        id: 'businessPhone', label: 'Contact Phone', type: 'phone',
+        placeholder: '(555) 555-0100', required: true,
+        officialFieldName: 'Contact Phone',
+      },
+      {
+        id: 'fein', label: 'Federal EIN', type: 'text',
+        placeholder: 'XX-XXXXXXX', required: false,
+        officialFieldName: 'Federal Employer ID / FEIN',
+      },
+      {
+        id: 'businessType', label: 'Type of Business', type: 'text',
+        placeholder: 'e.g. restaurant, retail, consulting, construction', required: true,
+        officialFieldName: 'Nature of Business (SIC Code if known)',
+      },
+      {
+        id: 'equipmentValue', label: 'Estimated Total Value of Equipment & Machinery', type: 'text',
+        placeholder: 'Original cost of all equipment, machinery, tools', required: true,
+        officialFieldName: 'Equipment / Machinery Total Cost',
+        hint: 'Use original purchase cost (not depreciated value). Include computers, kitchen equipment, shop tools, etc.',
+      },
+      {
+        id: 'furnitureValue', label: 'Estimated Value of Office Furniture & Fixtures', type: 'text',
+        placeholder: 'Original cost of desks, chairs, shelving, display cases, etc.', required: false,
+        officialFieldName: 'Furniture, Fixtures & Equipment (FF&E)',
+      },
+      {
+        id: 'leaseholdValue', label: 'Estimated Value of Leasehold Improvements', type: 'text',
+        placeholder: 'Cost of tenant improvements you paid for (not landlord-provided)', required: false,
+        officialFieldName: 'Leasehold Improvements',
+      },
+      {
+        id: 'inventoryValue', label: 'Estimated Value of Inventory (if taxed in your state)', type: 'text',
+        placeholder: 'Market value of goods held for resale (leave blank if exempt)', required: false,
+        officialFieldName: 'Inventory / Merchandise',
+        hint: 'Florida, Texas, California, and many states exempt inventory from personal property tax. Check your county rules.',
+      },
+      {
+        id: 'taxYear', label: 'Tax Year Covered by This Return', type: 'text',
+        placeholder: 'e.g. 2024 or 2025', required: true,
+        officialFieldName: 'Assessment / Tax Year',
+      },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://floridarevenue.com/property/Pages/LocalOfficials_CountyPropertyAppraisers.aspx', submitInstructions: 'Florida Tangible Personal Property returns are filed with your County Property Appraiser by April 1. The TPP exemption ($25,000) eliminates tax for most small businesses. File even if you believe you\'re under the exemption.' },
+      TX: { submitUrl: 'https://comptroller.texas.gov/taxes/property-tax/', submitInstructions: 'Texas business personal property is assessed by your county Appraisal District. Rendition deadline is April 15. Contact your county CAD (e.g. HCAD, DCAD, TCAD) to file online.' },
+      CA: { submitUrl: 'https://www.boe.ca.gov/proptaxes/buspropert.htm', submitInstructions: 'California business personal property returns (Form 571-L) are filed with your county Assessor by April 15. Most counties accept online filing.' },
+      NC: { submitUrl: 'https://www.ncdor.gov/taxes-forms/property-tax', submitInstructions: 'North Carolina business personal property listing periods run January 1–January 31 with most county assessors. File with your county tax listing office.' },
+      GA: { submitUrl: 'https://dor.georgia.gov/property-tax-real-and-personal', submitInstructions: 'Georgia business personal property returns are filed with your county Board of Tax Assessors by April 1.' },
+    },
+  },
+
+  'zoning-compliance-letter-request': {
+    id:          'zoning-compliance-letter-request',
+    name:        'Zoning Compliance Letter / Certificate of Zoning Request',
+    description:
+      'A Zoning Compliance Letter (also called a Certificate of Zoning, Zoning Verification ' +
+      'Letter, or Zoning Confirmation Letter) is an official document from the local planning ' +
+      'or zoning department confirming that a specific business use is permitted at a given ' +
+      'address under current zoning. Required by: lenders (SBA loans, commercial mortgages), ' +
+      'landlords (before signing a lease), business buyers (due diligence), and franchise ' +
+      'agreements. RegPulse\'s automated zoning check gives an instant estimate, but an ' +
+      'official letter from the municipality is legally binding.',
+    submitUrl:    'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions: 'Submit a written request to your local city or county planning / zoning department. Include the property address, parcel number, and description of proposed business use. Most jurisdictions respond in 5–15 business days.',
+    requiredDocs: ['Property address and parcel/folio number', 'Written description of the proposed business use', 'Copy of your lease or LOI (Letter of Intent) if applicable'],
+    fee:         '$25–$200 (most planning departments)',
+    fields: [
+      {
+        id: 'applicantLegalName', label: 'Applicant / Requester Name', type: 'text',
+        placeholder: 'Your full legal name or business name', required: true,
+        officialFieldName: 'Applicant / Requester Name',
+      },
+      {
+        id: 'businessAddress', label: 'Property Address (Subject of Request)', type: 'address',
+        placeholder: 'Full address of the property in question', required: true,
+        officialFieldName: 'Property / Site Address',
+      },
+      {
+        id: 'parcelNumber', label: 'Parcel / Folio Number', type: 'text',
+        placeholder: 'e.g. 12-3456-789-0000 (from county property records)', required: false,
+        officialFieldName: 'Parcel Identification Number',
+        hint: 'Find on your property tax bill or county property appraiser website.',
+      },
+      {
+        id: 'currentZoneType', label: 'Current Zoning Classification (if known)', type: 'text',
+        placeholder: 'e.g. C-2, B-1, MU-Commercial (pre-filled from zoning check)', required: false,
+        officialFieldName: 'Current Zoning District',
+      },
+      {
+        id: 'proposedBusinessUse', label: 'Description of Proposed Business Use', type: 'text',
+        placeholder: 'e.g. retail clothing store, home-based accounting office, food truck commissary', required: true,
+        officialFieldName: 'Proposed Use / Business Description',
+      },
+      {
+        id: 'purposeOfRequest', label: 'Purpose of the Compliance Letter', type: 'select',
+        options: [
+          'SBA loan / bank financing requirement',
+          'Commercial lease due diligence',
+          'Business acquisition / purchase due diligence',
+          'Franchise agreement requirement',
+          'Business license application requirement',
+          'Personal / informational only',
+          'Other',
+        ],
+        required: true,
+        officialFieldName: 'Reason for Request',
+      },
+      {
+        id: 'businessPhone', label: 'Contact Phone', type: 'phone',
+        placeholder: '(555) 555-0100', required: true,
+        officialFieldName: 'Requester Phone',
+      },
+      {
+        id: 'businessEmail', label: 'Contact Email', type: 'email',
+        placeholder: 'you@yourbusiness.com', required: true,
+        officialFieldName: 'Requester Email',
+      },
+      {
+        id: 'deliveryPreference', label: 'Preferred Delivery of Letter', type: 'select',
+        options: [
+          'Email (PDF copy)',
+          'Mail (physical copy)',
+          'In-person pickup',
+          'Both email and mail',
+        ],
+        required: false,
+        officialFieldName: 'Response / Delivery Method',
+      },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://floridajobs.org/business-growth-and-partnerships/for-businesses/licensing', submitInstructions: 'In Florida, request zoning compliance letters from your city or county Planning and Zoning department. Miami-Dade: miamidade.gov/zoning. Broward: broward.org/planning. Palm Beach: pbcgov.com/pzb.' },
+      TX: { submitUrl: 'https://www.texas.gov', submitInstructions: 'In Texas, contact your local city planning department. Austin: austintexas.gov/department/development-services. Houston: houstontx.gov/planning. Dallas: dallascityhall.com/departments/sustainabledevelopment.' },
+      CA: { submitUrl: 'https://www.hcd.ca.gov', submitInstructions: 'In California, request zoning letters from your city or county planning department. LA City: planning.lacity.org. San Francisco: sf.gov/departments/planning-department.' },
+      NY: { submitUrl: 'https://www.nyc.gov/site/bsa/index.page', submitInstructions: 'In NYC, zoning compliance letters are issued by the NYC Department of Buildings (Zoning Compliance Letters) or the Board of Standards and Appeals at nyc.gov/site/bsa.' },
+      IL: { submitUrl: 'https://www.chicago.gov/city/en/depts/dcd', submitInstructions: 'In Chicago, contact the Department of Planning and Development for zoning compliance information at chicago.gov/city/en/depts/dcd.' },
+    },
+  },
+
+  'health-dept-inspection-checklist': {
+    id:          'health-dept-inspection-checklist',
+    name:        'Food Service Pre-Inspection Self-Assessment',
+    description:
+      'A guided self-inspection checklist based on FDA Food Code and common health department ' +
+      'inspection criteria. Use this before your opening inspection or annual renewal inspection ' +
+      'to identify and fix critical violations proactively. Critical violations (temperature ' +
+      'control, handwashing, food source, pest control) can result in immediate closure. ' +
+      'This checklist does not replace an official inspection — it helps you prepare so you ' +
+      'pass on the first attempt.',
+    submitUrl:    'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions: 'Complete this self-assessment at least 1 week before your scheduled health inspection. Address all "No" and "N/A-but-required" items. Keep a copy on file as documentation of your compliance efforts.',
+    requiredDocs: ['Food manager certification certificate (on-site copy)', 'Employee food handler cards (if required by jurisdiction)', 'Pest control service records', 'Equipment calibration records (thermometers)'],
+    fee:         'No fee (internal checklist)',
+    fields: [
+      {
+        id: 'businessName', label: 'Establishment Name', type: 'text',
+        placeholder: 'Restaurant / food business name', required: true,
+        officialFieldName: 'Establishment Name',
+      },
+      {
+        id: 'businessAddress', label: 'Establishment Address', type: 'address',
+        placeholder: 'Physical address of the food facility', required: true,
+        officialFieldName: 'Inspection Address',
+      },
+      {
+        id: 'ownerFullName', label: 'Owner / Manager Name', type: 'text',
+        placeholder: 'Person responsible for food safety compliance', required: true,
+        officialFieldName: 'Owner / Manager',
+      },
+      {
+        id: 'businessPhone', label: 'Contact Phone', type: 'phone',
+        placeholder: '(555) 555-0100', required: true,
+        officialFieldName: 'Contact Phone',
+      },
+      {
+        id: 'hasCertifiedManager', label: 'Is a Certified Food Manager on staff and certificate on-site?', type: 'checkbox',
+        required: true,
+        officialFieldName: 'Certified Food Manager Present',
+      },
+      {
+        id: 'hasHandwashingSinks', label: 'Are dedicated handwashing sinks in all required locations?', type: 'checkbox',
+        required: true,
+        officialFieldName: 'Handwashing Facilities',
+      },
+      {
+        id: 'tempControlsWorking', label: 'Are all refrigeration units holding 41°F or below?', type: 'checkbox',
+        required: true,
+        officialFieldName: 'Cold Holding Temperature Controls',
+      },
+      {
+        id: 'hotHoldingTemp', label: 'Are all hot holding units maintaining 135°F or above?', type: 'checkbox',
+        required: false,
+        officialFieldName: 'Hot Holding Temperature Controls',
+      },
+      {
+        id: 'noPestEvidence', label: 'No evidence of pests (rodents, cockroaches, flies)?', type: 'checkbox',
+        required: true,
+        officialFieldName: 'Pest Control',
+      },
+      {
+        id: 'foodFromApprovedSource', label: 'All food obtained from approved, licensed suppliers?', type: 'checkbox',
+        required: true,
+        officialFieldName: 'Approved Food Source',
+      },
+      {
+        id: 'threeCompartmentSinkClean', label: 'Three-compartment sink clean, functional, and properly stocked?', type: 'checkbox',
+        required: true,
+        officialFieldName: 'Warewashing / Sanitization Setup',
+      },
+      {
+        id: 'sanitizerConcentration', label: 'Sanitizer solution at correct concentration (test strips available)?', type: 'checkbox',
+        required: true,
+        officialFieldName: 'Chemical Sanitizer Concentration',
+      },
+      {
+        id: 'personalHygieneCompliant', label: 'All employees following personal hygiene rules (gloves, hair restraints)?', type: 'checkbox',
+        required: true,
+        officialFieldName: 'Employee Hygiene',
+      },
+      {
+        id: 'inspectionDate', label: 'Scheduled or Target Inspection Date', type: 'date',
+        placeholder: 'MM/DD/YYYY', required: false,
+        officialFieldName: 'Inspection Date',
+      },
+    ],
+    defaultRenewalMonths: 12,
+    localeUrls: {
+      FL: { submitUrl: 'https://floridahealth.gov', submitInstructions: 'Florida food service inspections are conducted by the county DOH. Review the FL Food Code at floridahealth.gov and your county inspection reports.' },
+      TX: { submitUrl: 'https://dshs.texas.gov/food-establishments', submitInstructions: 'Texas food establishments are inspected by local city or county health departments using the Texas Food Establishment Rules (TFER) as the standard.' },
+      CA: { submitUrl: 'https://www.cdph.ca.gov', submitInstructions: 'California food establishments are inspected by county Environmental Health using the California Retail Food Code (CalCode). Check your county EHD website for inspection criteria.' },
+      NY: { submitUrl: 'https://www.nyc.gov/site/doh/business/food-establishment-permits.page', submitInstructions: 'NYC food inspections follow the NYC Health Code. Review inspection criteria and past grades at nyc.gov/health.' },
+      IL: { submitUrl: 'https://www.chicago.gov/city/en/depts/cdph', submitInstructions: 'Chicago food inspections follow the Chicago Food Service Sanitation Code. Review criteria at chicago.gov/city/en/depts/cdph.' },
+    },
+  },
+
+  // v65 — New guided wizard forms ──────────────────────────────────────────────
+
+  'building-permit': {
+    id:          'building-permit',
+    name:        'Building / Tenant Improvement Permit',
+    description:
+      'Required before any construction, renovation, or tenant improvement work at a business ' +
+      'location. This includes new interior walls, electrical upgrades, plumbing changes, HVAC ' +
+      'modifications, accessibility improvements, and exterior alterations. Permits must be ' +
+      'obtained before work begins — not after — or penalties and stop-work orders apply. The ' +
+      'inspector will verify code compliance at rough-in and final stages. Most jurisdictions ' +
+      'require a licensed contractor for structural, electrical, and plumbing work.',
+    submitUrl:    'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions: 'Apply to your local city or county building department before work begins. Submit plans/drawings for projects over a threshold square footage or valuation (typically $5,000+).',
+    requiredDocs: ['Site plan or floor plan with proposed changes', 'Contractor license and insurance certificates', 'Property owner authorization (if tenant)'],
+    fee:         '$100–$2,000+ (based on project valuation)',
+    fields: [
+      {
+        id: 'businessName', label: 'Business / Tenant Name', type: 'text',
+        placeholder: 'Business occupying the space', required: true,
+        officialFieldName: 'Applicant / Business Name',
+      },
+      {
+        id: 'ownerFullName', label: 'Property Owner or Lessee Name', type: 'text',
+        placeholder: 'Full legal name of applicant', required: true,
+        officialFieldName: 'Owner / Applicant Name',
+      },
+      {
+        id: 'businessAddress', label: 'Project / Property Address', type: 'address',
+        placeholder: 'Full address of the construction site', required: true,
+        officialFieldName: 'Project / Property Address',
+      },
+      {
+        id: 'businessPhone', label: 'Contact Phone Number', type: 'phone',
+        placeholder: '(555) 555-0100', required: true,
+        officialFieldName: 'Applicant Phone',
+      },
+      {
+        id: 'businessEmail', label: 'Contact Email Address', type: 'email',
+        placeholder: 'you@yourbusiness.com', required: false,
+        officialFieldName: 'Applicant Email',
+      },
+      {
+        id: 'workType', label: 'Type of Work', type: 'select',
+        options: [
+          'New construction (ground-up)',
+          'Tenant improvement / interior renovation',
+          'Electrical work only',
+          'Plumbing work only',
+          'HVAC / mechanical work only',
+          'Exterior alterations (facade, signage, paving)',
+          'Accessibility improvements (ADA compliance)',
+          'Demolition',
+          'Mixed scope (multiple trades)',
+        ],
+        required: true,
+        officialFieldName: 'Scope of Work / Permit Type',
+      },
+      {
+        id: 'projectDescription', label: 'Project Description', type: 'text',
+        placeholder: 'e.g. Install 3 interior walls, add 2 bathrooms, upgrade electrical panel', required: true,
+        officialFieldName: 'Description of Work',
+      },
+      {
+        id: 'estimatedProjectCost', label: 'Estimated Project Cost / Valuation', type: 'text',
+        placeholder: 'e.g. $15,000 or $75,000', required: true,
+        officialFieldName: 'Estimated Construction Valuation',
+        hint: 'Building permit fees are typically 1–3% of the project valuation.',
+      },
+      {
+        id: 'squareFootageAffected', label: 'Square Footage Affected', type: 'text',
+        placeholder: 'e.g. 800 sq ft', required: false,
+        officialFieldName: 'Affected Floor Area (sq ft)',
+      },
+      {
+        id: 'contractorName', label: 'General Contractor Name', type: 'text',
+        placeholder: 'Name of licensed general contractor (or "Owner-Builder")', required: false,
+        officialFieldName: 'Contractor Name',
+      },
+      {
+        id: 'contractorLicenseNumber', label: 'Contractor License Number', type: 'text',
+        placeholder: 'State contractor license number', required: false,
+        officialFieldName: 'Contractor License #',
+        hint: 'Required in most states for projects above $500–$1,000 threshold. Owner-builders may be exempt for their own property.',
+      },
+      {
+        id: 'startDate', label: 'Planned Construction Start Date', type: 'date',
+        placeholder: 'MM/DD/YYYY', required: false,
+        officialFieldName: 'Proposed Start Date',
+      },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://floridajobs.org/business-growth-and-partnerships/for-businesses/licensing', submitInstructions: 'Florida building permits are issued by your local county or city building department. Contact your jurisdiction\'s Building Official. Miami-Dade: miamidade.gov/building. Broward: broward.org/buildingandzoning.' },
+      TX: { submitUrl: 'https://www.texas.gov', submitInstructions: 'Texas building permits are local. Austin: austintexas.gov/department/development-services. Houston: houstontx.gov/planningdevelopment. Dallas: dallascityhall.com.' },
+      CA: { submitUrl: 'https://www.hcd.ca.gov', submitInstructions: 'California building permits are issued by your city or county building department. LA County: ladbs.org. San Francisco: sfdbi.org. San Jose: sanjoseca.gov/building.' },
+      NY: { submitUrl: 'https://www.nyc.gov/site/dob/index.page', submitInstructions: 'NYC building permits are issued by the Department of Buildings (DOB) at nyc.gov/site/dob. Use the DOB NOW Build portal for most project types.' },
+      IL: { submitUrl: 'https://www.chicago.gov/city/en/depts/bldgs', submitInstructions: 'Chicago building permits are issued by the Department of Buildings at chicago.gov/city/en/depts/bldgs. Use the Chicago Permit Portal for online filing.' },
+      GA: { submitUrl: 'https://www.atlantaga.gov/government/departments/city-planning', submitInstructions: 'Atlanta building permits at atlantaga.gov. Fulton County unincorporated: fultoncountyga.gov. Contact your local Building and Inspections office.' },
+    },
+  },
+
+  'food-manager-certification': {
+    id:          'food-manager-certification',
+    name:        'Food Safety Manager Certification Tracker',
+    description:
+      'Most states require at least one certified food protection manager (CFPM) at each food ' +
+      'service establishment. Certification is obtained by passing an accredited exam — most ' +
+      'commonly ServSafe (National Restaurant Association), NRFSP, Prometric, or 360training. ' +
+      'The certification is typically valid for 5 years. This tracker helps you record the ' +
+      'certification details, expiration date, and exam registration info so you can submit ' +
+      'proof to your local health department during the permitting process.',
+    submitUrl:    'https://www.servsafe.com/ServSafe-Manager/Get-Certified/Find-a-Class',
+    submitInstructions: 'Pass an accredited food safety manager exam. Register at servsafe.com (most common) or another ANSI-accredited provider. Submit your certificate to your local health department when applying for your food service permit.',
+    requiredDocs: ['Government-issued photo ID (for exam)', 'Proof of completion of food safety training course (some providers require)'],
+    fee:         '$35–$125 (exam + study materials; varies by provider)',
+    fields: [
+      {
+        id: 'businessName', label: 'Business / Establishment Name', type: 'text',
+        placeholder: 'Name of the food service business', required: true,
+        officialFieldName: 'Establishment Name',
+      },
+      {
+        id: 'ownerFullName', label: 'Owner / Manager Name', type: 'text',
+        placeholder: 'Name of owner or manager obtaining certification', required: true,
+        officialFieldName: 'Certifying Individual Name',
+      },
+      {
+        id: 'businessAddress', label: 'Business Address', type: 'address',
+        placeholder: 'Physical address of the food service establishment', required: true,
+        officialFieldName: 'Establishment Address',
+      },
+      {
+        id: 'businessPhone', label: 'Business Phone', type: 'phone',
+        placeholder: '(555) 555-0100', required: true,
+        officialFieldName: 'Contact Phone',
+      },
+      {
+        id: 'certProvider', label: 'Exam Provider / Certification Program', type: 'select',
+        options: [
+          'ServSafe (National Restaurant Association)',
+          'NRFSP (National Registry of Food Safety Professionals)',
+          'Prometric / Registered Environmental Health Specialist',
+          '360training.com (Learn2Serve)',
+          'StateFoodSafety.com',
+          'Other ANSI-accredited provider',
+        ],
+        required: true,
+        officialFieldName: 'Certification Provider',
+      },
+      {
+        id: 'examDate', label: 'Exam Date (actual or scheduled)', type: 'date',
+        placeholder: 'MM/DD/YYYY', required: false,
+        officialFieldName: 'Exam / Certification Date',
+      },
+      {
+        id: 'certificationNumber', label: 'Certification Number (if already obtained)', type: 'text',
+        placeholder: 'Certificate ID number from your certificate', required: false,
+        officialFieldName: 'Certificate / Registration Number',
+        hint: 'Leave blank if you have not yet taken the exam. Fill in after passing.',
+      },
+      {
+        id: 'expirationDate', label: 'Certificate Expiration Date', type: 'date',
+        placeholder: 'MM/DD/YYYY (typically 5 years from exam date)', required: false,
+        officialFieldName: 'Certificate Expiration Date',
+      },
+      {
+        id: 'numCertifiedManagers', label: 'Total Number of Certified Managers at This Location', type: 'text',
+        placeholder: 'e.g. 1, 2, 3', required: false,
+        officialFieldName: 'Number of Certified Food Managers',
+        hint: 'Many jurisdictions require one certified manager per shift or per location.',
+      },
+    ],
+    defaultRenewalMonths: 60,
+    localeUrls: {
+      FL: { submitUrl: 'https://floridahealth.gov', submitInstructions: 'Florida requires a certified food manager at each food establishment. Submit certificate to your county DOH with your food service permit application.' },
+      TX: { submitUrl: 'https://dshs.texas.gov/food-establishments', submitInstructions: 'Texas requires a Certified Food Manager (CFM) at each food establishment. Submit your ANSI-accredited certificate to your local health authority.' },
+      CA: { submitUrl: 'https://www.cdph.ca.gov', submitInstructions: 'California requires a Food Safety Manager at each food facility. The exam must be ANSI-accredited. Submit with your county food service permit application.' },
+      NY: { submitUrl: 'https://www.nyc.gov/site/doh/business/food-establishment-permits.page', submitInstructions: 'NYC requires a certified Food Protection Certificate (NYC course) in addition to or instead of national certifications. Check nyc.gov/health for current requirements.' },
+      IL: { submitUrl: 'https://www.chicago.gov/city/en/depts/cdph', submitInstructions: 'Chicago requires a Food Service Sanitation Manager Certificate (FSSMC). Contact Chicago CDPH at chicago.gov/city/en/depts/cdph for approved providers.' },
+    },
+  },
+
+  'resale-certificate': {
+    id:          'resale-certificate',
+    name:        'Resale / Wholesale Purchasing Certificate',
+    description:
+      'A resale certificate (also called a seller\'s permit exemption certificate, reseller ' +
+      'certificate, or Form ST-120/ST-3/etc. depending on the state) allows your business to ' +
+      'purchase goods for resale without paying sales tax at the point of purchase. You ' +
+      'collect and remit sales tax when you sell to your end customer instead. Required by ' +
+      'retailers, wholesalers, and any business that resells physical products. Presented ' +
+      'to your supplier at the time of purchase.',
+    submitUrl:    'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions: 'Complete this certificate and present it to your supplier or wholesale vendor. You may also need to register for a state sales tax permit first before issuing resale certificates.',
+    requiredDocs: ['State sales tax permit / seller\'s permit number', 'Business registration documentation'],
+    fee:         'No fee (completed and given to your supplier)',
+    fields: [
+      {
+        id: 'businessName', label: 'Purchaser Business Name', type: 'text',
+        placeholder: 'Your business name (the buyer)', required: true,
+        officialFieldName: 'Purchaser Name',
+      },
+      {
+        id: 'ownerFullName', label: 'Owner / Authorized Signer Name', type: 'text',
+        placeholder: 'Person signing the certificate', required: true,
+        officialFieldName: 'Authorized Signature / Title',
+      },
+      {
+        id: 'businessAddress', label: 'Purchaser Business Address', type: 'address',
+        placeholder: 'Your business mailing or physical address', required: true,
+        officialFieldName: 'Purchaser Address',
+      },
+      {
+        id: 'businessPhone', label: 'Business Phone', type: 'phone',
+        placeholder: '(555) 555-0100', required: false,
+        officialFieldName: 'Purchaser Phone',
+      },
+      {
+        id: 'fein', label: 'Federal EIN', type: 'text',
+        placeholder: 'XX-XXXXXXX', required: false,
+        officialFieldName: 'Federal Employer ID (EIN)',
+      },
+      {
+        id: 'stateTaxId', label: 'State Sales Tax Permit / Seller\'s Permit Number', type: 'text',
+        placeholder: 'Your state-issued sales tax registration number', required: true,
+        officialFieldName: 'State Tax Registration / Permit Number',
+        hint: 'Obtain this from your state\'s department of revenue before using a resale certificate.',
+      },
+      {
+        id: 'businessType', label: 'Type of Business', type: 'select',
+        options: [
+          'Retailer (sells to end consumers)',
+          'Wholesaler (sells to other businesses)',
+          'Manufacturer (resells components and materials)',
+          'Contractor (purchases materials for resale in projects)',
+          'Restaurant / Food Service (purchases food for resale)',
+          'E-commerce / Online Retailer',
+          'Other',
+        ],
+        required: true,
+        officialFieldName: 'Type of Business',
+      },
+      {
+        id: 'goodsPurchased', label: 'Description of Goods to be Purchased for Resale', type: 'text',
+        placeholder: 'e.g. clothing, electronics, food ingredients, restaurant supplies', required: true,
+        officialFieldName: 'Description of Items Purchased',
+        hint: 'Be specific. The goods must match what you actually sell to customers.',
+      },
+      {
+        id: 'sellerName', label: 'Seller / Supplier Name (if known)', type: 'text',
+        placeholder: 'Name of the wholesale supplier or vendor', required: false,
+        officialFieldName: 'Seller / Vendor Name',
+        hint: 'Some states require a separate certificate per supplier. Leave blank for a blanket certificate.',
+      },
+      {
+        id: 'sellerAddress', label: 'Seller / Supplier Address', type: 'address',
+        placeholder: 'Supplier\'s address (if required by your state)', required: false,
+        officialFieldName: 'Seller Address',
+      },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://floridarevenue.com/taxes/taxesfees/Pages/sales_tax.aspx', submitInstructions: 'Florida: Present your Florida Annual Resale Certificate (Form DR-13) to suppliers. Obtain via your Florida sales tax registration at floridarevenue.com.' },
+      TX: { submitUrl: 'https://comptroller.texas.gov/taxes/sales', submitInstructions: 'Texas: Use your Texas Sales and Use Tax Resale Certificate (Form 01-339) at comptroller.texas.gov. You must have a Texas sales tax permit number.' },
+      CA: { submitUrl: 'https://www.cdtfa.ca.gov/industry/exemptcertificates.html', submitInstructions: 'California: Use CDTFA General Resale Certificate (CDTFA-230). Available at cdtfa.ca.gov. Seller\'s permit number required.' },
+      NY: { submitUrl: 'https://www.tax.ny.gov/pdf/current_forms/st/st120_fill_in.pdf', submitInstructions: 'New York: Use Form ST-120 Resale Certificate. Your NY Certificate of Authority (sales tax registration) number is required.' },
+      IL: { submitUrl: 'https://tax.illinois.gov/research/taxinformation/sales/rot.html', submitInstructions: 'Illinois: Use Certificate of Resale (Form CRT-61) from IDOR at tax.illinois.gov. IL Account ID required.' },
+      WA: { submitUrl: 'https://dor.wa.gov/find-taxes-rates/retail-sales-tax/reseller-permit', submitInstructions: 'Washington: Use a Reseller Permit (not a certificate) issued by WSDOR at dor.wa.gov/find-taxes-rates/retail-sales-tax/reseller-permit. Apply online through My DOR.' },
+    },
+  },
+
+  'workers-comp-exemption': {
+    id:          'workers-comp-exemption',
+    name:        'Workers\' Compensation Exemption Application',
+    description:
+      'Sole proprietors, partners, and certain corporate officers may be exempt from carrying ' +
+      'workers\' compensation insurance for themselves (though they must still cover employees). ' +
+      'An exemption must be filed with the state workers\' compensation board or department of ' +
+      'labor. This form tracks the exemption application so you can prove compliance during ' +
+      'a contractor license application, business license renewal, or client contract ' +
+      'requirements. Exemptions do NOT cover employees — only the exempt individual.',
+    submitUrl:    'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions: 'File with your state\'s workers\' compensation board, insurance division, or department of labor. Many states have online portals. Exemption certificates must be renewed annually in most states.',
+    requiredDocs: ['Business entity registration documents (LLC articles, corporate charter)', 'Government-issued ID of officer/owner being exempted'],
+    fee:         '$0–$50 (most states)',
+    fields: [
+      {
+        id: 'businessName', label: 'Business Name', type: 'text',
+        placeholder: 'Legal business name', required: true,
+        officialFieldName: 'Employer / Business Name',
+      },
+      {
+        id: 'fein', label: 'Federal EIN', type: 'text',
+        placeholder: 'XX-XXXXXXX', required: true,
+        officialFieldName: 'FEIN / Employer ID',
+      },
+      {
+        id: 'businessAddress', label: 'Business Address', type: 'address',
+        placeholder: 'Principal business address', required: true,
+        officialFieldName: 'Business / Mailing Address',
+      },
+      {
+        id: 'businessPhone', label: 'Business Phone', type: 'phone',
+        placeholder: '(555) 555-0100', required: true,
+        officialFieldName: 'Contact Phone',
+      },
+      {
+        id: 'entityType', label: 'Business Entity Type', type: 'select',
+        options: [
+          'Sole Proprietorship',
+          'Partnership (General)',
+          'Limited Partnership (LP)',
+          'Limited Liability Company (LLC)',
+          'S-Corporation',
+          'C-Corporation',
+        ],
+        required: true,
+        officialFieldName: 'Entity Type',
+      },
+      {
+        id: 'exemptionType', label: 'Type of Exemption', type: 'select',
+        options: [
+          'Sole Proprietor (self only — no employees)',
+          'Partner (general or limited partner)',
+          'Corporate Officer / Member-Manager (LLC)',
+          'Corporate Officer (Corporation)',
+          'Family Member Exemption',
+        ],
+        required: true,
+        officialFieldName: 'Exemption Classification',
+      },
+      {
+        id: 'ownerFullName', label: 'Officer / Owner Name Being Exempted', type: 'text',
+        placeholder: 'Full legal name of the officer or owner', required: true,
+        officialFieldName: 'Officer / Owner Name',
+      },
+      {
+        id: 'ownerTitle', label: 'Title / Role in the Business', type: 'text',
+        placeholder: 'e.g. Owner, President, Managing Member', required: true,
+        officialFieldName: 'Officer Title',
+      },
+      {
+        id: 'numEmployees', label: 'Number of Employees (excluding exempt officers)', type: 'text',
+        placeholder: 'e.g. 0, 2, 5', required: true,
+        officialFieldName: 'Number of Employees',
+        hint: 'If you have any employees (other than exempted officers), you must carry workers\' comp for them even if you hold an exemption.',
+      },
+      {
+        id: 'ownershipPercentage', label: 'Ownership Percentage of Exempted Officer', type: 'text',
+        placeholder: 'e.g. 100%, 51%, 33%', required: false,
+        officialFieldName: 'Ownership Percentage',
+        hint: 'Some states require a minimum ownership % (e.g., 25% or 10%) to qualify for the officer exemption.',
+      },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.myfloridacfo.com/division/wc/employer/exemptions.htm', submitInstructions: 'Florida officer exemptions are filed with the FL Division of Workers\' Compensation at myfloridacfo.com/division/wc. Construction industry officers: specific requirements apply.' },
+      TX: { submitUrl: 'https://www.tdi.texas.gov/wc/employer/exemptions.html', submitInstructions: 'Texas workers\' comp is not mandatory for most private employers (Texas is a non-subscriber state). Check TDI rules at tdi.texas.gov/wc.' },
+      CA: { submitUrl: 'https://www.dir.ca.gov/dwc/', submitInstructions: 'California requires workers\' comp for all employees. Sole proprietors with no employees are exempt but should file Form DWC-5 for documentation at dir.ca.gov/dwc.' },
+      NY: { submitUrl: 'https://www.wcb.ny.gov/content/main/Employers/FormC-105.2.jsp', submitInstructions: 'New York: File CE-200 (Certificate of Attestation of Exemption) through the NYWCB online portal at wcb.ny.gov. Valid for 1 year.' },
+      IL: { submitUrl: 'https://www2.illinois.gov/sites/iwcc/Pages/default.aspx', submitInstructions: 'Illinois officers may file exemption with the Illinois Workers\' Compensation Commission at iwcc.il.gov. Sole proprietors with no employees are typically exempt.' },
+      GA: { submitUrl: 'https://sbwc.georgia.gov/', submitInstructions: 'Georgia: Corporate officer exemptions filed with the State Board of Workers\' Compensation at sbwc.georgia.gov. LLC members and sole proprietors may also qualify.' },
+    },
+  },
+
+  'dba-county-registration': {
+    id:          'dba-county-registration',
+    name:        'County DBA / Assumed Business Name Registration',
+    description:
+      'Many counties and cities require a separate local DBA (Doing Business As) or Assumed ' +
+      'Business Name filing in addition to the state fictitious name registration. This local ' +
+      'filing is often required to open a business bank account, obtain a business license, ' +
+      'or enter into contracts under the trade name. Filed at the County Clerk\'s or ' +
+      'Recorder\'s office. Some jurisdictions also require a newspaper publication of the ' +
+      'assumed name. Fees are modest ($10–$50).',
+    submitUrl:    'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions: 'File with your County Clerk, County Recorder, or Clerk of Court. Some jurisdictions allow online filing; others require in-person or mail submissions.',
+    requiredDocs: ['Government-issued photo ID', 'Business entity documents if filing as LLC or corporation (not sole proprietor)'],
+    fee:         '$10–$75 (most county clerks)',
+    fields: [
+      {
+        id: 'fictitiousName', label: 'DBA / Assumed Business Name', type: 'text',
+        placeholder: 'The trade name you will operate under', required: true,
+        officialFieldName: 'Assumed / Fictitious / DBA Name',
+      },
+      {
+        id: 'ownerFullName', label: 'Legal Owner Name', type: 'text',
+        placeholder: 'Full legal name of owner (individual or entity)', required: true,
+        officialFieldName: 'Owner / Registrant Legal Name',
+      },
+      {
+        id: 'businessAddress', label: 'Principal Business Address', type: 'address',
+        placeholder: 'Physical address where business is located', required: true,
+        officialFieldName: 'Principal Place of Business',
+      },
+      {
+        id: 'mailingAddress', label: 'Mailing Address (if different)', type: 'address',
+        placeholder: 'Leave blank if same as business address', required: false,
+        officialFieldName: 'Mailing Address',
+      },
+      {
+        id: 'businessPhone', label: 'Business Phone', type: 'phone',
+        placeholder: '(555) 555-0100', required: false,
+        officialFieldName: 'Contact Phone',
+      },
+      {
+        id: 'businessEmail', label: 'Business Email', type: 'email',
+        placeholder: 'you@yourbusiness.com', required: false,
+        officialFieldName: 'Contact Email',
+      },
+      {
+        id: 'entityType', label: 'Owner Entity Type', type: 'select',
+        options: [
+          'Individual (Sole Proprietor)',
+          'General Partnership',
+          'Limited Liability Company (LLC)',
+          'Corporation',
+          'Other',
+        ],
+        required: true,
+        officialFieldName: 'Type of Registrant',
+      },
+      {
+        id: 'businessType', label: 'Nature of Business', type: 'text',
+        placeholder: 'e.g. food truck, retail clothing, landscaping, consulting', required: true,
+        officialFieldName: 'Nature / Type of Business',
+      },
+      {
+        id: 'county', label: 'County of Registration', type: 'text',
+        placeholder: 'e.g. Miami-Dade County, Harris County, Cook County', required: true,
+        officialFieldName: 'County of Filing',
+      },
+      {
+        id: 'requiresNewspaperPublication', label: 'Does your state require newspaper publication?', type: 'checkbox',
+        required: false,
+        officialFieldName: 'Newspaper Publication Requirement',
+        hint: 'Some states (like PA, NY, IL) require publishing the assumed name in a local newspaper for a set period before or after filing.',
+      },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://dos.myflorida.com/sunbiz/forms/', submitInstructions: 'Florida fictitious names are registered with the FL Division of Corporations (Sunbiz) at sunbiz.org. County filing may also be required — check with your County Clerk.' },
+      TX: { submitUrl: 'https://www.sos.state.tx.us/corp/assumed_names.shtml', submitInstructions: 'Texas assumed names are filed with the County Clerk where the principal office is located AND the TX Secretary of State for LLCs/corps. Apply at sos.state.tx.us.' },
+      CA: { submitUrl: 'https://www.sos.ca.gov/business-programs/fictitious-business-name', submitInstructions: 'California fictitious business names are registered with the County Clerk of the county where the business is located. Search your county clerk\'s website.' },
+      NY: { submitUrl: 'https://www.dos.ny.gov/corps/bus_entity_search.html', submitInstructions: 'New York assumed names are filed with the County Clerk for sole proprietors/partnerships, or with the NY DOS for LLCs/corporations. Newspaper publication is required (4 weeks).' },
+      IL: { submitUrl: 'https://www.cyberdriveillinois.com/departments/business_services/assumed_name.html', submitInstructions: 'Illinois assumed names (DBA) for sole proprietors and partnerships are filed with the County Clerk. LLCs/corps file with the IL Secretary of State. Newspaper publication may be required.' },
+      GA: { submitUrl: 'https://sos.ga.gov/index.php/corporations', submitInstructions: 'Georgia trade names are registered with the GA Secretary of State at sos.ga.gov. County clerk registration may also be required for sole proprietors.' },
+    },
+  },
+
+  // v64 — New guided wizard forms ──────────────────────────────────────────────
+
+  'temporary-food-vendor-permit': {
+    id:          'temporary-food-vendor-permit',
+    name:        'Temporary / Event Food Vendor Permit',
+    description:
+      'Required for selling food at temporary events: farmers markets, festivals, fairs, ' +
+      'pop-up kitchens, or catering at one-time gatherings. Issued by the local health ' +
+      'department, typically for a single event or a limited series (up to 14 days). ' +
+      'Pre-packaged shelf-stable foods may be exempt; hot food preparation almost always ' +
+      'requires this permit. Apply at least 2–4 weeks before your event.',
+    submitUrl:    'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions: 'Apply to your local county or city health department. Many jurisdictions accept applications online. Submit at least 2 weeks before the event date.',
+    requiredDocs: ['Food manager / food handler certification', 'List of menu items and preparation methods', 'Event organizer letter or approval (if applicable)'],
+    fee:         '$25–$150 (varies by jurisdiction and event duration)',
+    fields: [
+      {
+        id: 'businessName', label: 'Business / Vendor Name', type: 'text',
+        placeholder: 'Your business or vendor name', required: true,
+        officialFieldName: 'Vendor / Establishment Name',
+      },
+      {
+        id: 'ownerFullName', label: 'Owner / Operator Name', type: 'text',
+        placeholder: 'Full legal name', required: true,
+        officialFieldName: 'Owner / Operator',
+      },
+      {
+        id: 'businessAddress', label: 'Operator Mailing Address', type: 'address',
+        placeholder: 'Your home or business mailing address', required: true,
+        officialFieldName: 'Mailing Address',
+      },
+      {
+        id: 'businessPhone', label: 'Contact Phone Number', type: 'phone',
+        placeholder: '(555) 555-0100', required: true,
+        officialFieldName: 'Contact Phone',
+      },
+      {
+        id: 'businessEmail', label: 'Contact Email Address', type: 'email',
+        placeholder: 'you@yourbusiness.com', required: false,
+        officialFieldName: 'Contact Email',
+      },
+      {
+        id: 'eventName', label: 'Event Name', type: 'text',
+        placeholder: 'e.g. Downtown Farmers Market, City Summer Fest', required: true,
+        officialFieldName: 'Event Name',
+      },
+      {
+        id: 'eventLocation', label: 'Event Address / Location', type: 'address',
+        placeholder: 'Full address where the event will be held', required: true,
+        officialFieldName: 'Event Location / Address',
+      },
+      {
+        id: 'eventDates', label: 'Event Date(s)', type: 'text',
+        placeholder: 'e.g. June 15, 2025 or June 1 – June 14, 2025', required: true,
+        officialFieldName: 'Event Date(s)',
+      },
+      {
+        id: 'foodTypes', label: 'Type of Food to be Sold', type: 'text',
+        placeholder: 'e.g. tacos, baked goods, smoothies, pre-packaged snacks', required: true,
+        officialFieldName: 'Menu / Food Items',
+      },
+      {
+        id: 'foodPrepMethod', label: 'Food Preparation Method', type: 'select',
+        options: [
+          'Pre-packaged / shelf-stable only (no on-site cooking)',
+          'On-site assembly (pre-cooked ingredients only)',
+          'Full on-site cooking (raw ingredients)',
+          'Baked goods prepared at home/cottage kitchen',
+          'Catered / prepared off-site and transported',
+        ],
+        required: true,
+        officialFieldName: 'Preparation Method',
+      },
+      {
+        id: 'waterSource', label: 'Water Source at Event', type: 'select',
+        options: [
+          'Municipal water (on-site hookup)',
+          'Potable water tank (self-supplied)',
+          'Bottled water only',
+          'No water needed (pre-packaged product)',
+        ],
+        required: true,
+        officialFieldName: 'Water Source',
+      },
+      {
+        id: 'foodManagerCert', label: 'Food Manager Certification Number', type: 'text',
+        placeholder: 'ServSafe or equivalent certification number', required: false,
+        officialFieldName: 'Food Manager Certificate Number',
+        hint: 'Required in most jurisdictions for hot food preparation. ServSafe is the most widely accepted.',
+      },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://floridahealth.gov', submitInstructions: 'In Florida, temporary food vendor permits are issued by the county Department of Health (e.g. miamidade.floridahealth.gov, broward.floridahealth.gov). Apply at least 2 weeks in advance.' },
+      TX: { submitUrl: 'https://dshs.texas.gov/food-establishments', submitInstructions: 'In Texas, contact your city or county health department. Houston: houstontx.gov/health. Austin: austintexas.gov/department/environmental-health-services-division.' },
+      CA: { submitUrl: 'https://www.cdph.ca.gov', submitInstructions: 'In California, temporary food facility permits are issued by your county Environmental Health Department. LA County: ehservices.publichealth.lacounty.gov.' },
+      NY: { submitUrl: 'https://www.nyc.gov/site/doh/business/food-establishment-permits.page', submitInstructions: 'In New York City, temporary food service permits are issued by the NYC Health Department. Apply at nyc.gov/health.' },
+      IL: { submitUrl: 'https://www.chicago.gov/city/en/depts/bacp', submitInstructions: 'In Chicago, temporary food vendors need a Temporary Food Service Establishment license from CDPH. Apply at chicago.gov/city/en/depts/cdph.' },
+    },
+  },
+
+  'cottage-food-registration': {
+    id:          'cottage-food-registration',
+    name:        'Cottage Food / Home Kitchen Registration',
+    description:
+      'Allows you to legally sell food items made in your home kitchen — typically ' +
+      'non-potentially-hazardous foods like baked goods, jams, jellies, candies, dried herbs, ' +
+      'and granola. Most states have Cottage Food laws with annual revenue caps ($50K–$75K) and ' +
+      'labeling requirements. Direct sales only (farmers markets, farm stands, online orders ' +
+      'with local pickup) are typically allowed; retail store distribution may not be. ' +
+      'Check your state\'s specific cottage food law before registering.',
+    submitUrl:    'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions: 'Most states require registration with your local health department or state agriculture department. Some states (like Texas and California) allow unregistered cottage food sales below a revenue threshold.',
+    requiredDocs: ['Home address (residential kitchen required)', 'Product list with ingredient labels', 'Completed label sample (if required by state)'],
+    fee:         'Free – $100 (most states)',
+    fields: [
+      {
+        id: 'businessName', label: 'Business / Bakery Name (or Your Name)', type: 'text',
+        placeholder: 'e.g. Jane\'s Home Bakery or your legal name', required: true,
+        officialFieldName: 'Cottage Food Operation Name',
+      },
+      {
+        id: 'ownerFullName', label: 'Your Legal Name', type: 'text',
+        placeholder: 'Full legal name (must be the home resident)', required: true,
+        officialFieldName: 'Operator Legal Name',
+      },
+      {
+        id: 'homeAddress', label: 'Home Kitchen Address', type: 'address',
+        placeholder: 'Full residential address where food is made', required: true,
+        officialFieldName: 'Production Kitchen Address',
+        hint: 'Must be your personal residence. Commercial kitchens or rentals do not qualify as cottage food.',
+      },
+      {
+        id: 'businessPhone', label: 'Phone Number', type: 'phone',
+        placeholder: '(555) 555-0100', required: true,
+        officialFieldName: 'Contact Phone',
+      },
+      {
+        id: 'businessEmail', label: 'Email Address', type: 'email',
+        placeholder: 'you@example.com', required: false,
+        officialFieldName: 'Contact Email',
+      },
+      {
+        id: 'productTypes', label: 'Products to be Sold', type: 'text',
+        placeholder: 'e.g. cookies, muffins, jam, granola, dried pasta', required: true,
+        officialFieldName: 'Cottage Food Products',
+        hint: 'Only non-potentially-hazardous foods are allowed (no cream fillings, meat, or items needing refrigeration).',
+      },
+      {
+        id: 'salesChannels', label: 'Where Will You Sell?', type: 'select',
+        options: [
+          'Farmers markets and farm stands only',
+          'Online orders with local delivery or pickup',
+          'Both farmers markets and online sales',
+          'From my home only (by appointment)',
+          'Temporary events and festivals',
+        ],
+        required: true,
+        officialFieldName: 'Sales Venue / Distribution Method',
+      },
+      {
+        id: 'estimatedAnnualRevenue', label: 'Estimated Annual Revenue', type: 'text',
+        placeholder: 'e.g. $5,000 or $35,000', required: false,
+        officialFieldName: 'Estimated Annual Gross Revenue',
+        hint: 'Most state cottage food laws cap revenue at $50,000–$75,000 per year. Verify your state\'s limit.',
+      },
+      {
+        id: 'hasRequiredLabeling', label: 'Will labels include all required disclosures?', type: 'checkbox',
+        required: true,
+        officialFieldName: 'Labeling Compliance',
+        hint: 'Labels must typically include: product name, ingredients, net weight, your name and address, and "Made in a home kitchen not inspected by the [State] Department of Health".',
+      },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.fdacs.gov/Business-Services/Food-Safety/Cottage-Food', submitInstructions: 'Florida cottage food operators register with the FL Department of Agriculture and Consumer Services (FDACS) at fdacs.gov. Annual revenue limit is $50,000.' },
+      TX: { submitUrl: 'https://www.dshs.texas.gov/cottage-food', submitInstructions: 'Texas cottage food operators do not need a permit for direct sales under $50,000/year. Check Texas Cottage Food Law requirements at dshs.texas.gov/cottage-food.' },
+      CA: { submitUrl: 'https://www.cdph.ca.gov/Programs/CEH/DFDCS/Pages/FDBPrograms/FoodSafetyProgram/CFO.aspx', submitInstructions: 'California has Class A (direct sales, no permit) and Class B (indirect sales, permit required) cottage food operations. Register with your county Environmental Health Department for Class B.' },
+      NY: { submitUrl: 'https://agriculture.ny.gov/food-safety/home-processor', submitInstructions: 'New York home processors selling directly must register with the NY Department of Agriculture at agriculture.ny.gov.' },
+      GA: { submitUrl: 'https://agr.georgia.gov/cottage-food', submitInstructions: 'Georgia cottage food operators register with the Georgia Department of Agriculture at agr.georgia.gov. Annual revenue limit is $50,000.' },
+      IL: { submitUrl: 'https://www2.illinois.gov/sites/agr/Pages/CottageFood.aspx', submitInstructions: 'Illinois Cottage Food Operations register with the Illinois Department of Public Health. Annual revenue limit is $25,000.' },
+    },
+  },
+
+  'liquor-license-application': {
+    id:          'liquor-license-application',
+    name:        'Liquor / Alcohol License Application',
+    description:
+      'Required for any business that sells or serves alcohol: bars, restaurants, clubs, ' +
+      'liquor stores, convenience stores, grocery stores, and event venues. License types ' +
+      'vary by state — on-premise (bars/restaurants), off-premise (retail stores), beer/wine ' +
+      'only, full liquor, etc. Apply well in advance (4–16 weeks processing time is common). ' +
+      'Local approval (city/county) is usually required in addition to the state license.',
+    submitUrl:    'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions: 'Apply to your state Alcohol Beverage Control (ABC) board and your local city or county licensing authority. Processing times vary widely — apply as early as possible.',
+    requiredDocs: ['Completed state ABC application', 'Floor plan of the licensed premises', 'Background check for all owners/officers', 'Lease agreement or property deed', 'Certificate of Good Standing from Secretary of State'],
+    fee:         '$300–$14,000+ (highly variable by state, license type, and premise type)',
+    fields: [
+      {
+        id: 'businessName', label: 'Business / Establishment Name', type: 'text',
+        placeholder: 'Legal name of the business', required: true,
+        officialFieldName: 'Establishment Name',
+      },
+      {
+        id: 'ownerFullName', label: 'Owner / Principal Officer Name', type: 'text',
+        placeholder: 'Full legal name of owner or responsible officer', required: true,
+        officialFieldName: 'Principal Owner / Applicant Name',
+      },
+      {
+        id: 'businessAddress', label: 'Licensed Premises Address', type: 'address',
+        placeholder: 'Physical address of the business location', required: true,
+        officialFieldName: 'Licensed Premises Address',
+      },
+      {
+        id: 'businessPhone', label: 'Business Phone Number', type: 'phone',
+        placeholder: '(555) 555-0100', required: true,
+        officialFieldName: 'Contact Phone',
+      },
+      {
+        id: 'businessEmail', label: 'Business Email Address', type: 'email',
+        placeholder: 'you@yourbusiness.com', required: false,
+        officialFieldName: 'Contact Email',
+      },
+      {
+        id: 'fein', label: 'Federal Employer ID Number (EIN)', type: 'text',
+        placeholder: 'XX-XXXXXXX', required: true,
+        officialFieldName: 'Federal Employer ID / FEIN',
+      },
+      {
+        id: 'licenseType', label: 'License Type Requested', type: 'select',
+        options: [
+          'On-Premise Consumption — Full Liquor (bar, restaurant, club)',
+          'On-Premise Consumption — Beer & Wine Only',
+          'Off-Premise Retail — Full Liquor (liquor store)',
+          'Off-Premise Retail — Beer & Wine Only (grocery, convenience)',
+          'Catering / Special Event License',
+          'Manufacturer / Distillery / Winery / Brewery',
+          'Club / Membership License',
+        ],
+        required: true,
+        officialFieldName: 'License Type',
+      },
+      {
+        id: 'premiseType', label: 'Type of Premises', type: 'select',
+        options: [
+          'Restaurant (food service with alcohol)',
+          'Bar / Tavern / Lounge',
+          'Nightclub / Entertainment Venue',
+          'Liquor Store / Package Store',
+          'Grocery Store / Convenience Store',
+          'Hotel / Motel',
+          'Brewery / Winery / Distillery',
+          'Event Venue / Banquet Hall',
+        ],
+        required: true,
+        officialFieldName: 'Premises Type',
+      },
+      {
+        id: 'seatingCapacity', label: 'Total Seating Capacity', type: 'text',
+        placeholder: 'Total number of seats (indoor + outdoor)', required: false,
+        officialFieldName: 'Seating Capacity',
+        hint: 'Required for on-premise licenses. Include bar stools and outdoor seating.',
+      },
+      {
+        id: 'alcoholSalesPercent', label: 'Estimated % of Revenue from Alcohol Sales', type: 'select',
+        options: [
+          'Less than 25% (restaurant-focused)',
+          '25%–49%',
+          '50%–74%',
+          '75%–100% (bar or liquor store)',
+        ],
+        required: false,
+        officialFieldName: 'Percentage of Sales from Alcohol',
+      },
+      {
+        id: 'hasSecurityPlan', label: 'Does your business have a security plan?', type: 'checkbox',
+        required: false,
+        officialFieldName: 'Security Plan on File',
+        hint: 'Required for high-capacity venues and nightclubs in many jurisdictions.',
+      },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.myfloridalicense.com/DBPR/', submitInstructions: 'Florida liquor licenses are issued by the Florida DBPR Division of Alcoholic Beverages and Tobacco (ABT) at myfloridalicense.com. Also requires local county/city zoning approval.' },
+      TX: { submitUrl: 'https://www.tabc.texas.gov/licensing/', submitInstructions: 'Texas liquor licenses are issued by the Texas Alcoholic Beverage Commission (TABC) at tabc.texas.gov/licensing. Texas is a local option state — check county/city wet/dry status first.' },
+      CA: { submitUrl: 'https://www.abc.ca.gov/licensing/', submitInstructions: 'California ABC licenses are issued at abc.ca.gov/licensing. Process takes 60–90 days. Local government approval is also required.' },
+      NY: { submitUrl: 'https://www.sla.ny.gov/apply-for-a-license', submitInstructions: 'New York SLA licenses at sla.ny.gov. NYC applicants also need Community Board approval (90-day window). Apply 4–6 months before opening.' },
+      IL: { submitUrl: 'https://www.idfpr.com/LicenseLookUp/LicenseLookUp.asp', submitInstructions: 'Illinois state liquor licenses at idfpr.illinois.gov. Chicago businesses also need a Chicago Local Liquor License from BACP.' },
+      GA: { submitUrl: 'https://www.dor.georgia.gov/alcohol-tobacco', submitInstructions: 'Georgia liquor licenses are issued by the GA Revenue Department AND the local city/county. Both must be obtained.' },
+    },
+  },
+
+  'sign-permit': {
+    id:          'sign-permit',
+    name:        'Business Sign Permit',
+    description:
+      'Required in most cities and counties before installing any exterior business sign — ' +
+      'including wall-mounted signs, freestanding monument signs, window vinyl, awning ' +
+      'lettering, and illuminated signs. Sign ordinances regulate size (square footage), ' +
+      'height, placement (setbacks), illumination, and number of signs per property. ' +
+      'HOAs and historic districts often have additional restrictions. Apply before ' +
+      'fabricating the sign to avoid costly changes.',
+    submitUrl:    'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions: 'Apply to your local city or county building / planning department. Most require sign drawings or renderings showing dimensions and placement.',
+    requiredDocs: ['Sign drawing or rendering with dimensions', 'Photo of the building facade', 'Property address and zoning verification'],
+    fee:         '$25–$300 (most jurisdictions)',
+    fields: [
+      {
+        id: 'businessName', label: 'Business Name', type: 'text',
+        placeholder: 'Business name as it will appear on the sign', required: true,
+        officialFieldName: 'Business Name / Sign Tenant',
+      },
+      {
+        id: 'ownerFullName', label: 'Owner / Applicant Name', type: 'text',
+        placeholder: 'Property owner or business owner name', required: true,
+        officialFieldName: 'Applicant Name',
+      },
+      {
+        id: 'businessAddress', label: 'Property / Installation Address', type: 'address',
+        placeholder: 'Address where sign will be installed', required: true,
+        officialFieldName: 'Installation Address',
+      },
+      {
+        id: 'businessPhone', label: 'Contact Phone', type: 'phone',
+        placeholder: '(555) 555-0100', required: true,
+        officialFieldName: 'Applicant Phone',
+      },
+      {
+        id: 'signType', label: 'Sign Type', type: 'select',
+        options: [
+          'Wall-mounted (flush to building face)',
+          'Projecting / Blade sign (perpendicular to wall)',
+          'Freestanding / Monument sign',
+          'Pole sign',
+          'Window vinyl / lettering',
+          'Awning with lettering',
+          'LED / Electronic Message Board',
+          'Illuminated cabinet sign',
+          'Painted wall mural',
+        ],
+        required: true,
+        officialFieldName: 'Sign Type',
+      },
+      {
+        id: 'signDimensions', label: 'Sign Dimensions (Width × Height)', type: 'text',
+        placeholder: 'e.g. 4 ft × 2 ft (8 sq ft total)', required: true,
+        officialFieldName: 'Sign Dimensions / Square Footage',
+      },
+      {
+        id: 'signMaterial', label: 'Sign Material', type: 'text',
+        placeholder: 'e.g. aluminum face, acrylic letters, vinyl wrap', required: false,
+        officialFieldName: 'Sign Material',
+      },
+      {
+        id: 'isIlluminated', label: 'Is the Sign Illuminated?', type: 'checkbox',
+        required: true,
+        officialFieldName: 'Illuminated Sign',
+      },
+      {
+        id: 'illuminationType', label: 'Illumination Type', type: 'select',
+        options: [
+          'Not illuminated',
+          'Internal illumination (backlit face)',
+          'External illumination (floodlight / halo)',
+          'LED channel letters',
+          'Neon',
+          'Electronic / LED message board',
+        ],
+        required: false,
+        officialFieldName: 'Illumination Type',
+      },
+      {
+        id: 'installerName', label: 'Sign Installer / Contractor Name', type: 'text',
+        placeholder: 'Name of the sign installation company (if applicable)', required: false,
+        officialFieldName: 'Sign Contractor Name',
+      },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://floridajobs.org/business-growth-and-partnerships/for-businesses/licensing', submitInstructions: 'In Florida, sign permits are issued by your city or county building department. Contact your local zoning office for sign ordinance rules.' },
+      TX: { submitUrl: 'https://www.texas.gov', submitInstructions: 'In Texas, sign permits are issued locally. Austin: austintexas.gov/department/development-services. Houston: houstontx.gov/planning. Dallas: dallascityhall.com.' },
+      CA: { submitUrl: 'https://www.hcd.ca.gov', submitInstructions: 'In California, sign permits are issued by your city or county planning/building department. Check local sign ordinances carefully — many CA cities have strict rules.' },
+      NY: { submitUrl: 'https://www.nyc.gov/site/dob/businesses/permits/sign-permits.page', submitInstructions: 'In NYC, sign permits for signs over 6 sq ft are issued by the NYC Department of Buildings (DOB). Apply at nyc.gov/site/dob.' },
+    },
+  },
+
+  'fire-inspection-certificate': {
+    id:          'fire-inspection-certificate',
+    name:        'Certificate of Occupancy / Fire Safety Inspection',
+    description:
+      'A Certificate of Occupancy (CO) or Fire Safety Inspection Certificate is required ' +
+      'before opening a new business location or after major renovations. The fire marshal ' +
+      'or building department inspects the premises for compliance with fire codes: exit signs, ' +
+      'emergency lighting, sprinkler systems, fire extinguisher placement, occupancy load ' +
+      'posting, and blocked exit clearance. Many landlords and business license offices ' +
+      'require proof of a valid CO before issuing permits.',
+    submitUrl:    'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions: 'Apply to your local fire marshal\'s office or building department. Schedule the inspection at least 2–4 weeks before your planned opening date.',
+    requiredDocs: ['Completed tenant improvement or build-out (if applicable)', 'Floor plan showing exit routes and fire equipment placement', 'Landlord authorization for inspection access'],
+    fee:         '$75–$500 (varies by square footage and jurisdiction)',
+    fields: [
+      {
+        id: 'businessName', label: 'Business Name', type: 'text',
+        placeholder: 'Business name at this location', required: true,
+        officialFieldName: 'Business / Occupant Name',
+      },
+      {
+        id: 'ownerFullName', label: 'Owner / Responsible Person', type: 'text',
+        placeholder: 'Full legal name of owner or lessee', required: true,
+        officialFieldName: 'Property Owner / Occupant',
+      },
+      {
+        id: 'businessAddress', label: 'Premises Address', type: 'address',
+        placeholder: 'Full address of the business location', required: true,
+        officialFieldName: 'Premises / Inspection Address',
+      },
+      {
+        id: 'businessPhone', label: 'Contact Phone', type: 'phone',
+        placeholder: '(555) 555-0100', required: true,
+        officialFieldName: 'Applicant Phone',
+      },
+      {
+        id: 'squareFootage', label: 'Total Square Footage of Business Area', type: 'text',
+        placeholder: 'e.g. 1,200 sq ft', required: true,
+        officialFieldName: 'Floor Area (sq ft)',
+      },
+      {
+        id: 'occupancyType', label: 'Occupancy / Business Type', type: 'select',
+        options: [
+          'Restaurant / Food Service (A-2 Assembly)',
+          'Retail Store (M — Mercantile)',
+          'Office (B — Business)',
+          'Warehouse / Storage (S — Storage)',
+          'Gym / Fitness Studio (A-3 Assembly)',
+          'Hair / Beauty Salon (B — Business)',
+          'Medical / Healthcare (I — Institutional)',
+          'Educational / Child Care (E — Educational)',
+          'Industrial / Manufacturing (F — Factory)',
+          'Other',
+        ],
+        required: true,
+        officialFieldName: 'Occupancy Classification',
+      },
+      {
+        id: 'maxOccupancy', label: 'Requested Maximum Occupancy Load', type: 'text',
+        placeholder: 'Number of people (customers + staff)', required: false,
+        officialFieldName: 'Occupant Load Request',
+      },
+      {
+        id: 'hasSprinklers', label: 'Does the building have a sprinkler system?', type: 'checkbox',
+        required: true,
+        officialFieldName: 'Automatic Sprinkler System',
+      },
+      {
+        id: 'hasFireAlarm', label: 'Does the building have a fire alarm system?', type: 'checkbox',
+        required: true,
+        officialFieldName: 'Fire Alarm System',
+      },
+      {
+        id: 'exitCount', label: 'Number of Exit Doors', type: 'text',
+        placeholder: 'e.g. 2', required: false,
+        officialFieldName: 'Number of Exits',
+      },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://floridajobs.org/business-growth-and-partnerships/for-businesses/licensing', submitInstructions: 'In Florida, Certificates of Occupancy are issued by the local building department. Contact your county or city building official.' },
+      TX: { submitUrl: 'https://www.texas.gov', submitInstructions: 'In Texas, Certificate of Occupancy / Fire Safety inspections are performed by the local fire marshal or building department. Houston: houstontx.gov/frm. Austin: austintexas.gov/department/fire.' },
+      CA: { submitUrl: 'https://www.hcd.ca.gov', submitInstructions: 'In California, Certificates of Occupancy are issued by your city or county building department. Contact your local building official.' },
+      NY: { submitUrl: 'https://www.nyc.gov/site/fdny/businesses/permitting/permits.page', submitInstructions: 'In NYC, Fire Safety Inspection / Certificates of Occupancy are issued by the NYC Department of Buildings and FDNY. Apply at nyc.gov/site/dob.' },
+      IL: { submitUrl: 'https://www.chicago.gov/city/en/depts/bldgs', submitInstructions: 'In Chicago, Certificates of Occupancy are issued by the Chicago Department of Buildings (CDB). Apply at chicago.gov/city/en/depts/bldgs.' },
+    },
+  },
+
+  'alarm-permit': {
+    id:          'alarm-permit',
+    name:        'Municipal Alarm / Security System Permit',
+    description:
+      'Many cities require businesses (and residences) to register their alarm system with the ' +
+      'local police or fire department. The permit reduces false alarm responses and may be ' +
+      'required before a monitoring company will activate your alarm. False alarms without a ' +
+      'permit can result in fines of $100–$1,000+. Most permits are issued annually for a ' +
+      'nominal fee and require an emergency contact list for after-hours response.',
+    submitUrl:    'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions: 'Apply online or in person at your local police department, fire department, or city finance office. Register before your alarm system goes live.',
+    requiredDocs: ['Alarm system type and monitoring company information', 'Emergency contact information (at least 2 contacts)'],
+    fee:         '$0–$75/year (most cities)',
+    fields: [
+      {
+        id: 'businessName', label: 'Business Name', type: 'text',
+        placeholder: 'Business name at this location', required: true,
+        officialFieldName: 'Alarm User / Business Name',
+      },
+      {
+        id: 'ownerFullName', label: 'Owner / Responsible Party', type: 'text',
+        placeholder: 'Full legal name', required: true,
+        officialFieldName: 'Responsible Party',
+      },
+      {
+        id: 'businessAddress', label: 'Alarm System Location Address', type: 'address',
+        placeholder: 'Physical address where the alarm is installed', required: true,
+        officialFieldName: 'Alarm Location / Service Address',
+      },
+      {
+        id: 'businessPhone', label: 'Contact Phone Number', type: 'phone',
+        placeholder: '(555) 555-0100', required: true,
+        officialFieldName: 'Contact / Callback Phone',
+      },
+      {
+        id: 'alarmType', label: 'Alarm System Type', type: 'select',
+        options: [
+          'Burglar / Intrusion Alarm only',
+          'Fire / Smoke Alarm only',
+          'Combined Burglar + Fire Alarm',
+          'Panic / Duress Alarm',
+          'Medical Emergency Alarm',
+          'Video Surveillance with Alarm Monitoring',
+        ],
+        required: true,
+        officialFieldName: 'Alarm Type',
+      },
+      {
+        id: 'alarmCompany', label: 'Alarm Monitoring Company Name', type: 'text',
+        placeholder: 'e.g. ADT, Vivint, SimpliSafe, or local company', required: true,
+        officialFieldName: 'Monitoring Company Name',
+      },
+      {
+        id: 'alarmCompanyPhone', label: 'Alarm Company Phone', type: 'phone',
+        placeholder: '(555) 555-0100', required: false,
+        officialFieldName: 'Monitoring Company Phone',
+      },
+      {
+        id: 'emergencyContactName', label: 'Emergency Contact #1 Name', type: 'text',
+        placeholder: 'Person authorized to respond after hours', required: true,
+        officialFieldName: 'Emergency Contact Name (1st)',
+      },
+      {
+        id: 'emergencyContactPhone', label: 'Emergency Contact #1 Phone', type: 'phone',
+        placeholder: '(555) 555-0100', required: true,
+        officialFieldName: 'Emergency Contact Phone (1st)',
+      },
+      {
+        id: 'emergencyContact2Name', label: 'Emergency Contact #2 Name', type: 'text',
+        placeholder: 'Second person authorized to respond', required: false,
+        officialFieldName: 'Emergency Contact Name (2nd)',
+      },
+      {
+        id: 'emergencyContact2Phone', label: 'Emergency Contact #2 Phone', type: 'phone',
+        placeholder: '(555) 555-0100', required: false,
+        officialFieldName: 'Emergency Contact Phone (2nd)',
+      },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://www.miamidade.gov', submitInstructions: 'In Florida, alarm permits are issued by local police or fire departments. Miami-Dade: miamidade.gov. Broward: broward.org. Most FL cities have online alarm permit registration.' },
+      TX: { submitUrl: 'https://www.houstontx.gov', submitInstructions: 'In Texas, alarm permits are required by most major cities. Houston: houstontx.gov/police/alarm. Dallas: dallascityhall.com. Austin: austintexas.gov.' },
+      CA: { submitUrl: 'https://www.lacity.gov', submitInstructions: 'In California, most cities require alarm permits. LA: lacity.org. San Francisco: sf.gov. San Jose: sanjoseca.gov. Check your local police department website.' },
+      IL: { submitUrl: 'https://www.chicago.gov/city/en/depts/dol', submitInstructions: 'Chicago requires a City of Chicago Alarm Permit. Apply at chicago.gov or through your local aldermanic office.' },
+      NY: { submitUrl: 'https://www.nyc.gov/site/nypd/services/law-enforcement/alarm-permits.page', submitInstructions: 'NYC requires alarm permits through the NYPD at nyc.gov/site/nypd/services/law-enforcement/alarm-permits.page.' },
+    },
+  },
+
+  'sidewalk-vending-permit': {
+    id:          'sidewalk-vending-permit',
+    name:        'Sidewalk / Street Vending Permit',
+    description:
+      'Required to operate a stationary food or merchandise cart on a public sidewalk, ' +
+      'plaza, or right-of-way. Sidewalk vending is regulated at the city level and rules ' +
+      'vary dramatically — some cities (like LA) have permitting programs with specific ' +
+      'zones; others prohibit it entirely or require a lottery. Most require proof of ' +
+      'liability insurance, a written approval from the adjacent property owner, and a ' +
+      'food handler\'s permit if selling food.',
+    submitUrl:    'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions: 'Apply to your city\'s public works, transportation, or licensing department. Check your city\'s specific sidewalk vending ordinance for location restrictions and permit requirements.',
+    requiredDocs: ['Government-issued ID', 'Liability insurance certificate ($1M minimum most cities)', 'Cart dimensions and description', 'Food handler certificate (if selling food)', 'Property owner written consent (many cities)'],
+    fee:         '$50–$500/year (highly variable by city)',
+    fields: [
+      {
+        id: 'businessName', label: 'Vendor / Business Name', type: 'text',
+        placeholder: 'Name used on your cart or signage', required: true,
+        officialFieldName: 'Vendor Name',
+      },
+      {
+        id: 'ownerFullName', label: 'Vendor Owner / Operator Name', type: 'text',
+        placeholder: 'Full legal name', required: true,
+        officialFieldName: 'Permit Applicant Name',
+      },
+      {
+        id: 'businessAddress', label: 'Vendor Mailing Address', type: 'address',
+        placeholder: 'Your home or business mailing address', required: true,
+        officialFieldName: 'Applicant Mailing Address',
+      },
+      {
+        id: 'businessPhone', label: 'Contact Phone', type: 'phone',
+        placeholder: '(555) 555-0100', required: true,
+        officialFieldName: 'Contact Phone',
+      },
+      {
+        id: 'businessEmail', label: 'Contact Email', type: 'email',
+        placeholder: 'you@yourbusiness.com', required: false,
+        officialFieldName: 'Contact Email',
+      },
+      {
+        id: 'vendingLocation', label: 'Proposed Vending Location (Cross Streets)', type: 'text',
+        placeholder: 'e.g. SE corner of 5th Ave & Main St, in front of 100 Main St', required: true,
+        officialFieldName: 'Proposed Vending Location',
+        hint: 'Be as specific as possible. Many cities require exact address or GPS coordinates.',
+      },
+      {
+        id: 'vendingType', label: 'Type of Items Sold', type: 'select',
+        options: [
+          'Food (hot food, prepared meals)',
+          'Food (pre-packaged snacks and beverages)',
+          'Fresh produce / fruit',
+          'Flowers',
+          'Merchandise (clothing, accessories, art)',
+          'Newspapers and publications',
+          'Mixed (food + merchandise)',
+        ],
+        required: true,
+        officialFieldName: 'Vending Type / Merchandise Category',
+      },
+      {
+        id: 'operatingHours', label: 'Planned Operating Hours', type: 'text',
+        placeholder: 'e.g. Mon–Fri 7am–3pm, Sat 8am–2pm', required: true,
+        officialFieldName: 'Hours of Operation',
+      },
+      {
+        id: 'cartDimensions', label: 'Cart / Equipment Dimensions', type: 'text',
+        placeholder: 'e.g. 3 ft × 5 ft footprint, 4 ft tall', required: true,
+        officialFieldName: 'Cart / Display Dimensions',
+        hint: 'Most cities require a minimum clearance of 6 ft on the sidewalk after the cart is placed.',
+      },
+      {
+        id: 'hasLiabilityInsurance', label: 'Do you have $1M+ liability insurance?', type: 'checkbox',
+        required: true,
+        officialFieldName: 'Liability Insurance',
+        hint: 'Nearly all cities require at minimum $1,000,000 general liability insurance naming the city as an additional insured.',
+      },
+    ],
+    localeUrls: {
+      CA: { submitUrl: 'https://lacity.gov/government/explore-la-government/departments/economic-and-workforce-development', submitInstructions: 'Los Angeles: Sidewalk Vending Permits issued by the City of LA Department of Economic and Workforce Development (EWD) and LAPD. Apply at lacity.org. San Francisco: sfgov.org/sftransportation.' },
+      NY: { submitUrl: 'https://www.nyc.gov/site/dca/businesses/license-checklist-general-vendor.page', submitInstructions: 'NYC: General Vending licenses issued by the Department of Consumer and Worker Protection (DCWP). Food vendors also need DOHMH mobile food vending permit. Caps on permits exist — waitlists are common.' },
+      TX: { submitUrl: 'https://www.austintexas.gov/department/sidewalk-vendor-permit', submitInstructions: 'Austin TX: Sidewalk Vendor Permits from City of Austin Transportation Department at austintexas.gov. Houston and Dallas regulate vending through special event permits or park permits.' },
+      IL: { submitUrl: 'https://www.chicago.gov/city/en/depts/bacp', submitInstructions: 'Chicago: Pushcart / Mobile Food Vendor licenses issued by BACP at chicago.gov/city/en/depts/bacp. Chicago also requires health department approval for food carts.' },
+      WA: { submitUrl: 'https://www.seattle.gov/transportation/permits-and-services/permits/right-of-way-use-permits', submitInstructions: 'Seattle: Street use permits for sidewalk vending from SDOT at seattle.gov/transportation. King County health permit also required for food carts.' },
+    },
+  },
+
+  // v63 — Zoning Variance Application (guided wizard with zoning pre-fill) ────
+
+  'zoning-variance-application': {
+    id:          'zoning-variance-application',
+    name:        'Zoning Variance / Special Exception Application',
+    description:
+      'File a variance or special exception request with your local zoning board when your ' +
+      'planned business use does not conform to the existing zoning classification. Required ' +
+      'when: the property is zoned residential but you need commercial use, you need a ' +
+      'conditional use permit for a home-based business, or you want to expand a non-conforming ' +
+      'use. Check your zoning result first — this form is only needed for conditional or ' +
+      'prohibited zones.',
+    submitUrl:    'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions: 'Contact your local city or county planning and zoning department to file. The RegPulse Form Assistant will help you prepare the application documents.',
+    requiredDocs: ['Property deed or lease agreement', 'Site plan or sketch of the property', 'Photos of the property'],
+    fee:         '$150–$600 (varies by jurisdiction)',
+    fields: [
+      {
+        id: 'applicantLegalName', label: 'Applicant Legal Name', type: 'text',
+        placeholder: 'Full legal name of applicant or business entity', required: true,
+        officialFieldName: 'Applicant / Owner Name',
+      },
+      {
+        id: 'propertyAddress', label: 'Property Address (Subject of Variance)', type: 'address',
+        placeholder: '123 Main St, City, ST 00000', required: true,
+        officialFieldName: 'Property / Site Address',
+      },
+      {
+        id: 'parcelNumber', label: 'Parcel / Folio Number', type: 'text',
+        placeholder: 'e.g. 12-3456-789-0000', required: false,
+        officialFieldName: 'Parcel ID / Tax Folio Number',
+        hint: 'Find on your property tax bill or county property appraiser website.',
+      },
+      {
+        id: 'currentZoneType', label: 'Current Zoning Classification', type: 'text',
+        placeholder: 'e.g. R-1, RS-2, Residential Single-Family', required: true,
+        officialFieldName: 'Existing Zoning District',
+        hint: 'This is pre-filled from your zoning check result if available.',
+      },
+      {
+        id: 'requestedVarianceType', label: 'Type of Relief Requested', type: 'select',
+        options: [
+          'Variance (dimensional relief)',
+          'Special Exception / Conditional Use Permit',
+          'Use Variance (use not permitted by right)',
+          'Home Occupation Special Permit',
+          'Non-Conforming Use Extension',
+        ],
+        required: true,
+        officialFieldName: 'Type of Application',
+      },
+      {
+        id: 'proposedBusinessUse', label: 'Proposed Business Use / Description', type: 'text',
+        placeholder: 'e.g. Home-based consulting office, food truck commissary kitchen', required: true,
+        officialFieldName: 'Description of Proposed Use',
+      },
+      {
+        id: 'hardshipJustification', label: 'Hardship / Special Conditions Statement', type: 'text',
+        placeholder: 'Describe why strict application of zoning code creates undue hardship...', required: true,
+        officialFieldName: 'Statement of Hardship / Special Conditions',
+        hint: 'Most boards require you to prove the hardship is unique to your property, not self-created, and consistent with the spirit of the zoning code.',
+      },
+      {
+        id: 'neighborImpactStatement', label: 'Impact on Surrounding Properties', type: 'text',
+        placeholder: 'Explain why the variance will not adversely affect neighboring properties...', required: true,
+        officialFieldName: 'Effect on Adjacent Properties / Neighborhood Character',
+      },
+      {
+        id: 'ownerFullName', label: 'Property Owner Full Name', type: 'text',
+        placeholder: 'Property owner (if different from applicant)', required: false,
+        officialFieldName: 'Property Owner Name',
+      },
+      {
+        id: 'businessPhone', label: 'Contact Phone Number', type: 'phone',
+        placeholder: '(555) 555-0100', required: true,
+        officialFieldName: 'Applicant Phone',
+      },
+      {
+        id: 'businessEmail', label: 'Contact Email Address', type: 'email',
+        placeholder: 'you@yourbusiness.com', required: true,
+        officialFieldName: 'Applicant Email',
+      },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://floridajobs.org/business-growth-and-partnerships/for-businesses/licensing', submitInstructions: 'In Florida, zoning variances are handled by individual county or city zoning boards. Contact your local planning and zoning department. Miami-Dade: miamidade.gov/zoning. Broward: broward.org/planning.' },
+      TX: { submitUrl: 'https://www.sos.state.tx.us', submitInstructions: 'In Texas, zoning variances are handled by the city Board of Adjustment. Contact your local city planning department (e.g. Austin: austintexas.gov/department/development-services).' },
+      CA: { submitUrl: 'https://www.hcd.ca.gov', submitInstructions: 'In California, zoning variances are handled by local city or county planning commissions. Contact your local planning department.' },
+      NY: { submitUrl: 'https://www.dos.ny.gov', submitInstructions: 'In New York, zoning variances are granted by local Zoning Boards of Appeals (ZBA). Contact your city or town ZBA directly.' },
+    },
+  },
+
+  // v63 — Commissary Agreement Worksheet (food truck) ───────────────────────
+
+  'commissary-agreement-worksheet': {
+    id:          'commissary-agreement-worksheet',
+    name:        'Food Truck Commissary Agreement Worksheet',
+    description:
+      'A guided worksheet to help you prepare your commissary agreement — required by most ' +
+      'health departments before issuing a Mobile Food Dispensing Vehicle (MFDV) or food ' +
+      'truck permit. The commissary is your licensed commercial kitchen base of operations ' +
+      'where you store food, clean equipment, and prepare cold prep items. This worksheet ' +
+      'documents the arrangement so you can submit it with your permit application.',
+    submitUrl:    'https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits',
+    submitInstructions: 'Submit the completed commissary agreement to your local health department when applying for your Mobile Food Dispensing Vehicle (MFDV) permit.',
+    requiredDocs: ['Commissary health permit / license', 'Vehicle title or registration', 'Food manager certification'],
+    fee:         'No fee (internal worksheet)',
+    fields: [
+      {
+        id: 'businessName', label: 'Food Truck / Vendor Business Name', type: 'text',
+        placeholder: 'Your food truck business name', required: true,
+        officialFieldName: 'Mobile Food Vendor Business Name',
+      },
+      {
+        id: 'ownerFullName', label: 'Vendor Owner / Operator Name', type: 'text',
+        placeholder: 'Full legal name', required: true,
+        officialFieldName: 'Owner / Operator Name',
+      },
+      {
+        id: 'businessAddress', label: 'Vendor Mailing Address', type: 'address',
+        placeholder: 'Mailing address of the food truck operator', required: true,
+        officialFieldName: 'Vendor Address',
+      },
+      {
+        id: 'businessPhone', label: 'Vendor Phone Number', type: 'phone',
+        placeholder: '(555) 555-0100', required: true,
+        officialFieldName: 'Vendor Phone',
+      },
+      {
+        id: 'commissaryName', label: 'Commissary / Kitchen Name', type: 'text',
+        placeholder: 'Name of the licensed commercial kitchen', required: true,
+        officialFieldName: 'Commissary Establishment Name',
+      },
+      {
+        id: 'commissaryAddress', label: 'Commissary Address', type: 'address',
+        placeholder: 'Full address of the commissary kitchen', required: true,
+        officialFieldName: 'Commissary Address',
+      },
+      {
+        id: 'commissaryLicenseNumber', label: 'Commissary License / Permit Number', type: 'text',
+        placeholder: 'Health permit number of the commissary', required: true,
+        officialFieldName: 'Commissary License Number',
+        hint: 'Ask the commissary operator for their current health department license number.',
+      },
+      {
+        id: 'commissaryContactName', label: 'Commissary Owner / Manager Name', type: 'text',
+        placeholder: 'Name of commissary owner or authorized manager', required: true,
+        officialFieldName: 'Commissary Operator Name',
+      },
+      {
+        id: 'commissaryPhone', label: 'Commissary Phone Number', type: 'phone',
+        placeholder: '(555) 555-0100', required: true,
+        officialFieldName: 'Commissary Phone',
+      },
+      {
+        id: 'commissaryServicesUsed', label: 'Services Used at Commissary', type: 'select',
+        options: [
+          'Food storage, prep, and equipment cleaning',
+          'Food storage and equipment cleaning only',
+          'Equipment cleaning only',
+          'Cold storage and equipment washing',
+          'Full commercial kitchen use (prep + cook + storage + cleaning)',
+        ],
+        required: true,
+        officialFieldName: 'Services Provided',
+      },
+      {
+        id: 'vehicleVIN', label: 'Food Truck / Vehicle VIN', type: 'text',
+        placeholder: '17-character VIN from vehicle title', required: false,
+        officialFieldName: 'Vehicle Identification Number (VIN)',
+      },
+      {
+        id: 'vehicleLicensePlate', label: 'Vehicle License Plate', type: 'text',
+        placeholder: 'State license plate number', required: false,
+        officialFieldName: 'License Plate Number',
+      },
+    ],
+    localeUrls: {
+      FL: { submitUrl: 'https://floridahealth.gov', submitInstructions: 'In Florida, submit this commissary agreement with your MFDV permit application to the county Florida Department of Health office (e.g. miamidade.floridahealth.gov, broward.floridahealth.gov).' },
+      TX: { submitUrl: 'https://dshs.texas.gov/food-establishments', submitInstructions: 'In Texas, submit the commissary agreement to your city health department (e.g. Houston Health: houstontx.gov/health, Austin Public Health: austintexas.gov/department/environmental-health-services-division).' },
+      CA: { submitUrl: 'https://www.cdph.ca.gov', submitInstructions: 'In California, submit to your county Environmental Health Department (e.g. LA County: ehservices.publichealth.lacounty.gov, San Francisco: sfdph.org).' },
+      IL: { submitUrl: 'https://www.chicago.gov/city/en/depts/bacp', submitInstructions: 'In Chicago, submit with your Mobile Food Dispenser license application to BACP at chicago.gov/city/en/depts/bacp.' },
+      NY: { submitUrl: 'https://www.nyc.gov/site/doh/business/food-establishment-permits.page', submitInstructions: 'In NYC, submit the commissary agreement with your Mobile Food Vending Permit application to DOHMH at nyc.gov/health.' },
+      AZ: { submitUrl: 'https://www.maricopa.gov/envservices', submitInstructions: 'In Maricopa County, submit to Maricopa County Environmental Services at maricopa.gov/envservices.' },
     },
   },
 
@@ -5844,6 +10900,3640 @@ export const LOCAL_FORMS: StateFormEntry[] = [
     commonFor:    ['all'],
   },
 
+  // v63 — Hyper-local high-impact forms ─────────────────────────────────────
+
+  // ── FLORIDA — Miami-Dade County (Home Occupation) ─────────────────────────
+
+  {
+    id:           'miami-dade-home-occupation-permit',
+    name:         'Miami-Dade County Home-Based Business Certificate of Use',
+    category:     'local',
+    description:
+      'Miami-Dade County requires a Certificate of Use (CU) for any business operating ' +
+      'from a residential address. Restrictions include no retail sales from the home, no ' +
+      'on-site employees not residing in the dwelling, no exterior signs, and no more than ' +
+      '25% of the home\'s floor area used for business. Apply through the Miami-Dade ' +
+      'Development Services portal at miamidade.gov/building. Separate municipal permits ' +
+      'may be required if located within a city (Miami, Hialeah, Coral Gables, etc.).',
+    officialUrl:  'https://www.miamidade.gov/building',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['home-based', 'consulting', 'freelance', 'service'],
+    countyUrls:   { 'Miami-Dade County': 'https://www.miamidade.gov/building' },
+  },
+
+  // ── FLORIDA — Miami-Dade County (Mobile Food Vendor Commissary) ───────────
+
+  {
+    id:           'miami-dade-commissary-agreement',
+    name:         'Miami-Dade County Commissary / Base of Operations Agreement',
+    category:     'local',
+    description:
+      'Food trucks and mobile food vendors operating in Miami-Dade County must maintain a ' +
+      'licensed commissary (base of operations) where they store, clean, and prepare food. ' +
+      'The commissary must be licensed by the Florida Department of Health and a written ' +
+      'agreement signed by both the commissary operator and the mobile vendor. This agreement ' +
+      'is required to obtain and renew the Mobile Food Dispensing Vehicle (MFDV) permit. ' +
+      'Contact the Miami-Dade Health Department at miamidade.floridahealth.gov.',
+    officialUrl:  'https://miamidade.floridahealth.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-truck', 'mobile-food-vendor', 'catering'],
+    countyUrls:   { 'Miami-Dade County': 'https://miamidade.floridahealth.gov' },
+  },
+
+  // ── FLORIDA — Broward County (Mobile Food Vendor) ─────────────────────────
+
+  {
+    id:           'broward-mobile-food-vendor-permit',
+    name:         'Broward County Mobile Food Vendor Permit',
+    category:     'local',
+    description:
+      'Broward County food trucks must obtain a Mobile Food Dispensing Vehicle (MFDV) ' +
+      'permit from the Florida Department of Health in Broward County. A signed commissary ' +
+      'agreement, vehicle inspection, and food manager certification are required. Permits ' +
+      'must be renewed annually. The Fort Lauderdale city limits also require a separate ' +
+      'City of Fort Lauderdale Business Tax Receipt.',
+    officialUrl:  'https://broward.floridahealth.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-truck', 'mobile-food-vendor', 'catering'],
+    countyUrls:   { 'Broward County': 'https://broward.floridahealth.gov' },
+  },
+
+  // ── FLORIDA — Palm Beach County (Food Service / Mobile Vendor) ────────────
+
+  {
+    id:           'palm-beach-food-service-permit',
+    name:         'Palm Beach County Food Service / MFDV Permit',
+    category:     'local',
+    description:
+      'Palm Beach County food service establishments and mobile food dispensing vehicles ' +
+      'must obtain permits through the Florida Department of Health in Palm Beach County. ' +
+      'Food trucks require a commissary agreement and vehicle inspection. Restaurants and ' +
+      'food service establishments must pass an initial inspection. Apply at ' +
+      'palmbeach.floridahealth.gov.',
+    officialUrl:  'https://palmbeach.floridahealth.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-truck', 'food-service', 'restaurant', 'catering'],
+    countyUrls:   { 'Palm Beach County': 'https://palmbeach.floridahealth.gov' },
+  },
+
+  // ── TEXAS — City of Houston (Harris County) ───────────────────────────────
+
+  {
+    id:           'houston-food-establishment-permit',
+    name:         'City of Houston Food Establishment Permit',
+    category:     'local',
+    description:
+      'Food service businesses in Houston must obtain a Food Establishment Permit from the ' +
+      'City of Houston Health and Human Services Department. Covers restaurants, cafeterias, ' +
+      'food trucks, mobile food vendors, caterers, and retail food stores. Permits must be ' +
+      'renewed annually. Apply at houstontx.gov/health. Mobile food vendors also need a ' +
+      'commissary agreement with a licensed Houston commercial kitchen.',
+    officialUrl:  'https://www.houstontx.gov/health',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-truck', 'food-service', 'restaurant', 'catering'],
+  },
+
+  {
+    id:           'houston-home-occupation-permit',
+    name:         'City of Houston Home Occupation Permit',
+    category:     'local',
+    description:
+      'Houston, Texas does not have traditional zoning for most residential areas, but ' +
+      'home-based businesses may be subject to deed restrictions enforced by civic ' +
+      'associations. Businesses in deed-restricted neighborhoods must comply with those ' +
+      'private restrictions. Harris County requires a home occupation registration for ' +
+      'unincorporated areas. Check restrictions at houstontx.gov and hcad.org.',
+    officialUrl:  'https://www.houstontx.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['home-based', 'consulting', 'freelance', 'service'],
+  },
+
+  // ── ARIZONA — Maricopa County / Phoenix ───────────────────────────────────
+
+  {
+    id:           'phoenix-home-occupation-permit',
+    name:         'City of Phoenix Home Occupation Permit',
+    category:     'local',
+    description:
+      'Phoenix, Arizona requires a Home Occupation Permit for businesses operated from a ' +
+      'residential dwelling. Restrictions include no exterior signage, no retail sales from ' +
+      'the home, no employees other than residents, and no more than one commercial vehicle. ' +
+      'Apply through the Phoenix Planning and Development Department at phoenix.gov/pdd. ' +
+      'The permit is valid indefinitely unless the business type changes.',
+    officialUrl:  'https://www.phoenix.gov/pdd',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  0,
+    commonFor:    ['home-based', 'consulting', 'freelance', 'service'],
+  },
+
+  {
+    id:           'maricopa-food-truck-permit',
+    name:         'Maricopa County Environmental Services Food Truck Permit',
+    category:     'local',
+    description:
+      'Food trucks and mobile food vendors operating in Maricopa County, Arizona must ' +
+      'obtain a permit from Maricopa County Environmental Services. A commissary agreement ' +
+      'with a licensed commercial kitchen is required. The City of Phoenix also requires a ' +
+      'separate mobile food vendor license for operations within city limits. Apply at ' +
+      'maricopa.gov/envservices.',
+    officialUrl:  'https://www.maricopa.gov/envservices',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-truck', 'mobile-food-vendor', 'catering'],
+    countyUrls:   { 'Maricopa County': 'https://www.maricopa.gov/envservices' },
+  },
+
+  // ── ILLINOIS — City of Chicago ────────────────────────────────────────────
+
+  {
+    id:           'chicago-food-truck-permit',
+    name:         'City of Chicago Mobile Food Dispenser / Food Truck License',
+    category:     'local',
+    description:
+      'Chicago food trucks require a Mobile Food Dispenser license from the City of Chicago ' +
+      'Department of Business Affairs and Consumer Protection (BACP). Must pass city ' +
+      'inspection, have a commissary agreement, and carry $1M liability insurance. The city ' +
+      'also requires food trucks to maintain a 200-foot distance from brick-and-mortar ' +
+      'restaurants. Apply at chicago.gov/city/en/depts/bacp. Annual renewal required.',
+    officialUrl:  'https://www.chicago.gov/city/en/depts/bacp',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-truck', 'mobile-food-vendor', 'catering'],
+  },
+
+  {
+    id:           'chicago-home-occupation-permit',
+    name:         'City of Chicago Home Occupation / Regulated Business License',
+    category:     'local',
+    description:
+      'Chicago allows home-based businesses but restricts customer visits, non-resident ' +
+      'employees, exterior signage, and storage of business materials in common areas. ' +
+      'Certain business types (child care, tutoring, music lessons) require a Regulated ' +
+      'Business License from BACP even when home-based. Apply at chicago.gov/city/en/depts/bacp.',
+    officialUrl:  'https://www.chicago.gov/city/en/depts/bacp',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  24,
+    commonFor:    ['home-based', 'consulting', 'child-care', 'tutoring'],
+  },
+
+  // ── CALIFORNIA — Los Angeles County ───────────────────────────────────────
+
+  {
+    id:           'la-county-food-truck-permit',
+    name:         'LA County Environmental Health Mobile Food Facility Permit',
+    category:     'local',
+    description:
+      'Los Angeles County requires a Mobile Food Facility (MFF) permit from the LA County ' +
+      'Department of Public Health Environmental Health Division for all food trucks. A ' +
+      'licensed commissary is required. The City of Los Angeles additionally requires a ' +
+      'Sidewalk Vending Permit for street vending. Apply at ehservices.publichealth.lacounty.gov.',
+    officialUrl:  'https://ehservices.publichealth.lacounty.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-truck', 'mobile-food-vendor', 'catering'],
+    countyUrls:   { 'Los Angeles County': 'https://ehservices.publichealth.lacounty.gov' },
+  },
+
+  {
+    id:           'la-county-home-occupation-permit',
+    name:         'LA County Home Occupation Permit',
+    category:     'local',
+    description:
+      'Unincorporated Los Angeles County allows home-based businesses with an approved ' +
+      'Home Occupation Permit from LA County Department of Regional Planning. Restrictions ' +
+      'include no employees outside the household, no customer visits, no exterior signage, ' +
+      'and no outside storage of business materials. Cities within LA County (Los Angeles, ' +
+      'Long Beach, Pasadena, etc.) have their own home occupation permit requirements.',
+    officialUrl:  'https://planning.lacounty.gov',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['home-based', 'consulting', 'freelance', 'service'],
+    countyUrls:   { 'Los Angeles County': 'https://planning.lacounty.gov' },
+  },
+
+  // ── NEW YORK — New York City ───────────────────────────────────────────────
+
+  {
+    id:           'nyc-food-truck-permit',
+    name:         'NYC Mobile Food Vending License & Permit',
+    category:     'local',
+    description:
+      'New York City requires both a Mobile Food Vending Permit (issued by DOHMH) and a ' +
+      'Mobile Food Vendor License for the vendor personally. There is a strict cap on ' +
+      'full-service permits with a multi-year waitlist. A commissary agreement is required. ' +
+      'NYC also requires a Department of Consumer and Worker Protection (DCWP) license for ' +
+      'street vending. Apply at nyc.gov/health.',
+    officialUrl:  'https://www.nyc.gov/site/doh/business/food-establishment-permits.page',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-truck', 'mobile-food-vendor', 'catering'],
+  },
+
+  // ── CALIFORNIA — San Francisco ────────────────────────────────────────────
+
+  {
+    id:           'sf-mobile-food-facility-permit',
+    name:         'San Francisco Mobile Food Facility Permit',
+    category:     'local',
+    description:
+      'Food trucks and mobile food vendors in San Francisco need a Mobile Food Facility ' +
+      'permit from the SF Department of Public Health and location approval from the SF ' +
+      'Arts Commission (public plazas) or SFMTA. A commissary agreement is required. ' +
+      'Annual renewal required. Apply at sfdph.org.',
+    officialUrl:  'https://www.sfdph.org',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-truck', 'mobile-food-vendor', 'catering'],
+  },
+
+  // ── WASHINGTON — King County / Seattle ────────────────────────────────────
+
+  {
+    id:           'seattle-food-business-permit',
+    name:         'Seattle / King County Food Business Permit',
+    category:     'local',
+    description:
+      'Food service businesses in Seattle and King County need a permit from Public Health ' +
+      'Seattle & King County. Covers restaurants, food trucks, temporary food vendors, and ' +
+      'cottage food operators. Mobile food vendors also need a commissary agreement. ' +
+      'Apply at kingcounty.gov/health.',
+    officialUrl:  'https://www.kingcounty.gov/depts/health/environmental-health/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-truck', 'food-service', 'restaurant', 'catering'],
+    countyUrls:   { 'King County': 'https://www.kingcounty.gov/depts/health/environmental-health/food-safety' },
+  },
+
+  // v64 — New hyper-local forms ─────────────────────────────────────────────
+
+  // ── FLORIDA — Fort Lauderdale / Broward County ────────────────────────────
+
+  {
+    id:           'fort-lauderdale-business-tax-receipt',
+    name:         'City of Fort Lauderdale Local Business Tax Receipt',
+    category:     'local',
+    description:
+      'The City of Fort Lauderdale requires a Local Business Tax Receipt (BTR) for all ' +
+      'businesses operating within city limits. Apply through the Fort Lauderdale Business ' +
+      'Tax Division. Businesses in unincorporated Broward County also need a separate Broward ' +
+      'County Business Tax Receipt. Renewed annually by September 30.',
+    officialUrl:  'https://www.fortlauderdale.gov/departments/city-manager-s-office/development-services/business-tax',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── FLORIDA — West Palm Beach / Palm Beach County ─────────────────────────
+
+  {
+    id:           'west-palm-beach-business-tax-receipt',
+    name:         'City of West Palm Beach Business Tax Receipt',
+    category:     'local',
+    description:
+      'West Palm Beach, Florida requires a Local Business Tax Receipt for businesses ' +
+      'operating within city limits. Apply through the City of West Palm Beach Building ' +
+      'and Development Services. Businesses also need a Palm Beach County Business Tax ' +
+      'Receipt if operating in the county. Renewed annually by September 30.',
+    officialUrl:  'https://www.wpb.org/government/departments/development-services',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── FLORIDA — Boca Raton / Palm Beach County ──────────────────────────────
+
+  {
+    id:           'boca-raton-business-tax-receipt',
+    name:         'City of Boca Raton Business Tax Receipt',
+    category:     'local',
+    description:
+      'Boca Raton, Florida requires a Local Business Tax Receipt for all businesses within ' +
+      'city limits. Apply through the City of Boca Raton Community Development Department. ' +
+      'Home-based businesses require a separate Home Occupation Permit. Renewed annually ' +
+      'by September 30.',
+    officialUrl:  'https://www.myboca.us/191/Businesses',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── TENNESSEE — Nashville / Davidson County ───────────────────────────────
+
+  {
+    id:           'nashville-business-license',
+    name:         'Nashville / Davidson County Business License',
+    category:     'local',
+    description:
+      'Nashville-Davidson County, Tennessee requires a Business License from the Tennessee ' +
+      'Department of Revenue for most businesses. Businesses with gross receipts over $10,000 ' +
+      'must obtain a Standard Business License; those under $10,000 may get a Minimal Activity ' +
+      'License. Apply online through the TN Department of Revenue TNTAP portal. Food businesses ' +
+      'also need Metro Nashville Health Department permits.',
+    officialUrl:  'https://www.tn.gov/revenue/taxes/business-tax.html',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'nashville-food-permit',
+    name:         'Metro Nashville Health Department Food Service Permit',
+    category:     'local',
+    description:
+      'Food service businesses in Nashville/Davidson County must obtain a Food Service ' +
+      'Establishment Permit from the Metropolitan Nashville-Davidson County Health Department. ' +
+      'Covers restaurants, food trucks, temporary food vendors, caterers, and food processing ' +
+      'facilities. Mobile food vendors also need a commissary agreement.',
+    officialUrl:  'https://www.nashville.gov/departments/health/environmental-health',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'food-truck', 'restaurant', 'catering'],
+  },
+
+  // ── INDIANA — Indianapolis / Marion County ────────────────────────────────
+
+  {
+    id:           'indianapolis-business-license',
+    name:         'Indianapolis / Marion County Business License',
+    category:     'local',
+    description:
+      'Indianapolis and Marion County use a consolidated city-county government (Consolidated ' +
+      'City-County or "Unigov"). Most businesses need a Certificate of Assumed Business Name ' +
+      '(DBA) at the county level and registration with the Indiana Secretary of State. The City ' +
+      'of Indianapolis issues specific permits for food service, contractors, and regulated ' +
+      'businesses through the Indy DPW and Health & Hospital Corporation.',
+    officialUrl:  'https://www.indy.gov/agency/department-of-business-and-neighborhood-services',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── MISSOURI — Kansas City ────────────────────────────────────────────────
+
+  {
+    id:           'kansas-city-business-license',
+    name:         'Kansas City, MO Business License',
+    category:     'local',
+    description:
+      'Kansas City, Missouri requires a Business License for most businesses operating within ' +
+      'the city. Food businesses need additional permits from the Health Department. Apply ' +
+      'through the KC Business License office at kcmo.gov. Note: Kansas City has over 60 ' +
+      'taxing districts across the metro — verify which city/county applies to your address.',
+    officialUrl:  'https://www.kcmo.gov/city-hall/departments/revenue/business-license',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── KENTUCKY — Louisville / Jefferson County ──────────────────────────────
+
+  {
+    id:           'louisville-business-license',
+    name:         'Louisville Metro / Jefferson County Business License',
+    category:     'local',
+    description:
+      'Louisville Metro (merged city-county government) requires an Occupational License ' +
+      'for businesses operating within Louisville Metro boundaries. Food businesses need ' +
+      'permits from Louisville Metro Public Health. Apply through Louisville Metro Revenue ' +
+      'Commission at louisvilleky.gov.',
+    officialUrl:  'https://louisvilleky.gov/government/revenue-commission/occupational-license',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+    countyUrls:   { 'Jefferson County': 'https://louisvilleky.gov/government/revenue-commission/occupational-license' },
+  },
+
+  // ── WISCONSIN — Milwaukee County / City of Milwaukee ─────────────────────
+
+  {
+    id:           'milwaukee-business-license',
+    name:         'City of Milwaukee Business License',
+    category:     'local',
+    description:
+      'Milwaukee, Wisconsin requires various licenses depending on business type: food ' +
+      'establishments need a Food Dealer License, retail businesses need a Retail Food ' +
+      'License, and bars/clubs need a Liquor License from the City Clerk. Apply through ' +
+      'the Milwaukee City Clerk\'s office at city.milwaukee.gov.',
+    officialUrl:  'https://city.milwaukee.gov/clerk/licenses',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'retail', 'restaurant', 'food-truck'],
+  },
+
+  // ── OHIO — Columbus / Franklin County ────────────────────────────────────
+
+  {
+    id:           'columbus-food-service-permit',
+    name:         'Columbus Public Health Food Service License',
+    category:     'local',
+    description:
+      'Food service businesses in Columbus and Franklin County must obtain a Food Service ' +
+      'Operation License from Columbus Public Health. Covers restaurants, cafeterias, food ' +
+      'trucks, vending machines, and temporary food operations. Annual renewal required. ' +
+      'Apply at columbus.gov/publichealth.',
+    officialUrl:  'https://www.columbus.gov/publichealth',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+  },
+
+  // ── OKLAHOMA — Oklahoma City / Oklahoma County ────────────────────────────
+
+  {
+    id:           'oklahoma-city-business-license',
+    name:         'Oklahoma City Business License & Permits',
+    category:     'local',
+    description:
+      'Oklahoma City does not require a general business license, but most businesses need ' +
+      'a Certificate of Occupancy and food service businesses require an Oklahoma State ' +
+      'Department of Health license. Contractors need a Certificate of Registration from ' +
+      'the Oklahoma Construction Industries Board. Food truck operators also need a City of ' +
+      'OKC Mobile Food Vending Permit. Apply at okc.gov.',
+    officialUrl:  'https://www.okc.gov/departments/development-services',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'contractor', 'food-truck', 'all'],
+  },
+
+  // ── RHODE ISLAND — Providence ────────────────────────────────────────────
+
+  {
+    id:           'providence-business-license',
+    name:         'City of Providence Business License / Certificate of Compliance',
+    category:     'local',
+    description:
+      'Providence, Rhode Island requires a Certificate of Compliance for all businesses ' +
+      'operating within city limits. Food businesses additionally need a permit from the ' +
+      'Providence Department of Inspection and Standards and the Rhode Island Department ' +
+      'of Health. Apply through the City of Providence Department of Inspection and Standards.',
+    officialUrl:  'https://www.providenceri.gov/inspection-standards/',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── CONNECTICUT — Hartford ────────────────────────────────────────────────
+
+  {
+    id:           'hartford-business-license',
+    name:         'City of Hartford Business License',
+    category:     'local',
+    description:
+      'Hartford, Connecticut requires a business license for most business types operating ' +
+      'within city limits. As with all CT municipalities, there is no county-level license ' +
+      '(Connecticut abolished county governments in 1960). Food businesses must additionally ' +
+      'obtain a food service permit from the Hartford Health Department. Apply through the ' +
+      'City of Hartford Development Services.',
+    officialUrl:  'https://www.hartford.gov/government/departments/development-services',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── MAINE — Portland ──────────────────────────────────────────────────────
+
+  {
+    id:           'portland-me-business-license',
+    name:         'City of Portland (ME) Business License',
+    category:     'local',
+    description:
+      'Portland, Maine requires various permits depending on business type. Food service ' +
+      'businesses need a Food Service Establishment License from the Portland Health Division. ' +
+      'Retail businesses with prepared food need a food service permit. Most businesses also ' +
+      'need a Certificate of Occupancy from the Portland Inspections Division. Apply at ' +
+      'portlandmaine.gov.',
+    officialUrl:  'https://www.portlandmaine.gov/335/Licensing',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'all'],
+  },
+
+  // ── ARIZONA — Tucson / Pima County ───────────────────────────────────────
+
+  {
+    id:           'tucson-business-license',
+    name:         'City of Tucson Business License',
+    category:     'local',
+    description:
+      'Tucson, Arizona requires a Tucson Business License for businesses operating within ' +
+      'city limits. Food service businesses additionally need a permit from the Pima County ' +
+      'Health Department. Home-based businesses must comply with Tucson\'s home occupation ' +
+      'zoning rules. Apply through the City of Tucson at tucsonaz.gov.',
+    officialUrl:  'https://www.tucsonaz.gov/Departments/Finance/Business-License',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+    countyUrls:   { 'Pima County': 'https://www.pima.gov/2306/Environmental-Health' },
+  },
+
+  {
+    id:           'pima-county-food-permit',
+    name:         'Pima County Environmental Health Food Service Permit',
+    category:     'local',
+    description:
+      'Food service businesses in Pima County (including Tucson) need a Food Service ' +
+      'Establishment permit from the Pima County Health Department Environmental Health ' +
+      'Division. Covers restaurants, food trucks, mobile food vendors, caterers, and ' +
+      'temporary food operations. Apply at pima.gov.',
+    officialUrl:  'https://www.pima.gov/2306/Environmental-Health',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Pima County': 'https://www.pima.gov/2306/Environmental-Health' },
+  },
+
+  // v65 — New hyper-local forms ─────────────────────────────────────────────
+
+  // ── MISSOURI — St. Louis City / County ────────────────────────────────────
+
+  {
+    id:           'st-louis-business-license',
+    name:         'City of St. Louis / St. Louis County Business License',
+    category:     'local',
+    description:
+      'St. Louis, Missouri operates as an independent city (not part of any county). ' +
+      'Businesses operating within the city need a Merchant\'s / Business License from the ' +
+      'City Collector of Revenue. Businesses in St. Louis County need a county business license ' +
+      'from the County Revenue Department. Food establishments additionally need a St. Louis ' +
+      'County Department of Public Health food service permit.',
+    officialUrl:  'https://www.stlouis-mo.gov/government/departments/collector',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'st-louis-county-food-permit',
+    name:         'St. Louis County Public Health Food Service Permit',
+    category:     'local',
+    description:
+      'Food service businesses in St. Louis County (and the City of St. Louis) must obtain ' +
+      'a food service permit from the St. Louis County Department of Public Health. Covers ' +
+      'restaurants, food trucks, caterers, and mobile food vendors. Annual renewal required. ' +
+      'Apply at stlouisco.com/publichealth.',
+    officialUrl:  'https://www.stlouisco.com/PublicHealth/EnvironmentalHealth/FoodProtection',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'St. Louis County': 'https://www.stlouisco.com/PublicHealth/EnvironmentalHealth/FoodProtection' },
+  },
+
+  // ── NEVADA — Clark County / Las Vegas ─────────────────────────────────────
+
+  {
+    id:           'clark-county-food-permit',
+    name:         'Clark County (Las Vegas) Health District Food Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Clark County (Las Vegas, Henderson, North Las Vegas, ' +
+      'and unincorporated areas) must obtain a permit from the Southern Nevada Health District ' +
+      '(SNHD). Covers restaurants, food trucks, catering, and mobile food units. Food trucks ' +
+      'require commissary agreements and vehicle inspections. Apply at southernnevadahealthdistrict.org.',
+    officialUrl:  'https://www.southernnevadahealthdistrict.org/permits-and-licensing/food-establishment',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Clark County': 'https://www.southernnevadahealthdistrict.org/permits-and-licensing/food-establishment' },
+  },
+
+  // ── CALIFORNIA — Fresno / Fresno County ───────────────────────────────────
+
+  {
+    id:           'fresno-food-service-permit',
+    name:         'Fresno County Environmental Health Food Service Permit',
+    category:     'local',
+    description:
+      'Food service businesses in Fresno and Fresno County must obtain a permit from the ' +
+      'Fresno County Department of Public Health and Planning Environmental Health Division. ' +
+      'Covers restaurants, food trucks, temporary food vendors, caterers, and cottage food ' +
+      'operators. Annual renewal required. Apply at co.fresno.ca.us/health.',
+    officialUrl:  'https://www.co.fresno.ca.us/departments/public-health-and-planning/environmental-health',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Fresno County': 'https://www.co.fresno.ca.us/departments/public-health-and-planning/environmental-health' },
+  },
+
+  // ── CALIFORNIA — Sacramento County ────────────────────────────────────────
+
+  {
+    id:           'sacramento-food-service-permit',
+    name:         'Sacramento County Environmental Management Food Facility Permit',
+    category:     'local',
+    description:
+      'Food facilities in Sacramento County must obtain a permit from the Sacramento County ' +
+      'Environmental Management Department. Covers retail food facilities, restaurants, food ' +
+      'trucks, temporary food events, and mobile food facilities. Food trucks require a ' +
+      'commissary agreement. Apply at emd.saccounty.gov.',
+    officialUrl:  'https://emd.saccounty.gov/ENS/Pages/Retail-Food.aspx',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Sacramento County': 'https://emd.saccounty.gov/ENS/Pages/Retail-Food.aspx' },
+  },
+
+  // ── CALIFORNIA — Santa Clara County / San Jose ────────────────────────────
+
+  {
+    id:           'santa-clara-food-service-permit',
+    name:         'Santa Clara County (San Jose) Environmental Health Food Permit',
+    category:     'local',
+    description:
+      'Food businesses in Santa Clara County (San Jose, Sunnyvale, Santa Clara, Palo Alto, etc.) ' +
+      'must obtain a permit from the Santa Clara County Environmental Health Department. Covers ' +
+      'restaurants, food trucks, temporary vendors, and caterers. City of San Jose businesses ' +
+      'may also need a San Jose Business Tax Certificate. Apply at ehd.sccgov.org.',
+    officialUrl:  'https://ehd.sccgov.org/retail-food-facility',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Santa Clara County': 'https://ehd.sccgov.org/retail-food-facility' },
+  },
+
+  // ── COLORADO — Denver ──────────────────────────────────────────────────────
+
+  {
+    id:           'denver-food-service-permit',
+    name:         'Denver Public Health Food Service Establishment License',
+    category:     'local',
+    description:
+      'Food service businesses in Denver must obtain a Food Service Establishment License ' +
+      'from Denver Public Health and Environment. Denver is a consolidated city-county with its ' +
+      'own licensing authority. Covers restaurants, food trucks, caterers, and mobile food ' +
+      'vendors. Food trucks also need a Denver Mobile Food Vendor license. Apply at ' +
+      'denvergov.org/health.',
+    officialUrl:  'https://www.denvergov.org/Government/Departments/Public-Health-Environment',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+  },
+
+  // ── ARIZONA — Maricopa County / Phoenix (food service) ────────────────────
+
+  {
+    id:           'maricopa-restaurant-permit',
+    name:         'Maricopa County Environmental Services Restaurant / Food Service Permit',
+    category:     'local',
+    description:
+      'Restaurants and food service establishments in Maricopa County (Phoenix, Scottsdale, ' +
+      'Tempe, Mesa, Chandler, and unincorporated areas) must obtain a permit from Maricopa ' +
+      'County Environmental Services. This is separate from the food truck permit. Permits ' +
+      'must be obtained before opening. Annual renewal required. Apply at maricopa.gov/envservices.',
+    officialUrl:  'https://www.maricopa.gov/envservices',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'catering'],
+    countyUrls:   { 'Maricopa County': 'https://www.maricopa.gov/envservices' },
+  },
+
+  // ── PENNSYLVANIA — Allegheny County / Pittsburgh ──────────────────────────
+
+  {
+    id:           'allegheny-food-service-permit',
+    name:         'Allegheny County Health Department Food Service Permit',
+    category:     'local',
+    description:
+      'Food service businesses in Allegheny County (Pittsburgh and surrounding municipalities) ' +
+      'must obtain a food service permit from the Allegheny County Health Department (ACHD). ' +
+      'Covers restaurants, food trucks, temporary food events, and mobile food vendors. ' +
+      'Pittsburgh food trucks also need a City of Pittsburgh mobile food vendor license. ' +
+      'Apply at alleghenycounty.us/health.',
+    officialUrl:  'https://www.alleghenycounty.us/Health-Department/Programs/Food-Safety/Food-Safety.aspx',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Allegheny County': 'https://www.alleghenycounty.us/Health-Department/Programs/Food-Safety/Food-Safety.aspx' },
+  },
+
+  // ── NORTH CAROLINA — Mecklenburg County / Charlotte ──────────────────────
+
+  {
+    id:           'mecklenburg-food-service-permit',
+    name:         'Mecklenburg County Environmental Health Food Service Permit',
+    category:     'local',
+    description:
+      'Food service businesses in Charlotte and Mecklenburg County must obtain a food service ' +
+      'establishment permit from the Mecklenburg County Health Department. Covers restaurants, ' +
+      'food trucks, temporary food vendors, and mobile food establishments. Annual renewal ' +
+      'required. Apply at co.mecklenburg.nc.us/health.',
+    officialUrl:  'https://www.mecknc.gov/HealthDepartment/EnvironmentalHealth/Pages/Food-and-Facilities.aspx',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Mecklenburg County': 'https://www.mecknc.gov/HealthDepartment/EnvironmentalHealth/Pages/Food-and-Facilities.aspx' },
+  },
+
+  // ── GEORGIA — Fulton County / Atlanta ────────────────────────────────────
+
+  {
+    id:           'fulton-county-food-service-permit',
+    name:         'Fulton County / Atlanta Board of Health Food Service Permit',
+    category:     'local',
+    description:
+      'Food service businesses in Atlanta and Fulton County must obtain a food service permit ' +
+      'from the Fulton County Board of Health. Businesses within City of Atlanta limits are ' +
+      'served by the Fulton County Health Department. Covers restaurants, food trucks, caterers, ' +
+      'and temporary food vendors. Annual renewal required. Apply at fultonhealth.org.',
+    officialUrl:  'https://www.fultonhealth.org/environmental-health',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Fulton County': 'https://www.fultonhealth.org/environmental-health' },
+  },
+
+  // ── VIRGINIA — Virginia Beach / Hampton Roads ─────────────────────────────
+
+  {
+    id:           'virginia-beach-business-license',
+    name:         'City of Virginia Beach Business License',
+    category:     'local',
+    description:
+      'Virginia Beach, Virginia requires a Business License (BPOL — Business, Professional, ' +
+      'and Occupational License) from the Commissioner of the Revenue for businesses with ' +
+      'gross receipts from Virginia Beach customers. The BPOL tax rate varies by business ' +
+      'type. Food service businesses also need a Permit to Operate from the Virginia Beach ' +
+      'Health Department. Apply at vbgov.com.',
+    officialUrl:  'https://www.vbgov.com/government/departments/commissioner-of-revenue/Pages/business-licenses.aspx',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── OHIO — Hamilton County / Cincinnati ───────────────────────────────────
+
+  {
+    id:           'cincinnati-food-service-permit',
+    name:         'Cincinnati / Hamilton County Food Service Operation License',
+    category:     'local',
+    description:
+      'Food service businesses in Cincinnati and Hamilton County, Ohio must obtain a Food ' +
+      'Service Operation License from the Cincinnati-Hamilton County Community Health (CHCCH) ' +
+      'or the Ohio Department of Agriculture (for certain food facilities). Covers restaurants, ' +
+      'food trucks, caterers, and mobile food vehicles. Annual renewal required. ' +
+      'Apply at hamiltoncountyhealth.org.',
+    officialUrl:  'https://www.hamiltoncountyhealth.org/environmental/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Hamilton County': 'https://www.hamiltoncountyhealth.org/environmental/food-safety' },
+  },
+
+  // v66 — New hyper-local forms ─────────────────────────────────────────────
+
+  // ── NEBRASKA — Omaha / Douglas County ────────────────────────────────────
+
+  {
+    id:           'omaha-douglas-food-service-permit',
+    name:         'Omaha / Douglas County Food Service Permit',
+    category:     'local',
+    description:
+      'Food businesses operating in Omaha or Douglas County must obtain a Food Service ' +
+      'Establishment Permit from the Douglas County Health Department. Covers restaurants, ' +
+      'food trucks, caterers, temporary food vendors, and retail food establishments. ' +
+      'Annual renewal required. Apply at douglascountyhealth.com.',
+    officialUrl:  'https://www.douglascountyhealth.com/environmental-health/food-service',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Douglas County': 'https://www.douglascountyhealth.com/environmental-health/food-service' },
+  },
+
+  // ── LOUISIANA — Baton Rouge / East Baton Rouge Parish ────────────────────
+
+  {
+    id:           'baton-rouge-food-permit',
+    name:         'Baton Rouge / EBR Parish Food Service Permit',
+    category:     'local',
+    description:
+      'Restaurants, food trucks, caterers, and retail food businesses operating in ' +
+      'East Baton Rouge Parish must obtain a Food Service Permit from the Louisiana ' +
+      'Department of Health Office of Public Health. Annual permit renewal required. ' +
+      'Apply through the Louisiana PrivateWell/Septic program or ldh.la.gov.',
+    officialUrl:  'https://ldh.la.gov/page/food-and-drug-unit',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+  },
+
+  {
+    id:           'baton-rouge-business-license',
+    name:         'Baton Rouge City/Parish Business License (Occupational License)',
+    category:     'local',
+    description:
+      'All businesses operating within Baton Rouge City-Parish must obtain an Occupational ' +
+      'License from the City of Baton Rouge/East Baton Rouge Parish Revenue Division. ' +
+      'Fee is based on gross revenue. Annual renewal required. Apply at brla.gov.',
+    officialUrl:  'https://brla.gov/653/Occupational-License',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── ALABAMA — Birmingham ──────────────────────────────────────────────────
+
+  {
+    id:           'birmingham-business-license',
+    name:         'Birmingham Business License (City)',
+    category:     'local',
+    description:
+      'All businesses operating in the City of Birmingham, AL must obtain a City Business ' +
+      'License from the Birmingham Revenue Division. Food businesses also need a Jefferson ' +
+      'County Environmental Services food establishment permit. Annual renewal required. ' +
+      'Apply at birminghamal.gov.',
+    officialUrl:  'https://www.birminghamal.gov/departments/revenue',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── KANSAS — Wichita / Sedgwick County ───────────────────────────────────
+
+  {
+    id:           'wichita-sedgwick-food-permit',
+    name:         'Wichita / Sedgwick County Food Service Establishment License',
+    category:     'local',
+    description:
+      'Food establishments in Wichita or Sedgwick County must be licensed by the Sedgwick ' +
+      'County Environmental Resources Division. Covers restaurants, mobile food units, ' +
+      'temporary food events, and retail food businesses. Annual license renewal required. ' +
+      'Apply at sedgwick.gov/environmental.',
+    officialUrl:  'https://www.sedgwick.gov/environmental/food-safety.aspx',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Sedgwick County': 'https://www.sedgwick.gov/environmental/food-safety.aspx' },
+  },
+
+  // ── WASHINGTON — Spokane / Spokane County ────────────────────────────────
+
+  {
+    id:           'spokane-county-food-permit',
+    name:         'Spokane County Food Establishment Permit',
+    category:     'local',
+    description:
+      'Restaurants, food trucks, caterers, and food retailers in Spokane County must obtain ' +
+      'a Food Service Establishment Permit from Spokane County Environmental Services (SRHD). ' +
+      'Annual renewal required. Inspections are conducted by Spokane Regional Health District. ' +
+      'Apply at srhd.org.',
+    officialUrl:  'https://www.srhd.org/programs/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Spokane County': 'https://www.srhd.org/programs/food-safety' },
+  },
+
+  // ── WASHINGTON — Tacoma / Pierce County ──────────────────────────────────
+
+  {
+    id:           'pierce-county-food-permit',
+    name:         'Pierce County / Tacoma Food Business License',
+    category:     'local',
+    description:
+      'Restaurants, food trucks, caterers, and retail food businesses in Tacoma or Pierce ' +
+      'County must be licensed by the Tacoma-Pierce County Health Department. A separate ' +
+      'City of Tacoma business license may also be required. Annual renewal required. ' +
+      'Apply at tpchd.org.',
+    officialUrl:  'https://www.tpchd.org/healthy-places/food-establishments',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Pierce County': 'https://www.tpchd.org/healthy-places/food-establishments' },
+  },
+
+  // ── WISCONSIN — Madison / Dane County ────────────────────────────────────
+
+  {
+    id:           'madison-dane-food-permit',
+    name:         'Madison / Dane County Food Service License',
+    category:     'local',
+    description:
+      'Food establishments in Madison or Dane County must obtain a Food Service License ' +
+      'from Public Health Madison & Dane County (PHMDC). Covers restaurants, food carts, ' +
+      'food trucks, caterers, and temporary food events. Annual renewal required. ' +
+      'Apply at publichealthmdc.com.',
+    officialUrl:  'https://publichealthmdc.com/environmental-health/food-safety/food-service-license',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+  },
+
+  // ── CALIFORNIA — Riverside County ────────────────────────────────────────
+
+  {
+    id:           'riverside-county-food-permit',
+    name:         'Riverside County Environmental Health Food Permit',
+    category:     'local',
+    description:
+      'Food establishments, food trucks, caterers, and temporary food facilities operating ' +
+      'in Riverside County must obtain a permit from the Riverside County Department of ' +
+      'Environmental Health (DEH). Annual permit renewal with inspections. ' +
+      'Apply at rivcoeh.org.',
+    officialUrl:  'https://www.rivcoeh.org/programs/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Riverside County': 'https://www.rivcoeh.org/programs/food-safety' },
+  },
+
+  // ── CALIFORNIA — San Bernardino County ───────────────────────────────────
+
+  {
+    id:           'san-bernardino-county-food-permit',
+    name:         'San Bernardino County Food Handler Permit (DEH)',
+    category:     'local',
+    description:
+      'Restaurants, food trucks, caterers, retail food markets, and mobile food facilities ' +
+      'in San Bernardino County must be permitted by the County of San Bernardino Department ' +
+      'of Environmental Health (DEH). Annual renewal required with regular inspections. ' +
+      'Apply at sbcounty.gov/deh.',
+    officialUrl:  'https://www.sbcounty.gov/deh/Programs/FoodSafety.aspx',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'San Bernardino County': 'https://www.sbcounty.gov/deh/Programs/FoodSafety.aspx' },
+  },
+
+  // ── CALIFORNIA — Kern County / Bakersfield ────────────────────────────────
+
+  {
+    id:           'kern-county-food-permit',
+    name:         'Kern County / Bakersfield Environmental Health Food Permit',
+    category:     'local',
+    description:
+      'Food businesses, restaurants, mobile food vendors, caterers, and temporary food ' +
+      'facilities in Kern County (including Bakersfield) must obtain a permit from the ' +
+      'Kern County Environmental Health Services Division. Annual permit required. ' +
+      'Apply at kerneh.org.',
+    officialUrl:  'https://www.kerneh.org/food',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   {
+      'Kern County':  'https://www.kerneh.org/food',
+      'Bakersfield':  'https://www.kerneh.org/food',
+    },
+  },
+
+  // ── COLORADO — Colorado Springs / El Paso County ─────────────────────────
+
+  {
+    id:           'colorado-springs-food-permit',
+    name:         'Colorado Springs / El Paso County Retail Food Establishment License',
+    category:     'local',
+    description:
+      'Restaurants, food trucks, caterers, and retail food businesses in Colorado Springs ' +
+      'or El Paso County must obtain a Retail Food Establishment license from El Paso County ' +
+      'Public Health. A separate City of Colorado Springs business license may also be required. ' +
+      'Annual renewal. Apply at elpasocountyhealth.org.',
+    officialUrl:  'https://www.elpasocountyhealth.org/programs/environmental-health/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'El Paso County': 'https://www.elpasocountyhealth.org/programs/environmental-health/food-safety' },
+  },
+
+  // ── ALASKA — Anchorage ────────────────────────────────────────────────────
+
+  {
+    id:           'anchorage-business-license',
+    name:         'Anchorage Business License (Municipality)',
+    category:     'local',
+    description:
+      'All businesses operating in the Municipality of Anchorage, AK must obtain a ' +
+      'Business License from the Anchorage Development Services Department. Anchorage ' +
+      'businesses also need a State of Alaska Business License from DCCED. Annual renewal ' +
+      'required. Apply at muniservices.us.',
+    officialUrl:  'https://www.muniservices.us/muni/business',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'alaska-food-service-permit',
+    name:         'Alaska DEC Food Safety / Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food establishments in Anchorage and throughout Alaska must obtain a Food Facility ' +
+      'License from the Alaska Department of Environmental Conservation (DEC) Food Safety ' +
+      'and Sanitation program. Covers restaurants, food trucks, caterers, processors, and ' +
+      'warehouses. Annual renewal required. Apply at dec.alaska.gov.',
+    officialUrl:  'https://dec.alaska.gov/eh/fss/food',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+  },
+
+  // ── SOUTH CAROLINA — Greenville / Greenville County ─────────────────────
+
+  {
+    id:           'greenville-sc-food-permit',
+    name:         'Greenville County SC Retail Food Establishment Permit',
+    category:     'local',
+    description:
+      'Restaurants, food trucks, caterers, and retail food businesses in Greenville or ' +
+      'Greenville County, SC must obtain a Retail Food Establishment Permit from the ' +
+      'South Carolina Department of Health and Environmental Control (DHEC). A City of ' +
+      'Greenville business license may also be required. Annual renewal. Apply at scdhec.gov.',
+    officialUrl:  'https://www.scdhec.gov/environment/food-protection',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Greenville County': 'https://www.scdhec.gov/environment/food-protection' },
+  },
+
+  // v68 — New hyper-local forms ─────────────────────────────────────────────
+
+  // ── CALIFORNIA — Long Beach ───────────────────────────────────────────────
+
+  {
+    id:           'long-beach-food-permit',
+    name:         'Long Beach Environmental Health Food Service Permit',
+    category:     'local',
+    description:
+      'Restaurants, food trucks, caterers, and retail food businesses in the City of ' +
+      'Long Beach must obtain a Food Facility Permit from the City of Long Beach ' +
+      'Environmental Health Division. Long Beach operates its own environmental health ' +
+      'program separate from Los Angeles County. Annual permit renewal required. ' +
+      'Apply at longbeach.gov/health.',
+    officialUrl:  'https://www.longbeach.gov/health/environmental-health/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Long Beach': 'https://www.longbeach.gov/health/environmental-health/food-safety' },
+  },
+
+  // ── MARYLAND — Baltimore City ─────────────────────────────────────────────
+
+  {
+    id:           'baltimore-food-permit',
+    name:         'Baltimore City Food Service Facility License',
+    category:     'local',
+    description:
+      'Food service establishments in Baltimore City must obtain a Food Service Facility ' +
+      'License from the Baltimore City Health Department. Covers restaurants, food trucks, ' +
+      'caterers, mobile food units, and retail food operations. Annual license renewal ' +
+      'required. Apply at health.baltimorecity.gov.',
+    officialUrl:  'https://health.baltimorecity.gov/programs/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+  },
+
+  // ── MINNESOTA — Minneapolis / Hennepin County ─────────────────────────────
+
+  {
+    id:           'minneapolis-food-service-permit',
+    name:         'Minneapolis / Hennepin County Food and Beverage Establishment License',
+    category:     'local',
+    description:
+      'Food and beverage establishments in Minneapolis must obtain a license from the ' +
+      'City of Minneapolis Environmental Health and Safety Division. Covers restaurants, ' +
+      'food trucks, mobile food units, caterers, and retail food businesses. Hennepin ' +
+      'County regulates food businesses in unincorporated areas. Annual renewal required. ' +
+      'Apply at minneapolismn.gov.',
+    officialUrl:  'https://www.minneapolismn.gov/government/departments/regulatory-services/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Hennepin County': 'https://www.hennepin.us/residents/environmental-health/food-establishments' },
+  },
+
+  // ── NORTH CAROLINA — Raleigh / Wake County ───────────────────────────────
+
+  {
+    id:           'wake-county-food-permit',
+    name:         'Wake County Environmental Services Food Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Wake County (including Raleigh, Cary, Apex, and ' +
+      'surrounding towns) must obtain a Food Establishment Permit from Wake County ' +
+      'Environmental Services. Covers restaurants, food trucks, temporary food events, ' +
+      'caterers, and retail food businesses. Annual permit renewal required. ' +
+      'Apply at wakegov.com.',
+    officialUrl:  'https://www.wakegov.com/departments-government/environmental-services/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Wake County': 'https://www.wakegov.com/departments-government/environmental-services/food-safety' },
+  },
+
+  // ── NORTH CAROLINA — Durham / Durham County ──────────────────────────────
+
+  {
+    id:           'durham-county-food-permit',
+    name:         'Durham County Environmental Health Food Service Permit',
+    category:     'local',
+    description:
+      'Restaurants, food trucks, caterers, and retail food businesses in Durham or Durham ' +
+      'County must obtain a food service permit from the Durham County Department of ' +
+      'Public Health Environmental Health Services. Annual permit renewal required. ' +
+      'The City of Durham business license is also required. Apply at dconc.gov.',
+    officialUrl:  'https://www.dconc.gov/government/departments-f-z/public-health/environmental-health-services',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Durham County': 'https://www.dconc.gov/government/departments-f-z/public-health/environmental-health-services' },
+  },
+
+  // ── LOUISIANA — New Orleans / Orleans Parish ──────────────────────────────
+
+  {
+    id:           'new-orleans-food-permit',
+    name:         'New Orleans / Orleans Parish Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in New Orleans (Orleans Parish) must obtain a food ' +
+      'establishment permit from the Louisiana Department of Health Office of Public ' +
+      'Health. A City of New Orleans occupational license and DBA registration with the ' +
+      'Orleans Parish Clerk of Court may also be required. Annual renewal required. ' +
+      'Apply at ldh.la.gov.',
+    officialUrl:  'https://ldh.la.gov/page/food-and-drug-unit',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+  },
+
+  // ── NEW MEXICO — Albuquerque / Bernalillo County ──────────────────────────
+
+  {
+    id:           'albuquerque-food-permit',
+    name:         'Albuquerque / Bernalillo County Food Service License',
+    category:     'local',
+    description:
+      'Food service establishments in Albuquerque or Bernalillo County must obtain a ' +
+      'Food Service License from the City of Albuquerque Environmental Health Department. ' +
+      'Covers restaurants, food trucks, caterers, and retail food facilities. Annual ' +
+      'renewal required. A City of Albuquerque business registration is also required. ' +
+      'Apply at cabq.gov.',
+    officialUrl:  'https://www.cabq.gov/environmentalhealth/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   {
+      'Albuquerque':     'https://www.cabq.gov/environmentalhealth/food-safety',
+      'Bernalillo County': 'https://www.bernco.gov/public-health/environmental-health',
+    },
+  },
+
+  // ── FLORIDA — Tampa / Hillsborough County ────────────────────────────────
+
+  {
+    id:           'hillsborough-county-food-permit',
+    name:         'Hillsborough County / Tampa Food Service Permit',
+    category:     'local',
+    description:
+      'Food service establishments operating in Hillsborough County (including Tampa, ' +
+      'Brandon, and Plant City) must obtain a Food Service Permit from the Hillsborough ' +
+      'County Health Department (an office of the Florida Department of Health). This is ' +
+      'separate from the City of Tampa Business Tax Receipt. Annual renewal required. ' +
+      'Apply at hillsboroughcounty.org or the FDOH Hillsborough County portal.',
+    officialUrl:  'https://hillsborough.floridahealth.gov/programs-and-services/environmental-health/food-hygiene',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Hillsborough County': 'https://hillsborough.floridahealth.gov/programs-and-services/environmental-health/food-hygiene' },
+  },
+
+  // ── TEXAS — Fort Worth / Tarrant County ──────────────────────────────────
+
+  {
+    id:           'tarrant-county-food-permit',
+    name:         'Fort Worth / Tarrant County Food Service Establishment License',
+    category:     'local',
+    description:
+      'Food service establishments in Fort Worth and Tarrant County must obtain a Food ' +
+      'Service Establishment License from the City of Fort Worth Environmental Health ' +
+      'Division or, for unincorporated areas, from Tarrant County Public Health. ' +
+      'Food trucks and mobile food vendors require a separate mobile food permit. ' +
+      'Annual renewal required. Apply at fortworthtexas.gov.',
+    officialUrl:  'https://www.fortworthtexas.gov/departments/code-compliance/environmental-health',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   {
+      'Tarrant County':   'https://www.tarrantcounty.com/en/public-health.html',
+      'Fort Worth':       'https://www.fortworthtexas.gov/departments/code-compliance/environmental-health',
+    },
+  },
+
+  // ── VIRGINIA — Norfolk ────────────────────────────────────────────────────
+
+  {
+    id:           'norfolk-business-license',
+    name:         'Norfolk City Business License (Commissioner of Revenue)',
+    category:     'local',
+    description:
+      'All businesses operating within the City of Norfolk, VA must obtain a business ' +
+      'license from the Norfolk Commissioner of the Revenue. Food service businesses also ' +
+      'need a food service permit from the Norfolk Department of Public Health. Annual ' +
+      'renewal of business license required. Apply at norfolk.gov.',
+    officialUrl:  'https://www.norfolk.gov/government/city-departments/commissioner-of-the-revenue',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── IOWA — Des Moines / Polk County ──────────────────────────────────────
+
+  {
+    id:           'polk-county-iowa-food-permit',
+    name:         'Polk County / Des Moines Food Establishment License',
+    category:     'local',
+    description:
+      'Food service establishments in Des Moines, Polk County, and surrounding Iowa ' +
+      'communities must obtain a Food Establishment License from the Iowa Department ' +
+      'of Inspections, Appeals, and Licensing (DIAL). The City of Des Moines may also ' +
+      'require a local business license and food service license. Annual renewal required. ' +
+      'Apply at dial.iowa.gov.',
+    officialUrl:  'https://dial.iowa.gov/food-and-consumer-safety/food-establishments',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Polk County': 'https://dial.iowa.gov/food-and-consumer-safety/food-establishments' },
+  },
+
+  // ── IDAHO — Boise / Ada County ────────────────────────────────────────────
+
+  {
+    id:           'ada-county-food-permit',
+    name:         'Ada County / Boise City Food Service Permit',
+    category:     'local',
+    description:
+      'Food service businesses in Boise, Meridian, Nampa, and other Ada County communities ' +
+      'must obtain a food establishment license from the Central District Health (CDH) ' +
+      'department. The City of Boise may also require a business license and food vendor ' +
+      'registration. Annual renewal required. Apply at cdhd.idaho.gov.',
+    officialUrl:  'https://cdhd.idaho.gov/environmental-health/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   {
+      'Ada County': 'https://cdhd.idaho.gov/environmental-health/food-safety',
+      'Boise':      'https://cdhd.idaho.gov/environmental-health/food-safety',
+    },
+  },
+
+  // ── TENNESSEE — Knoxville / Knox County ──────────────────────────────────
+
+  {
+    id:           'knox-county-food-permit',
+    name:         'Knox County / Knoxville Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Restaurants, food trucks, caterers, and food retailers in Knoxville and Knox County ' +
+      'must obtain a food service establishment permit from the Knox County Health Department ' +
+      'Environmental Health Division. The City of Knoxville business license is also required. ' +
+      'Annual permit renewal required. Apply at knoxcounty.org.',
+    officialUrl:  'https://www.knoxcounty.org/health/environmental/food_safety.php',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Knox County': 'https://www.knoxcounty.org/health/environmental/food_safety.php' },
+  },
+
+  // ── KENTUCKY — Lexington / Fayette County ────────────────────────────────
+
+  {
+    id:           'fayette-county-food-permit',
+    name:         'Fayette County / Lexington Food Service Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Lexington-Fayette Urban County must obtain a food ' +
+      'service permit from the Lexington-Fayette County Health Department. Covers ' +
+      'restaurants, food trucks, caterers, and retail food operations. Annual permit renewal ' +
+      'required. A Lexington-Fayette Urban County business license is also required. ' +
+      'Apply at lexingtonhealthdept.org.',
+    officialUrl:  'https://lexingtonhealthdept.org/environmental-health/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Fayette County': 'https://lexingtonhealthdept.org/environmental-health/food-safety' },
+  },
+
+  // v70 — 14 new high-volume metro LOCAL_FORMS ────────────────────────────────
+
+  // ── ARIZONA — Phoenix ─────────────────────────────────────────────────────
+
+  {
+    id:           'phoenix-city-business-license',
+    name:         'City of Phoenix Business License / Transaction Privilege Tax License',
+    category:     'local',
+    description:
+      'Businesses operating in the City of Phoenix, Arizona must obtain a City of Phoenix ' +
+      'Transaction Privilege Tax (TPT) License from the Arizona Department of Revenue and ' +
+      'may require a City of Phoenix business license from the City Finance Department. ' +
+      'Food service businesses additionally need a Maricopa County Environmental Services ' +
+      'permit. Annual renewal required. Apply at phoenix.gov/pdd.',
+    officialUrl:  'https://www.phoenix.gov/pdd/business-services',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+    countyUrls:   {
+      'Phoenix':         'https://www.phoenix.gov/pdd/business-services',
+      'Maricopa County': 'https://www.maricopa.gov/1305/Environmental-Services',
+    },
+  },
+
+  // ── TEXAS — San Antonio / Bexar County ───────────────────────────────────
+
+  {
+    id:           'bexar-county-food-permit',
+    name:         'San Antonio / Bexar County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in San Antonio and Bexar County must obtain a Food ' +
+      'Service Establishment Permit from the San Antonio Metropolitan Health District. ' +
+      'Restaurants, food trucks, caterers, and retail food businesses all require permits. ' +
+      'The City of San Antonio also requires a basic business registration. Annual renewal ' +
+      'required. Apply at sanantonio.gov/health.',
+    officialUrl:  'https://www.sanantonio.gov/Health/Programs-Initiatives/Environmental-Health',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   {
+      'Bexar County':    'https://www.sanantonio.gov/Health/Programs-Initiatives/Environmental-Health',
+      'San Antonio':     'https://www.sanantonio.gov/Health/Programs-Initiatives/Environmental-Health',
+    },
+  },
+
+  // ── TENNESSEE — Nashville Metro Business License ────────────────────────────
+
+  {
+    id:           'nashville-metro-business-license',
+    name:         'Nashville Metro Business License (Metropolitan Government)',
+    category:     'local',
+    description:
+      'All businesses operating within the Nashville-Davidson County metropolitan area must ' +
+      'obtain a Metro Business License from the Tennessee Department of Revenue (for the state ' +
+      'portion) and register with the Metropolitan Government of Nashville and Davidson County. ' +
+      'The Metro Business License is required before opening and must be renewed annually. ' +
+      'Food service businesses additionally require a food service permit from Metro Nashville ' +
+      'Public Health. Apply at nashville.gov.',
+    officialUrl:  'https://www.nashville.gov/departments/finance/metro-finance',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+    countyUrls:   {
+      'Davidson County': 'https://www.nashville.gov/departments/finance/metro-finance',
+      'Nashville':       'https://www.nashville.gov/departments/finance/metro-finance',
+    },
+  },
+
+  // ── INDIANA — Indianapolis / Marion County ────────────────────────────────
+
+  {
+    id:           'marion-county-food-permit',
+    name:         'Indianapolis / Marion County Food Service Establishment License',
+    category:     'local',
+    description:
+      'Food service businesses in Indianapolis and Marion County must obtain a Food ' +
+      'Service Establishment License from the Marion County Public Health Department. ' +
+      'Covers restaurants, food trucks, caterers, and retail food establishments. ' +
+      'Businesses also require a City of Indianapolis business license. Annual ' +
+      'renewal required. Apply at marionhealth.org.',
+    officialUrl:  'https://www.marionhealth.org/environmental-health/food-service',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   {
+      'Marion County':    'https://www.marionhealth.org/environmental-health/food-service',
+      'Indianapolis':     'https://www.marionhealth.org/environmental-health/food-service',
+    },
+  },
+
+  // ── OHIO — Columbus / Franklin County ────────────────────────────────────
+
+  {
+    id:           'columbus-food-permit',
+    name:         'Columbus / Franklin County Food Service Operation License',
+    category:     'local',
+    description:
+      'Food service businesses in Columbus and Franklin County must obtain a Food Service ' +
+      'Operation License from the Columbus Public Health Department or the Ohio Department ' +
+      'of Agriculture (ODA) for certain categories. Covers restaurants, food trucks, ' +
+      'caterers, and retail food operations. A City of Columbus business license is also ' +
+      'required. Annual renewal required. Apply at publichealth.columbus.gov.',
+    officialUrl:  'https://publichealth.columbus.gov/programs/environmental-health/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   {
+      'Franklin County': 'https://publichealth.columbus.gov/programs/environmental-health/food-safety',
+      'Columbus':        'https://publichealth.columbus.gov/programs/environmental-health/food-safety',
+    },
+  },
+
+  // ── FLORIDA — Jacksonville / Duval County ────────────────────────────────
+
+  {
+    id:           'jacksonville-btr',
+    name:         'Jacksonville (Duval County) Business Tax Receipt',
+    category:     'local',
+    description:
+      'All businesses operating in the City of Jacksonville (Duval County) must obtain a ' +
+      'Business Tax Receipt (BTR) from the Duval County Tax Collector\'s office. This is ' +
+      'separate from state licensing requirements. Food service businesses must also obtain ' +
+      'a food permit from the Florida Department of Health — Duval County. Annual renewal ' +
+      'required by September 30. Apply at taxcollector.coj.net.',
+    officialUrl:  'https://www.taxcollector.coj.net/business-tax-receipts.aspx',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+    countyUrls:   {
+      'Duval County':    'https://www.taxcollector.coj.net/business-tax-receipts.aspx',
+      'Jacksonville':    'https://www.taxcollector.coj.net/business-tax-receipts.aspx',
+    },
+  },
+
+  // ── FLORIDA — Tampa / City of Tampa ──────────────────────────────────────
+
+  {
+    id:           'tampa-city-btr',
+    name:         'City of Tampa Business Tax Receipt',
+    category:     'local',
+    description:
+      'Businesses operating within the City of Tampa (incorporated city limits, separate ' +
+      'from unincorporated Hillsborough County) must obtain a City of Tampa Business Tax ' +
+      'Receipt from the City of Tampa Revenue and Finance Department. This is in addition ' +
+      'to Hillsborough County\'s BTR. Annual renewal required. Food businesses also need ' +
+      'FDOH-Hillsborough food permits separately. Apply at tampagov.net.',
+    officialUrl:  'https://www.tampagov.net/revenue-and-finance/business-tax',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+    countyUrls:   {
+      'Tampa':           'https://www.tampagov.net/revenue-and-finance/business-tax',
+      'Hillsborough': 'https://www.hillsboroughcounty.org/en/businesses/business-services/business-tax-receipts',
+    },
+  },
+
+  // ── KENTUCKY — Louisville / Jefferson County ──────────────────────────────
+
+  {
+    id:           'louisville-food-permit',
+    name:         'Louisville / Jefferson County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Louisville Metro (Jefferson County) must obtain a ' +
+      'Food Service Establishment Permit from Louisville Metro Public Health and Wellness. ' +
+      'Covers restaurants, food trucks, caterers, mobile food units, and retail food ' +
+      'businesses. A Louisville Metro business license is also required. Annual permit ' +
+      'renewal required. Apply at louisvilleky.gov.',
+    officialUrl:  'https://louisvilleky.gov/government/public-health-wellness/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   {
+      'Jefferson County': 'https://louisvilleky.gov/government/public-health-wellness/food-safety',
+      'Louisville':       'https://louisvilleky.gov/government/public-health-wellness/food-safety',
+    },
+  },
+
+  // ── CONNECTICUT — Hartford / Hartford County ──────────────────────────────
+
+  {
+    id:           'hartford-ct-food-permit',
+    name:         'Hartford / Hartford County Food Service Establishment License',
+    category:     'local',
+    description:
+      'Food service establishments in Hartford and Hartford County must obtain a Food ' +
+      'Service Establishment License from the Hartford City Department of Health or the ' +
+      'Connecticut Department of Public Health. The City of Hartford also requires a ' +
+      'business registration. Annual renewal required. Apply at hartford.gov.',
+    officialUrl:  'https://www.hartford.gov/city-government/departments/health',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   {
+      'Hartford':        'https://www.hartford.gov/city-government/departments/health',
+      'Hartford County': 'https://portal.ct.gov/DPH/Environmental-Health/Food-Protection-Program/Food-Protection-Program',
+    },
+  },
+
+  // ── OKLAHOMA — Oklahoma City / Oklahoma County ───────────────────────────
+
+  {
+    id:           'oklahoma-city-food-permit',
+    name:         'Oklahoma City / Oklahoma County Food Service Establishment License',
+    category:     'local',
+    description:
+      'Food service establishments in Oklahoma City and Oklahoma County must obtain a Food ' +
+      'Service Establishment License from the Oklahoma City-County Health Department (OCCHD). ' +
+      'Covers restaurants, food trucks, caterers, delis, and retail food operations. ' +
+      'The City of Oklahoma City requires a business license registration. Annual renewal ' +
+      'required. Apply at occhd.org.',
+    officialUrl:  'https://www.occhd.org/environmental-health/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   {
+      'Oklahoma County':   'https://www.occhd.org/environmental-health/food-safety',
+      'Oklahoma City':     'https://www.occhd.org/environmental-health/food-safety',
+    },
+  },
+
+  // ── TEXAS — El Paso / El Paso County ─────────────────────────────────────
+
+  {
+    id:           'el-paso-food-permit',
+    name:         'El Paso / El Paso County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in El Paso and El Paso County must obtain a food service ' +
+      'establishment permit from the City of El Paso Department of Public Health Environmental ' +
+      'Services Division. Covers restaurants, food trucks, caterers, mobile food units, and ' +
+      'retail food operations. A City of El Paso business license is also required. Annual ' +
+      'renewal required. Apply at elpasotexas.gov.',
+    officialUrl:  'https://www.elpasotexas.gov/environmental-services/food-establishments',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   {
+      'El Paso County':  'https://www.elpasotexas.gov/environmental-services/food-establishments',
+      'El Paso':         'https://www.elpasotexas.gov/environmental-services/food-establishments',
+    },
+  },
+
+  // ── TEXAS — Austin / Travis County ───────────────────────────────────────
+
+  {
+    id:           'travis-county-food-permit',
+    name:         'Austin / Travis County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Austin and Travis County must obtain a Food ' +
+      'Service Establishment Permit from Austin Public Health Environmental Health ' +
+      'Services Division. Covers restaurants, food trucks, caterers, and retail food ' +
+      'businesses. Austin also requires a City of Austin business license registration. ' +
+      'Annual renewal required. Apply at austintexas.gov/department/environmental-health.',
+    officialUrl:  'https://www.austintexas.gov/department/environmental-health-services-division',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   {
+      'Travis County':   'https://www.austintexas.gov/department/environmental-health-services-division',
+      'Austin':          'https://www.austintexas.gov/department/environmental-health-services-division',
+    },
+  },
+
+  // ── MISSOURI — Kansas City / Jackson County ───────────────────────────────
+
+  {
+    id:           'kansas-city-mo-food-permit',
+    name:         'Kansas City / Jackson County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Kansas City and Jackson County, Missouri must obtain ' +
+      'a Food Service Establishment Permit from the Kansas City Health Department. Covers ' +
+      'restaurants, food trucks, caterers, and retail food operations. A City of Kansas ' +
+      'City business license is also required. Annual renewal required. Apply at kcmo.gov.',
+    officialUrl:  'https://www.kcmo.gov/city-hall/departments/health/environmental-health/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   {
+      'Jackson County': 'https://www.kcmo.gov/city-hall/departments/health/environmental-health/food-safety',
+      'Kansas City':    'https://www.kcmo.gov/city-hall/departments/health/environmental-health/food-safety',
+    },
+  },
+
+  // ── OREGON — Portland City Business License ──────────────────────────────
+
+  {
+    id:           'portland-city-business-license',
+    name:         'Portland City Business License Tax Registration',
+    category:     'local',
+    description:
+      'All businesses operating in the City of Portland must register for a Portland Business ' +
+      'License Tax through the Revenue Division of the City of Portland. This is separate from ' +
+      'the Multnomah County food permit and state business registration. Registration required ' +
+      'before conducting business. Annual renewal required. Apply at portlandoregon.gov/revenue.',
+    officialUrl:  'https://www.portland.gov/revenue/business-license-tax',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+    countyUrls:   {
+      'Portland':         'https://www.portland.gov/revenue/business-license-tax',
+      'Multnomah County': 'https://www.multco.us/envirohealth/food-safety',
+    },
+  },
+
+  // ── VIRGINIA — Richmond / Chesterfield County ────────────────────────────
+
+  {
+    id:           'richmond-va-food-permit',
+    name:         'Richmond / Chesterfield County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in the City of Richmond must obtain a food service ' +
+      'establishment permit from the Richmond City Health District (part of the Virginia ' +
+      'Department of Health). The City of Richmond also requires a business license from ' +
+      'the Finance Department. Chesterfield County businesses apply through the Chesterfield ' +
+      'Health District. Annual permit renewal required. Apply at vdh.virginia.gov.',
+    officialUrl:  'https://www.vdh.virginia.gov/richmond-city/environmental-health',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   {
+      'Richmond':           'https://www.vdh.virginia.gov/richmond-city/environmental-health',
+      'Chesterfield County': 'https://www.vdh.virginia.gov/chesterfield',
+    },
+  },
+
+  // ── HAWAII — Honolulu / Oahu ──────────────────────────────────────────────
+
+  {
+    id:           'honolulu-business-license',
+    name:         'Honolulu (Oahu) Basic Business Application / GET License',
+    category:     'local',
+    description:
+      'Hawaii uses a unified licensing system. Businesses operating in Honolulu (Oahu) need a ' +
+      'Basic Business Application (BB-1) from the Hawaii Department of Taxation to register for ' +
+      'the General Excise Tax (GET), which replaces sales tax in Hawaii. All businesses with ' +
+      'Hawaii gross income must file. Food businesses additionally need a Food Establishment ' +
+      'permit from the Hawaii Department of Health. Apply at portal.ehawaii.gov.',
+    officialUrl:  'https://portal.ehawaii.gov/business/register-a-business',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // v77 — 13 new hyper-local LOCAL_FORMS ──────────────────────────────────────
+
+  // ── NEBRASKA — Omaha / Douglas County ────────────────────────────────────
+
+  {
+    id:           'omaha-douglas-business-license',
+    name:         'Omaha / Douglas County Business License',
+    category:     'local',
+    description:
+      'Businesses operating within the City of Omaha must obtain a Business License from the City ' +
+      'of Omaha Revenue Division before commencing operations. Home-based businesses also require ' +
+      'a City of Omaha Home Occupation permit. Douglas County separately regulates certain ' +
+      'business types in unincorporated areas.',
+    officialUrl:  'https://www.cityofomaha.org/revenue',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'omaha-food-service-permit',
+    name:         'Omaha / Douglas County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in the City of Omaha and Douglas County must obtain a Food ' +
+      'Establishment Permit from Douglas County Health Department before opening. Covers restaurants, ' +
+      'cafes, food trucks, catering operations, and grocery stores.',
+    officialUrl:  'https://www.douglascountyhealth.com',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['restaurant', 'food-truck', 'catering'],
+  },
+
+  // ── LOUISIANA — Baton Rouge / East Baton Rouge ────────────────────────────
+
+  {
+    id:           'baton-rouge-business-license',
+    name:         'Baton Rouge / East Baton Rouge Parish Business License',
+    category:     'local',
+    description:
+      'The City of Baton Rouge and East Baton Rouge Parish require a Parish/City Occupational ' +
+      'License for all businesses operating within parish limits. Issued by the East Baton Rouge ' +
+      'Parish Revenue Division. Fee is based on gross revenue. Home-based businesses also require ' +
+      'this license.',
+    officialUrl:  'https://brgov.com/dept/revenue',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── ALABAMA — Birmingham / Jefferson County ───────────────────────────────
+
+  {
+    id:           'birmingham-jefferson-business-license',
+    name:         'Birmingham / Jefferson County Business License',
+    category:     'local',
+    description:
+      'All businesses operating in Birmingham must obtain a City of Birmingham Business License ' +
+      'from the Jefferson County License Division. Jefferson County also issues a separate County ' +
+      'Business License for businesses in unincorporated Jefferson County. Both licenses are ' +
+      'required if operating within city limits.',
+    officialUrl:  'https://www.jeffco.net/241/License-Division',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── KANSAS — Wichita / Sedgwick County ───────────────────────────────────
+
+  {
+    id:           'wichita-sedgwick-business-license',
+    name:         'Wichita / Sedgwick County Business License',
+    category:     'local',
+    description:
+      'The City of Wichita requires a Business License for most businesses operating within city limits. ' +
+      'The Business License is issued by the City of Wichita Office of Central Inspection. Some regulated ' +
+      'industries (food service, childcare, contractors) require additional state or county-level permits.',
+    officialUrl:  'https://www.wichita.gov/BusinessLicense',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'wichita-food-service-permit',
+    name:         'Wichita / Sedgwick County Food Establishment License',
+    category:     'local',
+    description:
+      'Food service establishments in Wichita and Sedgwick County require a Food Establishment ' +
+      'License from the Sedgwick County Environmental Health. Covers all permanent and temporary ' +
+      'food establishments including food trucks, restaurants, and mobile food vendors.',
+    officialUrl:  'https://www.sedgwickcounty.org/public-health/environmental-health',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['restaurant', 'food-truck'],
+  },
+
+  // ── WASHINGTON — Spokane City ─────────────────────────────────────────────
+
+  {
+    id:           'spokane-city-business-license',
+    name:         'City of Spokane Business License',
+    category:     'local',
+    description:
+      'The City of Spokane requires a City Business License for all businesses operating within ' +
+      'Spokane city limits, in addition to the Washington State Business License obtained through ' +
+      'the WA Department of Revenue (DOR). The city license is issued by the City of Spokane ' +
+      'Treasury Division.',
+    officialUrl:  'https://my.spokanecity.org/business',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── WASHINGTON — Tacoma / Pierce County ──────────────────────────────────
+
+  {
+    id:           'tacoma-pierce-business-license',
+    name:         'City of Tacoma Business License',
+    category:     'local',
+    description:
+      'The City of Tacoma requires a Tacoma Business License for all businesses with a physical ' +
+      'location in Tacoma or that earn income within city limits. In addition to the Tacoma license, ' +
+      'businesses must also hold a Washington State Business License (through the WA DOR Business ' +
+      'Licensing Service). Issued by the Tacoma Finance Department.',
+    officialUrl:  'https://www.cityoftacoma.org/business-license',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── WISCONSIN — Madison / Dane County ────────────────────────────────────
+
+  {
+    id:           'madison-dane-business-license',
+    name:         'Madison / Dane County Business License',
+    category:     'local',
+    description:
+      'The City of Madison requires a Business License for most business types operating within ' +
+      'the city. Issued by the City of Madison Finance Department. Food service businesses, ' +
+      'childcare facilities, and alcohol retailers require additional specialized licenses from ' +
+      'Public Health Madison & Dane County.',
+    officialUrl:  'https://www.cityofmadison.com/finance/licensing',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  {
+    id:           'madison-dane-food-permit',
+    name:         'Madison / Dane County Food Service License',
+    category:     'local',
+    description:
+      'Food service establishments in Madison and Dane County require a Food Service License ' +
+      'from Public Health Madison & Dane County before opening. Covers restaurants, cafes, ' +
+      'food carts, mobile food units, and catering operations.',
+    officialUrl:  'https://publichealthmdc.com/environmental-health/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['restaurant', 'food-truck', 'catering'],
+  },
+
+  // ── CALIFORNIA — Riverside / Riverside County ─────────────────────────────
+
+  {
+    id:           'riverside-ca-business-license',
+    name:         'City of Riverside Business License',
+    category:     'local',
+    description:
+      'The City of Riverside, California requires a Business License from the City Clerk\'s Office ' +
+      'for all businesses operating within city limits. Home-based businesses require a Home ' +
+      'Occupation Permit from the Planning Division. Riverside County separately licenses food ' +
+      'service operations through the Riverside County Environmental Health Department.',
+    officialUrl:  'https://www.riversideca.gov/finance/business-license',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── CALIFORNIA — San Bernardino / San Bernardino County ──────────────────
+
+  {
+    id:           'san-bernardino-city-business-license',
+    name:         'City of San Bernardino Business Registration Certificate',
+    category:     'local',
+    description:
+      'The City of San Bernardino requires a Business Registration Certificate for all businesses ' +
+      'operating within city limits. Issued by the City of San Bernardino Business Registration ' +
+      'Division. Food establishments also require a San Bernardino County Environmental Health ' +
+      'Services permit (separate application).',
+    officialUrl:  'https://www.sbcounty.gov/deh/business-registration',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── CALIFORNIA — Bakersfield / Kern County ────────────────────────────────
+
+  {
+    id:           'bakersfield-kern-business-license',
+    name:         'City of Bakersfield / Kern County Business License',
+    category:     'local',
+    description:
+      'The City of Bakersfield requires a Business License for all businesses operating within ' +
+      'Bakersfield city limits. Issued by the City of Bakersfield Finance Division. Businesses ' +
+      'in unincorporated Kern County are regulated by Kern County. Food service establishments ' +
+      'require a separate permit from Kern County Environmental Health Services.',
+    officialUrl:  'https://www.bakersfieldcity.us/gov/depts/fire/blic',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── COLORADO — Colorado Springs / El Paso County ─────────────────────────
+
+  {
+    id:           'colorado-springs-business-license',
+    name:         'Colorado Springs Business License',
+    category:     'local',
+    description:
+      'The City of Colorado Springs does not require a general business license for most businesses. ' +
+      'However, certain regulated industries (food service, childcare, contractors, home-based ' +
+      'businesses in some zones) require specific city or El Paso County permits. Food establishments ' +
+      'require a permit from El Paso County Public Health.',
+    officialUrl:  'https://coloradosprings.gov/business',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['restaurant', 'food-truck', 'childcare', 'contractor'],
+  },
+
+  // ── ALASKA — Municipality of Anchorage ───────────────────────────────────
+
+  {
+    id:           'anchorage-business-license',
+    name:         'Anchorage / Municipality of Anchorage Business License',
+    category:     'local',
+    description:
+      'All businesses operating in the Municipality of Anchorage must obtain an Alaska Business ' +
+      'License from the State of Alaska (required statewide) AND a Municipality of Anchorage ' +
+      'Business License from the Anchorage Finance Department. Food service establishments also ' +
+      'require a permit from the Anchorage Health Department.',
+    officialUrl:  'https://anchorageak.gov/business/business-license',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // ── SOUTH CAROLINA — Greenville / Greenville County ──────────────────────
+
+  {
+    id:           'greenville-sc-business-license',
+    name:         'City of Greenville / Greenville County Business License',
+    category:     'local',
+    description:
+      'All businesses operating within the City of Greenville, SC must obtain a Business License ' +
+      'from the City of Greenville Revenue Division. The fee is based on gross revenue and business ' +
+      'type. Businesses in Greenville County outside city limits must obtain a Greenville County ' +
+      'Business License from the Greenville County Economic Development Office.',
+    officialUrl:  'https://www.greenvillesc.gov/1107/Business-License',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+  },
+
+  // v76 — 13 new hyper-local LOCAL_FORMS ──────────────────────────────────────
+
+  // ── ARIZONA — Chandler ───────────────────────────────────────────────────
+
+  {
+    id:           'chandler-az-business-license',
+    name:         'Chandler AZ Business License',
+    category:     'local',
+    description:
+      'All businesses operating within the City of Chandler, Arizona must obtain a ' +
+      'Chandler Business License before opening. Chandler is a major business hub in the ' +
+      'East Valley and requires annual renewal. Many business types also require a separate ' +
+      'Maricopa County permit (food service, health, liquor). Apply online via the City of ' +
+      'Chandler\'s Business License portal at chandleraz.gov.',
+    officialUrl:  'https://www.chandleraz.gov/residents/neighborhoods-code-compliance/business-license',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['retail', 'food-truck', 'restaurant', 'services', 'home-based'],
+    countyUrls: { AZ: 'https://www.chandleraz.gov/residents/neighborhoods-code-compliance/business-license' },
+  },
+
+  // ── NEVADA — Henderson ───────────────────────────────────────────────────
+
+  {
+    id:           'henderson-nv-food-permit',
+    name:         'Henderson NV Southern Nevada Health District Food Handler / Establishment Permit',
+    category:     'local',
+    description:
+      'Restaurants, food trucks, caterers, and retail food businesses operating in ' +
+      'Henderson, Nevada must obtain a Food Establishment Permit from the Southern Nevada ' +
+      'Health District (SNHD). Henderson is the second-largest city in Nevada. Food handler ' +
+      'cards are required for all food service employees. Apply and renew online at ' +
+      'snhd.info. Clark County also requires a business license.',
+    officialUrl:  'https://snhd.info/food-establishment-permit',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-truck', 'restaurant'],
+    countyUrls: { NV: 'https://snhd.info/food-establishment-permit' },
+  },
+
+  // ── CALIFORNIA — Irvine / Orange County ──────────────────────────────────
+
+  {
+    id:           'irvine-ca-business-license',
+    name:         'Irvine CA Business License',
+    category:     'local',
+    description:
+      'All businesses operating within the City of Irvine, California must obtain a ' +
+      'City of Irvine Business License. Irvine is one of the most populous planned cities ' +
+      'in the US and a major business hub in Orange County. Retail food businesses also ' +
+      'require an Orange County Environmental Health food permit. Apply at cityofirvine.org. ' +
+      'Home-based businesses must comply with Irvine\'s home occupation standards.',
+    officialUrl:  'https://www.cityofirvine.org/doing-business/business-license',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['retail', 'services', 'home-based', 'ecommerce'],
+    countyUrls: { CA: 'https://www.cityofirvine.org/doing-business/business-license' },
+  },
+
+  // ── TEXAS — Plano / Collin County ────────────────────────────────────────
+
+  {
+    id:           'plano-tx-food-permit',
+    name:         'Plano TX / Collin County Food Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Plano and Collin County must obtain a Food ' +
+      'Establishment Permit from the Plano Environmental Health Division. Plano is one of ' +
+      'the largest cities in the DFW metroplex. Restaurants, food trucks, caterers, and ' +
+      'retail food businesses all require this permit. Apply at plano.gov/1329. Annual ' +
+      'renewal and inspections are required.',
+    officialUrl:  'https://www.plano.gov/1329/Food-Service-Permits',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-truck', 'restaurant'],
+    countyUrls: { TX: 'https://www.plano.gov/1329/Food-Service-Permits' },
+  },
+
+  // ── FLORIDA — Hialeah / Miami-Dade County ────────────────────────────────
+
+  {
+    id:           'hialeah-fl-food-permit',
+    name:         'Hialeah / Miami-Dade County Food Service Establishment License',
+    category:     'local',
+    description:
+      'Food service establishments in Hialeah, Florida are regulated by Miami-Dade County ' +
+      'and the Florida Department of Business and Professional Regulation (DBPR). Restaurants, ' +
+      'food trucks, and retail food businesses require both a City of Hialeah local business ' +
+      'tax receipt and a Florida DBPR Food Service Establishment License. Hialeah is the ' +
+      'second-largest city in Miami-Dade County. Apply at hialeahfl.gov for the local receipt ' +
+      'and miamidade.gov for county-level permits.',
+    officialUrl:  'https://www.hialeahfl.gov/business-licensing',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-truck', 'restaurant'],
+    countyUrls: { FL: 'https://www.miamidade.gov/business/business-license.asp' },
+  },
+
+  // ── FLORIDA — Fort Lauderdale / Broward County ───────────────────────────
+
+  {
+    id:           'fort-lauderdale-broward-food-permit',
+    name:         'Fort Lauderdale / Broward County Food Service Establishment License',
+    category:     'local',
+    description:
+      'Food service businesses in Fort Lauderdale and Broward County must obtain a ' +
+      'Florida DBPR Food Service Establishment License as well as a City of Fort Lauderdale ' +
+      'Business Tax Receipt (BTR). Broward County Environmental Protection and Growth ' +
+      'Management may also require permits for new construction. Apply for the DBPR license ' +
+      'at myfloridalicense.com and for the city BTR at fortlauderdale.gov.',
+    officialUrl:  'https://www.fortlauderdale.gov/departments/sustainable-development/business',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-truck', 'restaurant'],
+    countyUrls: { FL: 'https://www.fortlauderdale.gov/departments/sustainable-development/business' },
+  },
+
+  // ── CALIFORNIA — Chula Vista / San Diego County ──────────────────────────
+
+  {
+    id:           'chula-vista-san-diego-food-permit',
+    name:         'Chula Vista / San Diego County Environmental Health Food Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Chula Vista and San Diego County must obtain a ' +
+      'County of San Diego Environmental Health and Quality (DEHQ) Food Facility Permit. ' +
+      'Chula Vista is the second-largest city in San Diego County and one of the largest ' +
+      'cities on the US-Mexico border. Permits are required for restaurants, food trucks, ' +
+      'cottage food operations, and retail food markets. Apply online at sandiegocounty.gov.',
+    officialUrl:  'https://www.sandiegocounty.gov/content/sdc/deh/fhd/food/permits.html',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-truck', 'restaurant'],
+    countyUrls: { CA: 'https://www.sandiegocounty.gov/content/sdc/deh/fhd/food/permits.html' },
+  },
+
+  // ── CALIFORNIA — Fremont / Alameda County ────────────────────────────────
+
+  {
+    id:           'fremont-alameda-business-license',
+    name:         'Fremont CA Business License / Alameda County Business Registration',
+    category:     'local',
+    description:
+      'All businesses operating in Fremont, California must obtain a City of Fremont ' +
+      'Business License. Fremont is the fourth-largest city in the San Francisco Bay Area. ' +
+      'Food service businesses must also obtain an Alameda County Environmental Health ' +
+      'food facility permit. Home-based businesses must comply with Fremont\'s home ' +
+      'occupation regulations. Apply online at fremont.gov/business.',
+    officialUrl:  'https://www.fremont.gov/government/city-departments/finance/business-license',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['retail', 'services', 'home-based', 'ecommerce'],
+    countyUrls: { CA: 'https://www.fremont.gov/government/city-departments/finance/business-license' },
+  },
+
+  // ── ARIZONA — Gilbert ────────────────────────────────────────────────────
+
+  {
+    id:           'gilbert-az-business-license',
+    name:         'Gilbert AZ Business License',
+    category:     'local',
+    description:
+      'Businesses operating within the Town of Gilbert, Arizona must obtain a Gilbert ' +
+      'Business License before opening. Gilbert is one of the fastest-growing municipalities ' +
+      'in the US and a major employment center in the Southeast Valley. Food businesses also ' +
+      'require a Maricopa County Environmental Services food permit. Apply online at ' +
+      'gilbertaz.gov/business.',
+    officialUrl:  'https://www.gilbertaz.gov/departments/development-services/business-licensing',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['retail', 'food-truck', 'restaurant', 'services', 'home-based'],
+    countyUrls: { AZ: 'https://www.gilbertaz.gov/departments/development-services/business-licensing' },
+  },
+
+  // ── TEXAS — Garland / Dallas County ─────────────────────────────────────
+
+  {
+    id:           'garland-tx-business-license',
+    name:         'Garland TX Business Registration / Dallas County Food Permit',
+    category:     'local',
+    description:
+      'Businesses in Garland, Texas must register with the City of Garland. Food service ' +
+      'establishments also require a Dallas County Health and Human Services food permit. ' +
+      'Garland is the 12th-largest city in Texas and is located within the DFW metroplex. ' +
+      'Food trucks operating in Garland must obtain a Garland Mobile Food Unit permit. ' +
+      'Apply at garlandtx.gov.',
+    officialUrl:  'https://www.garlandtx.gov/2046/Business-Resources',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-truck', 'restaurant', 'retail', 'services'],
+    countyUrls: { TX: 'https://www.dallascounty.org/departments/dchhs/environmental-health.php' },
+  },
+
+  // ── MISSOURI — Springfield / Greene County ───────────────────────────────
+
+  {
+    id:           'springfield-mo-food-permit',
+    name:         'Springfield MO / Greene County Food Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Springfield, Missouri and Greene County must obtain ' +
+      'a Food Establishment Permit from the Springfield-Greene County Health Department. ' +
+      'Springfield is the third-largest city in Missouri and home to a large food service ' +
+      'industry. The permit covers restaurants, food trucks, caterers, and retail food. ' +
+      'Annual inspections are required. Apply at springfieldmo.gov/1455.',
+    officialUrl:  'https://www.springfieldmo.gov/1455/Environmental-Health',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-truck', 'restaurant'],
+    countyUrls: { MO: 'https://www.springfieldmo.gov/1455/Environmental-Health' },
+  },
+
+  // ── ILLINOIS — Peoria ────────────────────────────────────────────────────
+
+  {
+    id:           'peoria-il-food-permit',
+    name:         'Peoria IL / Peoria County Food Service License',
+    category:     'local',
+    description:
+      'Food service businesses in Peoria, Illinois must obtain a Retail Food Store ' +
+      'License from the Illinois Department of Public Health (IDPH) or from the City of ' +
+      'Peoria, depending on establishment type. Peoria is the largest city on the Illinois ' +
+      'River. Mobile food units require a separate mobile food dispenser license. Apply via ' +
+      'the City of Peoria Development Department at peoria.il.gov or via IDPH.',
+    officialUrl:  'https://www.peoria.il.gov/departments/development',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-truck', 'restaurant'],
+    countyUrls: { IL: 'https://www.peoria.il.gov/departments/development' },
+  },
+
+  // ── NEW YORK — Yonkers / Westchester County ──────────────────────────────
+
+  {
+    id:           'yonkers-westchester-food-permit',
+    name:         'Yonkers / Westchester County Department of Health Food Service Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Yonkers and Westchester County must obtain a ' +
+      'Westchester County Department of Health Food Service Establishment Permit. Yonkers ' +
+      'is the fourth-largest city in New York State. The permit covers restaurants, caterers, ' +
+      'temporary food vendors, and retail food businesses. Apply at health.westchestergov.com. ' +
+      'Yonkers businesses also need a City of Yonkers business registration.',
+    officialUrl:  'https://health.westchestergov.com/environmental-health/food-protection',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-truck', 'restaurant'],
+    countyUrls: { NY: 'https://health.westchestergov.com/environmental-health/food-protection' },
+  },
+
+  // v75 — 13 new hyper-local LOCAL_FORMS ──────────────────────────────────────
+
+  // ── IDAHO — Boise / Ada County ────────────────────────────────────────────
+
+  {
+    id:           'boise-ada-food-permit',
+    name:         'Boise / Ada County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Boise and Ada County must obtain a Food Establishment ' +
+      'Permit from the Central District Health (CDH) Environmental Health Division. All ' +
+      'restaurants, food trucks, caterers, delis, and retail food businesses require permits. ' +
+      'Boise businesses also need a City of Boise Business License from the City Clerk\'s ' +
+      'Office. Annual renewal required. Apply at cdhd.idaho.gov.',
+    officialUrl:  'https://www.cdhd.idaho.gov/eh/food.php',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Ada County': 'https://www.cdhd.idaho.gov/eh/food.php' },
+  },
+
+  // ── IOWA — Des Moines / Polk County ──────────────────────────────────────
+
+  {
+    id:           'des-moines-polk-food-permit',
+    name:         'Des Moines / Polk County Food Establishment License',
+    category:     'local',
+    description:
+      'Food service establishments in Des Moines and Polk County must obtain a Food ' +
+      'Establishment License from the Iowa Department of Inspections, Appeals, and ' +
+      'Licensing (DIAL) or the Polk County Environmental Health Division. All restaurants, ' +
+      'food trucks, caterers, and retail food businesses require permits. Des Moines ' +
+      'businesses also need a Des Moines Business Registration from the City ' +
+      'Development Department. Annual renewal required. Apply at iowa.gov/inspections.',
+    officialUrl:  'https://dial.iowa.gov/licensing/food-establishments',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Polk County': 'https://www.polkcountyiowa.gov/environmental-health' },
+  },
+
+  // ── WASHINGTON — Spokane City (city-specific) ─────────────────────────────
+
+  {
+    id:           'spokane-city-business-license',
+    name:         'City of Spokane Business License',
+    category:     'local',
+    description:
+      'All businesses operating within the City of Spokane must obtain a City of Spokane ' +
+      'Business License from the Spokane City Finance Department. This is a separate ' +
+      'requirement from the state of Washington Business License and the Spokane County ' +
+      'food permit (SRHD). Spokane city also collects Business and Occupation (B&O) tax ' +
+      'for most business types. Annual renewal required. Apply at spokane.city.',
+    officialUrl:  'https://my.spokane.city/s/licenses',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+    countyUrls:   { 'Spokane City': 'https://my.spokane.city/s/licenses' },
+  },
+
+  // ── NORTH CAROLINA — Winston-Salem / Forsyth County ──────────────────────
+
+  {
+    id:           'winston-salem-forsyth-food-permit',
+    name:         'Winston-Salem / Forsyth County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Winston-Salem and Forsyth County must obtain a ' +
+      'Food Service Establishment Permit from the Forsyth County Department of Public ' +
+      'Health Environmental Health Division. All restaurants, food trucks, caterers, and ' +
+      'retail food businesses require permits. Winston-Salem businesses also need a City ' +
+      'Business Privilege License from the City of Winston-Salem Finance Department. ' +
+      'Annual renewal required. Apply at forsyth.cc.',
+    officialUrl:  'https://www.forsyth.cc/publichealth/environmental/foodpermits.aspx',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Forsyth County': 'https://www.forsyth.cc/publichealth/environmental/foodpermits.aspx' },
+  },
+
+  // ── TENNESSEE — Knoxville / Knox County ──────────────────────────────────
+
+  {
+    id:           'knoxville-knox-food-permit',
+    name:         'Knoxville / Knox County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Knoxville and Knox County must obtain a Food Service ' +
+      'Establishment Permit from the Knox County Health Department Environmental Health ' +
+      'Division. All restaurants, food trucks, caterers, and retail food businesses ' +
+      'require permits. City of Knoxville businesses also need a City of Knoxville ' +
+      'Business License from the City Revenue Office. Annual renewal required. ' +
+      'Apply at knoxcounty.org/health.',
+    officialUrl:  'https://www.knoxcounty.org/health/environmental/food_safety.php',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Knox County': 'https://www.knoxcounty.org/health/environmental/food_safety.php' },
+  },
+
+  // ── KENTUCKY — Lexington / Fayette County ────────────────────────────────
+
+  {
+    id:           'lexington-fayette-food-permit',
+    name:         'Lexington / Fayette County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Lexington and Fayette County must obtain a Food ' +
+      'Service Establishment Permit from the Lexington-Fayette County Health Department. ' +
+      'All restaurants, food trucks, caterers, and retail food businesses require permits. ' +
+      'Lexington businesses also need a Lexington-Fayette Urban County Government (LFUCG) ' +
+      'Business License. Annual renewal required. Apply at lexingtonhealthdept.org.',
+    officialUrl:  'https://lexingtonhealthdept.org/environmental-health/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Fayette County': 'https://lexingtonhealthdept.org/environmental-health/food-safety' },
+  },
+
+  // ── NEW MEXICO — Albuquerque / Bernalillo County ──────────────────────────
+
+  {
+    id:           'albuquerque-bernalillo-food-permit',
+    name:         'Albuquerque / Bernalillo County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Albuquerque and Bernalillo County must obtain a ' +
+      'Food Service Establishment Permit from the Bernalillo County Environmental Health ' +
+      'Department or the City of Albuquerque Environmental Health Department. All ' +
+      'restaurants, food trucks, caterers, and retail food businesses require permits. ' +
+      'Albuquerque businesses also need a City of Albuquerque Business Registration. ' +
+      'Annual renewal required. Apply at bernco.gov/health.',
+    officialUrl:  'https://www.bernco.gov/health/environmental-health.aspx',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Bernalillo County': 'https://www.bernco.gov/health/environmental-health.aspx' },
+  },
+
+  // ── COLORADO — Aurora / Arapahoe County ──────────────────────────────────
+
+  {
+    id:           'aurora-arapahoe-food-permit',
+    name:         'Aurora / Arapahoe County Food Service Establishment License',
+    category:     'local',
+    description:
+      'Food service establishments in Aurora and Arapahoe County must obtain a Retail ' +
+      'Food Establishment License from Tri-County Health or the Arapahoe County Public ' +
+      'Health Department. All restaurants, food trucks, caterers, and retail food ' +
+      'businesses require permits. Aurora businesses also need a City of Aurora Business ' +
+      'License from the City Finance Department. Annual renewal required. ' +
+      'Apply at tchd.org or arapahoe.gov.',
+    officialUrl:  'https://www.tchd.org/302/Food-Facilities',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Arapahoe County': 'https://www.arapahoegov.com/2042/Public-Health' },
+  },
+
+  // ── CALIFORNIA — Anaheim / Orange County ─────────────────────────────────
+
+  {
+    id:           'anaheim-orange-food-permit',
+    name:         'Anaheim / Orange County Food Facility Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Anaheim, Santa Ana, and throughout Orange County ' +
+      'must obtain a Food Facility Permit from the Orange County Health Care Agency ' +
+      'Environmental Health Division. All restaurants, food trucks, caterers, and retail ' +
+      'food businesses require permits. Anaheim businesses also need a City of Anaheim ' +
+      'Business License. Annual renewal required. Apply at ochealthinfo.com.',
+    officialUrl:  'https://www.ochealthinfo.com/programs-and-services/environmental-health/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Orange County': 'https://www.ochealthinfo.com/programs-and-services/environmental-health/food-safety' },
+  },
+
+  // ── TEXAS — Corpus Christi / Nueces County ────────────────────────────────
+
+  {
+    id:           'corpus-christi-nueces-food-permit',
+    name:         'Corpus Christi / Nueces County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Corpus Christi and Nueces County must obtain a ' +
+      'Food Service Establishment Permit from the City of Corpus Christi Development ' +
+      'Services or the Nueces County Public Health District. All restaurants, food trucks, ' +
+      'caterers, and retail food businesses require permits. Corpus Christi businesses ' +
+      'also need a City of Corpus Christi Business License. Annual renewal required. ' +
+      'Apply at cctexas.com.',
+    officialUrl:  'https://www.cctexas.com/departments/development-services',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Nueces County': 'https://www.nuecesco.com/county-services/public-health' },
+  },
+
+  // ── TEXAS — Killeen / Bell County ─────────────────────────────────────────
+
+  {
+    id:           'killeen-bell-food-permit',
+    name:         'Killeen / Bell County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Killeen and Bell County must obtain a Food Service ' +
+      'Establishment Permit from the Bell County Health District or the City of Killeen ' +
+      'Environmental Health Division. All restaurants, food trucks, caterers, and retail ' +
+      'food businesses require permits. Killeen businesses also need a City of Killeen ' +
+      'Business License. Annual renewal required. Apply at killeentexas.gov.',
+    officialUrl:  'https://www.killeentexas.gov/190/Environmental-Health',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Bell County': 'https://www.co.bell.tx.us/departments/health.php' },
+  },
+
+  // ── TEXAS — Beaumont / Jefferson County ───────────────────────────────────
+
+  {
+    id:           'beaumont-jefferson-food-permit',
+    name:         'Beaumont / Jefferson County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Beaumont and Jefferson County must obtain a Food ' +
+      'Service Establishment Permit from the Jefferson County Department of Health or the ' +
+      'City of Beaumont Environmental Health Division. All restaurants, food trucks, ' +
+      'caterers, and retail food businesses require permits. Beaumont businesses also need ' +
+      'a City of Beaumont Business License. Annual renewal required. Apply at beaumonttexas.gov.',
+    officialUrl:  'https://www.beaumonttexas.gov/2018/Environmental-Health',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Jefferson County': 'https://www.co.jefferson.tx.us/depts/health/health.htm' },
+  },
+
+  // ── CALIFORNIA — Santa Ana / Orange County (city-specific) ────────────────
+
+  {
+    id:           'santa-ana-ca-business-license',
+    name:         'City of Santa Ana Business License',
+    category:     'local',
+    description:
+      'All businesses operating in the City of Santa Ana, California must obtain a City ' +
+      'of Santa Ana Business License from the City Finance and Management Services ' +
+      'Department. Food businesses also need an Orange County food facility permit from ' +
+      'the OC Health Care Agency. Annual renewal required. Santa Ana is the county seat ' +
+      'of Orange County and one of the densest business corridors in Southern California. ' +
+      'Apply at santa-ana.org/finance.',
+    officialUrl:  'https://www.santa-ana.org/finance/business-licensing',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all'],
+    countyUrls:   { 'Santa Ana': 'https://www.santa-ana.org/finance/business-licensing' },
+  },
+
+  // v74 — 13 new hyper-local LOCAL_FORMS ──────────────────────────────────────
+
+  // ── NEVADA — Reno / Washoe County ────────────────────────────────────────
+
+  {
+    id:           'reno-washoe-food-permit',
+    name:         'Reno / Washoe County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Reno, Sparks, and Washoe County must obtain a ' +
+      'Food Establishment Operating Permit from the Washoe County Health District ' +
+      'Environmental Health Division. All restaurants, food trucks, caterers, delis, ' +
+      'and retail food businesses require permits. Reno businesses also need a City of ' +
+      'Reno Business License from the City Finance Department. Annual renewal required. ' +
+      'Apply at washoecounty.gov/health.',
+    officialUrl:  'https://www.washoecounty.gov/health/programs-and-services/environmental-health/food-safety.php',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Washoe County': 'https://www.washoecounty.gov/health/programs-and-services/environmental-health/food-safety.php' },
+  },
+
+  // ── MAINE — Portland / Cumberland County ─────────────────────────────────
+
+  {
+    id:           'portland-me-food-permit',
+    name:         'Portland / Cumberland County ME Food Service Establishment License',
+    category:     'local',
+    description:
+      'Food service establishments in Portland and Cumberland County, Maine must obtain ' +
+      'a Food Establishment License from the Maine Department of Agriculture, Conservation ' +
+      'and Forestry (DACF). Portland businesses may also require a City of Portland ' +
+      'Business License. Food trucks require a Mobile Unit license. Annual renewal ' +
+      'required. Apply at maine.gov/dacf/qar/food-licensing.',
+    officialUrl:  'https://www.maine.gov/dacf/qar/food-licensing/index.shtml',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Cumberland County': 'https://www.maine.gov/dacf/qar/food-licensing/index.shtml' },
+  },
+
+  // ── NEW HAMPSHIRE — Manchester / Hillsborough County ─────────────────────
+
+  {
+    id:           'manchester-nh-food-permit',
+    name:         'Manchester / Hillsborough County NH Food Service License',
+    category:     'local',
+    description:
+      'Food service establishments in Manchester and Hillsborough County must obtain a ' +
+      'Food Service License from the New Hampshire Department of Health and Human Services ' +
+      '(DHHS) Food Protection Section. All restaurants, food trucks, caterers, delis, and ' +
+      'retail food businesses require permits. Manchester businesses also need a City of ' +
+      'Manchester Business License. Annual renewal required. Apply at nh.gov/dhhs.',
+    officialUrl:  'https://www.nh.gov/dhhs/befs/food/index.htm',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Hillsborough County': 'https://www.nh.gov/dhhs/befs/food/index.htm' },
+  },
+
+  // ── FLORIDA — Tallahassee / Leon County ──────────────────────────────────
+
+  {
+    id:           'tallahassee-leon-food-permit',
+    name:         'Tallahassee / Leon County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Tallahassee and Leon County must obtain a Food ' +
+      'Service Establishment License from the Florida Department of Business and ' +
+      'Professional Regulation (DBPR) Division of Hotels and Restaurants. All ' +
+      'restaurants, food trucks, caterers, and retail food businesses require permits. ' +
+      'Tallahassee businesses also need a City of Tallahassee Business Tax Receipt. ' +
+      'Annual renewal required. Apply at myfloridalicense.com.',
+    officialUrl:  'https://www.myfloridalicense.com/DBPR/hotels-restaurants',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   {
+      'Leon County':     'https://www.leoncountyfl.gov',
+      'Tallahassee':     'https://www.talgov.com/main/main.aspx',
+    },
+  },
+
+  // ── FLORIDA — Pensacola / Escambia County ────────────────────────────────
+
+  {
+    id:           'pensacola-escambia-food-permit',
+    name:         'Pensacola / Escambia County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Pensacola and Escambia County must obtain a Food ' +
+      'Service Establishment License from the Florida Department of Business and ' +
+      'Professional Regulation (DBPR) Division of Hotels and Restaurants. All ' +
+      'restaurants, food trucks, caterers, and retail food businesses require permits. ' +
+      'City of Pensacola businesses also need a Business Tax Receipt from the City. ' +
+      'Annual renewal required. Apply at myfloridalicense.com.',
+    officialUrl:  'https://www.myfloridalicense.com/DBPR/hotels-restaurants',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   {
+      'Escambia County': 'https://myescambia.com/our-services/public-safety/environmental-health',
+      'Pensacola':       'https://www.cityofpensacola.com',
+    },
+  },
+
+  // ── ALABAMA — Huntsville / Madison County ────────────────────────────────
+
+  {
+    id:           'huntsville-madison-food-permit',
+    name:         'Huntsville / Madison County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Huntsville and Madison County must obtain a Food ' +
+      'Service Establishment Permit from the Madison County Health Department. All ' +
+      'restaurants, food trucks, caterers, and retail food businesses require permits. ' +
+      'Huntsville businesses also need a City of Huntsville Business License from the ' +
+      'City Revenue Department. Annual renewal required. Apply at madisoncountyal.gov.',
+    officialUrl:  'https://www.madisoncountyal.gov/departments/health',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Madison County': 'https://www.madisoncountyal.gov/departments/health' },
+  },
+
+  // ── GEORGIA — Savannah / Chatham County ──────────────────────────────────
+
+  {
+    id:           'savannah-chatham-food-permit',
+    name:         'Savannah / Chatham County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Savannah and Chatham County must obtain a Food ' +
+      'Service Establishment Permit from the Chatham County Board of Health / Savannah ' +
+      'Chatham Public Health. All restaurants, food trucks, caterers, and retail food ' +
+      'businesses require permits. Savannah businesses also need a City of Savannah ' +
+      'Business Tax Certificate. Annual renewal required. Apply at savannahga.gov.',
+    officialUrl:  'https://www.savannahga.gov/773/Business-and-Occupation',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Chatham County': 'https://www.chathamcounty.org/404/Health-Department' },
+  },
+
+  // ── ALABAMA — Montgomery / Montgomery County ──────────────────────────────
+
+  {
+    id:           'montgomery-al-food-permit',
+    name:         'Montgomery / Montgomery County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Montgomery and Montgomery County must obtain a ' +
+      'Food Service Establishment Permit from the Montgomery County Health Department. ' +
+      'All restaurants, food trucks, caterers, and retail food businesses require ' +
+      'permits. Montgomery businesses also need a City of Montgomery Business License ' +
+      'from the City Revenue Department. Annual renewal required. Apply at ' +
+      'montgomeryal.gov.',
+    officialUrl:  'https://www.montgomeryal.gov/government/departments/health',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Montgomery County': 'https://www.montgomeryal.gov/government/departments/health' },
+  },
+
+  // ── GEORGIA — Macon / Bibb County ────────────────────────────────────────
+
+  {
+    id:           'macon-bibb-food-permit',
+    name:         'Macon-Bibb County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Macon and Bibb County must obtain a Food Service ' +
+      'Establishment Permit from the Macon-Bibb County Health Department and the Georgia ' +
+      'Department of Public Health. All restaurants, food trucks, caterers, and retail ' +
+      'food businesses require permits. Macon-Bibb businesses also need a Macon-Bibb ' +
+      'County Business License from the Revenue Commission. Annual renewal required. ' +
+      'Apply at maconbibb.us.',
+    officialUrl:  'https://www.maconbibb.us/revenue',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Bibb County': 'https://dph.georgia.gov/environmental-health/food-service' },
+  },
+
+  // ── SOUTH DAKOTA — Sioux Falls / Minnehaha County ────────────────────────
+
+  {
+    id:           'sioux-falls-food-permit',
+    name:         'Sioux Falls / Minnehaha County Food Service Establishment License',
+    category:     'local',
+    description:
+      'Food service establishments in Sioux Falls and Minnehaha County, South Dakota ' +
+      'must obtain a Food Service Establishment License from the South Dakota Department ' +
+      'of Health. All restaurants, food trucks, caterers, delis, and retail food ' +
+      'businesses require permits. Sioux Falls businesses also need a City of Sioux ' +
+      'Falls Business License from the City Finance Department. Annual renewal required. ' +
+      'Apply at doh.sd.gov.',
+    officialUrl:  'https://doh.sd.gov/disease-control-prevention/food/food-service-licenses.aspx',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Minnehaha County': 'https://doh.sd.gov/disease-control-prevention/food/food-service-licenses.aspx' },
+  },
+
+  // ── CALIFORNIA — Modesto / Stanislaus County ─────────────────────────────
+
+  {
+    id:           'stanislaus-county-food-permit',
+    name:         'Modesto / Stanislaus County Environmental Health Food Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Modesto, Turlock, and Stanislaus County must ' +
+      'obtain a Food Facility Permit from the Stanislaus County Environmental Resources ' +
+      'Department. All restaurants, food trucks, caterers, and retail food businesses ' +
+      'require permits. Modesto businesses also need a City of Modesto Business License. ' +
+      'Annual renewal required. Apply at stancounty.com/er.',
+    officialUrl:  'https://www.stancounty.com/er/hsd/environmental-health/food-safety.shtm',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Stanislaus County': 'https://www.stancounty.com/er/hsd/environmental-health/food-safety.shtm' },
+  },
+
+  // ── CALIFORNIA — Salinas / Monterey County ───────────────────────────────
+
+  {
+    id:           'monterey-county-food-permit',
+    name:         'Salinas / Monterey County Environmental Health Food Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Salinas, Monterey, and throughout Monterey County ' +
+      'must obtain a Food Facility Permit from the Monterey County Health Department ' +
+      'Environmental Health Bureau. All restaurants, food trucks, caterers, and retail ' +
+      'food businesses require permits. Salinas businesses also need a City of Salinas ' +
+      'Business License. Annual renewal required. Apply at co.monterey.ca.us/health.',
+    officialUrl:  'https://www.co.monterey.ca.us/government/departments-a-h/health/environmental-health/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Monterey County': 'https://www.co.monterey.ca.us/government/departments-a-h/health/environmental-health/food-safety' },
+  },
+
+  // ── LOUISIANA — Lafayette / Lafayette Parish ──────────────────────────────
+
+  {
+    id:           'lafayette-la-food-permit',
+    name:         'Lafayette / Lafayette Parish Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Lafayette and Lafayette Parish must obtain a Food ' +
+      'Service Establishment Permit from the Louisiana Department of Health (LDH) Office ' +
+      'of Public Health. All restaurants, food trucks, caterers, delis, and retail food ' +
+      'businesses require permits. Lafayette businesses also need a Lafayette Consolidated ' +
+      'Government (LCG) Occupational License from the Revenue Division. Annual renewal ' +
+      'required. Apply at ldh.la.gov.',
+    officialUrl:  'https://ldh.la.gov/page/food-and-drug',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Lafayette Parish': 'https://www.lafayettela.gov' },
+  },
+
+  // v73 — 13 new hyper-local LOCAL_FORMS ──────────────────────────────────────
+
+  // ── NEW YORK — Syracuse / Onondaga County ────────────────────────────────
+
+  {
+    id:           'syracuse-onondaga-food-permit',
+    name:         'Syracuse / Onondaga County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service businesses in Syracuse and Onondaga County must obtain a Food Service ' +
+      'Establishment Permit from the Onondaga County Health Department. All restaurants, ' +
+      'delis, food trucks, caterers, and retail food businesses require permits. City of ' +
+      'Syracuse businesses also need to register with the City Clerk. Annual renewal ' +
+      'required. Apply at ongov.net/health.',
+    officialUrl:  'https://www.ongov.net/health/environmental/food-safety.html',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Onondaga County': 'https://www.ongov.net/health/environmental/food-safety.html' },
+  },
+
+  // ── MICHIGAN — Grand Rapids / Kent County ────────────────────────────────
+
+  {
+    id:           'grand-rapids-kent-food-permit',
+    name:         'Grand Rapids / Kent County Food Service Establishment License',
+    category:     'local',
+    description:
+      'Food service establishments in Grand Rapids and Kent County must obtain a Food ' +
+      'Service Establishment License from the Michigan Department of Agriculture and Rural ' +
+      'Development (MDARD) or the Kent County Health Department. Restaurants, food trucks, ' +
+      'caterers, and retail food businesses all require permits. Grand Rapids businesses ' +
+      'also need a City of Grand Rapids Business Registration. Annual renewal required. ' +
+      'Apply at kentcountyhealth.org.',
+    officialUrl:  'https://www.kentcountyhealth.org/environmental-health/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Kent County': 'https://www.kentcountyhealth.org/environmental-health/food-safety' },
+  },
+
+  // ── NORTH CAROLINA — Fayetteville / Cumberland County ───────────────────
+
+  {
+    id:           'fayetteville-cumberland-food-permit',
+    name:         'Fayetteville / Cumberland County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Fayetteville and Cumberland County, NC must obtain ' +
+      'a Food Service Establishment Permit from the Cumberland County Public Health ' +
+      'Department. All restaurants, food trucks, caterers, and retail food businesses ' +
+      'require permits. City of Fayetteville businesses also need a City Business License ' +
+      'from the City Revenue Department. Annual renewal required. Apply at co.cumberland.nc.us.',
+    officialUrl:  'https://www.co.cumberland.nc.us/government/departments-a-f/environmental-health-services',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Cumberland County': 'https://www.co.cumberland.nc.us/government/departments-a-f/environmental-health-services' },
+  },
+
+  // ── OHIO — Akron / Summit County ─────────────────────────────────────────
+
+  {
+    id:           'akron-summit-food-permit',
+    name:         'Akron / Summit County Food Service Operation License',
+    category:     'local',
+    description:
+      'Food service establishments in Akron and Summit County must obtain a Food Service ' +
+      'Operation License from the Summit County Public Health Department. Restaurants, ' +
+      'food trucks, caterers, and retail food businesses all require permits. The City of ' +
+      'Akron also requires a City of Akron Business License from the City Revenue ' +
+      'Department. Annual renewal required. Apply at scph.org.',
+    officialUrl:  'https://www.scph.org/environmental-health/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Summit County': 'https://www.scph.org/environmental-health/food-safety' },
+  },
+
+  // ── COLORADO — Fort Collins / Larimer County ──────────────────────────────
+
+  {
+    id:           'fort-collins-larimer-food-permit',
+    name:         'Fort Collins / Larimer County Retail Food Establishment License',
+    category:     'local',
+    description:
+      'Food service establishments in Fort Collins and Larimer County must obtain a ' +
+      'Retail Food Establishment License from Larimer County Department of Health and ' +
+      'Environment. Restaurants, food trucks, caterers, and retail food businesses ' +
+      'require permits. City of Fort Collins businesses also need a Fort Collins Business ' +
+      'Registration from the City Clerk. Annual renewal required. Apply at larimer.gov/health.',
+    officialUrl:  'https://www.larimer.gov/health/programs/environmental-health/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Larimer County': 'https://www.larimer.gov/health/programs/environmental-health/food-safety' },
+  },
+
+  // ── CALIFORNIA — Stockton / San Joaquin County ───────────────────────────
+
+  {
+    id:           'san-joaquin-food-permit',
+    name:         'Stockton / San Joaquin County Environmental Health Food Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Stockton and San Joaquin County must obtain a ' +
+      'Food Facility Permit from the San Joaquin County Environmental Health Department. ' +
+      'All restaurants, food trucks, caterers, delis, and retail food businesses require ' +
+      'permits. Stockton businesses also need a City of Stockton Business License. Annual ' +
+      'renewal required. Apply at sjcpeh.org.',
+    officialUrl:  'https://www.sjcpeh.org/programs/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'San Joaquin County': 'https://www.sjcpeh.org/programs/food-safety' },
+  },
+
+  // ── FLORIDA — Cape Coral / Lee County ────────────────────────────────────
+
+  {
+    id:           'lee-county-food-permit',
+    name:         'Cape Coral / Lee County Food Service Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Cape Coral, Fort Myers, and Lee County must obtain ' +
+      'a Food Service Establishment License from the Florida Department of Business and ' +
+      'Professional Regulation (DBPR) Division of Hotels and Restaurants. Cape Coral ' +
+      'businesses also need a City of Cape Coral Business Tax Receipt from the City ' +
+      'Finance Department. Annual renewal required. Apply at myfloridalicense.com.',
+    officialUrl:  'https://www.myfloridalicense.com/DBPR/hotels-restaurants',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   {
+      'Lee County':   'https://www.leegov.com/dcd',
+      'Cape Coral':   'https://www.capecoral.gov/department/finance/business_tax_receipts.php',
+    },
+  },
+
+  // ── NEW JERSEY — Paterson / Passaic County ───────────────────────────────
+
+  {
+    id:           'paterson-passaic-food-permit',
+    name:         'Paterson / Passaic County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Paterson and Passaic County, NJ must obtain a ' +
+      'Food Service Establishment Permit from the Passaic County Department of Health. ' +
+      'All restaurants, delis, food trucks, caterers, and retail food businesses require ' +
+      'permits. City of Paterson businesses also need a City of Paterson Business License ' +
+      'from the City Clerk. Annual renewal required. Apply at passaiccountynj.org.',
+    officialUrl:  'https://www.passaiccountynj.org/departments/health',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Passaic County': 'https://www.passaiccountynj.org/departments/health' },
+  },
+
+  // ── VIRGINIA — Hampton City ───────────────────────────────────────────────
+
+  {
+    id:           'hampton-va-food-permit',
+    name:         'Hampton City VA Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Hampton, Virginia (an independent city) must obtain ' +
+      'a Food Service Establishment Permit from the Hampton Health Department. All ' +
+      'restaurants, food trucks, caterers, and retail food businesses require permits. ' +
+      'Hampton businesses also need a Hampton Business License from the City Commissioner ' +
+      'of the Revenue. Annual renewal required. Apply at hampton.gov.',
+    officialUrl:  'https://www.hampton.gov/1255/Health-Department',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering', 'all'],
+    countyUrls:   { 'Hampton City': 'https://www.hampton.gov/1255/Health-Department' },
+  },
+
+  // ── TEXAS — Amarillo / Potter County ─────────────────────────────────────
+
+  {
+    id:           'amarillo-potter-food-permit',
+    name:         'Amarillo / Potter-Randall County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Amarillo must obtain a Food Service Establishment ' +
+      'Permit from the City of Amarillo Public Health Department. All restaurants, food ' +
+      'trucks, caterers, delis, and temporary food vendors require permits. Amarillo ' +
+      'businesses also need a City of Amarillo Business License. Annual renewal required. ' +
+      'Apply at amarillo.gov.',
+    officialUrl:  'https://www.amarillo.gov/departments/health-department',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Potter County': 'https://www.amarillo.gov/departments/health-department' },
+  },
+
+  // ── TEXAS — Laredo / Webb County ─────────────────────────────────────────
+
+  {
+    id:           'laredo-webb-food-permit',
+    name:         'Laredo / Webb County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Laredo and Webb County must obtain a Food ' +
+      'Establishment Permit from the City of Laredo Health Department. All restaurants, ' +
+      'food trucks, caterers, and retail food businesses require permits. Laredo ' +
+      'businesses also need a City of Laredo Business License from the City Tax ' +
+      'Department. Annual renewal required. Apply at cityoflaredo.com.',
+    officialUrl:  'https://www.cityoflaredo.com/departments/health',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Webb County': 'https://www.cityoflaredo.com/departments/health' },
+  },
+
+  // ── CALIFORNIA — Oxnard / Ventura County ─────────────────────────────────
+
+  {
+    id:           'ventura-county-food-permit',
+    name:         'Oxnard / Ventura County Environmental Health Food Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Oxnard, Thousand Oaks, Simi Valley, and throughout ' +
+      'Ventura County must obtain a Food Facility Permit from the Ventura County ' +
+      'Environmental Health Division. All restaurants, food trucks, caterers, and retail ' +
+      'food businesses require permits. Oxnard businesses also need a City of Oxnard ' +
+      'Business License. Annual renewal required. Apply at vcrma.org/environmental-health.',
+    officialUrl:  'https://vcrma.org/environmental-health/food-facility-permits',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Ventura County': 'https://vcrma.org/environmental-health/food-facility-permits' },
+  },
+
+  // ── CALIFORNIA — Santa Cruz / Santa Cruz County ──────────────────────────
+
+  {
+    id:           'santa-cruz-county-food-permit',
+    name:         'Santa Cruz / Santa Cruz County Environmental Health Food Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Santa Cruz, Watsonville, and throughout Santa Cruz ' +
+      'County must obtain a Food Facility Permit from the Santa Cruz County Environmental ' +
+      'Health Division. Restaurants, food trucks, caterers, and temporary food vendors ' +
+      'require permits. Santa Cruz businesses also need a City of Santa Cruz Business ' +
+      'License. Annual renewal required. Apply at santacruzcounty.us/health.',
+    officialUrl:  'https://www.santacruzcounty.us/government/departments-a-f/environmental-health-services',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Santa Cruz County': 'https://www.santacruzcounty.us/government/departments-a-f/environmental-health-services' },
+  },
+
+  // v72 — 13 new hyper-local LOCAL_FORMS ──────────────────────────────────────
+
+  // ── MASSACHUSETTS — Boston / Suffolk County ───────────────────────────────
+
+  {
+    id:           'boston-ma-food-permit',
+    name:         'City of Boston / Suffolk County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Boston and Suffolk County must obtain a Food Service ' +
+      'Establishment Permit from the Boston Inspectional Services Department (ISD). All ' +
+      'restaurants, cafes, food trucks, caterers, delis, and retail food businesses require ' +
+      'permits. Boston businesses also need a Boston Business Certificate from the City ' +
+      'Clerk (if operating under a trade name). Annual renewal required. Apply at boston.gov/isd.',
+    officialUrl:  'https://www.boston.gov/departments/inspectional-services/how-apply-food-service-establishment-permit',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Suffolk County': 'https://www.boston.gov/departments/inspectional-services' },
+  },
+
+  {
+    id:           'boston-ma-business-certificate',
+    name:         'City of Boston Business Certificate (DBA / Trade Name Registration)',
+    category:     'local',
+    description:
+      'Businesses operating under a trade name (DBA) in Boston, Massachusetts must file a ' +
+      'Business Certificate with the City of Boston City Clerk\'s Office. The certificate must ' +
+      'be renewed every 4 years. Businesses with employees also need to register with the ' +
+      'Massachusetts Department of Revenue. Professional service businesses and retailers ' +
+      'should also register with the MA Secretary of State if operating as an LLC or corporation.',
+    officialUrl:  'https://www.boston.gov/departments/city-clerk/business-certificates',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  48,
+    commonFor:    ['all'],
+    countyUrls:   { 'Suffolk County': 'https://www.boston.gov/departments/city-clerk' },
+  },
+
+  // ── WASHINGTON STATE — Seattle / King County ──────────────────────────────
+
+  {
+    id:           'seattle-wa-food-permit',
+    name:         'Seattle / King County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service businesses in Seattle and King County must obtain a Food Service ' +
+      'Establishment Permit from the Public Health — Seattle & King County Environmental ' +
+      'Health Division. Restaurants, food trucks, caterers, mobile food units, and temporary ' +
+      'food vendors all require permits. Seattle businesses also need a Seattle Business ' +
+      'License from the City Finance and Administrative Services Department. Annual renewal.',
+    officialUrl:  'https://www.kingcounty.gov/depts/health/environmental-health/food-safety.aspx',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'King County': 'https://www.kingcounty.gov/depts/health/environmental-health/food-safety.aspx' },
+  },
+
+  // ── COLORADO — Denver / Denver County ────────────────────────────────────
+
+  {
+    id:           'denver-co-food-permit',
+    name:         'Denver / Denver County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Denver must obtain a Food Service Establishment ' +
+      'License from the Denver Department of Public Health and Environment (DDPHE). Denver ' +
+      'also consolidates multiple business requirements — businesses must register with the ' +
+      'Denver Treasury Division for a General Business License. Food trucks require a ' +
+      'Denver Mobile Food Vendor Permit from Denver Community Planning and Development. ' +
+      'Annual renewal required. Apply at denvergov.org.',
+    officialUrl:  'https://www.denvergov.org/Government/Agencies-Departments-Offices/Agencies-Departments-Offices-Directory/Business-Licensing/Food-Service',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Denver County': 'https://www.denvergov.org/Government/Agencies-Departments-Offices/Agencies-Departments-Offices-Directory/Public-Health-and-Environment' },
+  },
+
+  // ── PENNSYLVANIA — Pittsburgh / Allegheny County ──────────────────────────
+
+  {
+    id:           'pittsburgh-pa-food-permit',
+    name:         'Pittsburgh / Allegheny County Food Service Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Pittsburgh and Allegheny County must obtain a Food ' +
+      'Service License from the Allegheny County Health Department (ACHD). Covers ' +
+      'restaurants, food trucks, caterers, retail food businesses, and bakeries. Pittsburgh ' +
+      'businesses also need a City of Pittsburgh Business License from the Pittsburgh ' +
+      'Department of Finance. Annual renewal required. Apply at alleghenycounty.us/health.',
+    officialUrl:  'https://www.alleghenycounty.us/Health-Department/Resources/Food-Safety/Licensing-Permits-and-Forms.aspx',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Allegheny County': 'https://www.alleghenycounty.us/Health-Department/Resources/Food-Safety/Licensing-Permits-and-Forms.aspx' },
+  },
+
+  // ── OHIO — Cleveland / Cuyahoga County ───────────────────────────────────
+
+  {
+    id:           'cleveland-oh-food-permit',
+    name:         'Cleveland / Cuyahoga County Food Service Operation License',
+    category:     'local',
+    description:
+      'Food service businesses in Cleveland and Cuyahoga County must obtain a Food Service ' +
+      'Operation License from the Ohio Department of Agriculture or the local health ' +
+      'district. Cleveland businesses are inspected by the Cuyahoga County Board of Health ' +
+      'or the City of Cleveland Division of Health. Restaurants, food trucks, caterers, and ' +
+      'retail food operations all require permits. City of Cleveland businesses also need a ' +
+      'Vendor\'s License from the Cuyahoga County Fiscal Office. Annual renewal required.',
+    officialUrl:  'https://www.ccbh.net/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Cuyahoga County': 'https://www.ccbh.net/food-safety' },
+  },
+
+  // ── MICHIGAN — Detroit / Wayne County ────────────────────────────────────
+
+  {
+    id:           'detroit-mi-food-permit',
+    name:         'Detroit / Wayne County Food Service Establishment License',
+    category:     'local',
+    description:
+      'Food service establishments in Detroit and Wayne County must obtain a Food Service ' +
+      'Establishment License from the Detroit Health Department or the Michigan Department ' +
+      'of Agriculture and Rural Development (MDARD). Detroit city businesses are inspected ' +
+      'by the City of Detroit Health Department. Food trucks, caterers, and retail food ' +
+      'operations all require permits. Detroit businesses also need a Detroit Business ' +
+      'License from the City of Detroit. Annual renewal required. Apply at detroitmi.gov.',
+    officialUrl:  'https://detroitmi.gov/departments/detroit-health-department',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Wayne County': 'https://www.waynecounty.com/departments/dhhs.aspx' },
+  },
+
+  // ── TENNESSEE — Memphis / Shelby County ──────────────────────────────────
+
+  {
+    id:           'memphis-tn-food-permit',
+    name:         'Memphis / Shelby County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Memphis and Shelby County must obtain a Food Service ' +
+      'Establishment Permit from the Shelby County Health Department Environmental Quality ' +
+      'Division. All restaurants, food trucks, caterers, mobile food units, and temporary ' +
+      'food vendors require permits. Memphis businesses also need a City of Memphis Business ' +
+      'License from the Shelby County Clerk\'s Office. Annual renewal required. ' +
+      'Apply at shelbytnhealth.com.',
+    officialUrl:  'https://www.shelbytnhealth.com/302/Environmental-Health',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Shelby County': 'https://www.shelbytnhealth.com/302/Environmental-Health' },
+  },
+
+  // ── UTAH — Salt Lake City / Salt Lake County ─────────────────────────────
+
+  {
+    id:           'salt-lake-city-food-permit',
+    name:         'Salt Lake City / Salt Lake County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Salt Lake City and Salt Lake County must obtain a ' +
+      'Food Service Establishment License from the Salt Lake County Health Department. ' +
+      'All restaurants, food trucks, caterers, and retail food businesses require permits. ' +
+      'Salt Lake City businesses also need a Salt Lake City Business License from the City ' +
+      'Recorder\'s Office. Annual renewal required. Apply at slco.org/health.',
+    officialUrl:  'https://slco.org/health/environmental-health/food-protection',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering', 'all'],
+    countyUrls:   { 'Salt Lake County': 'https://slco.org/health/environmental-health/food-protection' },
+  },
+
+  // ── RHODE ISLAND — Providence / Providence County ─────────────────────────
+
+  {
+    id:           'providence-ri-food-permit',
+    name:         'Providence / Rhode Island Food Service Establishment License',
+    category:     'local',
+    description:
+      'Food service establishments in Providence and Rhode Island are licensed by the Rhode ' +
+      'Island Department of Health (RIDOH). All restaurants, food trucks, caterers, and ' +
+      'retail food businesses require a Food Service Establishment License. Providence ' +
+      'businesses also need a City of Providence Business License from the Providence City ' +
+      'Clerk. Annual renewal required. Apply at health.ri.gov.',
+    officialUrl:  'https://health.ri.gov/licenses/detail.php?id=230',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Providence County': 'https://health.ri.gov/licenses/detail.php?id=230' },
+  },
+
+  // ── NEBRASKA — Omaha / Douglas County ────────────────────────────────────
+
+  {
+    id:           'omaha-ne-food-permit',
+    name:         'Omaha / Douglas County Food Service Establishment License',
+    category:     'local',
+    description:
+      'Food service establishments in Omaha and Douglas County must obtain a Food ' +
+      'Service Establishment License from the Douglas County Health Department or the ' +
+      'Nebraska Department of Agriculture. City of Omaha businesses also need an Omaha ' +
+      'Occupation Tax (business license) from the City of Omaha Finance Department. Food ' +
+      'trucks require a Mobile Food Unit permit from the City. Annual renewal required. ' +
+      'Apply at douglascountyhealth.com.',
+    officialUrl:  'https://www.douglascountyhealth.com/environmental-health/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Douglas County': 'https://www.douglascountyhealth.com/environmental-health/food-safety' },
+  },
+
+  // ── WISCONSIN — Milwaukee / Milwaukee County ──────────────────────────────
+
+  {
+    id:           'milwaukee-wi-food-permit',
+    name:         'Milwaukee / Milwaukee County Food Service Establishment License',
+    category:     'local',
+    description:
+      'Food service establishments in Milwaukee and Milwaukee County must obtain a Food ' +
+      'Dealer License from the City of Milwaukee Health Department (for city businesses) ' +
+      'or the Milwaukee County Environmental Health Division (for suburban Milwaukee County ' +
+      'businesses). Milwaukee city businesses also need a Milwaukee Business Improvement ' +
+      'District license or food manager certification. Annual renewal required. ' +
+      'Apply at milwaukee.gov/health.',
+    officialUrl:  'https://city.milwaukee.gov/health/food-service',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Milwaukee County': 'https://milwaukeecountywi.gov/departments/environmental-health' },
+  },
+
+  // ── OKLAHOMA — Tulsa / Tulsa County ──────────────────────────────────────
+
+  {
+    id:           'tulsa-ok-food-permit',
+    name:         'Tulsa / Tulsa County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Tulsa and Tulsa County must obtain a Food Service ' +
+      'Establishment Permit from the Tulsa City-County Health Department (TCHD). All ' +
+      'restaurants, food trucks, caterers, delis, and retail food operations require ' +
+      'permits. Tulsa businesses also need a City of Tulsa Business License from the ' +
+      'Tulsa Development Authority. Annual renewal required. Apply at tulsa-health.org.',
+    officialUrl:  'https://www.tulsa-health.org/environmental-health/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Tulsa County': 'https://www.tulsa-health.org/environmental-health/food-safety' },
+  },
+
+  // ── ALASKA — Anchorage / Anchorage Municipality ───────────────────────────
+
+  {
+    id:           'anchorage-ak-food-permit',
+    name:         'Anchorage / Municipality of Anchorage Food Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Anchorage must obtain a Food Establishment Permit ' +
+      'from the Municipality of Anchorage Development Services Department or the Alaska ' +
+      'Department of Environmental Conservation (ADEC). Restaurants, food trucks, caterers, ' +
+      'and retail food businesses all require permits. Anchorage businesses also need a ' +
+      'Municipality of Anchorage Business License. Annual renewal required. ' +
+      'Apply at muni.org/departments/health.',
+    officialUrl:  'https://www.muni.org/Departments/health/Pages/default.aspx',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering', 'all'],
+    countyUrls:   { 'Municipality of Anchorage': 'https://dec.alaska.gov/eh/fss/food' },
+  },
+
+  // v71 — 11 new hyper-local LOCAL_FORMS ──────────────────────────────────────
+
+  // ── NEW JERSEY — Jersey City / Hudson County ──────────────────────────────
+
+  {
+    id:           'jersey-city-business-reg',
+    name:         'Jersey City / Hudson County Business Registration & Food Permit',
+    category:     'local',
+    description:
+      'Businesses operating in Jersey City, NJ must register with the City Clerk and obtain ' +
+      'a City of Jersey City Business Registration Certificate. Food service establishments ' +
+      'also need a food service permit from the Hudson County Department of Health and Human ' +
+      'Services. Food trucks require a Mobile Food Vendor license from the City. Annual ' +
+      'renewal required. Apply at jerseycitynj.gov.',
+    officialUrl:  'https://www.jerseycitynj.gov/cms/One.aspx?portalId=6189744&pageId=6192342',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all', 'food-service', 'restaurant', 'food-truck'],
+    countyUrls:   { 'Hudson County': 'https://www.hudsoncountynj.org/departments/health-human-services' },
+  },
+
+  // ── NEW JERSEY — Newark / Essex County ───────────────────────────────────
+
+  {
+    id:           'newark-nj-business-license',
+    name:         'Newark / Essex County Business License & Health Permit',
+    category:     'local',
+    description:
+      'All businesses operating in Newark, NJ must obtain a City of Newark Business License ' +
+      'from the Department of Finance and Administration. Food service businesses (restaurants, ' +
+      'delis, food trucks, caterers) also need a food service permit from the Essex County ' +
+      'Health Department or the Newark Division of Health. Annual renewal required. ' +
+      'Apply at newarknj.gov.',
+    officialUrl:  'https://www.newarknj.gov/departments/businessdevelopment',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['all', 'food-service', 'restaurant', 'food-truck'],
+    countyUrls:   { 'Essex County': 'https://www.essexcountynj.org/health' },
+  },
+
+  // ── NEW YORK — Rochester / Monroe County ─────────────────────────────────
+
+  {
+    id:           'rochester-ny-food-service-permit',
+    name:         'Rochester / Monroe County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Rochester and Monroe County, NY must obtain a permit ' +
+      'from the Monroe County Department of Public Health. Covers restaurants, delis, food ' +
+      'trucks, caterers, and mobile food vendors. Businesses in the City of Rochester also ' +
+      'need a City of Rochester Business License from the City Clerk. Annual renewal required. ' +
+      'Apply at monroecounty.gov.',
+    officialUrl:  'https://www.monroecounty.gov/health-foodservice',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Monroe County': 'https://www.monroecounty.gov/health-foodservice' },
+  },
+
+  // ── CONNECTICUT — New Haven ───────────────────────────────────────────────
+
+  {
+    id:           'new-haven-ct-food-permit',
+    name:         'City of New Haven Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service businesses in New Haven, CT must obtain a Food Service Establishment ' +
+      'Permit from the New Haven City Health Department. All food businesses including ' +
+      'restaurants, cafes, delis, food trucks, caterers, and temporary food vendors require ' +
+      'permits. New Haven businesses also need a City of New Haven Business License from ' +
+      'the City Clerk. Annual renewal required. Apply at newhavenct.gov.',
+    officialUrl:  'https://www.newhavenct.gov/government/departments/health-dept',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'New Haven County': 'https://portal.ct.gov/DPH/Environmental-Health/SERC/Food-Service' },
+  },
+
+  // ── TENNESSEE — Chattanooga / Hamilton County ─────────────────────────────
+
+  {
+    id:           'chattanooga-food-permit',
+    name:         'Chattanooga / Hamilton County Food Service Permit',
+    category:     'local',
+    description:
+      'Food service businesses in Chattanooga and Hamilton County must obtain a Food Service ' +
+      'Establishment Permit from the Chattanooga-Hamilton County Health Department. All ' +
+      'restaurants, food trucks, caterers, mobile food units, and retail food operations ' +
+      'require permits. Businesses in Chattanooga also need a City of Chattanooga Business ' +
+      'License. Annual renewal required. Apply at hamiltontn.gov.',
+    officialUrl:  'https://www.hamiltontn.gov/departments/health/environmental-health/foodsafety.aspx',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Hamilton County': 'https://www.hamiltontn.gov/departments/health' },
+  },
+
+  // ── ARKANSAS — Little Rock / Pulaski County ───────────────────────────────
+
+  {
+    id:           'little-rock-food-permit',
+    name:         'Little Rock / Pulaski County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Little Rock and Pulaski County must obtain a Retail ' +
+      'Food Establishment Permit from the Arkansas Department of Health. City of Little Rock ' +
+      'businesses also need a City of Little Rock Business License from the City Clerk. ' +
+      'Food trucks require a Mobile Food Unit permit. Annual renewal required. ' +
+      'Apply at healthy.arkansas.gov.',
+    officialUrl:  'https://www.healthy.arkansas.gov/programs-services/topics/food-protection',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Pulaski County': 'https://www.healthy.arkansas.gov/programs-services/topics/food-protection' },
+  },
+
+  // ── SOUTH CAROLINA — Columbia / Richland County ───────────────────────────
+
+  {
+    id:           'columbia-sc-food-permit',
+    name:         'Columbia / Richland County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service businesses in Columbia and Richland County, SC must obtain a Food ' +
+      'Service Establishment Permit from DHEC (SC Department of Health and Environmental ' +
+      'Control). City of Columbia businesses also need a City Business License from ' +
+      'the City of Columbia. Food trucks require a Mobile Food Unit permit. Annual renewal ' +
+      'required. Apply at scdhec.gov/food.',
+    officialUrl:  'https://www.scdhec.gov/environment/your-business/food-service-establishments',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Richland County': 'https://www.richlandonline.com' },
+  },
+
+  // ── GEORGIA — Augusta / Richmond County ──────────────────────────────────
+
+  {
+    id:           'augusta-ga-food-permit',
+    name:         'Augusta-Richmond County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Augusta-Richmond County must obtain a Food Service ' +
+      'Establishment Permit from the Augusta-Richmond County Health Department and the ' +
+      'Georgia Department of Public Health. Restaurants, caterers, food trucks, and mobile ' +
+      'food vendors all require permits. Augusta businesses also need a business license from ' +
+      'the Augusta-Richmond County License & Inspection Department. Annual renewal required.',
+    officialUrl:  'https://www.augustaga.gov/1087/License-Inspections',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Richmond County': 'https://dph.georgia.gov/environmental-health/food-service' },
+  },
+
+  // ── LOUISIANA — Shreveport / Caddo Parish ────────────────────────────────
+
+  {
+    id:           'shreveport-food-permit',
+    name:         'Shreveport / Caddo Parish Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service businesses in Shreveport and Caddo Parish, Louisiana must obtain a Food ' +
+      'Service Establishment Permit from the Louisiana Department of Health (LDH) Office of ' +
+      'Public Health. City of Shreveport businesses also need a City of Shreveport ' +
+      'Occupational License from the City Revenue Division. Annual renewal required. ' +
+      'Apply at ldh.la.gov.',
+    officialUrl:  'https://ldh.la.gov/page/food-and-drug',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Caddo Parish': 'https://www.shreveportla.gov/BusinessLicense' },
+  },
+
+  // ── ALABAMA — Mobile / Mobile County ─────────────────────────────────────
+
+  {
+    id:           'mobile-al-food-permit',
+    name:         'Mobile / Mobile County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service establishments in Mobile and Mobile County must obtain a Food Service ' +
+      'Establishment Permit from the Mobile County Health Department. City of Mobile ' +
+      'businesses also need a City of Mobile Business License from the City Revenue ' +
+      'Collections Department. Food trucks require a mobile food unit permit. Annual ' +
+      'renewal required. Apply at mobilecountyhealthdept.org.',
+    officialUrl:  'https://www.mobilecountyhealthdept.org/environmental-health/food-safety',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Mobile County': 'https://www.mobilecountyhealthdept.org/environmental-health/food-safety' },
+  },
+
+  // ── MISSISSIPPI — Jackson / Hinds County ──────────────────────────────────
+
+  {
+    id:           'jackson-ms-food-permit',
+    name:         'Jackson / Hinds County Food Service Establishment Permit',
+    category:     'local',
+    description:
+      'Food service businesses in Jackson and Hinds County, Mississippi must obtain a Food ' +
+      'Service Establishment Permit from the Mississippi State Department of Health (MSDH). ' +
+      'City of Jackson businesses also need a City of Jackson Business License from the City ' +
+      'Department of Administration and Finance. Mobile food units require separate permits. ' +
+      'Annual renewal required. Apply at msdh.ms.gov.',
+    officialUrl:  'https://msdh.ms.gov/msdhsite/_static/30,0,82.html',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+    countyUrls:   { 'Hinds County': 'https://www.co.hinds.ms.us' },
+  },
+
+  // ── HAWAII ────────────────────────────────────────────────────────────────
+
+  {
+    id:           'hawaii-food-establishment-permit',
+    name:         'Hawaii Department of Health Food Establishment Permit',
+    category:     'local',
+    description:
+      'All food establishments in Hawaii (restaurants, food trucks, caterers, school kitchens, ' +
+      'and mobile food units) must obtain a permit from the Hawaii Department of Health ' +
+      'Safe Drinking Water Branch / Environmental Health Administration. Permits are issued ' +
+      'by the relevant district health office. Oahu: apply at health.hawaii.gov.',
+    officialUrl:  'https://health.hawaii.gov/sanitation/food-establishments',
+    pdfPath:      null,
+    isDownloadable: false,
+    renewalMonths:  12,
+    commonFor:    ['food-service', 'restaurant', 'food-truck', 'catering'],
+  },
+
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -5934,6 +14624,405 @@ export function getDownloadedFormIds(): Set<string> {
     const existing = JSON.parse(localStorage.getItem(DOWNLOADED_FORMS_KEY) ?? "[]") as string[];
     return new Set(existing);
   } catch { return new Set(); }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// v69 — Business Category System
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * A rich business category with associated form recommendations and zoning keywords.
+ * Used by the searchable category picker in BusinessProfileView and by
+ * getRecommendedFormsForCategory() to surface hyper-local relevant forms.
+ */
+export interface BusinessCategory {
+  id:             string;
+  /** Short display name shown in the UI */
+  name:           string;
+  /** Lucide-react icon component name (string) */
+  icon:           string;
+  /** Group label for display clustering */
+  group:          string;
+  /** Form IDs to surface when this category is selected */
+  commonForms:    string[];
+  /** Keywords passed to the zoning checker for better zone matching */
+  zoningKeywords: string[];
+}
+
+export const BUSINESS_CATEGORIES: BusinessCategory[] = [
+  // ── Food & Beverage ────────────────────────────────────────────────────────
+  {
+    id: "food-truck", name: "Food Truck / Mobile Food", icon: "Truck", group: "Food & Beverage",
+    commonForms: ["mobile-food-vendor", "food-service-permit", "food-handler-cert", "business-license", "business-registration", "food-service-plan-review"],
+    zoningKeywords: ["mobile food", "food truck", "street vending", "temporary food"],
+  },
+  {
+    id: "restaurant", name: "Restaurant / Full-Service", icon: "Utensils", group: "Food & Beverage",
+    commonForms: ["food-service-permit", "food-manager-certification", "business-license", "business-registration", "sales-tax-registration", "employer-withholding-registration"],
+    zoningKeywords: ["restaurant", "food service", "dine-in", "full service restaurant"],
+  },
+  {
+    id: "cafe-coffeeshop", name: "Café / Coffee Shop", icon: "Coffee", group: "Food & Beverage",
+    commonForms: ["food-service-permit", "food-handler-cert", "business-license", "business-registration", "sales-tax-registration"],
+    zoningKeywords: ["café", "coffee shop", "cafe", "bakery café", "light food service"],
+  },
+  {
+    id: "bakery", name: "Bakery / Pastry Shop", icon: "ChefHat", group: "Food & Beverage",
+    commonForms: ["food-service-permit", "food-manager-certification", "business-license", "business-registration", "sales-tax-registration", "health-dept-inspection-checklist"],
+    zoningKeywords: ["bakery", "pastry", "bread", "food production", "retail bakery"],
+  },
+  {
+    id: "bar-nightclub", name: "Bar / Nightclub", icon: "Wine", group: "Food & Beverage",
+    commonForms: ["liquor-license-application", "food-service-permit", "business-license", "business-registration", "fire-inspection-certificate", "alarm-permit"],
+    zoningKeywords: ["bar", "nightclub", "tavern", "alcohol sales", "liquor establishment"],
+  },
+  {
+    id: "brewery-winery", name: "Brewery / Winery / Distillery", icon: "Wine", group: "Food & Beverage",
+    commonForms: ["liquor-license-application", "business-license", "business-registration", "employer-withholding-registration", "sales-tax-registration"],
+    zoningKeywords: ["brewery", "winery", "distillery", "alcohol production", "craft beer"],
+  },
+  {
+    id: "catering", name: "Catering / Event Food Service", icon: "ChefHat", group: "Food & Beverage",
+    commonForms: ["catering-license", "food-service-permit", "food-handler-cert", "business-license", "business-registration", "special-event-permit"],
+    zoningKeywords: ["catering", "event catering", "off-premise food service", "mobile catering"],
+  },
+  {
+    id: "home-bakery", name: "Home Bakery / Cottage Food", icon: "Home", group: "Food & Beverage",
+    commonForms: ["cottage-food-registration", "home-occupation-permit", "business-registration", "fictitious-name"],
+    zoningKeywords: ["cottage food", "home bakery", "home food production", "cottage business"],
+  },
+  {
+    id: "food-cart-stand", name: "Food Cart / Street Stand", icon: "ShoppingBag", group: "Food & Beverage",
+    commonForms: ["temporary-food-vendor-permit", "food-service-permit", "food-handler-cert", "business-license", "business-registration"],
+    zoningKeywords: ["food cart", "street stand", "sidewalk vending", "temporary food vendor"],
+  },
+  {
+    id: "juice-smoothie", name: "Juice Bar / Smoothie Shop", icon: "Leaf", group: "Food & Beverage",
+    commonForms: ["food-service-permit", "food-handler-cert", "business-license", "business-registration", "sales-tax-registration"],
+    zoningKeywords: ["juice bar", "smoothie shop", "health food", "beverage retail"],
+  },
+
+  // ── Retail ────────────────────────────────────────────────────────────────
+  {
+    id: "retail-store", name: "Retail Store (General)", icon: "ShoppingBag", group: "Retail",
+    commonForms: ["business-license", "business-registration", "sales-tax-registration", "fictitious-name", "resale-certificate", "sign-permit"],
+    zoningKeywords: ["retail", "general retail", "merchandise", "store front"],
+  },
+  {
+    id: "boutique-clothing", name: "Boutique / Clothing Store", icon: "Tag", group: "Retail",
+    commonForms: ["business-license", "business-registration", "sales-tax-registration", "resale-certificate", "fictitious-name"],
+    zoningKeywords: ["boutique", "clothing store", "apparel", "fashion retail"],
+  },
+  {
+    id: "convenience-store", name: "Convenience Store / Bodega", icon: "ShoppingBag", group: "Retail",
+    commonForms: ["business-license", "business-registration", "sales-tax-registration", "resale-certificate", "sign-permit", "health-dept-inspection-checklist"],
+    zoningKeywords: ["convenience store", "bodega", "corner store", "mini mart", "grocery"],
+  },
+  {
+    id: "specialty-food-retail", name: "Specialty Food Retail (Deli, Butcher)", icon: "Utensils", group: "Retail",
+    commonForms: ["food-service-permit", "business-license", "business-registration", "sales-tax-registration", "resale-certificate", "health-dept-inspection-checklist"],
+    zoningKeywords: ["specialty food", "deli", "butcher", "meat market", "gourmet food retail"],
+  },
+  {
+    id: "online-ecommerce", name: "Online / E-Commerce Store", icon: "Globe", group: "Retail",
+    commonForms: ["business-registration", "ein-application", "sales-tax-registration", "fictitious-name"],
+    zoningKeywords: ["ecommerce", "online retail", "internet sales", "dropshipping"],
+  },
+  {
+    id: "antique-collectibles", name: "Antique / Collectibles Shop", icon: "Package", group: "Retail",
+    commonForms: ["business-license", "business-registration", "sales-tax-registration", "resale-certificate"],
+    zoningKeywords: ["antique store", "collectibles", "secondhand", "thrift"],
+  },
+
+  // ── Professional Services ─────────────────────────────────────────────────
+  {
+    id: "consulting", name: "Consulting / Advisory", icon: "Briefcase", group: "Professional Services",
+    commonForms: ["business-registration", "fictitious-name", "ein-application", "professional-license-registration"],
+    zoningKeywords: ["consulting", "advisory", "professional office", "business services"],
+  },
+  {
+    id: "accounting-bookkeeping", name: "Accounting / Bookkeeping", icon: "Briefcase", group: "Professional Services",
+    commonForms: ["business-registration", "professional-license-registration", "fictitious-name", "ein-application", "business-license"],
+    zoningKeywords: ["accounting", "bookkeeping", "CPA", "tax services", "professional office"],
+  },
+  {
+    id: "legal-services", name: "Legal Services / Law Office", icon: "Briefcase", group: "Professional Services",
+    commonForms: ["business-registration", "professional-license-registration", "business-license", "ein-application"],
+    zoningKeywords: ["law office", "legal services", "attorney", "professional office"],
+  },
+  {
+    id: "marketing-agency", name: "Marketing / Creative Agency", icon: "Printer", group: "Professional Services",
+    commonForms: ["business-registration", "fictitious-name", "ein-application", "business-license"],
+    zoningKeywords: ["marketing agency", "creative agency", "advertising", "media", "professional office"],
+  },
+  {
+    id: "staffing-recruiting", name: "Staffing / Recruiting Agency", icon: "Briefcase", group: "Professional Services",
+    commonForms: ["business-registration", "business-license", "employer-withholding-registration", "ein-application", "professional-license-registration"],
+    zoningKeywords: ["staffing agency", "recruiting", "employment agency", "temp agency"],
+  },
+  {
+    id: "real-estate", name: "Real Estate / Property Management", icon: "Building2", group: "Professional Services",
+    commonForms: ["business-registration", "professional-license-registration", "business-license", "fictitious-name", "ein-application"],
+    zoningKeywords: ["real estate", "property management", "realty", "brokerage", "professional office"],
+  },
+  {
+    id: "insurance-financial", name: "Insurance / Financial Services", icon: "Briefcase", group: "Professional Services",
+    commonForms: ["business-registration", "professional-license-registration", "business-license", "ein-application"],
+    zoningKeywords: ["insurance", "financial services", "wealth management", "professional office"],
+  },
+  {
+    id: "it-tech-services", name: "IT / Tech Services", icon: "Laptop", group: "Professional Services",
+    commonForms: ["business-registration", "fictitious-name", "ein-application", "business-license"],
+    zoningKeywords: ["IT services", "technology", "computer repair", "software", "tech office"],
+  },
+
+  // ── Health & Wellness ─────────────────────────────────────────────────────
+  {
+    id: "salon-beauty", name: "Hair Salon / Beauty", icon: "Scissors", group: "Health & Wellness",
+    commonForms: ["business-license", "business-registration", "professional-license-registration", "fictitious-name", "sales-tax-registration"],
+    zoningKeywords: ["hair salon", "beauty salon", "cosmetology", "nail salon", "personal care"],
+  },
+  {
+    id: "barbershop", name: "Barbershop", icon: "Scissors", group: "Health & Wellness",
+    commonForms: ["business-license", "business-registration", "professional-license-registration", "fictitious-name"],
+    zoningKeywords: ["barbershop", "barber", "men's grooming", "hair cutting"],
+  },
+  {
+    id: "spa-massage", name: "Spa / Massage Therapy", icon: "Heart", group: "Health & Wellness",
+    commonForms: ["business-license", "business-registration", "professional-license-registration", "fictitious-name", "health-dept-inspection-checklist"],
+    zoningKeywords: ["spa", "massage therapy", "wellness center", "bodywork", "personal care"],
+  },
+  {
+    id: "tattoo-piercing", name: "Tattoo / Body Piercing Studio", icon: "Pencil", group: "Health & Wellness",
+    commonForms: ["business-license", "business-registration", "health-dept-inspection-checklist", "fictitious-name", "fire-inspection-certificate"],
+    zoningKeywords: ["tattoo studio", "body piercing", "tattoo parlor", "body art"],
+  },
+  {
+    id: "gym-fitness", name: "Gym / Personal Training", icon: "Dumbbell", group: "Health & Wellness",
+    commonForms: ["business-license", "business-registration", "fictitious-name", "employer-withholding-registration", "fire-inspection-certificate"],
+    zoningKeywords: ["gym", "fitness center", "personal training", "health club", "workout studio"],
+  },
+  {
+    id: "yoga-wellness", name: "Yoga / Pilates / Wellness Studio", icon: "Heart", group: "Health & Wellness",
+    commonForms: ["business-license", "business-registration", "fictitious-name", "professional-license-registration"],
+    zoningKeywords: ["yoga studio", "pilates", "wellness studio", "meditation", "holistic health"],
+  },
+  {
+    id: "medical-dental", name: "Medical / Dental / Chiropractic Office", icon: "Stethoscope", group: "Health & Wellness",
+    commonForms: ["business-registration", "professional-license-registration", "business-license", "ein-application", "employer-withholding-registration"],
+    zoningKeywords: ["medical office", "dental office", "chiropractic", "healthcare", "clinical"],
+  },
+
+  // ── Home-Based ────────────────────────────────────────────────────────────
+  {
+    id: "home-based-service", name: "Home-Based Service Business", icon: "Home", group: "Home-Based",
+    commonForms: ["home-occupation-permit", "business-registration", "fictitious-name", "business-license"],
+    zoningKeywords: ["home-based business", "home occupation", "home office", "residential business"],
+  },
+  {
+    id: "home-daycare", name: "Home Daycare / Family Childcare", icon: "Baby", group: "Home-Based",
+    commonForms: ["childcare-home-license", "home-occupation-permit", "business-registration", "fictitious-name"],
+    zoningKeywords: ["home daycare", "family daycare", "residential childcare", "home child care"],
+  },
+  {
+    id: "home-office-remote", name: "Home Office / Remote Work Business", icon: "Laptop", group: "Home-Based",
+    commonForms: ["home-occupation-permit", "business-registration", "fictitious-name", "ein-application"],
+    zoningKeywords: ["home office", "remote business", "telework", "home-based professional"],
+  },
+
+  // ── Construction & Trades ─────────────────────────────────────────────────
+  {
+    id: "general-contractor", name: "General Contractor / Builder", icon: "HardHat", group: "Construction & Trades",
+    commonForms: ["business-license", "business-registration", "ein-application", "workers-comp-exemption", "employer-withholding-registration"],
+    zoningKeywords: ["general contractor", "construction", "builder", "contractor license"],
+  },
+  {
+    id: "plumbing", name: "Plumbing / Pipefitting", icon: "Wrench", group: "Construction & Trades",
+    commonForms: ["business-license", "business-registration", "professional-license-registration", "workers-comp-exemption", "ein-application"],
+    zoningKeywords: ["plumbing", "pipefitting", "plumber", "water services"],
+  },
+  {
+    id: "electrical", name: "Electrical Contractor", icon: "Zap", group: "Construction & Trades",
+    commonForms: ["business-license", "business-registration", "professional-license-registration", "workers-comp-exemption", "ein-application"],
+    zoningKeywords: ["electrical contractor", "electrician", "wiring", "electrical services"],
+  },
+  {
+    id: "hvac", name: "HVAC / Mechanical", icon: "Wind", group: "Construction & Trades",
+    commonForms: ["business-license", "business-registration", "professional-license-registration", "workers-comp-exemption", "ein-application"],
+    zoningKeywords: ["HVAC", "heating", "cooling", "mechanical contractor", "air conditioning"],
+  },
+  {
+    id: "roofing", name: "Roofing Contractor", icon: "HardHat", group: "Construction & Trades",
+    commonForms: ["business-license", "business-registration", "workers-comp-exemption", "ein-application"],
+    zoningKeywords: ["roofing", "roofer", "roof installation", "roofing contractor"],
+  },
+  {
+    id: "landscaping", name: "Landscaping / Lawn Care", icon: "Sprout", group: "Construction & Trades",
+    commonForms: ["business-license", "business-registration", "fictitious-name", "workers-comp-exemption"],
+    zoningKeywords: ["landscaping", "lawn care", "yard work", "grounds maintenance", "tree service"],
+  },
+  {
+    id: "cleaning-janitorial", name: "Cleaning / Janitorial Services", icon: "Sparkles", group: "Construction & Trades",
+    commonForms: ["business-registration", "fictitious-name", "business-license", "workers-comp-exemption"],
+    zoningKeywords: ["cleaning service", "janitorial", "maid service", "commercial cleaning"],
+  },
+
+  // ── Transportation & Auto ─────────────────────────────────────────────────
+  {
+    id: "auto-repair", name: "Auto Repair Shop / Mechanic", icon: "Car", group: "Transportation & Auto",
+    commonForms: ["business-license", "business-registration", "sales-tax-registration", "employer-withholding-registration", "sign-permit"],
+    zoningKeywords: ["auto repair", "mechanic", "automotive", "car repair", "garage"],
+  },
+  {
+    id: "car-wash", name: "Car Wash / Auto Detailing", icon: "Car", group: "Transportation & Auto",
+    commonForms: ["business-license", "business-registration", "sales-tax-registration", "fictitious-name"],
+    zoningKeywords: ["car wash", "auto detailing", "vehicle cleaning", "carwash"],
+  },
+  {
+    id: "trucking-freight", name: "Trucking / Freight / Courier", icon: "Truck", group: "Transportation & Auto",
+    commonForms: ["business-registration", "ein-application", "business-license", "employer-withholding-registration"],
+    zoningKeywords: ["trucking", "freight", "courier", "logistics", "carrier", "delivery service"],
+  },
+  {
+    id: "taxi-rideshare", name: "Taxi / Rideshare / Limo", icon: "Car", group: "Transportation & Auto",
+    commonForms: ["business-license", "business-registration", "fictitious-name"],
+    zoningKeywords: ["taxi", "rideshare", "limousine", "transportation network", "for-hire vehicle"],
+  },
+  {
+    id: "auto-sales", name: "Auto Sales / Dealership", icon: "Car", group: "Transportation & Auto",
+    commonForms: ["business-license", "business-registration", "sales-tax-registration", "employer-withholding-registration", "resale-certificate"],
+    zoningKeywords: ["auto dealer", "car sales", "dealership", "used cars", "automotive sales"],
+  },
+
+  // ── Childcare & Education ─────────────────────────────────────────────────
+  {
+    id: "daycare-preschool", name: "Daycare / Preschool Center", icon: "Baby", group: "Childcare & Education",
+    commonForms: ["childcare-home-license", "business-license", "business-registration", "fire-inspection-certificate", "health-dept-inspection-checklist", "employer-withholding-registration"],
+    zoningKeywords: ["daycare", "preschool", "childcare center", "early childhood", "licensed daycare"],
+  },
+  {
+    id: "tutoring-center", name: "Tutoring / Test Prep Center", icon: "GraduationCap", group: "Childcare & Education",
+    commonForms: ["business-license", "business-registration", "fictitious-name", "ein-application"],
+    zoningKeywords: ["tutoring center", "test prep", "learning center", "academic tutoring"],
+  },
+  {
+    id: "music-arts-lessons", name: "Music / Arts / Dance Lessons", icon: "Music", group: "Childcare & Education",
+    commonForms: ["business-license", "business-registration", "fictitious-name", "professional-license-registration"],
+    zoningKeywords: ["music lessons", "art studio", "dance studio", "performing arts", "music school"],
+  },
+  {
+    id: "after-school", name: "After-School / Summer Camp", icon: "School", group: "Childcare & Education",
+    commonForms: ["business-license", "business-registration", "fire-inspection-certificate", "health-dept-inspection-checklist"],
+    zoningKeywords: ["after school program", "summer camp", "youth program", "enrichment center"],
+  },
+
+  // ── Hospitality & Entertainment ───────────────────────────────────────────
+  {
+    id: "hotel-bnb", name: "Hotel / Motel / Bed & Breakfast", icon: "Building2", group: "Hospitality & Entertainment",
+    commonForms: ["business-license", "business-registration", "sales-tax-registration", "fire-inspection-certificate", "health-dept-inspection-checklist", "employer-withholding-registration"],
+    zoningKeywords: ["hotel", "motel", "bed and breakfast", "lodging", "short-term rental", "inn"],
+  },
+  {
+    id: "event-venue", name: "Event Venue / Banquet Hall", icon: "CalendarDays", group: "Hospitality & Entertainment",
+    commonForms: ["special-event-permit", "business-license", "business-registration", "fire-inspection-certificate", "alarm-permit", "liquor-license-application"],
+    zoningKeywords: ["event venue", "banquet hall", "wedding venue", "special events", "reception hall"],
+  },
+  {
+    id: "photography-video", name: "Photography / Videography", icon: "Camera", group: "Hospitality & Entertainment",
+    commonForms: ["business-registration", "fictitious-name", "ein-application", "business-license"],
+    zoningKeywords: ["photography studio", "videography", "photo studio", "creative studio"],
+  },
+  {
+    id: "fitness-studio", name: "Dance / Fitness Studio", icon: "Music", group: "Hospitality & Entertainment",
+    commonForms: ["business-license", "business-registration", "fictitious-name", "fire-inspection-certificate"],
+    zoningKeywords: ["dance studio", "fitness studio", "aerobics", "barre studio", "spin class"],
+  },
+  {
+    id: "entertainment-amusement", name: "Entertainment / Amusement", icon: "Music", group: "Hospitality & Entertainment",
+    commonForms: ["business-license", "business-registration", "special-event-permit", "fire-inspection-certificate", "alarm-permit"],
+    zoningKeywords: ["entertainment", "amusement", "gaming", "bowling", "arcade", "recreation"],
+  },
+
+  // ── Other ─────────────────────────────────────────────────────────────────
+  {
+    id: "nonprofit", name: "Nonprofit Organization", icon: "Heart", group: "Other",
+    commonForms: ["business-registration", "ein-application", "employer-withholding-registration"],
+    zoningKeywords: ["nonprofit", "charity", "501c3", "community organization", "religious organization"],
+  },
+  {
+    id: "manufacturing-light", name: "Light Manufacturing / Workshop", icon: "Factory", group: "Other",
+    commonForms: ["business-license", "business-registration", "employer-withholding-registration", "business-personal-property-tax", "fire-inspection-certificate"],
+    zoningKeywords: ["light manufacturing", "workshop", "fabrication", "assembly", "light industrial"],
+  },
+  {
+    id: "pet-services", name: "Pet Grooming / Boarding / Vet", icon: "Heart", group: "Other",
+    commonForms: ["business-license", "business-registration", "fictitious-name", "health-dept-inspection-checklist"],
+    zoningKeywords: ["pet grooming", "pet boarding", "veterinary", "animal care", "kennel", "pet shop"],
+  },
+  {
+    id: "printing-graphics", name: "Printing / Signage / Graphics", icon: "Printer", group: "Other",
+    commonForms: ["business-license", "business-registration", "sales-tax-registration", "fictitious-name"],
+    zoningKeywords: ["printing", "signage", "graphics", "print shop", "commercial printing"],
+  },
+  {
+    id: "laundry-drycleaning", name: "Laundry / Dry Cleaning", icon: "Sparkles", group: "Other",
+    commonForms: ["business-license", "business-registration", "sales-tax-registration", "fictitious-name", "health-dept-inspection-checklist"],
+    zoningKeywords: ["laundry", "dry cleaning", "laundromat", "coin laundry", "textile care"],
+  },
+  {
+    id: "other", name: "Other / Not Listed", icon: "MoreHorizontal", group: "Other",
+    commonForms: ["business-license", "business-registration", "fictitious-name"],
+    zoningKeywords: ["business"],
+  },
+];
+
+/**
+ * Returns recommended form IDs for a given business category and location.
+ * Filters `commonForms` from the category to IDs that exist in ALL_FORMS,
+ * then appends universal federal starters (EIN, BOI) if not already present.
+ */
+export function getRecommendedFormsForCategory(
+  categoryId: string,
+  location:   string,
+): string[] {
+  const category = BUSINESS_CATEGORIES.find(c => c.id === categoryId);
+  if (!category) return [];
+
+  const results: string[] = [];
+  const seen    = new Set<string>();
+
+  const push = (...ids: string[]) => {
+    for (const id of ids) {
+      if (!seen.has(id) && id in ALL_FORMS) {
+        seen.add(id);
+        results.push(id);
+      }
+    }
+  };
+
+  // Category-specific forms first
+  push(...category.commonForms);
+
+  // Universal starters every new business needs
+  push("ss-4", "boi-report", "ein-application");
+
+  // Location-based state inference
+  const locLower = location.toLowerCase();
+  if (locLower.includes(", fl") || locLower.includes("florida")) {
+    push("fl-fictitious-name", "fl-annual-report");
+  } else if (locLower.includes(", tx") || locLower.includes("texas")) {
+    push("tx-assumed-name", "tx-franchise-tax");
+  } else if (locLower.includes(", ca") || locLower.includes("california")) {
+    push("ca-fictitious-business-name", "ca-seller-permit");
+  } else if (locLower.includes(", ny") || locLower.includes("new york")) {
+    push("ny-assumed-name", "ny-sales-tax");
+  } else if (locLower.includes(", il") || locLower.includes("illinois")) {
+    push("il-assumed-name");
+  } else if (locLower.includes(", wa") || locLower.includes("washington")) {
+    push("wa-business-license");
+  }
+
+  return results.slice(0, 10);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

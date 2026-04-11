@@ -1,5 +1,27 @@
 "use client";
 
+// Mobile responsiveness overhaul — vMobile
+//        Profile scrollable body uses px-4 sm:px-6 for safe mobile gutters.
+//        Stats bar wraps gracefully on small screens.
+//        Profile header name/location row is responsive.
+//        Zoning panel header/body padding tightened for phones.
+//        Form card action buttons wrap on narrow screens.
+// v75 — "Complete with AI" buttons added to Business Profile recommended forms cards
+//        Every recommended form card now has a cyan "Complete with AI" CTA that opens
+//        the Form Filler for that specific form, pre-filled with business profile data.
+//        Disabled (greyed out) when the form card already has a Completed badge.
+//        onStartForm? prop added to Props; parent wires to handleStartFormFromProfile.
+// v69 — Expanded business category selection system for better hyper-local accuracy
+//        Searchable category picker with icons in profile header; 52 categories across 10 groups.
+//        BUSINESS_CATEGORIES replaces BIZ_TYPE_OPTIONS in zoning panel for richer business type selection.
+//        onCategoryChange? prop wires category changes back to parent.
+// v67 — Adaptive Zoning Checker + category labels on all requirement cards
+//        Adaptive Zoning: detects attached zoning result, compares address to current
+//        business location, shows stale-result banner + "Update for new address" button.
+//        Panel pre-fills current address + GPS/reset button; loads existing result on open.
+//        Category labels: FEDERAL (blue) / STATE (indigo) / COUNTY (violet) / CITY/TOWN (teal)
+//        on all Recommended Forms, Completed Documents, zoning required-permit chips.
+//
 // BusinessProfileView — v61: Fix "View completed zoning check" button
 //
 // v61 — "View completed zoning check" now opens an inline modal reconstructed
@@ -68,10 +90,19 @@ import {
   AlertCircle, SaveAll,
   // v45 — zoning panel icons
   Shield, ShieldCheck, ShieldX, Loader2, Search, ChevronRight,
+  // v69 — category icons
+  Truck, Utensils, Coffee, ChefHat, Wine, ShoppingBag, Briefcase, Scissors,
+  Heart, Dumbbell, Stethoscope, Wrench, Zap, Leaf, Wind, Home, Laptop,
+  BookOpen, Package, Music, GraduationCap, Printer, Sprout, Globe, Camera,
+  CalendarDays, Car, Baby, School, Tag, HardHat, Factory, MoreHorizontal,
+  type LucideIcon,
 } from "lucide-react";
 import type { SavedBusiness, UploadedDocument, ChecklistItem } from "@/lib/regbot-types";
 import {
   markFormAsDownloaded,
+  ALL_FORMS,
+  BUSINESS_CATEGORIES,
+  getRecommendedFormsForCategory,
   type FederalFormEntry,
   type StateFormEntry,
 } from "@/lib/formTemplates";
@@ -151,6 +182,17 @@ interface Props {
    * Parent creates a synthetic UploadedDocument from the result and adds it to uploadedDocs.
    */
   onAttachZoningResult?: (result: ZoningResult) => void;
+  /**
+   * v69 — called when the user selects a new business category from the searchable picker.
+   * Parent can use this to refresh recommended forms or update the saved business.
+   */
+  onCategoryChange?: (categoryId: string) => void;
+  /**
+   * v75 — called when the user clicks "Complete with AI" on a recommended form card.
+   * Parent resolves the form template and opens the Form Filler pre-filled with
+   * current business profile data. No-op if no guided template exists for that formId.
+   */
+  onStartForm?: (formId: string) => void;
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -181,14 +223,21 @@ function healthRingColor(score: number) {
   return              { cls: "text-red-400",     text: "Action Required" };
 }
 
-// Category badge colours (dark-theme)
-function catBadge(category: string): string {
-  switch (category) {
-    case "federal": return "bg-blue-500/20 text-blue-300 border-blue-400/30";
-    case "state":   return "bg-indigo-500/20 text-indigo-300 border-indigo-400/30";
-    case "local":   return "bg-violet-500/20 text-violet-300 border-violet-400/30";
-    default:        return "bg-slate-500/20 text-slate-300 border-slate-400/30";
+// v67 — Jurisdiction category label + pill colours for FEDERAL/STATE/COUNTY/CITY/TOWN.
+// For 'local' entries, heuristic: id or name containing "county" → COUNTY, else CITY/TOWN.
+function getCatLabel(entry: FormEntry | { category: string; id?: string; name?: string }): { label: string; cls: string } {
+  const cat  = entry.category ?? "";
+  const id   = ("id"   in entry ? entry.id   : "") ?? "";
+  const name = ("name" in entry ? entry.name : "") ?? "";
+  if (cat === "federal") return { label: "FEDERAL",   cls: "bg-blue-500/20 text-blue-300 border-blue-400/30" };
+  if (cat === "state")   return { label: "STATE",     cls: "bg-indigo-500/20 text-indigo-300 border-indigo-400/30" };
+  if (cat === "local") {
+    const isCounty = id.toLowerCase().includes("county") || name.toLowerCase().includes("county");
+    return isCounty
+      ? { label: "COUNTY",    cls: "bg-violet-500/20 text-violet-300 border-violet-400/30" }
+      : { label: "CITY/TOWN", cls: "bg-teal-500/20 text-teal-300 border-teal-400/30" };
   }
+  return { label: "LOCAL", cls: "bg-violet-500/20 text-violet-300 border-violet-400/30" };
 }
 
 const BADGE_CLS = "text-[9px] font-bold tracking-wide border rounded-md px-1.5 py-0.5";
@@ -212,18 +261,25 @@ const ZONING_STATUS: Record<ZoningResult["status"], {
   unknown:     { label: "Unknown",     color: "text-slate-400",   bg: "rgba(255,255,255,0.05)", border: "rgba(255,255,255,0.15)", Icon: Shield      },
 };
 
+// v69 — Map icon name strings from BUSINESS_CATEGORIES to Lucide components
+const CAT_ICON_MAP: Record<string, LucideIcon> = {
+  Truck, Utensils, Coffee, ChefHat, Wine, ShoppingBag, Briefcase, Scissors,
+  Heart, Dumbbell, Stethoscope, Wrench, Zap, Leaf, Wind, Home, Laptop,
+  BookOpen, Package, Music, GraduationCap, Printer, Sprout, Globe, Camera,
+  CalendarDays, Car, Baby, School, Tag, HardHat, Factory, MoreHorizontal,
+  Building2, Sparkles, Pencil,
+};
+
+/** Renders the icon for a BUSINESS_CATEGORIES entry, falling back to Building2 */
+function CategoryIcon({ iconName, className }: { iconName: string; className?: string }) {
+  const Icon = (CAT_ICON_MAP[iconName] ?? Building2) as LucideIcon;
+  return <Icon className={className} />;
+}
+
+// v69 — Zoning panel business type options derived from BUSINESS_CATEGORIES
 const BIZ_TYPE_OPTIONS = [
-  { value: "",              label: "Select business type…" },
-  { value: "food-truck",   label: "Food Truck / Mobile Food" },
-  { value: "restaurant",   label: "Restaurant / Café" },
-  { value: "retail",       label: "Retail Store" },
-  { value: "home-bakery",  label: "Home Bakery / Cottage Food" },
-  { value: "service",      label: "Service Business (consulting, design, etc.)" },
-  { value: "salon",        label: "Salon / Beauty Services" },
-  { value: "childcare",    label: "Childcare / Daycare" },
-  { value: "manufacturing",label: "Light Manufacturing / Workshop" },
-  { value: "ecommerce",    label: "E-Commerce / Online Store" },
-  { value: "other",        label: "Other" },
+  { value: "", label: "Select business type…" },
+  ...BUSINESS_CATEGORIES.map(c => ({ value: c.id, label: c.name })),
 ];
 
 export default function BusinessProfileView({
@@ -240,6 +296,8 @@ export default function BusinessProfileView({
   onViewCompletedForm,
   onCheckZoning,
   onAttachZoningResult,
+  onCategoryChange,
+  onStartForm,
 }: Props) {
 
   // v61 — state for inline zoning result view modal
@@ -359,19 +417,107 @@ export default function BusinessProfileView({
   const [zoningError,      setZoningError]      = useState<string | null>(null);
   const [zoningAttached,   setZoningAttached]   = useState(false);
 
+  // v69 — Category picker state
+  const [editingCategory, setEditingCategory] = useState(false);
+  const [categorySearch,  setCategorySearch]  = useState("");
+  const categoryRef = useRef<HTMLDivElement | null>(null);
+
+  // Current category object (if business.businessType matches a BUSINESS_CATEGORIES id)
+  const activeCategory = useMemo(
+    () => BUSINESS_CATEGORIES.find(c => c.id === business.businessType) ?? null,
+    [business.businessType],
+  );
+
+  // Filtered list for the searchable picker
+  const filteredCategories = useMemo(() => {
+    const q = categorySearch.toLowerCase();
+    if (!q) return BUSINESS_CATEGORIES;
+    return BUSINESS_CATEGORIES.filter(
+      c => c.name.toLowerCase().includes(q) || c.group.toLowerCase().includes(q)
+    );
+  }, [categorySearch]);
+
+  // Close the category picker when clicking outside
+  useEffect(() => {
+    if (!editingCategory) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (categoryRef.current && !categoryRef.current.contains(e.target as Node)) {
+        setEditingCategory(false);
+        setCategorySearch("");
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [editingCategory]);
+
+  const handleSelectCategory = useCallback((catId: string) => {
+    setEditingCategory(false);
+    setCategorySearch("");
+    onCategoryChange?.(catId);
+    // Also sync zoning biz type to new category
+    setZoningBizType(catId);
+  }, [onCategoryChange]);
+
   // Sync address when business changes (e.g. location edit)
   useEffect(() => {
     setZoningAddress(business.location);
   }, [business.location]);
 
+  // v67 — Detect an already-attached zoning result and whether it is stale
+  // (address used for the check differs from the current business location).
+  const attachedZoningDoc = useMemo(
+    () => allCompletedDocs.find(
+      d => d.formId === "zoning-check" || d.analysis?.docType === "Zoning Compliance Check"
+    ),
+    [allCompletedDocs],
+  );
+
+  const attachedZoningAddress = useMemo((): string => {
+    if (!attachedZoningDoc) return "";
+    const raw = attachedZoningDoc.analysis?.rawExtracted as Record<string, unknown> | undefined;
+    return (raw?.address as string | undefined) ?? "";
+  }, [attachedZoningDoc]);
+
+  const attachedZoningStatus = useMemo((): ZoningResult["status"] | null => {
+    if (!attachedZoningDoc) return null;
+    const raw = attachedZoningDoc.analysis?.rawExtracted as Record<string, unknown> | undefined;
+    return (raw?.status as ZoningResult["status"] | undefined) ?? null;
+  }, [attachedZoningDoc]);
+
+  const zoningIsStale = useMemo(() => {
+    if (!attachedZoningDoc || !attachedZoningAddress) return false;
+    return attachedZoningAddress.trim().toLowerCase() !== business.location.trim().toLowerCase();
+  }, [attachedZoningDoc, attachedZoningAddress, business.location]);
+
+  // v67 — Open zoning panel; if a result is already attached, reconstruct it for display.
   const handleOpenZoningPanel = useCallback(() => {
     setZoningAddress(business.location);
     setZoningBizType(business.businessType ?? "");
-    setZoningResult(null);
     setZoningError(null);
-    setZoningAttached(false);
+
+    if (attachedZoningDoc) {
+      const raw  = attachedZoningDoc.analysis?.rawExtracted as Record<string, unknown> | undefined;
+      const rec: ZoningResult = {
+        status:       (raw?.status as ZoningResult["status"] | undefined) ?? "unknown",
+        zoneType:     (raw?.zone_type as string | undefined) ?? (attachedZoningDoc.analysis?.issuingAuthority ?? "Unknown zone"),
+        restrictions: Array.isArray(attachedZoningDoc.analysis?.suggestions)
+          ? (attachedZoningDoc.analysis!.suggestions as string[])
+          : [],
+        requiredPermits: [],
+        notes:        (attachedZoningDoc.analysis?.summary as string | undefined) ?? "",
+        checkedAt:    attachedZoningDoc.uploadedAt,
+        address:      (raw?.address as string | undefined) ?? business.location,
+        businessType: (raw?.business_type as string | undefined) ?? (business.businessType ?? ""),
+      };
+      setZoningResult(rec);
+      setZoningAttached(true);
+    } else {
+      setZoningResult(null);
+      setZoningAttached(false);
+    }
+
     setShowZoningPanel(true);
-  }, [business.location, business.businessType]);
+  }, [business.location, business.businessType, attachedZoningDoc]);
 
   const handleRunZoningCheck = useCallback(async () => {
     if (!onCheckZoning) return;
@@ -764,16 +910,28 @@ export default function BusinessProfileView({
             </div>
           </div>
 
-          {/* Panel body — scrollable */}
-          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
+          {/* Panel body — scrollable; vMobile: tighter padding on phones */}
+          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6 space-y-5">
 
-            {/* ── Input form (shown until results arrive) ── */}
+            {/* ── Input form (shown until results arrive, or when re-running) ── */}
             {!zoningResult && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-1.5">
-                    Business Address
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                      Business Address
+                    </label>
+                    {/* v67 — GPS/reset button: pre-fills current business location */}
+                    {business.location && zoningAddress !== business.location && (
+                      <button
+                        onClick={() => setZoningAddress(business.location)}
+                        className="inline-flex items-center gap-1 text-[10px] font-semibold text-cyan-400 hover:text-cyan-300 transition-colors"
+                      >
+                        <MapPin className="h-2.5 w-2.5" />
+                        Use current location
+                      </button>
+                    )}
+                  </div>
                   <textarea
                     value={zoningAddress}
                     onChange={e => setZoningAddress(e.target.value)}
@@ -880,37 +1038,47 @@ export default function BusinessProfileView({
                     {zoningResult.notes}
                   </div>
 
-                  {/* Required permits */}
+                  {/* Required permits — v67: category badge on each permit chip */}
                   {zoningResult.requiredPermits.length > 0 && (
                     <div>
                       <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-2">
                         Required Permits
                       </p>
                       <div className="space-y-2">
-                        {zoningResult.requiredPermits.map((permit, i) => (
-                          <div
-                            key={i}
-                            className="flex items-start gap-3 px-4 py-3 rounded-xl"
-                            style={{ background: "rgba(34,211,238,0.05)", border: "1px solid rgba(34,211,238,0.15)" }}
-                          >
-                            <CheckCircle2 className="h-3.5 w-3.5 text-cyan-400 shrink-0 mt-0.5" />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-semibold text-white leading-snug">{permit.name}</p>
-                              <p className="text-[10px] text-slate-400 leading-snug mt-0.5">{permit.description}</p>
+                        {zoningResult.requiredPermits.map((permit, i) => {
+                          // Derive category from ALL_FORMS lookup when a formId is present
+                          const linked = permit.formId ? ALL_FORMS[permit.formId] : undefined;
+                          const permCat = linked && "category" in linked
+                            ? getCatLabel(linked as FormEntry)
+                            : { label: "LOCAL", cls: "bg-violet-500/20 text-violet-300 border-violet-400/30" };
+                          return (
+                            <div
+                              key={i}
+                              className="flex items-start gap-3 px-4 py-3 rounded-xl"
+                              style={{ background: "rgba(34,211,238,0.05)", border: "1px solid rgba(34,211,238,0.15)" }}
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5 text-cyan-400 shrink-0 mt-0.5" />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                                  <p className="text-xs font-semibold text-white leading-snug">{permit.name}</p>
+                                  <span className={`inline-flex ${BADGE_CLS} ${permCat.cls}`}>{permCat.label}</span>
+                                </div>
+                                <p className="text-[10px] text-slate-400 leading-snug">{permit.description}</p>
+                              </div>
+                              {permit.url && (
+                                <a
+                                  href={permit.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="shrink-0 inline-flex items-center gap-1 text-[10px] font-semibold text-cyan-400 hover:text-cyan-300 transition-colors"
+                                >
+                                  <ExternalLink className="h-3 w-3" />
+                                  Apply
+                                </a>
+                              )}
                             </div>
-                            {permit.url && (
-                              <a
-                                href={permit.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="shrink-0 inline-flex items-center gap-1 text-[10px] font-semibold text-cyan-400 hover:text-cyan-300 transition-colors"
-                              >
-                                <ExternalLink className="h-3 w-3" />
-                                Apply
-                              </a>
-                            )}
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -971,9 +1139,29 @@ export default function BusinessProfileView({
                   )}
 
                   {/* Address + business type checked */}
-                  <div className="text-[10px] text-slate-600 text-center pb-2">
-                    Checked for: {zoningResult.address} · {zoningResult.businessType}
+                  <div className="text-[10px] text-slate-500 text-center pb-2">
+                    Checked for: {zoningResult.address}
+                    {zoningResult.businessType ? ` · ${zoningResult.businessType}` : ""}
                   </div>
+
+                  {/* v67 — Stale address warning inside panel */}
+                  {zoningIsStale && zoningAttached && (
+                    <div
+                      className="flex items-start gap-2.5 px-4 py-3 rounded-xl"
+                      style={{ background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.28)" }}
+                    >
+                      <AlertCircle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-amber-300 leading-tight">
+                          Address has changed
+                        </p>
+                        <p className="text-[10px] text-amber-400/70 leading-snug mt-0.5">
+                          This result was checked for <span className="font-semibold">{zoningResult.address}</span>.
+                          Your current address is <span className="font-semibold">{business.location}</span>.
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                 </div>
               );
@@ -989,7 +1177,25 @@ export default function BusinessProfileView({
             {/* When results visible */}
             {zoningResult && !zoningLoading && (
               <>
-                {zoningAttached ? (
+                {/* v67 — "Update for new address" is primary when stale */}
+                {zoningIsStale && zoningAttached ? (
+                  <button
+                    onClick={() => {
+                      setZoningResult(null);
+                      setZoningError(null);
+                      setZoningAttached(false);
+                      setZoningAddress(business.location);
+                    }}
+                    disabled={!onCheckZoning}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-[#0d1b35] disabled:opacity-40 transition-colors"
+                    style={{ background: "rgb(251,191,36)" }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "rgb(252,211,77)")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "rgb(251,191,36)")}
+                  >
+                    <Search className="h-4 w-4" />
+                    Update for New Address
+                  </button>
+                ) : zoningAttached ? (
                   <div
                     className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold"
                     style={{ background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.35)", color: "rgb(110,231,183)" }}
@@ -1014,7 +1220,7 @@ export default function BusinessProfileView({
                   onClick={() => { setZoningResult(null); setZoningError(null); setZoningAttached(false); }}
                   className="w-full text-center text-xs text-slate-500 hover:text-slate-300 transition-colors py-1"
                 >
-                  Check another address
+                  {zoningAttached ? "Re-run check for different address" : "Check another address"}
                 </button>
               </>
             )}
@@ -1059,10 +1265,11 @@ export default function BusinessProfileView({
           Header — dark navy with cyan hairline border
           ════════════════════════════════════════════════════════════════════ */}
       <div
-        className="shrink-0 px-6 py-5"
+        className="shrink-0 px-4 sm:px-6 py-4 sm:py-5"
         style={{ borderBottom: "1px solid rgba(34,211,238,0.15)" }}
       >
-        <div className="flex items-start justify-between gap-4">
+        {/* vMobile: wraps to column on very small screens */}
+        <div className="flex items-start justify-between gap-3 sm:gap-4 flex-wrap">
 
           {/* Left: back arrow + building icon + name + location */}
           <div className="flex items-start gap-3 min-w-0">
@@ -1153,14 +1360,70 @@ export default function BusinessProfileView({
                       <Pencil className="h-2.5 w-2.5" />
                     </button>
                   )}
-                  {business.businessType && (
-                    <>
-                      <span className="text-slate-600">·</span>
-                      <span className="text-xs text-slate-500 capitalize">{business.businessType}</span>
-                    </>
-                  )}
                 </div>
               )}
+
+              {/* v69 — Category row with icon + searchable picker */}
+              <div ref={categoryRef} className="relative mt-1.5">
+                {editingCategory ? (
+                  <div
+                    className="absolute top-0 left-0 z-30 w-64 rounded-xl shadow-xl overflow-hidden"
+                    style={{ background: "#0d1b35", border: "1px solid rgba(34,211,238,0.30)" }}
+                  >
+                    <div className="flex items-center gap-2 px-3 py-2 border-b" style={{ borderColor: "rgba(34,211,238,0.20)" }}>
+                      <Search className="h-3 w-3 text-slate-400 shrink-0" />
+                      <input
+                        autoFocus
+                        type="text"
+                        value={categorySearch}
+                        onChange={e => setCategorySearch(e.target.value)}
+                        placeholder="Search category…"
+                        className="flex-1 text-xs text-white bg-transparent outline-none placeholder:text-slate-500"
+                      />
+                      <button onClick={() => { setEditingCategory(false); setCategorySearch(""); }}>
+                        <X className="h-3 w-3 text-slate-500 hover:text-slate-300" />
+                      </button>
+                    </div>
+                    <div className="max-h-56 overflow-y-auto">
+                      {filteredCategories.map(cat => (
+                        <button
+                          key={cat.id}
+                          onClick={() => handleSelectCategory(cat.id)}
+                          className={`w-full flex items-center gap-2 px-3 py-2 text-left text-xs transition-colors hover:bg-white/10 ${
+                            cat.id === business.businessType ? "text-cyan-300 bg-cyan-500/10" : "text-slate-300"
+                          }`}
+                        >
+                          <CategoryIcon iconName={cat.icon} className="h-3 w-3 shrink-0 text-slate-400" />
+                          <span className="flex-1 leading-tight">{cat.name}</span>
+                          {cat.id === business.businessType && <Check className="h-2.5 w-2.5 text-cyan-400 shrink-0" />}
+                        </button>
+                      ))}
+                      {filteredCategories.length === 0 && (
+                        <p className="px-3 py-3 text-xs text-slate-500 text-center">No matches</p>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setEditingCategory(true)}
+                    className="flex items-center gap-1.5 group/cat rounded-lg px-1 py-0.5 -ml-1 hover:bg-white/8 transition-colors"
+                    title="Change business category"
+                  >
+                    {activeCategory ? (
+                      <>
+                        <CategoryIcon iconName={activeCategory.icon} className="h-3 w-3 text-cyan-500 shrink-0" />
+                        <span className="text-xs text-cyan-400">{activeCategory.name}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Building2 className="h-3 w-3 text-slate-600 shrink-0" />
+                        <span className="text-xs text-slate-600 italic">Set category…</span>
+                      </>
+                    )}
+                    <Pencil className="h-2 w-2 text-slate-600 opacity-0 group-hover/cat:opacity-100 transition-opacity ml-0.5" />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -1186,8 +1449,8 @@ export default function BusinessProfileView({
           Back to Chat
         </button>
 
-        {/* v45 — Check Zoning button */}
-        {onCheckZoning && (
+        {/* v67 — Adaptive Zoning button: shows existing status when result attached */}
+        {onCheckZoning && !attachedZoningDoc && (
           <button
             onClick={handleOpenZoningPanel}
             className="mt-2 w-full flex items-center justify-center gap-2 text-xs font-semibold transition-colors rounded-lg py-2"
@@ -1203,6 +1466,61 @@ export default function BusinessProfileView({
             Check Zoning for this Address
           </button>
         )}
+
+        {/* v67 — Compact zoning status strip when result is already attached */}
+        {onCheckZoning && attachedZoningDoc && (() => {
+          const sc = attachedZoningStatus ? ZONING_STATUS[attachedZoningStatus] : ZONING_STATUS.unknown;
+          const { Icon } = sc;
+          const raw = attachedZoningDoc.analysis?.rawExtracted as Record<string, unknown> | undefined;
+          const zone = (raw?.zone_type as string | undefined) ?? (attachedZoningDoc.analysis?.issuingAuthority ?? "");
+          return (
+            <div className="mt-2 space-y-1.5">
+              {/* Status strip */}
+              <div
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg"
+                style={{ background: sc.bg, border: `1px solid ${sc.border}` }}
+              >
+                <Icon className={`h-3.5 w-3.5 shrink-0 ${sc.color}`} />
+                <div className="flex-1 min-w-0">
+                  <span className={`text-[10px] font-bold ${sc.color}`}>{sc.label}</span>
+                  {zone ? <span className="text-[10px] text-slate-400 ml-1">· {zone}</span> : null}
+                </div>
+                <button
+                  onClick={handleOpenZoningPanel}
+                  className="shrink-0 text-[10px] font-semibold text-cyan-400 hover:text-cyan-300 transition-colors"
+                >
+                  View
+                </button>
+              </div>
+              {/* Stale-address banner */}
+              {zoningIsStale ? (
+                <button
+                  onClick={handleOpenZoningPanel}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors"
+                  style={{
+                    background: "rgba(251,191,36,0.08)",
+                    border:     "1px solid rgba(251,191,36,0.30)",
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(251,191,36,0.13)")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "rgba(251,191,36,0.08)")}
+                >
+                  <AlertCircle className="h-3 w-3 text-amber-400 shrink-0" />
+                  <span className="text-[10px] font-semibold text-amber-300 flex-1 leading-tight">
+                    Location changed — update zoning check
+                  </span>
+                  <ChevronRight className="h-3 w-3 text-amber-400 shrink-0" />
+                </button>
+              ) : (
+                <button
+                  onClick={handleOpenZoningPanel}
+                  className="w-full text-center text-[10px] text-slate-500 hover:text-cyan-400 transition-colors py-0.5"
+                >
+                  Update zoning check
+                </button>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       {/* ── v39 — Unsaved changes banner ──────────────────────────────────── */}
@@ -1222,12 +1540,13 @@ export default function BusinessProfileView({
           Body — scrollable
           ════════════════════════════════════════════════════════════════════ */}
       <div className="flex-1 overflow-y-auto">
-        <div className="px-6 py-7 space-y-10 max-w-4xl mx-auto w-full">
+        {/* vMobile: tighter padding on phones */}
+        <div className="px-4 sm:px-6 py-5 sm:py-7 space-y-8 sm:space-y-10 max-w-4xl mx-auto w-full">
 
           {/* ── v36/v41 — Compliance Stats (live from checklist) ────────── */}
           {showStats && (
             <section
-              className="flex items-center gap-5 p-5 rounded-xl"
+              className="flex items-center gap-4 sm:gap-5 p-4 sm:p-5 rounded-xl flex-wrap"
               style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
             >
               {/* SVG health ring */}
@@ -1361,53 +1680,68 @@ export default function BusinessProfileView({
                 ))}
 
                 {/* Saved docs — includes localSavedDocs + parent completedDocuments (deduped) */}
-                {allCompletedDocs.map((doc, i) => (
-                  <div
-                    key={doc.id ?? i}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl"
-                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)" }}
-                  >
+                {allCompletedDocs.map((doc, i) => {
+                  // v67 — derive category badge from ALL_FORMS lookup
+                  const isZoningDoc = doc.formId === "zoning-check" || doc.analysis?.docType === "Zoning Compliance Check";
+                  const linkedForm  = doc.formId && !isZoningDoc ? ALL_FORMS[doc.formId] : undefined;
+                  const docCat = isZoningDoc
+                    ? { label: "ZONING", cls: "bg-cyan-500/20 text-cyan-300 border-cyan-400/30" }
+                    : linkedForm && "category" in linkedForm
+                      ? getCatLabel(linkedForm as FormEntry)
+                      : null;
+
+                  return (
                     <div
-                      className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ background: "rgba(34,211,238,0.10)", border: "1px solid rgba(34,211,238,0.20)" }}
+                      key={doc.id ?? i}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl"
+                      style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)" }}
                     >
-                      <FileText className="h-4 w-4 text-cyan-400" />
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-white truncate">{doc.originalName}</p>
-                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                        {doc.analysis?.docType && (
-                          <span className="text-[10px] text-slate-500">{doc.analysis.docType}</span>
-                        )}
-                        <span className="flex items-center gap-1 text-[10px] text-slate-500">
-                          <Calendar className="h-2.5 w-2.5" />
-                          {formatDate(doc.uploadedAt)}
-                        </span>
-                        <span className="text-[10px] text-slate-600 tabular-nums">
-                          {formatFileSize(doc.sizeBytes)}
-                        </span>
-                        {doc.analyzed ? (
-                          <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-400/25 rounded-full px-1.5 py-0.5">
-                            <CheckCircle2 className="h-2.5 w-2.5" />Analyzed
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-semibold text-slate-500 bg-white/5 border border-white/10 rounded-full px-1.5 py-0.5">
-                            Attached
-                          </span>
-                        )}
+                      <div
+                        className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0"
+                        style={{ background: "rgba(34,211,238,0.10)", border: "1px solid rgba(34,211,238,0.20)" }}
+                      >
+                        <FileText className="h-4 w-4 text-cyan-400" />
                       </div>
-                    </div>
 
-                    <button
-                      onClick={() => viewDoc(doc)}
-                      className="shrink-0 inline-flex items-center gap-1.5 text-[11px] font-semibold text-cyan-400 border border-cyan-400/30 bg-cyan-400/10 hover:bg-cyan-400/20 rounded-lg px-3 py-1.5 transition-colors"
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                      View
-                    </button>
-                  </div>
-                ))}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-white truncate">{doc.originalName}</p>
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                          {/* v67 — category badge */}
+                          {docCat && (
+                            <span className={`inline-flex ${BADGE_CLS} ${docCat.cls}`}>{docCat.label}</span>
+                          )}
+                          {doc.analysis?.docType && (
+                            <span className="text-[10px] text-slate-500">{doc.analysis.docType}</span>
+                          )}
+                          <span className="flex items-center gap-1 text-[10px] text-slate-500">
+                            <Calendar className="h-2.5 w-2.5" />
+                            {formatDate(doc.uploadedAt)}
+                          </span>
+                          <span className="text-[10px] text-slate-600 tabular-nums">
+                            {formatFileSize(doc.sizeBytes)}
+                          </span>
+                          {doc.analyzed ? (
+                            <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-400/25 rounded-full px-1.5 py-0.5">
+                              <CheckCircle2 className="h-2.5 w-2.5" />Analyzed
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-semibold text-slate-500 bg-white/5 border border-white/10 rounded-full px-1.5 py-0.5">
+                              Attached
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => viewDoc(doc)}
+                        className="shrink-0 inline-flex items-center gap-1.5 text-[11px] font-semibold text-cyan-400 border border-cyan-400/30 bg-cyan-400/10 hover:bg-cyan-400/20 rounded-lg px-3 py-1.5 transition-colors"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        View
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </section>
@@ -1451,6 +1785,9 @@ export default function BusinessProfileView({
                   // v44 — isCompleted drives card-level visual state
                   const isCompleted = cardDocs.length > 0;
 
+                  // v67 — derive FEDERAL/STATE/COUNTY/CITY/TOWN label for this card
+                  const { label: entryLabel, cls: entryCls } = getCatLabel(entry);
+
                   return (
                     <div
                       key={entry.id}
@@ -1480,10 +1817,10 @@ export default function BusinessProfileView({
                             : undefined,
                       }}
                     >
-                      {/* Badge row */}
+                      {/* Badge row — v67: FEDERAL/STATE/COUNTY/CITY/TOWN pill */}
                       <div className="flex items-start justify-between gap-2 flex-wrap">
-                        <span className={`inline-flex ${BADGE_CLS} ${catBadge(entry.category)}`}>
-                          {entry.category.toUpperCase()}
+                        <span className={`inline-flex ${BADGE_CLS} ${entryCls}`}>
+                          {entryLabel}
                         </span>
                         <div className="flex items-center gap-1.5 flex-wrap">
                           {/* v44 — green "Completed" badge; uses isCompleted for clarity */}
@@ -1623,6 +1960,26 @@ export default function BusinessProfileView({
                             <ExternalLink className="h-3 w-3" />
                             Official Site
                           </a>
+                        )}
+
+                        {/* v75 — "Complete with AI" button: always visible, disabled when already completed */}
+                        {onStartForm && (
+                          <button
+                            onClick={() => { if (!isCompleted) onStartForm(entry.id); }}
+                            disabled={isCompleted}
+                            title={isCompleted ? "Already completed — view document above" : `Complete ${entry.name} with AI assistance`}
+                            className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
+                              isCompleted
+                                ? "opacity-40 cursor-not-allowed text-slate-400 bg-white/5 border border-white/10"
+                                : "text-[#0d1b35]"
+                            }`}
+                            style={!isCompleted ? { background: "rgb(34,211,238)" } : undefined}
+                            onMouseEnter={e => { if (!isCompleted) (e.currentTarget as HTMLButtonElement).style.background = "rgb(103,232,249)"; }}
+                            onMouseLeave={e => { if (!isCompleted) (e.currentTarget as HTMLButtonElement).style.background = "rgb(34,211,238)"; }}
+                          >
+                            <Sparkles className="h-3 w-3" />
+                            Complete with AI
+                          </button>
                         )}
 
                         {/* Upload Completed (hidden input + button) — always available */}

@@ -1,3 +1,103 @@
+// v77 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_TEMPLATES: str-local-occupancy-tax, farmers-market-vendor-license,
+//        vape-smoke-shop-retail-license, door-to-door-solicitor-permit,
+//        hair-braiding-natural-hair-license.
+//        13 new LOCAL_FORMS: Omaha/Douglas NE, Baton Rouge LA, Birmingham/Jefferson AL,
+//        Wichita/Sedgwick KS, Spokane WA, Tacoma/Pierce WA, Madison/Dane WI,
+//        Riverside CA, San Bernardino CA, Bakersfield/Kern CA, Colorado Springs CO,
+//        Anchorage AK, Greenville SC.
+//        buildZoningSeed deepened: STR/vacation zones → occupancy tax pre-fill;
+//        retail/commercial zones → vape shop and solicitor permit hints.
+//        FIELD_SKIP_CONDITIONS: platformRemitsTax, vendorProductType, vapeProductTypes,
+//        trainingHoursCompleted, trainingSchool, solicitorType.
+// Mobile responsiveness overhaul — vMobile
+//        Sidebar collapses to a slide-in drawer on mobile (< md breakpoint).
+//        Hamburger menu button added to chat header for mobile navigation.
+//        Chat messages, input area, and header all scale for small screens.
+//        FormFiller and modals adjust padding/layout for phones.
+// v76 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_TEMPLATES (painting-contractor-license, masonry-contractor-license,
+//        commercial-pool-health-permit, cosmetologist-individual-license, towing-company-license)
+//        13 new LOCAL_FORMS: Chandler AZ, Henderson NV, Irvine CA, Plano TX, Hialeah FL,
+//        Fort Lauderdale FL, Chula Vista CA, Fremont CA, Gilbert AZ, Garland TX,
+//        Springfield MO, Peoria IL, Yonkers/Westchester NY.
+//        buildZoningSeed deepened: residential/commercial zone → form-specific pre-fills.
+//        FIELD_SKIP_CONDITIONS: hasLifeguard, hasDrainCover, hasLeadCert, numVehicles, etc.
+// v75 — "Complete with AI" buttons added to Business Profile recommended forms cards
+//        handleStartFormFromProfile: closes profile view, resolves locale template for
+//        the clicked form using the loaded business's location + county, and opens the
+//        Form Filler pre-filled with current business profile data (name, location,
+//        businessType, ownerName, EIN, phone, email from completedFormsByFormId).
+//        onStartForm prop wired to <BusinessProfileView>.
+//        Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration:
+//        5 new FORM_TEMPLATES (funeral-home-license, pharmacy-permit,
+//        social-worker-practice-license, real-estate-broker-license,
+//        alcohol-catering-endorsement) +
+//        13 new LOCAL_FORMS: Boise/Ada ID, Des Moines/Polk IA, Spokane WA, Winston-Salem NC,
+//        Knoxville TN, Lexington KY, Albuquerque NM, Aurora CO, Anaheim CA,
+//        Corpus Christi TX, Killeen TX, Beaumont TX, Santa Ana CA.
+// v74 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_TEMPLATES (childcare-center-license, pool-spa-contractor-license,
+//        landscape-contractor-license, security-guard-company-license, food-manufacturer-license) +
+//        13 new LOCAL_FORMS: Reno/Washoe NV, Portland ME, Manchester NH, Tallahassee FL,
+//        Pensacola FL, Huntsville AL, Savannah GA, Montgomery AL, Macon GA,
+//        Sioux Falls SD, Modesto/Stanislaus CA, Salinas/Monterey CA, Lafayette LA.
+// v73 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_TEMPLATES (plumbing-contractor-license, hvac-contractor-license,
+//        pest-control-license, vehicle-repair-shop-license, roofing-contractor-license) +
+//        13 new LOCAL_FORMS for metros: Syracuse NY, Grand Rapids MI, Fayetteville NC,
+//        Akron OH, Fort Collins CO, Stockton CA, Cape Coral FL, Paterson NJ, Hampton VA,
+//        Amarillo TX, Laredo TX, Oxnard/Ventura CA, Santa Cruz CA.
+// v72 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_TEMPLATES (barbershop-cosmetology-salon-permit, tattoo-body-art-studio-permit,
+//        electrical-contractor-license, pet-grooming-salon-license, commercial-kitchen-shared-permit) +
+//        13 new LOCAL_FORMS for major metros (Boston MA, Seattle WA, Denver CO, Pittsburgh PA,
+//        Cleveland OH, Detroit MI, Memphis TN, Salt Lake City UT, Providence RI, Omaha NE,
+//        Milwaukee WI, Tulsa OK, Anchorage AK). buildZoningSeed deepened with zoneType keyword
+//        mapping for commercial/residential/industrial zoning pre-fills.
+// v71 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_TEMPLATES (notary-public-commission, auto-dealer-license,
+//        charitable-solicitation-registration, food-truck-city-permit, event-alcohol-permit) +
+//        11 new LOCAL_FORMS for mid-size metros (Jersey City NJ, Newark NJ, Rochester NY,
+//        New Haven CT, Chattanooga TN, Little Rock AR, Columbia SC, Augusta GA,
+//        Shreveport LA, Mobile AL, Jackson MS).
+// v70 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_TEMPLATES (short-term-rental-permit, tobacco-retail-license,
+//        food-facility-annual-renewal, massage-establishment-permit, secondhand-dealer-license) +
+//        14 new LOCAL_FORMS for high-volume metros (Phoenix AZ, San Antonio TX, Nashville TN,
+//        Indianapolis IN, Columbus OH, Jacksonville FL, Tampa city FL, Louisville KY, Buffalo NY,
+//        Tucson AZ, El Paso TX, Austin/Travis TX, Sacramento CA, Portland OR, Virginia Beach VA).
+//        Fixed zoningProfile extraction: raw?.zone_type (underscore) checked alongside raw?.zoneType.
+//        New local forms auto-attach to the correct form card via onSaveDocument handler.
+// v68 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new FORM_TEMPLATES (special-event-permit, outdoor-dining-permit, catering-license,
+//        childcare-home-license, professional-license-registration) + 14 new LOCAL_FORMS for
+//        underserved metros (Long Beach CA, Baltimore MD, Minneapolis MN, Raleigh/Wake NC,
+//        Durham NC, New Orleans LA, Albuquerque NM, Tampa/Hillsborough FL, Fort Worth/Tarrant TX,
+//        Norfolk VA, Des Moines/Polk IA, Boise/Ada ID, Knoxville/Knox TN, Lexington/Fayette KY).
+//        No page.tsx logic changes required — FormFiller wiring already correct.
+// v67 — Adaptive Zoning Checker + category labels on all requirement cards
+//        BusinessProfileView now detects attached zoning results, compares addresses, and
+//        shows an "Update for new address" banner when location changes. No page.tsx wiring
+//        changes required — handleCheckZoning + handleAttachZoningResult already wire correctly.
+// v66 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new guided wizard FORM_TEMPLATES (food-service-plan-review, employer-withholding-registration,
+//        business-personal-property-tax, zoning-compliance-letter-request, health-dept-inspection-checklist)
+//        + 15 new LOCAL_FORMS (Omaha, Baton Rouge, Birmingham, Wichita, Spokane, Tacoma, Madison WI,
+//        Riverside CA, San Bernardino CA, Kern/Bakersfield CA, Colorado Springs, Anchorage, Greenville SC).
+// v65 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        5 new guided wizard FORM_TEMPLATES (building-permit, food-manager-certification,
+//        resale-certificate, workers-comp-exemption, dba-county-registration) + 15 new LOCAL_FORMS.
+// v64 — Aggressive Form Assistant expansion with more hyper-local forms + deeper Zoning integration
+//        7 new guided wizard FORM_TEMPLATES (temporary-food-vendor, cottage-food, liquor-license,
+//        sign-permit, fire-inspection, alarm-permit, sidewalk-vending) + 15 new LOCAL_FORMS.
+//        FormFiller now shows a variance suggestion callout when zoning is conditional/prohibited.
+// v63 — Aggressive Form Assistant expansion for hyper-local regulations with more local forms + Zoning integration
+//        FormFiller now receives zoningProfile extracted from attached zoning check document
+//        so zone-aware fields are pre-seeded and a contextual advisory banner is shown.
+// v62 — Expanded Form Assistant with more federal/state/local forms + improved PDF pre-filling
+//        FormFiller now receives enriched businessProfile (ownerName, ein, phone, email)
+//        derived from previously completed form data so new forms auto-fill more fields.
 // v52 — Fixed build errors for Vercel deployment
 // Changes summary:
 // - Expanded manual location input to support ZIP, "City, ST", and "City, Full State Name"
@@ -185,6 +285,7 @@ import {
   Bell, BellOff, Activity, Zap, Crown, Lock, Plus, Trash2, Upload,
   LogIn, LogOut, Mail, KeyRound, UserPlus, X as XIcon,
   FolderOpen, // v20 — Forms Library Section
+  Menu, // vMobile — hamburger for mobile sidebar toggle
 } from "lucide-react";
 import AddBusinessModal from "@/components/AddBusinessModal";
 import AddLocationModal from "@/components/AddLocationModal";
@@ -1127,6 +1228,7 @@ export default function ChatPage() {
   const [formsLibraryOpen, setFormsLibraryOpen]     = useState(false);
   // v31 — Business Profile View: replaces chat messages pane when active
   const [showProfileView, setShowProfileView]       = useState(false);
+  const [showMobileSidebar, setShowMobileSidebar]   = useState(false); // vMobile
   const [uploadedDocs, setUploadedDocs]             = useState<UploadedDocument[]>([]);
 
   // ── Pro subscription state ────────────────────────────────────────────────
@@ -1894,6 +1996,30 @@ export default function ChatPage() {
   };
 
   /**
+   * v75 — Called by BusinessProfileView when the user clicks "Complete with AI" on a
+   * recommended form card. Closes the profile view, resolves the locale-aware template
+   * for the clicked formId using the loaded business's location + county, and opens the
+   * Form Filler. The existing businessProfile hint (derived from loadedBusiness and
+   * completedFormsByFormId) automatically pre-fills all matching fields.
+   */
+  const handleStartFormFromProfile = (formId: string) => {
+    if (!isPro && monthlyFormsUsed >= FREE_MONTHLY_LIMIT) return;
+    // Use the loaded business's location so locale overrides fire correctly
+    // (userLocation is already set to biz.location when a business is loaded).
+    const template = getLocaleFormTemplate(formId, userLocation, detectedCounty);
+    if (!template) return; // no guided wizard for this form — silently ignore
+    setFormQueue([]);
+    setQueueIndex(0);
+    setCompletedFormsData([]);
+    setShowPacketScreen(false);
+    setActiveFormInitialData(undefined);
+    setActiveFormIsRenewal(false);
+    setActiveTemplate(template);
+    // Close profile view so the Form Filler is visible
+    setShowProfileView(false);
+  };
+
+  /**
    * Launch a renewal of an existing form, optionally pre-filling with the last
    * submission's field values. If the item belongs to a different saved business,
    * that business is activated first before the form opens.
@@ -2030,6 +2156,88 @@ export default function ChatPage() {
       setActiveTemplate(null);
     }
   };
+
+  // ── v62 — Auto-create business profile after Form Filler completion ─────────
+  /**
+   * Called by FormFiller when a form is completed but no business profile exists.
+   * Creates a new SavedBusiness from the collected form data, attaches the
+   * completed form as a synthetic document, and opens Business Profile View.
+   *
+   * v62 — Automatic business profile creation from Form Filler when no profile exists
+   */
+  const handleFormCompleteWithoutProfile = useCallback((
+    formData: Record<string, string>,
+    completedFormId: string,
+  ) => {
+    const now = new Date().toISOString();
+
+    // Derive business name from form fields, fall back to "My Business"
+    const bizName = (
+      formData.businessName?.trim() ||
+      formData.legalName?.trim() ||
+      formData.fictitiousName?.trim() ||
+      "My Business"
+    );
+
+    // Derive location from form fields, fall back to current user location
+    const bizLocation = (
+      formData.businessAddress?.trim() ||
+      formData.principalAddress?.trim() ||
+      formData.physicalAddress?.trim() ||
+      formData.businessLocation?.trim() ||
+      userLocation
+    );
+
+    const profile = calcBizProfile([], undefined);
+
+    const newBiz: SavedBusiness = {
+      id:                  `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      name:                bizName,
+      location:            bizLocation,
+      savedAt:             now,
+      lastChecked:         now,
+      checklist:           [],
+      chatHistory:         toSavedMessages(messages),
+      healthScore:         profile.healthScore,
+      totalForms:          profile.totalForms,
+      completedFormsCount: profile.completedFormsCount,
+      isPreExisting:       false,
+    };
+
+    // Optimistic update — show business in sidebar + set as active immediately
+    setLoadedBusiness(newBiz);
+    setSavedBusinesses(prev => {
+      const without = prev.filter(b => b.id !== newBiz.id);
+      return [newBiz, ...without];
+    });
+    void dbSaveBusiness(user ? getSb() : null, user?.id ?? null, newBiz).then(() => {
+      setSavedBusinesses(localLoadBusinesses());
+    });
+
+    // Attach the completed form as a synthetic UploadedDocument so it
+    // appears on the matching recommended form card in BusinessProfileView.
+    const formName = (ALL_FORMS as Record<string, { name: string }>)[completedFormId]?.name ?? completedFormId;
+    const syntheticDoc: UploadedDocument = {
+      id:           `form-complete-${completedFormId}-${Date.now()}`,
+      businessId:   newBiz.id,
+      originalName: `${formName} — Completed`,
+      mimeType:     "application/pdf",
+      sizeBytes:    0,
+      storagePath:  "",
+      analysis:     undefined,
+      analyzed:     false,
+      uploadedAt:   now,
+      formId:       completedFormId,
+    };
+    setUploadedDocs(prev => [
+      syntheticDoc,
+      ...prev.filter(d => !(d.formId === completedFormId && d.id.startsWith("form-complete-"))),
+    ]);
+
+    // Open Business Profile View after the form filler closes
+    setTimeout(() => setShowProfileView(true), 350);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userLocation, messages, user]);
 
   // ── View completed form from checklist ────────────────────────────────────
   /**
@@ -3003,7 +3211,21 @@ export default function ChatPage() {
       )}
 
       {/* ════════════ Sidebar ════════════ */}
-      <div className="w-72 border-r border-slate-200 bg-white flex flex-col shrink-0">
+      {/* vMobile: overlay backdrop — visible only on mobile when sidebar is open */}
+      {showMobileSidebar && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 md:hidden"
+          onClick={() => setShowMobileSidebar(false)}
+        />
+      )}
+      {/* vMobile: sidebar is hidden on mobile by default; slides in as fixed drawer when showMobileSidebar */}
+      <div className={`
+        fixed inset-y-0 left-0 z-50 w-72 flex flex-col shrink-0
+        border-r border-slate-200 bg-white
+        transition-transform duration-300
+        ${showMobileSidebar ? "translate-x-0" : "-translate-x-full"}
+        md:static md:translate-x-0 md:flex
+      `}>
 
         {/* Brand — neo-futurist glass header */}
         <div className="rp-brand-header flex items-center gap-2.5 px-4 py-3.5">
@@ -3034,6 +3256,14 @@ export default function ChatPage() {
             title={isPro ? "Switch to Free tier (dev)" : "Switch to Pro tier (dev)"}
           >
             {isPro ? "Pro ✓" : "Free"}
+          </button>
+          {/* vMobile — close button visible only on mobile */}
+          <button
+            onClick={() => setShowMobileSidebar(false)}
+            className="md:hidden shrink-0 text-slate-400 hover:text-slate-600 transition-colors p-1"
+            aria-label="Close menu"
+          >
+            <XIcon className="h-4 w-4" />
           </button>
         </div>
 
@@ -3958,32 +4188,40 @@ export default function ChatPage() {
           onViewCompletedForm={handleViewCompletedForm}
           onCheckZoning={handleCheckZoning}
           onAttachZoningResult={handleAttachZoningResult}
+          onStartForm={handleStartFormFromProfile}
         />
       ) : null}
       <div className={`flex-1 flex flex-col overflow-hidden relative ${showProfileView && loadedBusiness ? "hidden" : ""}`}>
 
-        {/* Header bar */}
-        <div className="border-b border-slate-200 bg-white px-6 py-3.5 shrink-0 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <RegPulseIcon size={26} />
-            <div>
+        {/* Header bar — vMobile: hamburger on left for mobile sidebar */}
+        <div className="border-b border-slate-200 bg-white px-3 sm:px-6 py-3.5 shrink-0 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+            {/* vMobile — hamburger button, hidden on md+ where sidebar is always visible */}
+            <button
+              onClick={() => setShowMobileSidebar(true)}
+              className="md:hidden shrink-0 text-slate-500 hover:text-slate-700 transition-colors p-1"
+              aria-label="Open menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <RegPulseIcon size={26} className="shrink-0" />
+            <div className="min-w-0">
               <h2 className="font-semibold text-slate-900 text-sm leading-tight">Chat with RegPulse</h2>
               {loadedBusiness ? (
-                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                <div className="flex items-center gap-1 mt-0.5 flex-wrap">
                   <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
-                  <p className="text-xs text-blue-600 font-medium leading-tight truncate max-w-[160px]">
+                  <p className="text-xs text-blue-600 font-medium leading-tight truncate max-w-[120px] sm:max-w-[160px]">
                     {loadedBusiness.name}
                   </p>
                   {activeLocation ? (
                     <>
                       <span className="text-xs text-slate-300">•</span>
-                      <span className="text-xs text-slate-500 font-medium truncate max-w-[120px]">
+                      <span className="hidden sm:inline text-xs text-slate-500 font-medium truncate max-w-[120px]">
                         {activeLocation.name}
                       </span>
-                      <span className="text-xs text-slate-400 truncate max-w-[100px]">· {activeLocation.location}</span>
                     </>
                   ) : (
-                    <span className="text-xs text-slate-400">· {loadedBusiness.location}</span>
+                    <span className="hidden sm:inline text-xs text-slate-400 truncate max-w-[100px]">· {loadedBusiness.location}</span>
                   )}
                 </div>
               ) : (
@@ -3992,19 +4230,20 @@ export default function ChatPage() {
             </div>
           </div>
           {locationIsReady && (
-            <span className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full ring-1 transition-colors ${
+            <span className={`shrink-0 flex items-center gap-1.5 text-xs font-medium px-2.5 sm:px-3 py-1 rounded-full ring-1 transition-colors ${
               zipResolved
                 ? "bg-green-50 text-green-700 ring-green-200"
                 : "bg-blue-50 text-blue-700 ring-blue-100"
             }`}>
               <MapPin className="h-3 w-3 shrink-0" />
-              <span className="truncate max-w-[180px]">{userLocation}</span>
+              <span className="hidden sm:inline truncate max-w-[140px]">{userLocation}</span>
+              <span className="sm:hidden truncate max-w-[80px]">{userLocation.split(",")[0]}</span>
             </span>
           )}
         </div>
 
-        {/* Messages list */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
+        {/* Messages list — vMobile: tighter padding on small screens */}
+        <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-5">
           {messages.map((msg) => (
             <div
               key={msg.id}
@@ -4194,11 +4433,29 @@ export default function ChatPage() {
             skipPayment={true}
             initialFormData={activeFormInitialData}
             isRenewal={activeFormIsRenewal}
-            businessProfile={loadedBusiness ? {
-              name:         loadedBusiness.name,
-              location:     loadedBusiness.location,
-              businessType: loadedBusiness.businessType,
-            } : null}
+            businessProfile={loadedBusiness ? (() => {
+              // v62 — enrich profile hint with owner name + EIN extracted from
+              // any previously completed form data (EIN app, business registration, etc.)
+              const einEntry = completedFormsByFormId['ein-application'];
+              const regEntry = completedFormsByFormId['business-registration'];
+              const anyEntry = einEntry ?? regEntry ?? Object.values(completedFormsByFormId)[0];
+              const derivedOwner = anyEntry?.formData?.ownerFullName
+                ?? anyEntry?.formData?.responsiblePartyName
+                ?? anyEntry?.formData?.legalName;
+              const derivedEin = anyEntry?.formData?.fein
+                ?? completedFormsByFormId['sales-tax-registration']?.formData?.fein;
+              const derivedPhone = anyEntry?.formData?.businessPhone ?? anyEntry?.formData?.ownerPhone;
+              const derivedEmail = anyEntry?.formData?.businessEmail ?? anyEntry?.formData?.ownerEmail;
+              return {
+                name:         loadedBusiness.name,
+                location:     loadedBusiness.location,
+                businessType: loadedBusiness.businessType,
+                ownerName:    derivedOwner,
+                ein:          derivedEin,
+                phone:        derivedPhone,
+                email:        derivedEmail,
+              };
+            })() : null}
             onSaveDocument={(filename, _base64) => {
               // v60 — update the synthetic document record with the real filename so the
               // matching form card in BusinessProfileView shows the actual file name
@@ -4210,9 +4467,37 @@ export default function ChatPage() {
                   : d
               ));
             }}
+            onFormCompleteWithoutProfile={handleFormCompleteWithoutProfile}
+            zoningProfile={(() => {
+              // v63 — extract the most recent zoning check result attached to this business
+              // and pass it to FormFiller so zone-aware fields can be pre-seeded.
+              // v70 — fixed: check both raw?.zone_type (underscore, from API) and raw?.zoneType (camelCase)
+              const zoningDoc = uploadedDocs.find(
+                d => d.formId === "zoning-check" && d.mimeType === "application/json"
+              );
+              if (!zoningDoc?.analysis) return null;
+              const raw = zoningDoc.analysis.rawExtracted as Record<string, unknown> | undefined;
+              return {
+                status:       (raw?.status ?? undefined) as string | undefined,
+                // v70 — check underscore variant first (API returns zone_type), then camelCase
+                zoneType:     (
+                  (raw?.zone_type as string | undefined) ??
+                  (raw?.zoneType as string | undefined) ??
+                  (zoningDoc.analysis.issuingAuthority as string | undefined) ??
+                  zoningDoc.analysis.docType
+                ) ?? undefined,
+                restrictions: Array.isArray(raw?.restrictions)
+                  ? (raw.restrictions as string[])
+                  : (Array.isArray(zoningDoc.analysis.suggestions) ? zoningDoc.analysis.suggestions as string[] : undefined),
+                address:      (
+                  (raw?.address as string | undefined) ??
+                  loadedBusiness?.location
+                ) ?? undefined,
+              };
+            })()}
           />
         ) : (
-          <div className="px-6 py-4 border-t border-slate-200 bg-white shrink-0">
+          <div className="px-3 sm:px-6 py-3 sm:py-4 border-t border-slate-200 bg-white shrink-0">{/* vMobile: tighter padding on phones */}
             <div className="max-w-3xl mx-auto flex gap-2 items-center">
               {/* Upload button — compact, sits left of the text input.
                   v17: businessId is required for the storage-first path in
