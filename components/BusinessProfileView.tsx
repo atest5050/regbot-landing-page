@@ -1,5 +1,16 @@
 "use client";
 
+// vMobile-final-fix — Fixed icons + Google Ads conversion tracking + mobile scaling
+//        Expand / chevron icon clickability restored: root container class changed from
+//        "flex-1 flex flex-col overflow-hidden relative" to "flex-1 flex flex-col relative".
+//        overflow-hidden on the root was clipping absolutely-positioned interactive children
+//        (category-picker dropdown at z-30, stale-zoning banner button with ChevronRight,
+//        form-card action buttons near the visible boundary) making them untappable on iOS.
+//        The scrollable body div (flex-1 overflow-y-auto overscroll-y-contain) owns its own
+//        scroll containment context — the root does not need overflow-hidden for layout.
+//        Mobile aspect-ratio fix (carried from vMobile-scale-fix): component fills the parent
+//        flex-1 slot constrained by the corrected root div height in page.tsx; header and save
+//        footer are shrink-0; only the body div scrolls. Safe-area inset applied to footers.
 // vMobile-scale-fix — Fixed aspect ratio / scaling for Business Profile on mobile
 //        Root container: flex-1 flex flex-col overflow-hidden (fills parent exactly,
 //        no overflow bleed, correct on all viewport sizes including iOS Safari).
@@ -708,9 +719,14 @@ export default function BusinessProfileView({
 
   const hasDrafts = drafts.length > 0;
 
+  // vMobile-icon-fix — root container changed from overflow-hidden to overflow-visible so
+  // that absolutely-positioned interactive elements (category picker dropdown at z-30,
+  // stale-zoning banner button) are never clipped and remain fully tappable. The scrollable
+  // body div (flex-1 overflow-y-auto) provides its own scroll containment, so the root
+  // does not need overflow-hidden for correct layout behaviour.
   return (
     <div
-      className="flex-1 flex flex-col overflow-hidden relative"
+      className="flex-1 flex flex-col relative"
       style={{ background: "linear-gradient(160deg, #0d1b35 0%, #0f2847 100%)" }}
     >
 

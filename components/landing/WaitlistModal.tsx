@@ -1,11 +1,9 @@
-// Changes summary:
-// - Added GA4 "waitlist_signup" conversion event that fires after a confirmed
-//   successful Supabase insert (i.e. only on real conversions, not on errors or
-//   duplicate emails).
-// - Event parameters include UTM source/medium/campaign read from the current
-//   URL at submit time — no PII is sent to GA4.
-// - gtagEvent and getUtmParams are imported from lib/gtag; both are no-ops when
-//   NEXT_PUBLIC_GA4_ID is absent (safe in local dev).
+// vMobile-final-fix — Fixed icons + Google Ads conversion tracking + mobile scaling
+//   Google Ads conversion event fires after confirmed Supabase insert (real conversions only).
+//   Uses window.gtag directly (typed via Window extension in lib/gtag.ts) so the standard
+//   Google Ads `gtag('event','conversion',{send_to:...})` payload is sent alongside the
+//   existing GA4 waitlist_signup event.
+//   No PII: only the conversion label is sent; email is never passed to any analytics call.
 
 "use client";
 
@@ -63,7 +61,16 @@ export default function WaitlistModal({ open, onOpenChange }: WaitlistModalProps
         }
       } else {
         setSubmitted(true);
-        // ── GA4 conversion event ───────────────────────────────────────────
+
+        // ── Google Ads conversion tracking — Waitlist Signup ──────────────
+        // Fires the standard Google Ads conversion tag immediately after a
+        // confirmed insert so the attribution window is preserved.
+        // window.gtag is typed via the Window extension in lib/gtag.ts.
+        if (typeof window !== "undefined" && typeof window.gtag !== "undefined") {
+          window.gtag('event', 'conversion', { 'send_to': 'AW-18059886296/d5ZACNiYrpocENj9z6ND' });
+        }
+
+        // ── GA4 named event (UTM-enriched) ────────────────────────────────
         // Fired only here — after a confirmed successful DB insert.
         // No PII: email is not sent; UTM params identify traffic source.
         const utm = getUtmParams();

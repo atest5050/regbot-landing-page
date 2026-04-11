@@ -1,3 +1,13 @@
+// vMobile-final-fix — Fixed icons + Google Ads conversion tracking + mobile scaling
+//        Send button clickability restored: root shell changed from h-dvh to
+//        calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)).
+//        body safe-area padding (from layout.tsx vMobile-scale-fix) + h-dvh caused the
+//        flex container to overflow the body content area on iOS — the send button and
+//        bottom form-card buttons fell below the tappable viewport edge on devices
+//        with notch / home-bar (iPhone X+). Subtracting the insets from root height
+//        makes it fit exactly within the body content area on every device; on desktop
+//        and older iPhones where env() returns 0 the calc degenerates to h-dvh unchanged.
+//        Input bar wrapper: relative z-10 ensures correct stacking above positioned ancestors.
 // vMobile-scale-fix — Fixed aspect ratio / scaling for Business Profile on mobile
 //        Outer shell: h-screen → h-dvh (avoids iOS Safari address-bar gap).
 //        BusinessProfileView container: uses flex-1 overflow-hidden so the profile
@@ -3049,7 +3059,11 @@ export default function ChatPage() {
     : null;
 
   return (
-    <div className="flex h-dvh bg-[#f8f9fb]">{/* vMobile-scale-fix: dvh = dynamic viewport height, correct on iOS Safari */}
+    // vMobile-icon-fix — root flex height subtracts body safe-area padding so the container
+    // never overflows the body content area. Without this, body paddingTop + paddingBottom
+    // (env(safe-area-inset-*)) + h-dvh > viewport: the send button / bottom form-card
+    // buttons end up below the iOS viewport edge and become untappable.
+    <div className="flex bg-[#f8f9fb]" style={{ height: "calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom))" }}>{/* vMobile-scale-fix: dvh = dynamic viewport height, correct on iOS Safari */}
 
       {/* v61 — Review Impact modal ─────────────────────────────────────── */}
       {reviewImpactAlert && (
@@ -4507,7 +4521,7 @@ export default function ChatPage() {
             })()}
           />
         ) : (
-          <div className="px-3 sm:px-6 py-3 sm:py-4 border-t border-slate-200 bg-white shrink-0">{/* vMobile: tighter padding on phones */}
+          <div className="relative z-10 px-3 sm:px-6 py-3 sm:py-4 border-t border-slate-200 bg-white shrink-0">{/* vMobile: tighter padding on phones; z-10 ensures input bar is above any positioned ancestors (vMobile-icon-fix) */}
             <div className="max-w-3xl mx-auto flex gap-2 items-center">
               {/* Upload button — compact, sits left of the text input.
                   v17: businessId is required for the storage-first path in

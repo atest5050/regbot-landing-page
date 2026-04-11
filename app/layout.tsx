@@ -1,3 +1,9 @@
+// vMobile-final-fix — Fixed icons + Google Ads conversion tracking + mobile scaling
+// - Google Ads global site tag (gtag.js) added to <head> via server-rendered <script>
+//   tags so it fires on every page — including the landing page — before any client
+//   JavaScript runs. This is required for Waitlist Signup conversion attribution.
+// - The existing GA4 <Script strategy="afterInteractive"> tags in <body> are kept
+//   unchanged; both share the same window.dataLayer queue (standard dual-tracking setup).
 // vMobile-scale-fix — Fixed aspect ratio / scaling for Business Profile on mobile
 // - Added explicit viewport meta with device-width, initial-scale=1, maximum-scale=5,
 //   user-scalable=yes, and viewport-fit=cover for iOS safe-area-inset support.
@@ -39,7 +45,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "RegPulse — Never guess your local regulations again.",
   description: "RegPulse is your AI co-pilot for hyper-local permits, zoning, health codes, and compliance. Ask in plain English and get accurate, sourced answers with checklists and next steps — built for Etsy sellers, home bakers, food trucks, consultants, and every side hustler.",
-  
+
   metadataBase: new URL("https://regbot-landing-page.vercel.app"),
 
   keywords: [
@@ -80,6 +86,31 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.variable}>
+      {/* ── Google Ads conversion tag — required for tracking Waitlist Signup ──
+          Server-rendered <script> tags in <head> so the global site tag fires
+          on every page (including the landing page) before any client JS runs.
+          The async attribute on the loader prevents render-blocking.
+          Both tags are hardcoded (no env-var gate) so they always load in prod
+          and in preview deployments — Google Ads attribution requires this.
+          window.dataLayer is shared with the GA4 init below (standard setup).  */}
+      <head>
+        {/* eslint-disable-next-line @next/next/no-before-interactive-script-outside-document */}
+        <script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=AW-18059886296"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'AW-18059886296');
+            `,
+          }}
+        />
+      </head>
+
       {/* vMobile-scale-fix: min-h-dvh uses dynamic viewport height on mobile (avoids
           the iOS Safari address-bar gap). Safe-area env() vars ensure content clears
           the notch and home indicator on all iPhones / modern Androids.            */}
