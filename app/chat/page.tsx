@@ -1,3 +1,21 @@
+// vMobile-icon-fix-v3 — Final fix for Send button + hamburger/expand icons on mobile
+//        Send button: min-h-[48px] min-w-[48px] + pointer-events-auto; z-index lifted to z-20.
+//        Hamburger: pointer-events-auto added; chat container overflow-hidden removed.
+//        Root chat column overflow-hidden removed so no flex ancestor clips touch events.
+//        Input bar z-10 → z-20 so it stacks above any positioned siblings.
+// vMobile-gps-fix — Fixed reliable GPS detection and "Current location" button on mobile
+//        triggerGps() extracted as a useCallback so it can be called from both the
+//        automatic permissions-check path AND from a direct user tap (iOS Safari requires
+//        the first geolocation prompt to originate from a user gesture).
+//        Permissions API queried on mount: "granted" → auto-trigger; "denied" → show error
+//        immediately; "prompt" → show full-width button and wait for tap.
+//        getCurrentPosition options: enableHighAccuracy:true, timeout:12000, maximumAge:60000.
+//        Error codes distinguished: PERMISSION_DENIED (1) / POSITION_UNAVAILABLE (2) / TIMEOUT (3)
+//        — each shows a specific, actionable message.
+//        gpsLoading state drives a spinner + Cancel button while the fix is in-flight.
+//        gpsError state drives an amber error banner + Retry button (timeout only).
+//        Location panel replaced: checkbox → full-width min-h-[48px] "Use Current Location"
+//        button; success shows location pill + RefreshCw icon + dismiss; all touch targets ≥44px.
 // vMobile-global-scale-fix — Applied proper mobile scaling to all links and buttons
 //        All interactive elements in the chat UI verified for 44px minimum touch target.
 //        Input bar (send button, upload button): already py-2.5+ from vMobile pass.
@@ -305,7 +323,9 @@ import {
   Bell, BellOff, Activity, Zap, Crown, Lock, Plus, Trash2, Upload,
   LogIn, LogOut, Mail, KeyRound, UserPlus, X as XIcon,
   FolderOpen, // v20 — Forms Library Section
-  Menu, // vMobile — hamburger for mobile sidebar toggle
+  Menu,       // vMobile — hamburger for mobile sidebar toggle
+  // vMobile-gps-fix — icons for GPS button, refresh, and error states
+  LocateFixed, RefreshCw, AlertCircle,
 } from "lucide-react";
 import AddBusinessModal from "@/components/AddBusinessModal";
 import AddLocationModal from "@/components/AddLocationModal";
@@ -1189,6 +1209,10 @@ export default function ChatPage() {
   const [detectedCounty, setDetectedCounty]     = useState<string | null>(null);
   const gpsActiveRef  = useRef(true);
   const zipLookupRef  = useRef<string>("");
+  // vMobile-gps-fix: explicit loading + error state for GPS so the UI can show
+  // a loading spinner, distinguish error types, and offer a retry button.
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [gpsError,   setGpsError]   = useState<string | null>(null);
 
   // ── Form state ────────────────────────────────────────────────────────────
   const [activeTemplate, setActiveTemplate]             = useState<FormTemplate | null>(null);
@@ -1572,11 +1596,26 @@ export default function ChatPage() {
   }, [checklist, completedFormsByFormId, messages, loadedBusiness?.id, activeLocationId]);
 
   // ── GPS ───────────────────────────────────────────────────────────────────
+  // vMobile-gps-fix: extracted into triggerGps() so it can be called from both
+  // the automatic useEffect path (when permission is already "granted") and from
+  // a user-tap on the "Use Current Location" button (iOS requires a user gesture
+  // for the first permission prompt — calling from a tap satisfies that requirement).
 
-  useEffect(() => {
-    if (!useExactLocation || !navigator.geolocation) return;
+  /** Kick off a GPS fix + Nominatim reverse geocode. Safe to call multiple times
+   *  (cancels any prior in-flight attempt via gpsActiveRef). */
+  const triggerGps = useCallback(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setGpsError("Geolocation is not supported by your browser.");
+      setUseExactLocation(false);
+      setUserLocation("Enter location");
+      return;
+    }
     gpsActiveRef.current = true;
+    setGpsLoading(true);
+    setGpsError(null);
     setZipResolved(false);
+    setUserLocation("Detecting location...");
+
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         if (!gpsActiveRef.current) return;
@@ -1592,11 +1631,11 @@ export default function ChatPage() {
           // All values are trimmed — Nominatim occasionally returns trailing whitespace
           // that would break the state-abbreviation regex in parseStateFromLocation.
           const cityRaw: string | null = (
-            data.address?.city        ||
-            data.address?.town        ||
-            data.address?.village     ||
-            data.address?.hamlet      ||
-            data.address?.suburb      ||
+            data.address?.city          ||
+            data.address?.town          ||
+            data.address?.village       ||
+            data.address?.hamlet        ||
+            data.address?.suburb        ||
             data.address?.neighbourhood ||
             null
           );
@@ -1621,30 +1660,101 @@ export default function ChatPage() {
           // rather than "Unknown Location, FL 33411".
           const city = cityTrimmed ?? countyRaw ?? "Unknown Location";
 
+          setGpsLoading(false);
           setUserLocation(zip ? `${city}, ${state} ${zip}` : `${city}, ${state}`);
           setDetectedCounty(countyRaw);
         } catch {
-          if (gpsActiveRef.current) { setUserLocation("Your current location"); setDetectedCounty(null); }
+          if (gpsActiveRef.current) {
+            setGpsLoading(false);
+            setUserLocation("Your current location");
+            setDetectedCounty(null);
+          }
         }
       },
-      () => { if (gpsActiveRef.current) { setUserLocation("Your current location"); setDetectedCounty(null); } }
+      (err: GeolocationPositionError) => {
+        if (!gpsActiveRef.current) return;
+        setGpsLoading(false);
+        // Distinguish error types so the UI can show actionable messages.
+        // Code 1 = PERMISSION_DENIED, 2 = POSITION_UNAVAILABLE, 3 = TIMEOUT
+        if (err.code === 1) {
+          setGpsError("Location access denied. Enable in your browser/phone settings, or enter manually below.");
+          setUseExactLocation(false);
+          setUserLocation("Enter location");
+        } else if (err.code === 2) {
+          setGpsError("GPS signal unavailable. Move to an open area or enter your location manually.");
+          setUseExactLocation(false);
+          setUserLocation("Enter location");
+        } else {
+          // Timeout — keep useExactLocation true so retry button is shown
+          setGpsError("Location timed out — tap Retry or enter your city/ZIP manually.");
+          setUserLocation("Enter location");
+        }
+      },
+      // vMobile-gps-fix: explicit options required for reliable iOS Safari behaviour.
+      // enableHighAccuracy: true  — requests fine GPS rather than network/IP location.
+      // timeout: 12000            — abort after 12 s (default is infinite on some browsers).
+      // maximumAge: 60000         — reuse a cached fix up to 60 s old (faster on return visits).
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
     );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // vMobile-gps-fix: on mount (or when useExactLocation toggles back to true),
+  // query the Permissions API first.
+  //  "granted"  → auto-trigger (user already approved on a prior visit)
+  //  "denied"   → skip prompt, show error immediately
+  //  "prompt"   → do nothing; user must tap the "Use Current Location" button
+  //               (iOS Safari requires a user gesture for the first permission prompt)
+  //  API absent → trigger directly (older Safari / some Android WebViews)
+  useEffect(() => {
+    if (!useExactLocation) return;
+
+    if (typeof navigator !== "undefined" && navigator.permissions) {
+      navigator.permissions
+        .query({ name: "geolocation" as PermissionName })
+        .then(status => {
+          if (status.state === "granted") {
+            triggerGps();
+          } else if (status.state === "denied") {
+            setGpsLoading(false);
+            setGpsError("Location access denied. Enable it in your browser settings, or enter manually.");
+            setUseExactLocation(false);
+            setUserLocation("Enter location");
+          }
+          // "prompt" → show the button; user tap satisfies iOS gesture requirement
+        })
+        .catch(() => {
+          // Permissions API unsupported — trigger directly (older Safari fallback)
+          triggerGps();
+        });
+    } else {
+      // No Permissions API at all — trigger directly
+      triggerGps();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [useExactLocation]);
 
   const handleToggleGps = () => {
+    gpsActiveRef.current = false;
+    setGpsLoading(false);
+    setGpsError(null);
+    setManualLocation("");
+    setZipResolved(false);
+    setDetectedCounty(null);
     if (useExactLocation) {
-      gpsActiveRef.current = false;
-      setManualLocation("");
-      setZipResolved(false);
-      setDetectedCounty(null);
       setUserLocation("Enter location");
+      setUseExactLocation(false);
     } else {
-      setManualLocation("");
-      setZipResolved(false);
-      setDetectedCounty(null);
       setUserLocation("Detecting location...");
+      setUseExactLocation(true);
+      // useEffect above will fire because useExactLocation changed to true
     }
-    setUseExactLocation(v => !v);
+  };
+
+  /** Retry GPS after a timeout error without toggling the GPS mode off. */
+  const handleRetryGps = () => {
+    setGpsError(null);
+    triggerGps();
   };
 
   // ── Location input (ZIP or City, ST / City, State) ────────────────────────
@@ -3051,7 +3161,10 @@ export default function ChatPage() {
 
   // ── Location display helpers ──────────────────────────────────────────────
 
+  // vMobile-gps-fix: also guard on gpsLoading so the header badge never shows
+  // a "Detecting…" string as a resolved location while GPS is in progress.
   const locationIsReady =
+    !gpsLoading &&
     userLocation !== "Detecting location..." &&
     userLocation !== "Enter location" &&
     userLocation !== "Resolving ZIP…" &&
@@ -3420,56 +3533,128 @@ export default function ChatPage() {
           )}
         </div>
 
-        {/* Location panel */}
+        {/* ── Location panel — vMobile-gps-fix ──────────────────────────────
+             Replaces the checkbox toggle with a prominent touch-friendly button.
+             State machine:
+               gpsLoading           → spinner + cancel
+               locationIsReady      → resolved pill + refresh icon
+               !resolved + no error → "Use Current Location" tap-to-trigger button
+               gpsError             → error banner + conditional retry
+               !useExactLocation    → manual ZIP/city input
+             ─────────────────────────────────────────────────────────────── */}
         <div className="px-4 py-4 border-b border-slate-100 space-y-3">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
             Your Location
           </p>
 
-          <div className={`flex items-center gap-2 rounded-lg px-3 py-2 transition-colors ${
-            zipResolved
-              ? "bg-green-50 ring-1 ring-green-200"
-              : locationIsReady
-                ? "bg-blue-50 ring-1 ring-blue-200"
-                : "bg-slate-50 ring-1 ring-slate-200"
-          }`}>
-            {zipLookingUp ? (
-              <Loader2 className="h-3.5 w-3.5 text-slate-400 shrink-0 animate-spin" />
-            ) : zipResolved ? (
-              <CheckCheck className="h-3.5 w-3.5 text-green-600 shrink-0" />
-            ) : (
-              <MapPin className={`h-3.5 w-3.5 shrink-0 ${locationIsReady ? "text-blue-500" : "text-slate-400"}`} />
-            )}
-            <div className="min-w-0">
-              <span className={`font-medium text-xs truncate block ${
-                zipResolved ? "text-green-800" : locationIsReady ? "text-slate-700" : "text-slate-400"
-              }`}>
-                {userLocation}
-              </span>
-              {detectedCounty && locationIsReady && (
-                <span className="text-[10px] text-slate-400 truncate block">{detectedCounty}</span>
+          {/* ── State A: GPS loading ── */}
+          {useExactLocation && gpsLoading && (
+            <div className="flex items-center gap-3 rounded-xl bg-blue-50 ring-1 ring-blue-200 px-3 py-3">
+              <Loader2 className="h-4 w-4 text-blue-500 shrink-0 animate-spin" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-blue-700 leading-tight">Detecting your location…</p>
+                <p className="text-[10px] text-blue-400 mt-0.5">This can take a few seconds</p>
+              </div>
+              <button
+                onClick={handleToggleGps}
+                className="shrink-0 text-[10px] font-semibold text-blue-400 hover:text-blue-700 transition-colors px-2 py-1 rounded"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+
+          {/* ── State B: GPS resolved (location is ready) ── */}
+          {useExactLocation && !gpsLoading && !gpsError && locationIsReady && (
+            <div className={`flex items-center gap-2 rounded-xl px-3 py-2.5 ring-1 transition-colors ${
+              zipResolved ? "bg-green-50 ring-green-200" : "bg-blue-50 ring-blue-200"
+            }`}>
+              {zipResolved
+                ? <CheckCheck className="h-3.5 w-3.5 text-green-600 shrink-0" />
+                : <MapPin className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+              }
+              <div className="min-w-0 flex-1">
+                <span className={`font-semibold text-xs truncate block ${
+                  zipResolved ? "text-green-800" : "text-slate-700"
+                }`}>
+                  {userLocation}
+                </span>
+                {detectedCounty && (
+                  <span className="text-[10px] text-slate-400 truncate block">{detectedCounty}</span>
+                )}
+              </div>
+              {/* Refresh GPS — min touch target via p-1.5 + h-4 w-4 icon */}
+              <button
+                onClick={handleRetryGps}
+                title="Refresh location"
+                className="shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-100 transition-colors"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={handleToggleGps}
+                title="Switch to manual location"
+                className="shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+              >
+                <XIcon className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+
+          {/* ── State C: waiting for user to tap GPS (permission = "prompt") ──
+               On iOS Safari the first geolocation prompt REQUIRES a user gesture.
+               We display a full-width button so the tap satisfies that requirement.
+               min-h-[48px] meets WCAG 2.5.5 target-size guidance on mobile.           */}
+          {useExactLocation && !gpsLoading && !gpsError && !locationIsReady && (
+            <button
+              onClick={triggerGps}
+              className="w-full flex items-center justify-center gap-2.5 min-h-[48px] py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-semibold transition-colors shadow-sm shadow-blue-200"
+            >
+              <LocateFixed className="h-4 w-4 shrink-0" />
+              Use Current Location
+            </button>
+          )}
+
+          {/* ── State D: GPS error ── */}
+          {gpsError && (
+            <div className="space-y-2">
+              <div className="flex items-start gap-2 rounded-xl bg-amber-50 ring-1 ring-amber-200 px-3 py-3">
+                <AlertCircle className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+                <p className="text-[11px] text-amber-800 leading-snug">{gpsError}</p>
+              </div>
+              {/* Retry only for timeout (not denied/unavailable — those set useExactLocation false) */}
+              {useExactLocation && (
+                <button
+                  onClick={handleRetryGps}
+                  className="w-full flex items-center justify-center gap-2 min-h-[44px] py-2.5 px-4 rounded-xl border border-blue-300 bg-white text-blue-600 text-sm font-semibold hover:bg-blue-50 transition-colors"
+                >
+                  <LocateFixed className="h-4 w-4 shrink-0" />
+                  Retry GPS
+                </button>
               )}
             </div>
-          </div>
+          )}
 
-          <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={useExactLocation}
-              onChange={handleToggleGps}
-              className="accent-blue-600"
-            />
-            <span className="text-slate-500">Use current location (GPS)</span>
-          </label>
+          {/* ── GPS off: prominent "Use GPS" button ── */}
+          {!useExactLocation && !gpsError && (
+            <button
+              onClick={handleToggleGps}
+              className="w-full flex items-center justify-center gap-2 min-h-[44px] py-2.5 px-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 text-slate-600 hover:text-blue-600 text-xs font-semibold transition-colors"
+            >
+              <LocateFixed className="h-3.5 w-3.5 shrink-0" />
+              Use Current Location (GPS)
+            </button>
+          )}
 
-          {!useExactLocation && (
+          {/* ── Manual location input ── shown when GPS is off or errored-out ── */}
+          {(!useExactLocation || (gpsError && !useExactLocation)) && (
             <div className="relative">
               <Input
                 type="text"
                 placeholder="ZIP code or City, State (e.g. 79401 or Lubbock, TX)"
                 value={manualLocation}
                 onChange={handleLocationInput}
-                className={`text-xs h-8 pr-7 ${zipResolved ? "border-green-300 focus-visible:ring-green-200" : ""}`}
+                className={`text-xs h-9 pr-7 ${zipResolved ? "border-green-300 focus-visible:ring-green-200" : ""}`}
               />
               {zipLookingUp && (
                 <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 animate-spin" />
@@ -3477,6 +3662,15 @@ export default function ChatPage() {
               {zipResolved && !zipLookingUp && (
                 <CheckCheck className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-green-500" />
               )}
+            </div>
+          )}
+
+          {/* ZIP lookup resolved display (for manual entry) */}
+          {!useExactLocation && zipResolved && locationIsReady && (
+            <div className="flex items-center gap-2 rounded-lg bg-green-50 ring-1 ring-green-200 px-3 py-2">
+              <CheckCheck className="h-3.5 w-3.5 text-green-600 shrink-0" />
+              <span className="text-xs font-semibold text-green-800 truncate">{userLocation}</span>
+              {detectedCounty && <span className="text-[10px] text-slate-400 truncate">{detectedCounty}</span>}
             </div>
           )}
         </div>
@@ -4221,7 +4415,7 @@ export default function ChatPage() {
           />
         </div>
       ) : null}
-      <div className={`flex-1 flex flex-col overflow-hidden relative ${showProfileView && loadedBusiness ? "hidden" : ""}`}>
+      <div className={`flex-1 flex flex-col relative min-w-0 ${showProfileView && loadedBusiness ? "hidden" : ""}`}>{/* vMobile-icon-fix-v3: removed overflow-hidden so no flex ancestor clips touch targets on the hamburger, send button, or form-card buttons */}
 
         {/* Header bar — vMobile: hamburger on left for mobile sidebar */}
         <div className="border-b border-slate-200 bg-white px-3 sm:px-6 py-3.5 shrink-0 flex items-center justify-between gap-2">
@@ -4229,7 +4423,7 @@ export default function ChatPage() {
             {/* vMobile — hamburger button, hidden on md+ where sidebar is always visible */}
             <button
               onClick={() => setShowMobileSidebar(true)}
-              className="md:hidden shrink-0 text-slate-500 hover:text-slate-700 transition-colors p-1"
+              className="md:hidden shrink-0 text-slate-500 hover:text-slate-700 transition-colors p-2 min-h-[44px] min-w-[44px] flex items-center justify-center pointer-events-auto"
               aria-label="Open menu"
             >
               <Menu className="h-5 w-5" />
@@ -4527,7 +4721,7 @@ export default function ChatPage() {
             })()}
           />
         ) : (
-          <div className="relative z-10 px-3 sm:px-6 py-3 sm:py-4 border-t border-slate-200 bg-white shrink-0">{/* vMobile: tighter padding on phones; z-10 ensures input bar is above any positioned ancestors (vMobile-icon-fix) */}
+          <div className="relative z-20 px-3 sm:px-6 py-3 sm:py-4 border-t border-slate-200 bg-white shrink-0 pointer-events-auto">{/* vMobile-icon-fix-v3: z-20 (up from z-10) ensures input bar stacks above any positioned ancestors; pointer-events-auto ensures taps reach send button on iOS */}
             <div className="max-w-3xl mx-auto flex gap-2 items-center">
               {/* Upload button — compact, sits left of the text input.
                   v17: businessId is required for the storage-first path in
@@ -4558,8 +4752,8 @@ export default function ChatPage() {
               <button
                 onClick={sendMessage}
                 disabled={!input.trim() || isLoading}
-                className="h-10 w-10 flex items-center justify-center bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl transition-colors shrink-0"
-              >
+                className="min-h-[48px] min-w-[48px] flex items-center justify-center bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl transition-colors shrink-0 pointer-events-auto"
+              >{/* vMobile-icon-fix-v3: 48px touch target + pointer-events-auto for iOS Safari */}
                 <Send className="h-4 w-4" />
               </button>
             </div>

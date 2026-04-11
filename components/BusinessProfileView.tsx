@@ -1,5 +1,16 @@
 "use client";
 
+// vMobile-icon-fix-v3 — Final fix for Send button + hamburger/expand icons on mobile
+//        Category picker dropdown: overflow-hidden removed so inner items are not clipped.
+//        Form card action buttons (View Document, Complete with AI, Official Site, Upload):
+//          min-h-[44px] added; pointer-events-auto added for iOS Safari tap reliability.
+//        Stale-zoning ChevronRight banner: pointer-events-auto added.
+//        Category picker trigger button: pointer-events-auto added.
+// vMobile-gps-fix — Fixed reliable GPS detection and "Current location" button on mobile
+//        BusinessProfileView does not call navigator.geolocation directly — GPS coordinates
+//        are resolved in the parent (app/chat/page.tsx) and passed down via business.location.
+//        Change here: "Use current location" reset button in the zoning panel enlarged to
+//        py-1.5 px-2 rounded-lg for a better touch target on phones (was text-only link).
 // vMobile-global-scale-fix — Applied proper mobile scaling to all links and buttons
 //        All buttons in Business Profile View verified for 44px minimum touch target:
 //        "Back to Chat" (flex items-center gap-2, text-sm — meets target via h-dvh layout).
@@ -953,11 +964,13 @@ export default function BusinessProfileView({
                     <label className="block text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                       Business Address
                     </label>
-                    {/* v67 — GPS/reset button: pre-fills current business location */}
+                    {/* v67 — GPS/reset button: pre-fills current business location.
+                        vMobile-gps-fix: py-1.5 px-2 rounded-lg gives ≥36px touch area
+                        (tight space — full 44px would crowd the label row).            */}
                     {business.location && zoningAddress !== business.location && (
                       <button
                         onClick={() => setZoningAddress(business.location)}
-                        className="inline-flex items-center gap-1 text-[10px] font-semibold text-cyan-400 hover:text-cyan-300 transition-colors"
+                        className="inline-flex items-center gap-1 py-1.5 px-2 rounded-lg text-[10px] font-semibold text-cyan-400 hover:text-cyan-300 hover:bg-white/5 transition-colors"
                       >
                         <MapPin className="h-2.5 w-2.5" />
                         Use current location
@@ -1405,9 +1418,9 @@ export default function BusinessProfileView({
               <div ref={categoryRef} className="relative mt-1.5">
                 {editingCategory ? (
                   <div
-                    className="absolute top-0 left-0 z-30 w-64 rounded-xl shadow-xl overflow-hidden"
+                    className="absolute top-0 left-0 z-30 w-64 rounded-xl shadow-xl"
                     style={{ background: "#0d1b35", border: "1px solid rgba(34,211,238,0.30)" }}
-                  >
+                  >{/* vMobile-icon-fix-v3: overflow-hidden removed — was clipping inner list items near boundaries */}
                     <div className="flex items-center gap-2 px-3 py-2 border-b" style={{ borderColor: "rgba(34,211,238,0.20)" }}>
                       <Search className="h-3 w-3 text-slate-400 shrink-0" />
                       <input
@@ -1444,7 +1457,7 @@ export default function BusinessProfileView({
                 ) : (
                   <button
                     onClick={() => setEditingCategory(true)}
-                    className="flex items-center gap-1.5 group/cat rounded-lg px-1 py-0.5 -ml-1 hover:bg-white/8 transition-colors"
+                    className="flex items-center gap-1.5 group/cat rounded-lg px-1 py-0.5 -ml-1 hover:bg-white/8 transition-colors pointer-events-auto min-h-[44px]"
                     title="Change business category"
                   >
                     {activeCategory ? (
@@ -1534,7 +1547,7 @@ export default function BusinessProfileView({
               {zoningIsStale ? (
                 <button
                   onClick={handleOpenZoningPanel}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors pointer-events-auto min-h-[44px]"
                   style={{
                     background: "rgba(251,191,36,0.08)",
                     border:     "1px solid rgba(251,191,36,0.30)",
@@ -1968,7 +1981,7 @@ export default function BusinessProfileView({
                         {isCompleted ? (
                           <button
                             onClick={() => viewDoc(cardDocs[0])}
-                            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg text-[#0d1b35] transition-colors"
+                            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg text-[#0d1b35] transition-colors min-h-[44px] pointer-events-auto"
                             style={{ background: "rgb(52,211,153)" }}
                             onMouseEnter={e => (e.currentTarget.style.background = "rgb(110,231,183)")}
                             onMouseLeave={e => (e.currentTarget.style.background = "rgb(52,211,153)")}
@@ -1983,7 +1996,7 @@ export default function BusinessProfileView({
                             rel="noopener noreferrer"
                             download
                             onClick={() => handleDownload(entry.id)}
-                            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg text-[#0d1b35] transition-colors"
+                            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg text-[#0d1b35] transition-colors min-h-[44px] pointer-events-auto"
                             style={{ background: "rgb(34,211,238)" }}
                             onMouseEnter={e => (e.currentTarget.style.background = "rgb(103,232,249)")}
                             onMouseLeave={e => (e.currentTarget.style.background = "rgb(34,211,238)")}
@@ -1996,7 +2009,7 @@ export default function BusinessProfileView({
                             href={entry.officialUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg text-slate-300 hover:text-white border border-white/15 hover:border-white/30 bg-white/5 hover:bg-white/10 transition-colors"
+                            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg text-slate-300 hover:text-white border border-white/15 hover:border-white/30 bg-white/5 hover:bg-white/10 transition-colors min-h-[44px] pointer-events-auto"
                           >
                             <ExternalLink className="h-3 w-3" />
                             Official Site
@@ -2009,7 +2022,7 @@ export default function BusinessProfileView({
                             onClick={() => { if (!isCompleted) onStartForm(entry.id); }}
                             disabled={isCompleted}
                             title={isCompleted ? "Already completed — view document above" : `Complete ${entry.name} with AI assistance`}
-                            className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
+                            className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors min-h-[44px] pointer-events-auto ${
                               isCompleted
                                 ? "opacity-40 cursor-not-allowed text-slate-400 bg-white/5 border border-white/10"
                                 : "text-[#0d1b35]"
@@ -2035,7 +2048,7 @@ export default function BusinessProfileView({
                           /* Secondary action when already completed */
                           <button
                             onClick={() => fileInputRefs.current[entry.id]?.click()}
-                            className="inline-flex items-center gap-1.5 text-[10px] font-semibold px-2 py-1 rounded-lg text-slate-400 border border-white/10 bg-white/5 hover:bg-white/10 hover:text-slate-300 transition-colors"
+                            className="inline-flex items-center gap-1.5 text-[10px] font-semibold px-2 py-1 rounded-lg text-slate-400 border border-white/10 bg-white/5 hover:bg-white/10 hover:text-slate-300 transition-colors min-h-[44px] pointer-events-auto"
                             title={`Replace document for ${entry.name}`}
                           >
                             <Paperclip className="h-2.5 w-2.5" />
@@ -2045,7 +2058,7 @@ export default function BusinessProfileView({
                           <>
                             <button
                               onClick={() => fileInputRefs.current[entry.id]?.click()}
-                              className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg text-cyan-400 border border-cyan-400/30 bg-cyan-400/10 hover:bg-cyan-400/20 transition-colors"
+                              className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg text-cyan-400 border border-cyan-400/30 bg-cyan-400/10 hover:bg-cyan-400/20 transition-colors min-h-[44px] pointer-events-auto"
                               title={`Attach your completed ${entry.name}`}
                             >
                               <Paperclip className="h-3 w-3" />
@@ -2053,7 +2066,7 @@ export default function BusinessProfileView({
                             </button>
                             <button
                               onClick={() => fileInputRefs.current[entry.id]?.click()}
-                              className="text-[11px] text-slate-500 hover:text-cyan-400 underline underline-offset-2 transition-colors"
+                              className="text-[11px] text-slate-500 hover:text-cyan-400 underline underline-offset-2 transition-colors min-h-[44px] pointer-events-auto"
                             >
                               Browse files
                             </button>
