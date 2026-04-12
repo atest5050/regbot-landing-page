@@ -1,3 +1,4 @@
+// vMobile-location-scroll-fix — AI now respects detected location + compliance table is scrollable on mobile
 // vMobile-icon-fix-v3 — Final fix for Send button + hamburger/expand icons on mobile
 //        Send button: min-h-[48px] min-w-[48px] + pointer-events-auto; z-index lifted to z-20.
 //        Hamburger: pointer-events-auto added; chat container overflow-hidden removed.
@@ -1214,6 +1215,16 @@ export default function ChatPage() {
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsError,   setGpsError]   = useState<string | null>(null);
 
+  // vMobile-location-fix — refs that always hold the latest location values.
+  // Plain async functions (like callApi, sendMessage) capture their enclosing render's
+  // state via closure. If GPS resolves and schedules a re-render but the user taps Send
+  // before the re-render completes, the old closure still carries "Detecting location..."
+  // as userLocation. Reading from refs instead of closure state guarantees callApi always
+  // sends the most-current resolved location and county to the API.
+  const userLocationRef   = useRef(userLocation);
+  const detectedCountyRef = useRef<string | null>(detectedCounty);
+  const gpsLoadingRef     = useRef(false);
+
   // ── Form state ────────────────────────────────────────────────────────────
   const [activeTemplate, setActiveTemplate]             = useState<FormTemplate | null>(null);
   const [formQueue, setFormQueue]                       = useState<FormTemplate[]>([]);
@@ -1537,6 +1548,12 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, activeTemplate, showPacketScreen]);
 
+  // vMobile-location-fix: keep location refs in sync with state on every render.
+  // Must come before callApi so the refs are always current when the user sends a message.
+  useEffect(() => { userLocationRef.current   = userLocation;   }, [userLocation]);
+  useEffect(() => { detectedCountyRef.current = detectedCounty; }, [detectedCounty]);
+  useEffect(() => { gpsLoadingRef.current     = gpsLoading;     }, [gpsLoading]);
+
   // ── Auto-save the active business profile ─────────────────────────────────
   // Whenever the checklist, completed-forms map, or messages change while a
   // business is loaded, write the updated profile back to storage.
@@ -1825,17 +1842,63 @@ export default function ChatPage() {
   };
 
   // ── API helper ────────────────────────────────────────────────────────────
+  //
+  // vMobile-location-fix — AI now respects detected GPS location; no longer asks for
+  // manual input when badge is populated.
+  //
+  // Two-pronged fix:
+  //   1. Read location from refs (not closure state) so a GPS resolve that races with a
+  //      Send tap never sends "Detecting location..." to the server system prompt.
+  //   2. When location is confirmed, prepend a synthetic user↔assistant exchange to the
+  //      messages array before sending to the API. This anchors the location in the
+  //      conversation history so the AI never asks "What city/state are you in?" even
+  //      if an earlier turn in the thread left that question open.
+  //      The synthetic pair is NOT stored in the UI messages state — it is API-only.
 
   const callApi = async (outgoingMessages: Message[]) => {
     setIsLoading(true);
     try {
+      // Always read from refs so we get the latest resolved values, not the closure snapshot
+      const loc = userLocationRef.current;
+      const cty = detectedCountyRef.current;
+      const locResolved =
+        !gpsLoadingRef.current &&
+        loc !== "Detecting location..." &&
+        loc !== "Enter location"          &&
+        loc !== "Resolving ZIP…"          &&
+        !loc.startsWith("Detecting");
+
+      // Build the messages array for the API call.
+      // Strip the UI-only WELCOME_MESSAGE (id:"welcome", role:"assistant") — it must never
+      // appear in the API call because:
+      //  a) Anthropic requires alternating user/assistant turns; a leading "assistant" turn
+      //     is tolerated by itself but causes a "two consecutive assistant" error when we
+      //     prepend the synthetic location pair below.
+      //  b) The welcome text is irrelevant context for the model.
+      const apiMessages: { role: "user" | "assistant"; content: string }[] =
+        outgoingMessages
+          .filter(m => m.id !== "welcome")   // vMobile-location-scroll-fix: drop UI welcome
+          .map(m => ({ role: m.role as "user" | "assistant", content: m.content }));
+
+      // If location is confirmed, prepend a synthetic exchange so the AI always sees the
+      // location confirmed in conversation history. This stops it from asking "where are
+      // you located?" even if an earlier turn in the thread left that question open.
+      // Safe to unshift now because apiMessages starts with a user turn (welcome stripped).
+      if (locResolved) {
+        const locationCtx = `${loc}${cty ? ` (${cty})` : ""}`;
+        apiMessages.unshift(
+          { role: "user",      content: `My location is ${locationCtx}.` },
+          { role: "assistant", content: `Got it — I'll provide compliance guidance specific to ${locationCtx}. What type of business are you starting or operating?` },
+        );
+      }
+
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: outgoingMessages.map(m => ({ role: m.role, content: m.content })),
-          location: userLocation,
-          county:   detectedCounty ?? undefined,
+          messages: apiMessages,
+          location: locResolved ? loc : (userLocation || "Unknown location"),
+          county:   locResolved ? (cty ?? undefined) : (detectedCounty ?? undefined),
         }),
       });
       const data = await res.json();
@@ -3770,7 +3833,7 @@ export default function ChatPage() {
             );
           })()}
 
-          <div ref={checklistTopRef} className="flex-1 overflow-y-auto px-4 pb-2">
+          <div ref={checklistTopRef} className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain px-4 pb-2">{/* vMobile-location-scroll-fix: min-h-0 allows flex-1 to shrink below content size so overflow-y-auto actually scrolls on mobile instead of overflowing the sidebar */}
             <EnhancedChecklist
               items={checklist}
               onUpdate={(id, changes) =>
