@@ -1,5 +1,6 @@
 "use client";
 
+// vMobile-diagnosis-final-fix — overflow-hidden on root div so body flex-1 min-h-0 can actually scroll on mobile
 // vMobile-final-deploy-fix — Fixed scrolling in compliance + business profile, zoning button, and AI location awareness on mobile
 // vMobile-icon-fix-v3 — Final fix for Send button + hamburger/expand icons on mobile
 //        Category picker dropdown: overflow-hidden removed so inner items are not clipped.
@@ -746,9 +747,11 @@ export default function BusinessProfileView({
   // does not need overflow-hidden for correct layout behaviour.
   return (
     <div
-      className="flex-1 flex flex-col relative"
+      className="flex-1 flex flex-col relative overflow-hidden"
       style={{ background: "linear-gradient(160deg, #0d1b35 0%, #0f2847 100%)" }}
-    >
+    >{/* vMobile-diagnosis-final-fix: overflow-hidden constrains the flex column so the body
+         div (flex-1 min-h-0 overflow-y-auto) can actually scroll. Without this the root div
+         has no height ceiling and min-h-0 on the body has nothing to shrink against. */}
 
       {/* ── v39 — Leave-guard modal ──────────────────────────────────────── */}
       {showLeaveModal && (

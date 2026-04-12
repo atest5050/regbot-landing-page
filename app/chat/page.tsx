@@ -1,3 +1,4 @@
+// vMobile-diagnosis-final-fix — Always inject location context (even pre-GPS); shrink-0 on sidebar sections; min-h-0 audit
 // vMobile-final-deploy-fix — Fixed scrolling in compliance + business profile, zoning button, and AI location awareness on mobile
 // vMobile-location-scroll-fix — AI now respects detected location + compliance table is scrollable on mobile
 // vMobile-icon-fix-v3 — Final fix for Send button + hamburger/expand icons on mobile
@@ -1859,14 +1860,17 @@ export default function ChatPage() {
   const callApi = async (outgoingMessages: Message[]) => {
     setIsLoading(true);
     try {
-      // Always read from refs so we get the latest resolved values, not the closure snapshot
+      // Always read from refs so we get the latest resolved values, not the closure snapshot.
+      // vMobile-diagnosis-final-fix: hasRealLoc no longer gates on !gpsLoadingRef.current —
+      // on iOS first visit GPS hasn't started yet (requires sidebar gesture) so gpsLoading is
+      // false AND loc is still "Detecting location...". We only check the string value; the
+      // gpsLoading flag only means we should prefer the string once it resolves.
       const loc = userLocationRef.current;
       const cty = detectedCountyRef.current;
-      const locResolved =
-        !gpsLoadingRef.current &&
+      const hasRealLoc =
         loc !== "Detecting location..." &&
-        loc !== "Enter location"          &&
-        loc !== "Resolving ZIP…"          &&
+        loc !== "Enter location"        &&
+        loc !== "Resolving ZIP…"        &&
         !loc.startsWith("Detecting");
 
       // Build the messages array for the API call.
@@ -1881,15 +1885,24 @@ export default function ChatPage() {
           .filter(m => m.id !== "welcome")   // vMobile-location-scroll-fix: drop UI welcome
           .map(m => ({ role: m.role as "user" | "assistant", content: m.content }));
 
-      // If location is confirmed, prepend a synthetic exchange so the AI always sees the
-      // location confirmed in conversation history. This stops it from asking "where are
-      // you located?" even if an earlier turn in the thread left that question open.
-      // Safe to unshift now because apiMessages starts with a user turn (welcome stripped).
-      if (locResolved) {
+      // vMobile-diagnosis-final-fix: ALWAYS inject a synthetic exchange so the AI never asks
+      // "Where are you located?" regardless of GPS state.
+      //   • hasRealLoc → real city/state confirmed; inject the normal "My location is …" pair.
+      //   • !hasRealLoc → GPS not yet resolved (first visit, iOS prompt not shown); inject a
+      //     "don't ask for location" anchor so the AI waits for the user to provide it naturally
+      //     rather than interrupting with a city/state prompt.
+      // Safe to unshift because apiMessages starts with a user turn (welcome stripped above).
+      if (hasRealLoc) {
         const locationCtx = `${loc}${cty ? ` (${cty})` : ""}`;
         apiMessages.unshift(
           { role: "user",      content: `My location is ${locationCtx}.` },
           { role: "assistant", content: `Got it — I'll provide compliance guidance specific to ${locationCtx}. What type of business are you starting or operating?` },
+        );
+      } else {
+        // Location not yet available — tell the AI to proceed without asking for it.
+        apiMessages.unshift(
+          { role: "user",      content: "My location is still being detected. Please help me with my question and do not ask me for my city, state, or ZIP code — I'll provide location details when available." },
+          { role: "assistant", content: "Of course — I'll assist you now and apply location-specific compliance details once your location is confirmed." },
         );
       }
 
@@ -1898,8 +1911,8 @@ export default function ChatPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: apiMessages,
-          location: locResolved ? loc : (userLocation || "Unknown location"),
-          county:   locResolved ? (cty ?? undefined) : (detectedCounty ?? undefined),
+          location: hasRealLoc ? loc : (userLocation || "Unknown location"),
+          county:   hasRealLoc ? (cty ?? undefined) : (detectedCounty ?? undefined),
         }),
       });
       const data = await res.json();
@@ -3469,7 +3482,8 @@ export default function ChatPage() {
         </div>
 
         {/* ── Auth panel ─────────────────────────────────────────────────── */}
-        <div className="border-b border-slate-100">
+        {/* vMobile-diagnosis-final-fix: shrink-0 prevents this section from being squeezed by flex-1 compliance dashboard */}
+        <div className="shrink-0 border-b border-slate-100">
           {authLoading ? null : user ? (
             /* Signed-in: compact status bar */
             <div className="flex items-center gap-2 px-4 py-2.5">
@@ -3606,7 +3620,8 @@ export default function ChatPage() {
                gpsError             → error banner + conditional retry
                !useExactLocation    → manual ZIP/city input
              ─────────────────────────────────────────────────────────────── */}
-        <div className="px-4 py-4 border-b border-slate-100 space-y-3">
+        {/* vMobile-diagnosis-final-fix: shrink-0 keeps location panel pinned so it never gets squeezed by the flex-1 compliance dashboard below */}
+        <div className="shrink-0 px-4 py-4 border-b border-slate-100 space-y-3">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
             Your Location
           </p>
