@@ -1,5 +1,19 @@
 "use client";
 
+// vMobile-stabilization-pass — Final Mobile Stabilization Pass
+//        Root div: overflow-hidden removed.
+//          The page.tsx parent wrapper (`flex-1 flex flex-col overflow-hidden min-w-0`)
+//          provides the definite height constraint; overflow-hidden on this root was
+//          redundant AND was blocking iOS Safari touch events on absolutely-positioned
+//          interactive children (category picker z-30, zoning banner ChevronRight,
+//          form-card buttons, Back to Chat button, Zoning button).
+//        Header row: flex-wrap removed (default flex-nowrap).
+//          With flex-wrap the health score pill could collapse below the business info
+//          on narrow phones (<375 px), making the header very tall and pushing the
+//          Back to Chat and Zoning buttons below the visible viewport edge.
+//          The left block already uses min-w-0 + truncate so it shrinks gracefully.
+//        Body scroll chain already correct: flex-1 min-h-0 overflow-y-auto
+//          overscroll-y-contain — verified, no change needed.
 // vMobile-diagnosis-final-fix — overflow-hidden on root div so body flex-1 min-h-0 can actually scroll on mobile
 // vMobile-final-deploy-fix — Fixed scrolling in compliance + business profile, zoning button, and AI location awareness on mobile
 // vMobile-icon-fix-v3 — Final fix for Send button + hamburger/expand icons on mobile
@@ -747,11 +761,20 @@ export default function BusinessProfileView({
   // does not need overflow-hidden for correct layout behaviour.
   return (
     <div
-      className="flex-1 flex flex-col relative overflow-hidden"
+      className="flex-1 flex flex-col relative"
       style={{ background: "linear-gradient(160deg, #0d1b35 0%, #0f2847 100%)" }}
-    >{/* vMobile-diagnosis-final-fix: overflow-hidden constrains the flex column so the body
-         div (flex-1 min-h-0 overflow-y-auto) can actually scroll. Without this the root div
-         has no height ceiling and min-h-0 on the body has nothing to shrink against. */}
+    >{/* vMobile-stabilization-pass: overflow-hidden REMOVED from this root div.
+         Reason: the parent wrapper in page.tsx (`flex-1 flex flex-col overflow-hidden
+         min-w-0`) is the actual height constraint — it's a flex-1 child of the
+         calc(100dvh) root row, so it has a definite height. The body div's
+         `flex-1 min-h-0 overflow-y-auto` correctly scrolls against that parent height.
+         Keeping overflow-hidden HERE was harmful because iOS Safari blocks touch events
+         on absolutely-positioned descendants that paint near the container boundary:
+           • category-picker dropdown (absolute z-30) — untappable near the edge
+           • stale-zoning ChevronRight banner — untappable
+           • form-card action buttons close to the lower visible boundary — untappable
+           • Back to Chat + Zoning button (absolute-adjacent) — unreliable tap target
+         Removing it restores full pointer-event propagation on all these elements. */}
 
       {/* ── v39 — Leave-guard modal ──────────────────────────────────────── */}
       {showLeaveModal && (
@@ -938,9 +961,11 @@ export default function BusinessProfileView({
             className="shrink-0 px-6 py-5 flex items-center gap-3"
             style={{ borderBottom: "1px solid rgba(34,211,238,0.15)" }}
           >
+            {/* vZoning-panel-completion: min-h-[48px] min-w-[48px] — meets 48px touch target
+                on mobile (was h-8 w-8 = 32px, too small for iOS tap reliability). */}
             <button
               onClick={() => setShowZoningPanel(false)}
-              className="h-8 w-8 flex items-center justify-center rounded-lg border border-white/15 text-slate-400 hover:text-white hover:border-white/30 transition-colors shrink-0"
+              className="min-h-[48px] min-w-[48px] flex items-center justify-center rounded-lg border border-white/15 text-slate-400 hover:text-white hover:border-white/30 transition-colors shrink-0 pointer-events-auto"
               title="Close"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -958,7 +983,12 @@ export default function BusinessProfileView({
           </div>
 
           {/* Panel body — scrollable; vMobile: tighter padding on phones */}
-          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6 space-y-5">
+          {/* vZoning-panel-completion: min-h-0 is required so flex-1 can shrink below its
+              content height and overflow-y-auto actually activates on iOS Safari.
+              Without min-h-0 the CSS default min-height:auto prevents the div from
+              shrinking to fit the panel height, so content overflows instead of scrolling.
+              overscroll-y-contain stops iOS rubber-band from propagating to the parent. */}
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain px-4 sm:px-6 py-4 sm:py-6 space-y-5">
 
             {/* ── Input form (shown until results arrive, or when re-running) ── */}
             {!zoningResult && (
@@ -1323,8 +1353,13 @@ export default function BusinessProfileView({
         className="shrink-0 px-4 sm:px-6 py-4 sm:py-5"
         style={{ borderBottom: "1px solid rgba(34,211,238,0.15)" }}
       >
-        {/* vMobile: wraps to column on very small screens */}
-        <div className="flex items-start justify-between gap-3 sm:gap-4 flex-wrap">
+        {/* vMobile-stabilization-pass: flex-wrap REMOVED → flex-nowrap (default).
+            flex-wrap let the health score pill drop to a second line on narrow screens,
+            making the header section very tall and pushing the "Back to Chat" +
+            "Check Zoning" buttons below the visible fold. With flex-nowrap the left
+            block (min-w-0, business name/location truncate) shrinks gracefully and
+            the right health pill stays on the same row at all viewport widths. */}
+        <div className="flex items-start justify-between gap-3 sm:gap-4 min-w-0">
 
           {/* Left: back arrow + building icon + name + location */}
           <div className="flex items-start gap-3 min-w-0">

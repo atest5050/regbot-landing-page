@@ -1,3 +1,13 @@
+// vMobile-stabilization-pass — Final Mobile Stabilization Pass
+//        1. Chat messages div: min-h-0 + overscroll-y-contain added.
+//           Without min-h-0 the flex-1 child's default min-height:auto blocks overflow-y-auto
+//           from activating — content overflows the viewport instead of scrolling on mobile.
+//        2. Location guarantee: callApi's synthetic exchange (hasRealLoc path → real city/state
+//           injected as first turn; !hasRealLoc path → "don't ask" anchor injected) already
+//           ensures GPS context is always present before any quick-reply or first AI message.
+//           No sendQuickReply logic change needed — callApi reads from live refs.
+//        3. Sidebar checklist already has flex-1 min-h-0 overflow-y-auto overscroll-y-contain
+//           (from vMobile-location-scroll-fix) — verified correct, no change needed.
 // vMobile-diagnosis-final-fix — Always inject location context (even pre-GPS); shrink-0 on sidebar sections; min-h-0 audit
 // vMobile-final-deploy-fix — Fixed scrolling in compliance + business profile, zoning button, and AI location awareness on mobile
 // vMobile-location-scroll-fix — AI now respects detected location + compliance table is scrollable on mobile
@@ -3433,13 +3443,27 @@ export default function ChatPage() {
         />
       )}
       {/* vMobile: sidebar is hidden on mobile by default; slides in as fixed drawer when showMobileSidebar */}
-      <div className={`
-        fixed inset-y-0 left-0 z-50 w-72 flex flex-col shrink-0 overflow-hidden
-        border-r border-slate-200 bg-white
-        transition-transform duration-300
-        ${showMobileSidebar ? "translate-x-0" : "-translate-x-full"}
-        md:static md:translate-x-0 md:flex
-      `}>{/* vMobile-final-deploy-fix: overflow-hidden constrains the flex column so flex-1 children can actually shrink/scroll on mobile */}
+      <div
+        className={`
+          fixed inset-y-0 left-0 z-50 w-72 flex flex-col shrink-0 overflow-hidden
+          border-r border-slate-200 bg-white
+          transition-transform duration-300
+          ${showMobileSidebar ? "translate-x-0" : "-translate-x-full"}
+          md:static md:translate-x-0 md:flex
+        `}
+        style={{
+          // vMobile-stabilization-verification-and-polish: The sidebar is `fixed inset-y-0`
+          // on mobile (slides in as a drawer), which means it starts at top:0 / bottom:0 and
+          // bypasses the body-level env(safe-area-inset-*) padding applied in layout.tsx.
+          // Without these insets the brand header sits under the notch on iPhone X+ and the
+          // bottom of the checklist is obscured by the home indicator.
+          // `md:static` restores normal flow on desktop so these values have no effect there
+          // (env(safe-area-inset-*) resolves to 0 when viewport-fit is not cover, and on
+          // desktop there is no notch/home-bar anyway).
+          paddingTop:    "env(safe-area-inset-top)",
+          paddingBottom: "env(safe-area-inset-bottom)",
+        }}
+      >{/* vMobile-final-deploy-fix: overflow-hidden constrains the flex column so flex-1 children can actually shrink/scroll on mobile */}
 
         {/* Brand — neo-futurist glass header */}
         <div className="rp-brand-header flex items-center gap-2.5 px-4 py-3.5">
@@ -4546,7 +4570,13 @@ export default function ChatPage() {
         </div>
 
         {/* Messages list — vMobile: tighter padding on small screens */}
-        <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-5">
+        {/* vMobile-stabilization-pass: min-h-0 is required so flex-1 can shrink below its
+            content height, which is what allows overflow-y-auto to actually activate on
+            mobile. Without min-h-0 the CSS default min-height:auto prevents the div from
+            shrinking, so it expands to content height and overflows the viewport instead
+            of scrolling. overscroll-y-contain stops iOS rubber-band from bleeding to the
+            parent document when the user scrolls past the top/bottom of the list. */}
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-5">
           {messages.map((msg) => (
             <div
               key={msg.id}
