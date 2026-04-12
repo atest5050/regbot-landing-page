@@ -1,5 +1,6 @@
 "use client";
 
+// vMobile-final-deploy-fix — Fixed scrolling in compliance + business profile, zoning button, and AI location awareness on mobile
 // vMobile-icon-fix-v3 — Final fix for Send button + hamburger/expand icons on mobile
 //        Category picker dropdown: overflow-hidden removed so inner items are not clipped.
 //        Form card action buttons (View Document, Complete with AI, Official Site, Upload):
@@ -1491,20 +1492,20 @@ export default function BusinessProfileView({
           )}
         </div>
 
-        {/* Back to Chat wide button */}
+        {/* Back to Chat wide button — vMobile-final-deploy-fix: min-h-[48px] touch target */}
         <button
           onClick={() => handleLeaveAttempt(onBackToChat)}
-          className="mt-4 w-full flex items-center justify-center gap-2 text-xs font-semibold text-slate-300 hover:text-white border border-white/10 hover:border-white/25 bg-white/5 hover:bg-white/10 rounded-lg py-2 transition-colors"
+          className="mt-4 w-full flex items-center justify-center gap-2 text-xs font-semibold text-slate-300 hover:text-white border border-white/10 hover:border-white/25 bg-white/5 hover:bg-white/10 rounded-xl min-h-[48px] pointer-events-auto transition-colors"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Back to Chat
         </button>
 
-        {/* v67 — Adaptive Zoning button: shows existing status when result attached */}
+        {/* vMobile-final-deploy-fix — Zoning button: min-h-[48px] touch target + pointer-events-auto for iOS Safari */}
         {onCheckZoning && !attachedZoningDoc && (
           <button
             onClick={handleOpenZoningPanel}
-            className="mt-2 w-full flex items-center justify-center gap-2 text-xs font-semibold transition-colors rounded-lg py-2"
+            className="mt-2 w-full flex items-center justify-center gap-2 text-xs font-semibold transition-colors rounded-xl min-h-[48px] pointer-events-auto"
             style={{
               background: "rgba(34,211,238,0.08)",
               border:     "1px solid rgba(34,211,238,0.30)",
@@ -1589,11 +1590,12 @@ export default function BusinessProfileView({
 
       {/* ════════════════════════════════════════════════════════════════════
           Body — scrollable
-          vMobile-scale-fix: flex-1 overflow-y-auto is the ONLY scrolling region.
-          The outer container is overflow-hidden so this div clips correctly.
-          overscroll-y-contain prevents scroll-chaining on iOS (bounce bleed).
+          vMobile-final-deploy-fix: min-h-0 added so flex-1 can shrink below
+          its content size and overflow-y-auto actually activates on mobile.
+          Without min-h-0 the default min-height:auto prevents the div from
+          shrinking, so content overflows the viewport instead of scrolling.
           ════════════════════════════════════════════════════════════════════ */}
-      <div className="flex-1 overflow-y-auto overscroll-y-contain">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain">
         {/* vMobile: tighter padding on phones */}
         <div className="px-4 sm:px-6 py-5 sm:py-7 space-y-8 sm:space-y-10 max-w-4xl mx-auto w-full">
 

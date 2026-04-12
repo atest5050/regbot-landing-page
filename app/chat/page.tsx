@@ -1,3 +1,4 @@
+// vMobile-final-deploy-fix — Fixed scrolling in compliance + business profile, zoning button, and AI location awareness on mobile
 // vMobile-location-scroll-fix — AI now respects detected location + compliance table is scrollable on mobile
 // vMobile-icon-fix-v3 — Final fix for Send button + hamburger/expand icons on mobile
 //        Send button: min-h-[48px] min-w-[48px] + pointer-events-auto; z-index lifted to z-20.
@@ -3420,12 +3421,12 @@ export default function ChatPage() {
       )}
       {/* vMobile: sidebar is hidden on mobile by default; slides in as fixed drawer when showMobileSidebar */}
       <div className={`
-        fixed inset-y-0 left-0 z-50 w-72 flex flex-col shrink-0
+        fixed inset-y-0 left-0 z-50 w-72 flex flex-col shrink-0 overflow-hidden
         border-r border-slate-200 bg-white
         transition-transform duration-300
         ${showMobileSidebar ? "translate-x-0" : "-translate-x-full"}
         md:static md:translate-x-0 md:flex
-      `}>
+      `}>{/* vMobile-final-deploy-fix: overflow-hidden constrains the flex column so flex-1 children can actually shrink/scroll on mobile */}
 
         {/* Brand — neo-futurist glass header */}
         <div className="rp-brand-header flex items-center gap-2.5 px-4 py-3.5">
