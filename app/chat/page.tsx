@@ -1,3 +1,26 @@
+// vMobile-PostDeploy-CriticalFixPass — Fix remaining critical mobile regressions
+//        1. Sidebar pointer-events-none when closed: the `-translate-x-full` sidebar is
+//           `fixed z-50` and iOS Safari fires touch-hit-tests at the element's pre-transform
+//           position in certain compositing-layer scenarios. Adding `pointer-events-none` when
+//           `!showMobileSidebar` ensures the off-screen drawer never intercepts taps on the
+//           chat area or BusinessProfileView content beneath it.
+//        2. Unified scroll container + zoning panel body: `touch-action: pan-y` explicitly
+//           tells the browser touch-gesture handler that this element accepts vertical scroll
+//           gestures. Without it, `overflow: hidden` on the parent (sidebar outer div, profile
+//           root) can suppress the gesture routing on iOS Safari, leaving the scroll container
+//           visually present but unresponsive to finger swipes.
+//        3. Brand header shrink-0: the `.rp-brand-header` div had no `shrink-0`; in a flex-col
+//           with tall GPS/auth panels, the flex algorithm can squeeze it below minimum height.
+//        4. `onCategoryChange` wired to `handleCategoryChangeFromProfile`: category changes in
+//           the profile view must update `loadedBusiness.businessType` so `profileRecommendedForms`
+//           useMemo re-derives the correct form list for the new business type.
+//        5. Pass `userLocation` to BusinessProfileView as fallback for zoning panel address:
+//           when `business.location` is blank or GPS-only (no street), the zoning panel now
+//           falls back to the detected GPS location so the address field is never empty.
+//        6. Root height fallback: `100vh` CSS fallback before the `dvh` value ensures the root
+//           flex container has a defined height on iOS < 15.4 / Android Chrome < 108 where
+//           `dvh` is unsupported and would resolve to nothing, collapsing the flex chain and
+//           breaking every `flex-1 min-h-0 overflow-y-auto` scroll container in the tree.
 // vChatZoningContextInjection — AI chat automatically zoning-aware
 //        When a business is loaded and has an attached ZoningResult (persisted as a
 //        synthetic UploadedDocument with formId="zoning-check" and mimeType="application/json"),
@@ -3093,6 +3116,18 @@ export default function ChatPage() {
   }, [loadedBusiness, handleUpdateBusinessFromProfile]);
 
   /**
+   * vMobile-PostDeploy-CriticalFixPass — Thin wrapper: update only the business type.
+   * Called by BusinessProfileView when the user picks a new category from the searchable
+   * picker. Updating loadedBusiness.businessType causes profileRecommendedForms useMemo
+   * to re-derive the correct form list for the new category on the next render.
+   */
+  const handleCategoryChangeFromProfile = useCallback((categoryId: string) => {
+    if (!loadedBusiness) return;
+    handleUpdateBusinessFromProfile({ ...loadedBusiness, businessType: categoryId });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadedBusiness, handleUpdateBusinessFromProfile]);
+
+  /**
    * v35 — Fixed Upload Completed button + Drag & Drop support.
    * Called by BusinessProfileView when the user picks or drops a file on a
    * recommended form card. Immediately adds an optimistic UploadedDocument to
@@ -3417,11 +3452,13 @@ export default function ChatPage() {
     : null;
 
   return (
-    // vMobile-icon-fix — root flex height subtracts body safe-area padding so the container
-    // never overflows the body content area. Without this, body paddingTop + paddingBottom
-    // (env(safe-area-inset-*)) + h-dvh > viewport: the send button / bottom form-card
-    // buttons end up below the iOS viewport edge and become untappable.
-    <div className="flex bg-[#f8f9fb]" style={{ height: "calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom))" }}>{/* vMobile-scale-fix: dvh = dynamic viewport height, correct on iOS Safari */}
+    // vMobile-icon-fix / vMobile-PostDeploy-CriticalFixPass: `h-dvh-safe` (defined in
+    // globals.css) provides a three-tier height fallback: 100vh (all browsers) →
+    // 100svh (iOS 15.4+, Chrome 108+) → 100dvh (dynamic; adjusts as browser chrome
+    // shows/hides). Each tier subtracts env(safe-area-inset-*) for notch/home-bar.
+    // Using a CSS utility class instead of a React style prop avoids the TS error for
+    // the unsupported `dvh`/`svh` units in CSSProperties.
+    <div className="flex bg-[#f8f9fb] h-dvh-safe">{/* vMobile-scale-fix: dvh = dynamic viewport height, correct on iOS Safari */}
 
       {/* v61 — Review Impact modal ─────────────────────────────────────── */}
       {reviewImpactAlert && (
@@ -3600,8 +3637,8 @@ export default function ChatPage() {
           fixed inset-y-0 left-0 z-50 w-72 flex flex-col shrink-0 overflow-hidden
           border-r border-slate-200 bg-white
           transition-transform duration-300
-          ${showMobileSidebar ? "translate-x-0" : "-translate-x-full"}
-          md:static md:translate-x-0 md:flex
+          ${showMobileSidebar ? "translate-x-0" : "-translate-x-full pointer-events-none"}
+          md:static md:translate-x-0 md:flex md:pointer-events-auto
         `}
         style={{
           // vMobile-stabilization-verification-and-polish: The sidebar is `fixed inset-y-0`
@@ -3618,7 +3655,9 @@ export default function ChatPage() {
       >{/* vMobile-final-deploy-fix: overflow-hidden constrains the flex column so flex-1 children can actually shrink/scroll on mobile */}
 
         {/* Brand — neo-futurist glass header */}
-        <div className="rp-brand-header flex items-center gap-2.5 px-4 py-3.5">
+        {/* vMobile-PostDeploy-CriticalFixPass: shrink-0 added — without it the brand header
+            can be squeezed by the flex-1 unified scroller when auth/GPS panels are tall. */}
+        <div className="rp-brand-header flex items-center gap-2.5 px-4 py-3.5 shrink-0">
           <RegPulseIcon size={34} className="shrink-0" />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
@@ -3940,7 +3979,10 @@ export default function ChatPage() {
              FIX: The entire compliance dashboard is now ONE `overflow-y-auto` scroll container.
              Every section (label, health card, checklist, renewals, alerts, upsell, library,
              businesses) lives inside it and scrolls together. No nested scroller needed. */}
-        <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain">
+        {/* vMobile-PostDeploy-CriticalFixPass: touch-action:pan-y explicitly tells iOS Safari
+            that this element accepts vertical scroll gestures. Without it, overflow:hidden on
+            the sidebar outer div can suppress gesture routing to this overflow-y-auto child. */}
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain" style={{ touchAction: "pan-y" }}>
           <div className="px-4 pt-4 pb-2 shrink-0">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
               Compliance Dashboard
@@ -4766,6 +4808,13 @@ export default function ChatPage() {
             onViewDocument={handleViewDocument}
             onUpdateBusinessName={handleUpdateBusinessNameFromProfile}
             onLocationChange={handleLocationChangeFromProfile}
+            // vMobile-PostDeploy-CriticalFixPass: wire onCategoryChange so that picking a
+            // new business type in the profile updates loadedBusiness.businessType, which
+            // causes profileRecommendedForms useMemo to re-derive the correct form list.
+            onCategoryChange={handleCategoryChangeFromProfile}
+            // vMobile-PostDeploy-CriticalFixPass: pass detected GPS location as fallback
+            // for the zoning panel address field when business.location is blank.
+            userLocation={userLocation}
             onSaveDrafts={handleSaveDraftsFromProfile}
             onDiscardDrafts={handleDiscardDraftsFromProfile}
             onViewCompletedForm={handleViewCompletedForm}

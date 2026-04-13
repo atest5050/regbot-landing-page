@@ -68,6 +68,27 @@
           drop-shadow(0 0 3px  rgba(34, 211, 238, 0.30));
 }
 
+/* ── vMobile-PostDeploy-CriticalFixPass: dvh-safe root height ────────────────
+   h-dvh-safe provides a three-tier height fallback for the root chat shell:
+   1. 100vh  — universal fallback (all browsers; includes browser chrome on mobile)
+   2. 100svh — small viewport height (iOS 15.4+, Chrome 108+); excludes retractable
+               browser UI so content never extends under the address bar
+   3. 100dvh — dynamic viewport height (same support); adjusts in real time as the
+               browser chrome shows/hides during scroll
+   Each env(safe-area-inset-*) subtraction clears the iOS notch + home indicator.
+   The cascade means older browsers get 100vh (slightly too tall but scrollable)
+   while modern browsers get the perfect dynamic height with no reflow.
+   Note: we cannot put dvh/svh in React inline style props because TypeScript's
+   CSSProperties type doesn't include them yet — the @layer utilities rule here
+   is the correct escape hatch.                                                  */
+@layer utilities {
+  .h-dvh-safe {
+    height: calc(100vh  - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    height: calc(100svh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+}
+
 /* ── Chat sidebar brand header — neo-futurist glass panel ────────────────────
    Deep navy gradient that echoes the shield's interior, with a hairline cyan
    border at the bottom for a lit-edge glassmorphism effect.                   */

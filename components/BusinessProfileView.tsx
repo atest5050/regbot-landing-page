@@ -1,5 +1,20 @@
 "use client";
 
+// vMobile-PostDeploy-CriticalFixPass — Fix remaining critical mobile regressions
+//        1. touch-action:pan-y on both scroll containers (profile body + zoning panel body):
+//           iOS Safari's gesture recogniser checks ancestors for `overflow: hidden` before
+//           deciding whether to route a pan gesture to a child's overflow-y:auto container.
+//           `touch-action: pan-y` on the container itself short-circuits that check and
+//           forces the gesture to be handled here, regardless of parent overflow state.
+//        2. userLocation prop added to Props + destructured: GPS-detected location string
+//           passed from page.tsx. Used as fallback for zoningAddress when business.location
+//           is blank (e.g. newly created business without a saved location). Prevents the
+//           zoning panel address field from appearing empty on first open.
+//        3. effectiveLocation = business.location || userLocation || "" used in:
+//           a) useState(effectiveLocation) — initial value on mount
+//           b) useEffect([business.location, userLocation]) sync — re-runs when GPS resolves
+//           c) handleOpenZoningPanel — always resets to best available address on panel open
+//        4. zoningBizType: handleSelectCategory already calls setZoningBizType — no change.
 // vZoningSmartRecommendations — Dynamic Recommended Forms based on active ZoningResult
 //        When a ZoningResult is present (live check in panel OR persisted attached doc):
 //        1. zoningAwareFormIds useMemo derives a Set<string> of form IDs matched via:
@@ -331,6 +346,12 @@ interface Props {
    */
   onStartForm?: (formId: string) => void;
   /**
+   * vMobile-PostDeploy-CriticalFixPass — GPS-detected location string from the parent
+   * (e.g. "Miami, FL 33101"). Used as fallback for the zoning panel address field when
+   * business.location is blank or hasn't been set yet by the user.
+   */
+  userLocation?: string;
+  /**
    * vRuleChangeAlerts-Profile-Integration — Active (non-dismissed) alerts for this
    * specific business, pre-filtered by the parent. When undefined or empty, the
    * "Recent Rule Changes" section is hidden entirely.
@@ -467,6 +488,8 @@ export default function BusinessProfileView({
   onAttachZoningResult,
   onCategoryChange,
   onStartForm,
+  // vMobile-PostDeploy-CriticalFixPass: GPS fallback for zoning panel address
+  userLocation,
   // vRuleChangeAlerts-Profile-Integration: new alert props
   ruleAlerts,
   onDismissAlert,
@@ -582,8 +605,11 @@ export default function BusinessProfileView({
   const pendingLeaveRef = useRef<(() => void) | null>(null);
 
   // ── v45 — Zoning panel state ─────────────────────────────────────────────
+  // vMobile-PostDeploy-CriticalFixPass: fall back to userLocation (GPS-detected)
+  // when business.location is blank so the zoning address field is never empty.
+  const effectiveLocation = business.location || userLocation || "";
   const [showZoningPanel,  setShowZoningPanel]  = useState(false);
-  const [zoningAddress,    setZoningAddress]    = useState(business.location);
+  const [zoningAddress,    setZoningAddress]    = useState(effectiveLocation);
   const [zoningBizType,    setZoningBizType]    = useState(business.businessType ?? "");
   const [zoningLoading,    setZoningLoading]    = useState(false);
   const [zoningResult,     setZoningResult]     = useState<ZoningResult | null>(null);
@@ -631,10 +657,12 @@ export default function BusinessProfileView({
     setZoningBizType(catId);
   }, [onCategoryChange]);
 
-  // Sync address when business changes (e.g. location edit)
+  // vMobile-PostDeploy-CriticalFixPass: sync address when business location or detected
+  // GPS location changes. Prefer business.location (user-set); fall back to userLocation
+  // (GPS) so the zoning address field is always pre-populated with the best available value.
   useEffect(() => {
-    setZoningAddress(business.location);
-  }, [business.location]);
+    setZoningAddress(business.location || userLocation || "");
+  }, [business.location, userLocation]);
 
   // v67 — Detect an already-attached zoning result and whether it is stale
   // (address used for the check differs from the current business location).
@@ -664,7 +692,8 @@ export default function BusinessProfileView({
 
   // v67 — Open zoning panel; if a result is already attached, reconstruct it for display.
   const handleOpenZoningPanel = useCallback(() => {
-    setZoningAddress(business.location);
+    // vMobile-PostDeploy-CriticalFixPass: use GPS fallback so address is never blank
+    setZoningAddress(business.location || userLocation || "");
     setZoningBizType(business.businessType ?? "");
     setZoningError(null);
 
@@ -1206,7 +1235,9 @@ export default function BusinessProfileView({
               Without min-h-0 the CSS default min-height:auto prevents the div from
               shrinking to fit the panel height, so content overflows instead of scrolling.
               overscroll-y-contain stops iOS rubber-band from propagating to the parent. */}
-          <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain px-4 sm:px-6 py-4 sm:py-6 space-y-5">
+          {/* vMobile-PostDeploy-CriticalFixPass: touch-action:pan-y ensures iOS Safari routes
+              vertical swipe gestures into this scroller even when an ancestor has overflow:hidden. */}
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain px-4 sm:px-6 py-4 sm:py-6 space-y-5" style={{ touchAction: "pan-y" }}>
 
             {/* ── Input form (shown until results arrive, or when re-running) ── */}
             {!zoningResult && (
@@ -1881,7 +1912,10 @@ export default function BusinessProfileView({
           Without min-h-0 the default min-height:auto prevents the div from
           shrinking, so content overflows the viewport instead of scrolling.
           ════════════════════════════════════════════════════════════════════ */}
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain">
+      {/* vMobile-PostDeploy-CriticalFixPass: touch-action:pan-y — same iOS gesture routing fix
+          as the zoning panel body. Ensures the profile body scroll container receives vertical
+          swipe gestures on iOS Safari regardless of overflow:hidden on ancestor elements. */}
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain" style={{ touchAction: "pan-y" }}>
         {/* vMobile: tighter padding on phones */}
         <div className="px-4 sm:px-6 py-5 sm:py-7 space-y-8 sm:space-y-10 max-w-4xl mx-auto w-full">
 
