@@ -1,3 +1,52 @@
+// vChatZoningContextInjection — AI chat automatically zoning-aware
+//        When a business is loaded and has an attached ZoningResult (persisted as a
+//        synthetic UploadedDocument with formId="zoning-check" and mimeType="application/json"),
+//        the chat injects a concise zoning context block into every API call so the
+//        AI model reasons with full zoning awareness.
+//
+//        Implementation:
+//        1. attachedZoningContext useMemo — extracts zone status, zoneType, restrictions,
+//           matchedFormIds, notes, and address from uploadedDocs for the loaded business.
+//           Mirrors the v70 extraction pattern used by FormFiller's zoningProfile prop.
+//        2. zoningContextBlock useMemo — serialises to a concise ≤5-line text block.
+//        3. zoningContextRef — mirrors zoningContextBlock so callApi (a plain async
+//           function capturing a render-time closure) reads the latest value via ref.
+//        4. callApi injection — prepends a synthetic user/assistant exchange with the
+//           zoning block as the very first turn in apiMessages. It is stripped from the
+//           visible messages state automatically (never unshifted there — only into
+//           the local apiMessages array used for the fetch call).
+//        5. "Zoning context active" badge in the chat header — cyan pill with Layers
+//           icon; tooltip shows zone type + status. Hidden on mobile (abbreviated "Zoning").
+//           Appears only when attachedZoningContext is non-null for the active business.
+//
+//        Mobile compliance: badge uses shrink-0 + text-[10px] to prevent wrapping; no
+//        new scroll containers or overflow changes; all existing touch targets preserved.
+// vMobile-RegressionFixPass — Fix three remaining mobile regressions
+//        1. Compliance dashboard (sidebar checklist) scroll on iOS Safari / Android Chrome:
+//           Root cause: the compliance dashboard was `flex-1 flex flex-col min-h-0
+//           overflow-hidden` with the EnhancedChecklist as the only `flex-1 overflow-y-auto`
+//           child. All subsequent sections (renewals, alerts, pro upsell, forms library, My
+//           Businesses) were `shrink-0` siblings placed AFTER the scrollable div. On small
+//           viewports their combined height exceeded the available space; the checklist
+//           shrank to ~0px. The outer `overflow-hidden` then clipped the overflowing lower
+//           sections, making the sidebar appear broken or empty.
+//           Fix: the entire compliance dashboard area is now ONE unified
+//           `flex-1 min-h-0 overflow-y-auto overscroll-y-contain` scroll container. All
+//           sidebar content (label, health card, checklist, renewals, alerts, upsell,
+//           forms library, businesses) lives inside it and scrolls together. The inner
+//           nested scrollable-only-for-checklist div is replaced with a plain `px-4 pb-2`.
+//        2. "Check Zoning for this Address" button not visible/tappable on mobile:
+//           Root cause: the page.tsx parent wrapper around BusinessProfileView had
+//           `overflow-hidden`. On iOS Safari this blocks pointer events for children that
+//           paint near the clipped boundary — specifically the "Back to Chat" and "Check
+//           Zoning" buttons at the bottom of the pinned header section.
+//           Fix: `overflow-hidden` removed from the page.tsx wrapper (BusinessProfileView's
+//           own body scroll chain provides all containment). Also see BusinessProfileView.tsx
+//           for the Back to Chat arrow button (32px → 44px) and header pointer-events-auto.
+//        3. Page scaling / safe-area: root shell `calc(100dvh - env(safe-area-inset-*))` +
+//           body `padding: env(safe-area-inset-*)` already correct. The two fixes above
+//           resolve the visible-but-untappable and empty-sidebar symptoms that were being
+//           mistaken for a scaling issue.
 // vMobile-stabilization-pass — Final Mobile Stabilization Pass
 //        1. Chat messages div: min-h-0 + overscroll-y-contain added.
 //           Without min-h-0 the flex-1 child's default min-height:auto blocks overflow-y-auto
@@ -1236,6 +1285,10 @@ export default function ChatPage() {
   const userLocationRef   = useRef(userLocation);
   const detectedCountyRef = useRef<string | null>(detectedCounty);
   const gpsLoadingRef     = useRef(false);
+  // vChatZoningContextInjection: ref mirrors the derived zoning context block so
+  // callApi (a plain async function capturing a render-time closure) always reads
+  // the most-current value without needing to be recreated on every render.
+  const zoningContextRef  = useRef<string | null>(null);
 
   // ── Form state ────────────────────────────────────────────────────────────
   const [activeTemplate, setActiveTemplate]             = useState<FormTemplate | null>(null);
@@ -1259,6 +1312,10 @@ export default function ChatPage() {
     useState<Record<string, string> | undefined>(undefined);
   /** True when the active FormFiller session is a renewal (drives the renewal banner). */
   const [activeFormIsRenewal, setActiveFormIsRenewal] = useState(false);
+  // vSeamlessProfileFormFillerBridge: tracks that the active FormFiller was launched
+  // from BusinessProfileView so handleFormComplete / handleDismissForm know to reopen
+  // the profile instead of leaving the user at the empty chat screen.
+  const [formLaunchedFromProfile, setFormLaunchedFromProfile] = useState(false);
 
   // ── Saved businesses ──────────────────────────────────────────────────────
   const [savedBusinesses, setSavedBusinesses] = useState<SavedBusiness[]>([]);
@@ -1565,6 +1622,65 @@ export default function ChatPage() {
   useEffect(() => { userLocationRef.current   = userLocation;   }, [userLocation]);
   useEffect(() => { detectedCountyRef.current = detectedCounty; }, [detectedCounty]);
   useEffect(() => { gpsLoadingRef.current     = gpsLoading;     }, [gpsLoading]);
+
+  // ── vChatZoningContextInjection ──────────────────────────────────────────
+  // Derive the attached zoning result for the currently loaded business.
+  // Source: a synthetic UploadedDocument (mimeType "application/json",
+  // formId "zoning-check") created by handleAttachZoningResult. This is the
+  // exact same document the FormFiller's zoningProfile prop reads from.
+  const attachedZoningContext = useMemo(() => {
+    if (!loadedBusiness) return null;
+    // Find the zoning doc for this specific business.
+    const zoningDoc = uploadedDocs.find(
+      d => d.businessId === loadedBusiness.id &&
+           d.mimeType === "application/json" &&
+           (d.formId === "zoning-check" || d.analysis?.docType === "Zoning Compliance Check")
+    );
+    if (!zoningDoc?.analysis) return null;
+    const raw = zoningDoc.analysis.rawExtracted as Record<string, unknown> | undefined;
+    return {
+      status:       (raw?.status as string | undefined) ?? "unknown",
+      // v70 pattern: check underscore variant first (API writes zone_type), then camelCase
+      zoneType:     (
+        (raw?.zone_type as string | undefined) ??
+        (raw?.zoneType  as string | undefined) ??
+        (zoningDoc.analysis.issuingAuthority as string | undefined) ??
+        "Unknown zone"
+      ),
+      restrictions: Array.isArray(raw?.restrictions)
+        ? (raw.restrictions as string[])
+        : (Array.isArray(zoningDoc.analysis.suggestions)
+            ? (zoningDoc.analysis.suggestions as string[])
+            : []),
+      matchedFormIds: zoningDoc.analysis.matchedFormIds ?? [],
+      notes:        zoningDoc.analysis.summary ?? "",
+      address:      (raw?.address       as string | undefined) ?? loadedBusiness.location,
+      businessType: (raw?.business_type as string | undefined) ?? (loadedBusiness.businessType ?? ""),
+      checkedAt:    zoningDoc.uploadedAt,
+    };
+  }, [loadedBusiness, uploadedDocs]);
+
+  // Build the concise text block that is injected into every callApi as a
+  // synthetic user/assistant exchange. Kept short (≤5 lines) so it doesn't
+  // consume excessive tokens. Null when no zoning result is attached.
+  const zoningContextBlock = useMemo((): string | null => {
+    if (!attachedZoningContext) return null;
+    const { status, zoneType, restrictions, matchedFormIds, notes, address, businessType } = attachedZoningContext;
+    const lines: string[] = [
+      `[Zoning result for ${businessType || "this business"} at ${address}]`,
+      `Zone: ${zoneType} · Status: ${status}`,
+    ];
+    if (matchedFormIds.length > 0)
+      lines.push(`Required permits: ${matchedFormIds.join(", ")}`);
+    if (restrictions.length > 0)
+      lines.push(`Key restrictions: ${restrictions.slice(0, 3).join("; ")}`);
+    if (notes)
+      lines.push(`Summary: ${notes}`);
+    return lines.join("\n");
+  }, [attachedZoningContext]);
+
+  // Keep the ref in sync so callApi always reads the latest value.
+  useEffect(() => { zoningContextRef.current = zoningContextBlock; }, [zoningContextBlock]);
 
   // ── Auto-save the active business profile ─────────────────────────────────
   // Whenever the checklist, completed-forms map, or messages change while a
@@ -1916,6 +2032,26 @@ export default function ChatPage() {
         );
       }
 
+      // vChatZoningContextInjection: if the loaded business has an attached zoning
+      // result, prepend it as a synthetic user/assistant exchange so the model
+      // treats it as authoritative background context. It sits before the location
+      // pair so it is the very first turn in the conversation — never shown to the
+      // user, never stored in messages state, stripped automatically because it is
+      // only added to apiMessages here. Reading from ref avoids closure-stale values.
+      const zoningCtx = zoningContextRef.current;
+      if (zoningCtx) {
+        apiMessages.unshift(
+          {
+            role:    "user",
+            content: `Here is the attached zoning result for this business:\n${zoningCtx}`,
+          },
+          {
+            role:    "assistant",
+            content: "Understood — I'll factor in this zoning analysis when answering your compliance questions.",
+          },
+        );
+      }
+
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -2234,6 +2370,9 @@ export default function ChatPage() {
     setActiveTemplate(template);
     // Close profile view so the Form Filler is visible
     setShowProfileView(false);
+    // vSeamlessProfileFormFillerBridge: mark that we came from the profile so
+    // handleFormComplete / handleDismissForm know to reopen it.
+    setFormLaunchedFromProfile(true);
   };
 
   /**
@@ -2371,6 +2510,13 @@ export default function ChatPage() {
       }
     } else {
       setActiveTemplate(null);
+      // vSeamlessProfileFormFillerBridge: return to profile if this form was launched
+      // from BusinessProfileView. Optimistic state (green badge, health score) is
+      // already in place because setChecklist / setUploadedDocs ran above.
+      if (formLaunchedFromProfile) {
+        setShowProfileView(true);
+        setFormLaunchedFromProfile(false);
+      }
     }
   };
 
@@ -2473,6 +2619,12 @@ export default function ChatPage() {
     setFormQueue([]);
     setQueueIndex(0);
     setCompletedFormsData([]);
+    // vSeamlessProfileFormFillerBridge: if the form was launched from the profile,
+    // return the user there rather than leaving them at the empty chat screen.
+    if (formLaunchedFromProfile) {
+      setShowProfileView(true);
+      setFormLaunchedFromProfile(false);
+    }
   };
 
   // ── Business save / load ──────────────────────────────────────────────────
@@ -3778,8 +3930,17 @@ export default function ChatPage() {
           )}
         </div>
 
-        {/* Compliance Dashboard */}
-        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        {/* vMobile-RegressionFixPass: Compliance Dashboard — unified single scroll container.
+             BEFORE: outer div was `flex-1 flex flex-col min-h-0 overflow-hidden` and only the
+             EnhancedChecklist had its own `flex-1 min-h-0 overflow-y-auto` scroller. All other
+             sections (renewals, alerts, pro upsell, forms library, businesses) were `shrink-0`
+             siblings placed AFTER the scrollable div. On mobile (short viewports) those sections
+             consumed all available height; the checklist flex-1 shrank to ~0px and the outer
+             overflow-hidden clipped the content below it — making the sidebar appear empty.
+             FIX: The entire compliance dashboard is now ONE `overflow-y-auto` scroll container.
+             Every section (label, health card, checklist, renewals, alerts, upsell, library,
+             businesses) lives inside it and scrolls together. No nested scroller needed. */}
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain">
           <div className="px-4 pt-4 pb-2 shrink-0">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
               Compliance Dashboard
@@ -3873,7 +4034,9 @@ export default function ChatPage() {
             );
           })()}
 
-          <div ref={checklistTopRef} className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain px-4 pb-2">{/* vMobile-location-scroll-fix: min-h-0 allows flex-1 to shrink below content size so overflow-y-auto actually scrolls on mobile instead of overflowing the sidebar */}
+          {/* vMobile-RegressionFixPass: checklist wrapper is now a plain block — the outer
+               unified scroll container owns the scroll; no inner nested scroller needed. */}
+          <div ref={checklistTopRef} className="px-4 pb-2">
             <EnhancedChecklist
               items={checklist}
               onUpdate={(id, changes) =>
@@ -4143,60 +4306,115 @@ export default function ChatPage() {
             )}
           </div>
 
-          {/* My Businesses — Living Profile cards */}
-          <div className="shrink-0 border-t border-slate-100 px-4 py-3 space-y-2">
+          {/* vMyBusinessesPortfolioEffect — Rich portfolio cards for My Businesses.
+               Each card shows: colored left-accent border (green/amber/red/blue by health),
+               health dot, business name, score %, location, form-completion pill,
+               renewal-due pill (red, 30-day window), alert badge (amber), last-checked
+               timestamp, and a thin compliance progress bar at the card footer.
+               Active (loaded) business: blue ring + shadow treatment.
+               At-risk (score < 50 or alert or renewals): tinted background.
+               All existing wiring (click → open profile, Bell, Trash, Locations sub-list,
+               delete confirm) is preserved unchanged. */}
+          <div className="border-t border-slate-100 px-4 py-3 space-y-2">
+            {/* Section header */}
             <div className="flex items-center justify-between">
               <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
                 My Businesses
               </p>
               <button
                 onClick={() => setShowAddBizModal(true)}
-                className="flex items-center gap-0.5 text-[10px] font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg px-2 py-0.5 transition-colors"
+                className="flex items-center gap-0.5 text-[10px] font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg px-2 py-0.5 transition-colors min-h-[32px] pointer-events-auto"
                 title="Add a business"
               >
                 <Plus className="h-3 w-3" />
                 Add
               </button>
             </div>
+
             {savedBusinesses.length === 0 ? (
-              <div className="text-center py-3 space-y-2">
-                <p className="text-[11px] text-slate-400 italic">
-                  No businesses yet — add one to get started.
+              /* Empty state — dashed border prompts first action */
+              <div className="rounded-xl border border-dashed border-slate-200 px-4 py-5 text-center space-y-2">
+                <p className="text-[11px] text-slate-400">
+                  No businesses yet — add one to track compliance.
                 </p>
                 <button
                   onClick={() => setShowAddBizModal(true)}
-                  className="text-[11px] font-semibold text-blue-600 hover:underline"
+                  className="text-[11px] font-semibold text-blue-600 hover:underline pointer-events-auto"
                 >
                   + Add your first business
                 </button>
               </div>
             ) : (
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {savedBusinesses.map(biz => {
-                  const score        = biz.healthScore ?? 0;
-                  const hasScore     = biz.totalForms != null && biz.totalForms > 0;
-                  const dotColor     = !hasScore   ? "bg-slate-300" :
-                                       score >= 80  ? "bg-green-500" :
-                                       score >= 50  ? "bg-amber-400" : "bg-red-400";
-                  const isLoaded     = loadedBusiness?.id === biz.id;
-                  const hasAlert     = ruleAlerts.some(a => a.businessId === biz.id && !a.dismissed);
-                  const isUrgent     = hasScore && score < 50;
-                  const cardBg       =
-                    isLoaded  ? "bg-blue-50 border-blue-200 ring-1 ring-blue-200" :
-                    isUrgent  ? "bg-red-50 border-red-200 hover:bg-red-100" :
-                    hasAlert  ? "bg-amber-50 border-amber-200 hover:bg-amber-100" :
-                                "bg-slate-50 border-slate-200 hover:bg-blue-50 hover:border-blue-200";
-                  const nameColor    =
-                    isLoaded  ? "text-blue-700" :
-                    isUrgent  ? "text-red-700"  :
-                    hasAlert  ? "text-amber-800" : "text-slate-700";
-
+                  // vMyBusinessesPortfolioEffect: per-card derived values
+                  const score          = biz.healthScore ?? 0;
+                  const hasScore       = biz.totalForms != null && biz.totalForms > 0;
+                  const isLoaded       = loadedBusiness?.id === biz.id;
+                  const hasAlert       = ruleAlerts.some(a => a.businessId === biz.id && !a.dismissed);
+                  // Renewals due within 30 days for this specific business
+                  const urgentRenewals = allRenewals.filter(
+                    r => r.biz.id === biz.id && r.daysLeft >= 0 && r.daysLeft <= 30
+                  ).length;
+                  const isAtRisk       = hasScore && score < 50;
                   const isConfirmingDelete = confirmDeleteBizId === biz.id;
+
+                  // Health dot color
+                  const dotColor =
+                    !hasScore   ? "bg-slate-300" :
+                    score >= 80 ? "bg-emerald-500" :
+                    score >= 50 ? "bg-amber-400" : "bg-red-400";
+
+                  // Progress bar fill color (inline style for smooth transitions)
+                  const barColor =
+                    score >= 80 ? "#10b981" :
+                    score >= 50 ? "#f59e0b" : "#ef4444";
+
+                  // Score label color
+                  const scoreColor =
+                    !hasScore   ? "text-slate-400" :
+                    score >= 80 ? "text-emerald-600" :
+                    score >= 50 ? "text-amber-600" : "text-red-600";
+
+                  // Form-count pill tint matches health tier
+                  const formPillCls =
+                    !hasScore   ? "bg-slate-50 border-slate-200 text-slate-500" :
+                    score >= 80 ? "bg-emerald-50 border-emerald-200 text-emerald-700" :
+                    score >= 50 ? "bg-amber-50 border-amber-200 text-amber-700" :
+                                  "bg-red-50 border-red-200 text-red-700";
+
+                  // Left accent border: blue when active, red/amber when at risk, green when healthy, slate otherwise
+                  const leftBorderColor =
+                    isLoaded                       ? "#3b82f6" :
+                    isAtRisk                       ? "#ef4444" :
+                    hasAlert || urgentRenewals > 0 ? "#f59e0b" :
+                    hasScore && score >= 80        ? "#10b981" : "#e2e8f0";
+
+                  // Card background + border
+                  const cardBg =
+                    isLoaded           ? "bg-blue-50 border-blue-200" :
+                    isAtRisk           ? "bg-red-50/70 border-red-200" :
+                    hasAlert           ? "bg-amber-50/70 border-amber-200" :
+                    urgentRenewals > 0 ? "bg-orange-50/50 border-orange-200" :
+                                        "bg-white border-slate-200";
+
+                  const cardHover =
+                    isLoaded           ? "" :
+                    isAtRisk           ? "hover:bg-red-50 hover:border-red-300" :
+                    hasAlert           ? "hover:bg-amber-50 hover:border-amber-300" :
+                    urgentRenewals > 0 ? "hover:bg-orange-50 hover:border-orange-300" :
+                                        "hover:bg-slate-50 hover:border-slate-300";
+
+                  // Business name color
+                  const nameColor =
+                    isLoaded  ? "text-blue-800" :
+                    isAtRisk  ? "text-red-800"  :
+                    hasAlert  ? "text-amber-900" : "text-slate-800";
 
                   return (
                     <div key={biz.id} className="relative group/card">
                       {isConfirmingDelete ? (
-                        /* Delete confirmation inline bar */
+                        /* Delete confirmation — inline, replaces card */
                         <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs">
                           <p className="text-red-700 font-medium mb-1.5 leading-snug">
                             Delete &ldquo;{biz.name}&rdquo; and all its data? This cannot be undone.
@@ -4207,13 +4425,13 @@ export default function ChatPage() {
                                 handleDeleteBusiness(biz);
                                 setConfirmDeleteBizId(null);
                               }}
-                              className="px-2 py-0.5 bg-red-600 text-white rounded font-semibold hover:bg-red-700 transition-colors"
+                              className="px-2 py-0.5 bg-red-600 text-white rounded font-semibold hover:bg-red-700 transition-colors min-h-[28px] pointer-events-auto"
                             >
                               Delete
                             </button>
                             <button
                               onClick={() => setConfirmDeleteBizId(null)}
-                              className="px-2 py-0.5 bg-white border border-slate-300 rounded text-slate-600 hover:bg-slate-50 transition-colors"
+                              className="px-2 py-0.5 bg-white border border-slate-300 rounded text-slate-600 hover:bg-slate-50 transition-colors min-h-[28px] pointer-events-auto"
                             >
                               Cancel
                             </button>
@@ -4221,77 +4439,108 @@ export default function ChatPage() {
                         </div>
                       ) : (
                         <>
-                          {/* v31 — clicking the card loads the business AND shows profile view */}
+                          {/* ── Portfolio card ─────────────────────────────── */}
                           <button
                             onClick={() => {
                               handleLoadBusiness(biz);
                               setShowProfileView(true);
                             }}
-                            className={`w-full text-left rounded-xl border px-2.5 py-2 transition-all group pr-14 ${cardBg}`}
+                            className={`w-full text-left rounded-xl border transition-all pr-14 ${cardBg} ${cardHover} ${
+                              isLoaded ? "ring-1 ring-blue-300 shadow-sm shadow-blue-100/60" : ""
+                            } pointer-events-auto`}
+                            style={{
+                              // vMyBusinessesPortfolioEffect: colored left accent border
+                              // communicates health status at a glance without extra chrome.
+                              borderLeftWidth: "3px",
+                              borderLeftColor: leftBorderColor,
+                            }}
                             title={`View profile for ${biz.name}`}
                           >
-                            {/* Row 1: icon + name + Pro badge + chevron */}
-                            <div className="flex items-center gap-2">
-                              {/* Health dot */}
+                            {/* Row 1: health dot + name + score % + chevron */}
+                            <div className="flex items-center gap-2 px-2.5 pt-2.5">
                               <span className={`h-2 w-2 rounded-full shrink-0 ${dotColor}`} />
-                              <p className={`flex-1 text-xs font-semibold truncate transition-colors ${nameColor}`}>
+                              <p className={`flex-1 text-xs font-bold truncate ${nameColor}`}>
                                 {biz.name}
                               </p>
-                              {isPro && (
+                              {hasScore ? (
+                                <span className={`text-[10px] font-bold tabular-nums shrink-0 ${scoreColor}`}>
+                                  {score}%
+                                </span>
+                              ) : isPro ? (
                                 <span className="shrink-0 inline-flex items-center gap-0.5 text-[8px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded px-1 py-0.5">
                                   <Crown className="h-1.5 w-1.5" />
                                   Pro
                                 </span>
-                              )}
+                              ) : null}
                               <ChevronRight className={`h-3 w-3 shrink-0 transition-colors ${
-                                isLoaded ? "text-blue-400" : "text-slate-300 group-hover:text-blue-400"
+                                isLoaded ? "text-blue-400" : "text-slate-300 group-hover/card:text-blue-400"
                               }`} />
                             </div>
 
-                            {/* Row 2: location + type badge */}
-                            <div className="flex items-center gap-1.5 mt-0.5 pl-4">
+                            {/* Row 2: location + isPreExisting badge */}
+                            <div className="flex items-center gap-1.5 px-2.5 mt-0.5 pl-7">
                               <p className="text-[10px] text-slate-400 truncate flex-1">
-                                {biz.location}
+                                {biz.location || "No location set"}
                               </p>
                               {biz.isPreExisting && (
-                                <span className="shrink-0 text-[9px] text-slate-400 bg-slate-100 border border-slate-200 rounded px-1 py-0.5">
+                                <span className="shrink-0 text-[8px] text-slate-400 bg-slate-100 border border-slate-200 rounded px-1 leading-none py-0.5">
                                   existing
                                 </span>
                               )}
                             </div>
 
-                            {/* Row 3: meta chips */}
-                            <div className="flex items-center gap-1.5 mt-1.5 pl-4 flex-wrap">
+                            {/* Row 3: status pills + last-checked timestamp */}
+                            <div className="flex items-center gap-1 px-2.5 mt-1.5 pb-1.5 pl-7 flex-wrap">
+                              {/* Form-completion pill: "X/Y done" */}
                               {hasScore && (
-                                <span className={`text-[10px] font-semibold tabular-nums ${
-                                  score >= 80 ? "text-green-700" : score >= 50 ? "text-amber-700" : "text-red-700"
-                                }`}>
-                                  {score}% health
+                                <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded border leading-none ${formPillCls}`}>
+                                  {biz.completedFormsCount ?? 0}/{biz.totalForms} done
                                 </span>
                               )}
-                              {biz.totalForms != null && biz.totalForms > 0 && (
-                                <span className="text-[10px] text-slate-400">
-                                  · {biz.completedFormsCount ?? 0}/{biz.totalForms} forms
+                              {/* Renewals-due pill: only if within 30 days */}
+                              {urgentRenewals > 0 && (
+                                <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded border bg-red-50 border-red-200 text-red-600 leading-none">
+                                  <Bell className="h-2 w-2 shrink-0" />
+                                  {urgentRenewals} due
                                 </span>
                               )}
+                              {/* Alert badge */}
                               {hasAlert && (
-                                <span className="text-[10px] font-semibold text-amber-600">· alert</span>
+                                <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded border bg-amber-50 border-amber-200 text-amber-600 leading-none">
+                                  <Zap className="h-2 w-2 shrink-0" />
+                                  alert
+                                </span>
                               )}
+                              {/* Last-checked — right-aligned timestamp */}
                               {biz.lastChecked && (
-                                <span className="text-[10px] text-slate-400 ml-auto">
+                                <span className="text-[9px] text-slate-400 ml-auto tabular-nums shrink-0">
                                   {relativeDate(biz.lastChecked)}
                                 </span>
                               )}
                             </div>
+
+                            {/* Compliance progress bar — thin 3px strip at card bottom */}
+                            {hasScore && (
+                              <div className="mx-2.5 mb-2 h-[3px] rounded-full bg-slate-100 overflow-hidden">
+                                <div
+                                  className="h-full rounded-full"
+                                  style={{
+                                    width: `${Math.max(4, score)}%`,
+                                    background: barColor,
+                                    transition: "width 0.5s ease",
+                                  }}
+                                />
+                              </div>
+                            )}
                           </button>
 
-                          {/* Bell icon — opens notification prefs */}
+                          {/* Bell icon — notification prefs, hover-only */}
                           <button
                             onClick={e => {
                               e.stopPropagation();
                               setNotifPrefsBizId(biz.id);
                             }}
-                            className={`absolute top-1.5 right-7 p-1 rounded-md transition-all opacity-0 group-hover/card:opacity-100 ${
+                            className={`absolute top-1.5 right-7 p-1 rounded-md transition-all opacity-0 group-hover/card:opacity-100 pointer-events-auto ${
                               biz.notificationPrefs?.emailEnabled || biz.notificationPrefs?.smsEnabled
                                 ? "text-blue-400 hover:text-blue-600 hover:bg-blue-50"
                                 : biz.notificationPrefs && !biz.notificationPrefs.emailEnabled && !biz.notificationPrefs.smsEnabled
@@ -4306,13 +4555,13 @@ export default function ChatPage() {
                             }
                           </button>
 
-                          {/* Trash icon — visible on hover */}
+                          {/* Trash icon — delete, hover-only */}
                           <button
                             onClick={e => {
                               e.stopPropagation();
                               setConfirmDeleteBizId(biz.id);
                             }}
-                            className="absolute top-1.5 right-1.5 p-1 rounded-md text-slate-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover/card:opacity-100 transition-all"
+                            className="absolute top-1.5 right-1.5 p-1 rounded-md text-slate-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover/card:opacity-100 transition-all pointer-events-auto"
                             title={`Delete ${biz.name}`}
                           >
                             <Trash2 className="h-3 w-3" />
@@ -4320,11 +4569,11 @@ export default function ChatPage() {
                         </>
                       )}
 
-                      {/* ── Locations sub-list ────────────────────────────── */}
+                      {/* ── Locations sub-list (unchanged logic) ───────── */}
                       {(() => {
                         const locs = biz.locations;
                         if (!locs?.length) {
-                          // No locations yet — show "Add Location" link below card on hover
+                          // No locations yet — show "Add Location" link on hover
                           return (
                             <div className="pl-2 pr-1 pb-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
                               <button
@@ -4336,7 +4585,7 @@ export default function ChatPage() {
                                     setAddLocationBizId(biz.id);
                                   }
                                 }}
-                                className="flex items-center gap-1 text-[10px] text-blue-500 hover:text-blue-700 hover:underline transition-colors py-0.5"
+                                className="flex items-center gap-1 text-[10px] text-blue-500 hover:text-blue-700 hover:underline transition-colors py-0.5 pointer-events-auto"
                               >
                                 <Plus className="h-2.5 w-2.5" />
                                 Add location
@@ -4348,7 +4597,7 @@ export default function ChatPage() {
                         const isExpanded = expandedBizIds.has(biz.id);
                         return (
                           <div className="pl-2 pr-1 pb-1 mt-0.5 space-y-0.5">
-                            {/* Toggle row */}
+                            {/* Expand/collapse toggle */}
                             <button
                               onClick={e => {
                                 e.stopPropagation();
@@ -4358,7 +4607,7 @@ export default function ChatPage() {
                                   return next;
                                 });
                               }}
-                              className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-slate-600 transition-colors w-full py-0.5"
+                              className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-slate-600 transition-colors w-full py-0.5 pointer-events-auto"
                             >
                               {isExpanded
                                 ? <ChevronDown className="h-2.5 w-2.5 shrink-0" />
@@ -4370,11 +4619,12 @@ export default function ChatPage() {
                               <div className="space-y-0.5 pl-1">
                                 {locs.map(loc => {
                                   const isActiveLoc = isLoaded && activeLocationId === loc.id;
-                                  const locScore = loc.healthScore ?? 0;
+                                  const locScore    = loc.healthScore ?? 0;
                                   const locHasScore = loc.totalForms != null && loc.totalForms > 0;
-                                  const locDot = !locHasScore ? "bg-slate-300" :
-                                                  locScore >= 80 ? "bg-green-500" :
-                                                  locScore >= 50 ? "bg-amber-400" : "bg-red-400";
+                                  const locDot      =
+                                    !locHasScore    ? "bg-slate-300" :
+                                    locScore >= 80  ? "bg-emerald-500" :
+                                    locScore >= 50  ? "bg-amber-400" : "bg-red-400";
                                   return (
                                     <button
                                       key={loc.id}
@@ -4386,7 +4636,7 @@ export default function ChatPage() {
                                           handleLoadBusiness(biz, loc.id);
                                         }
                                       }}
-                                      className={`w-full text-left flex items-center gap-1.5 px-2 py-1 rounded-lg border transition-all ${
+                                      className={`w-full text-left flex items-center gap-1.5 px-2 py-1 rounded-lg border transition-all pointer-events-auto ${
                                         isActiveLoc
                                           ? "bg-blue-50 border-blue-200 text-blue-700"
                                           : "bg-white border-slate-100 text-slate-600 hover:bg-blue-50 hover:border-blue-100 hover:text-blue-700"
@@ -4409,7 +4659,7 @@ export default function ChatPage() {
                                       setAddLocationBizId(biz.id);
                                     }
                                   }}
-                                  className="w-full flex items-center gap-1 text-[10px] text-blue-500 hover:text-blue-700 hover:bg-blue-50 transition-colors px-2 py-1 rounded-lg"
+                                  className="w-full flex items-center gap-1 text-[10px] text-blue-500 hover:text-blue-700 hover:bg-blue-50 transition-colors px-2 py-1 rounded-lg pointer-events-auto"
                                 >
                                   <Plus className="h-2.5 w-2.5" />
                                   Add location
@@ -4494,12 +4744,19 @@ export default function ChatPage() {
       {/* v44 — uploaded documents now visibly appear on the matching recommended form card with filename + green checkmark */}
       {/* v45 — Zoning & Address Compliance Checker + fixed document attachment on profile creation */}
       {/* v50 — Fixed "Attach Zoning Result to Profile" button so result is saved and immediately visible on the business profile */}
-      {/* vMobile-scale-fix: flex-1 flex flex-col overflow-hidden ensures the profile view
-          fills exactly the remaining viewport height on all screen sizes. On mobile the
-          BusinessProfileView's own overflow-y-auto body handles scrolling internally —
-          the outer container must NOT overflow so the sticky header/footer stay pinned. */}
+      {/* vMobile-RegressionFixPass: overflow-hidden removed from this wrapper.
+          The previous overflow-hidden on this parent was blocking iOS Safari touch events
+          on BusinessProfileView's "Back to Chat" and "Check Zoning for this Address"
+          buttons when they were near the container boundary. On iOS Safari, overflow:hidden
+          on a positioned ancestor clips pointer events for descendants that paint near the
+          clipped edge — making those buttons appear invisible or unreachable.
+          BusinessProfileView's own body div (flex-1 min-h-0 overflow-y-auto) provides
+          all the scroll containment needed; the outer wrapper does not need overflow-hidden.
+          vMobile-scale-fix: flex-1 flex flex-col still fills exactly the remaining
+          viewport height on all screen sizes — removing overflow-hidden doesn't change
+          the sizing, only the clipping behavior. */}
       {showProfileView && loadedBusiness ? (
-        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <div className="flex-1 flex flex-col min-w-0">
           <BusinessProfileView
             business={loadedBusiness}
             recommendedForms={profileRecommendedForms}
@@ -4515,6 +4772,12 @@ export default function ChatPage() {
             onCheckZoning={handleCheckZoning}
             onAttachZoningResult={handleAttachZoningResult}
             onStartForm={handleStartFormFromProfile}
+            // vRuleChangeAlerts-Profile-Integration: pre-filtered active alerts for this
+            // business. onDismissAlert persists; onReviewImpact opens the Review Impact
+            // modal already wired in page.tsx via setReviewImpactAlertId.
+            ruleAlerts={ruleAlerts.filter(a => !a.dismissed && a.businessId === loadedBusiness.id)}
+            onDismissAlert={dismissAlert}
+            onReviewImpact={setReviewImpactAlertId}
           />
         </div>
       ) : null}
@@ -4549,6 +4812,19 @@ export default function ChatPage() {
                     </>
                   ) : (
                     <span className="hidden sm:inline text-xs text-slate-400 truncate max-w-[100px]">· {loadedBusiness.location}</span>
+                  )}
+                  {/* vChatZoningContextInjection: badge shown when an attached zoning
+                      result is active for this business — confirms to the user that the
+                      AI is reasoning with zoning context in every reply. */}
+                  {attachedZoningContext && (
+                    <span
+                      className="inline-flex items-center gap-0.5 text-[10px] font-bold text-cyan-600 bg-cyan-50 border border-cyan-200 rounded-full px-1.5 py-0.5 shrink-0"
+                      title={`Zoning context: ${attachedZoningContext.zoneType} · ${attachedZoningContext.status}`}
+                    >
+                      <Layers className="h-2.5 w-2.5 shrink-0" />
+                      <span className="hidden sm:inline">Zoning context active</span>
+                      <span className="sm:hidden">Zoning</span>
+                    </span>
                   )}
                 </div>
               ) : (

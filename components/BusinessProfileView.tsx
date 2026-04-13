@@ -1,5 +1,88 @@
 "use client";
 
+// vZoningSmartRecommendations — Dynamic Recommended Forms based on active ZoningResult
+//        When a ZoningResult is present (live check in panel OR persisted attached doc):
+//        1. zoningAwareFormIds useMemo derives a Set<string> of form IDs matched via:
+//           a) ZoningResult.requiredPermits[*].formId (highest fidelity, live check only)
+//           b) Keyword scan of zoneType + restrictions + notes / analysis text:
+//              residential / R-1..R-3 → home-occupation-permit
+//              food / restaurant / cottage → food-service-permit
+//              mobile food / food truck → mobile-food-vendor
+//              short-term rental / STR / Airbnb → str-local-occupancy-tax
+//              retail / commercial / C-1..C-2 → sales-tax-registration + business-license
+//              salon / beauty / cosmetolog → cosmetologist-individual-license
+//           c) Persisted: attachedZoningDoc.analysis.matchedFormIds (AI doc analysis)
+//        2. zoningAwareSortedForms useMemo reorders recommendedForms — aware cards bubble
+//           to the top; original order preserved within each group.
+//        3. Section header shows a "Zoning-smart" cyan pill badge when any forms are matched.
+//        4. Each matched form card gets:
+//           • cyan "Zoning-aware" badge (MapPin icon) in the badge row
+//           • 2px cyan left-border accent (when not yet completed)
+//           • subtle cyan background tint (rgba(34,211,238,0.05))
+//           • soft cyan box-shadow glow (0 0 0 1px rgba(34,211,238,0.10))
+//        All existing functionality preserved: drag-and-drop, "Complete with AI", optimistic
+//        state, "Completed" emerald badge, pending-save amber badge, section ref scroll.
+// vMobile-RegressionFixPass — Fix three remaining mobile regressions
+//        1. Compliance dashboard scroll: root div had pointer-events-auto added to header
+//           and Back to Chat arrow button enlarged from h-8 w-8 (32px) to min-h-[44px]
+//           min-w-[44px] to meet the 44px minimum touch target. (Core sidebar scroll fix
+//           is in page.tsx — see note there.)
+//        2. Zoning button tappability: header div now has pointer-events-auto explicitly
+//           so iOS Safari compositing layer does not block touch events on the header's
+//           "Back to Chat" and "Check Zoning for this Address" buttons.
+//        3. Page scaling: no change needed here — root div is already `flex-1 flex flex-col
+//           relative` with no overflow-hidden; body is `flex-1 min-h-0 overflow-y-auto`.
+//           The parent overflow-hidden that was blocking taps is removed in page.tsx.
+// vSeamlessProfileFormFillerBridge — Seamless profile ↔ FormFiller bridge
+//        "Complete with AI" now returns the user directly to the updated
+//        BusinessProfileView after form completion or dismissal — no blank chat screen.
+//        pendingFormId local state: set on tap → shows "Opening…" label immediately
+//        before the parent closes the profile view. Auto-reset after 1 s as a safety
+//        net in case the parent has no template for the given formId (silent no-op).
+//        All optimistic state (green badge, health score) was already in place from
+//        the synthetic UploadedDocument pattern — no additional changes needed here.
+// vRuleChangeAlerts-Profile-Integration — Wire live Rule Change Alerts into the profile
+//        RuleAlert[] for this business passed via ruleAlerts prop (pre-filtered by parent).
+//        Section appears after the stats card and before Completed Documents. Each card
+//        shows: title, one-sentence description, relative date, "Review Impact" CTA
+//        (calls onReviewImpact which opens the full modal in page.tsx), and a dismiss ×
+//        (calls onDismissAlert which marks dismissed=true and persists via page.tsx).
+//        Section hidden when ruleAlerts is empty or undefined (no empty-state card —
+//        keeps the profile clean when there are no active alerts).
+//        All touch targets: Review Impact ≥48px, dismiss × ≥44px min-h/min-w,
+//        pointer-events-auto on all buttons. Section body participates in the existing
+//        flex-1 min-h-0 overflow-y-auto scroll chain without additional containers.
+// vBusinessProfile-LivingDashboard-Polish — Premium living compliance dashboard polish
+//        1. Health score SVG ring is now interactive: clicking it smooth-scrolls to
+//           the Recommended Forms section via recommendedFormsSectionRef.
+//        2. Stats bar redesigned for narrow phones (<400px): removed the h-10 w-px
+//           vertical dividers that orphaned visually when flex-wrap kicked in. Stats
+//           are now separated by gap alone. Added a grid-style bottom row for Pending
+//           + Expiring on mobile so they never overlap the ring column.
+//        3. Last-checked timestamp added below the compliance label using business.lastChecked
+//           (ISO string stored on SavedBusiness). Uses new timeAgo() helper.
+//        4. Renewal urgency: urgentCount (30-day window, red) added alongside expiringCount
+//           (60-day, amber). Stats bar uses red/amber based on urgency bucket.
+//        5. Compact zoning strip: "Update zoning check" secondary link enlarged to
+//           min-h-[44px] flex items-center — was py-0.5 (too small for iOS tap target).
+//        6. Ring button has aria-label + pointer-events-auto + min-h/min-w 56px so the
+//           entire 72×72 ring area is reliably tappable on touch screens.
+// vZoning-panel-completion — Fully implemented live Zoning Results Panel
+//        1. Panel body scroll fixed: flex-1 overflow-y-auto → flex-1 min-h-0 overflow-y-auto
+//           overscroll-y-contain. Without min-h-0 the CSS default min-height:auto prevents
+//           the body div from shrinking to the panel height on iOS Safari, so overflow-y-auto
+//           never activates and results overflow the viewport instead of scrolling.
+//        2. Close button enlarged: h-8 w-8 (32px) → min-h-[48px] min-w-[48px] + pointer-events-auto
+//           to meet the 48px minimum touch target on mobile.
+//        3. Zone type promoted to a dedicated cyan row below the status banner so it's never
+//           truncated. Was previously only a tiny text-xs subtitle inside the status banner.
+//        4. Notes block made conditional ({zoningResult.notes && ...}) — prevents an empty
+//           container from rendering when the API returns an empty notes string.
+//        5. Permit links renamed "Apply" → "Learn More" (more accurate — not all links are
+//           direct application portals). Added min-h-[44px] py-1 to the <a> tag touch target.
+//        6. All footer CTAs (Run Zoning Check, Attach to Profile, Update for New Address,
+//           Check another address): py-2.5/py-3 → min-h-[48px] (primary) / min-h-[44px]
+//           (secondary text link) + pointer-events-auto on all of them.
 // vMobile-stabilization-pass — Final Mobile Stabilization Pass
 //        Root div: overflow-hidden removed.
 //          The page.tsx parent wrapper (`flex-1 flex flex-col overflow-hidden min-w-0`)
@@ -151,7 +234,7 @@ import {
   CalendarDays, Car, Baby, School, Tag, HardHat, Factory, MoreHorizontal,
   type LucideIcon,
 } from "lucide-react";
-import type { SavedBusiness, UploadedDocument, ChecklistItem } from "@/lib/regbot-types";
+import type { SavedBusiness, UploadedDocument, ChecklistItem, RuleAlert } from "@/lib/regbot-types";
 import {
   markFormAsDownloaded,
   ALL_FORMS,
@@ -247,6 +330,22 @@ interface Props {
    * current business profile data. No-op if no guided template exists for that formId.
    */
   onStartForm?: (formId: string) => void;
+  /**
+   * vRuleChangeAlerts-Profile-Integration — Active (non-dismissed) alerts for this
+   * specific business, pre-filtered by the parent. When undefined or empty, the
+   * "Recent Rule Changes" section is hidden entirely.
+   */
+  ruleAlerts?: RuleAlert[];
+  /**
+   * vRuleChangeAlerts-Profile-Integration — Marks an alert as dismissed and persists
+   * the change. Called with the alert's composite ID string.
+   */
+  onDismissAlert?: (alertId: string) => void;
+  /**
+   * vRuleChangeAlerts-Profile-Integration — Opens the full Review Impact modal in
+   * page.tsx for the given alert ID, showing affected filings + what to do next.
+   */
+  onReviewImpact?: (alertId: string) => void;
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -275,6 +374,22 @@ function healthRingColor(score: number) {
   if (score >= 80) return { cls: "text-emerald-400", text: "Good Standing" };
   if (score >= 50) return { cls: "text-amber-400",   text: "Needs Attention" };
   return              { cls: "text-red-400",     text: "Action Required" };
+}
+
+// vBusinessProfile-LivingDashboard-Polish: relative time formatter for last-checked display.
+// Returns strings like "today", "2 days ago", "3 weeks ago", "Jan 5".
+function timeAgo(iso: string | undefined): string {
+  if (!iso) return "";
+  try {
+    const ms = Date.now() - new Date(iso).getTime();
+    const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+    if (days === 0) return "today";
+    if (days === 1) return "yesterday";
+    if (days < 7)  return `${days} days ago`;
+    if (days < 14) return "1 week ago";
+    if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
+    return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  } catch { return ""; }
 }
 
 // v67 — Jurisdiction category label + pill colours for FEDERAL/STATE/COUNTY/CITY/TOWN.
@@ -352,6 +467,10 @@ export default function BusinessProfileView({
   onAttachZoningResult,
   onCategoryChange,
   onStartForm,
+  // vRuleChangeAlerts-Profile-Integration: new alert props
+  ruleAlerts,
+  onDismissAlert,
+  onReviewImpact,
 }: Props) {
 
   // v61 — state for inline zoning result view modal
@@ -748,7 +867,104 @@ export default function BusinessProfileView({
       return d >= now && d <= cutoff;
     }).length;
   })();
+  // vBusinessProfile-LivingDashboard-Polish: 30-day urgent bucket (red) vs 60-day upcoming (amber).
+  // urgentCount ≤ expiringCount always — used for color logic only, not a separate display column.
+  const urgentCount = (() => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const cutoff30 = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    return checklist.filter(c => {
+      if (!c.renewalDate) return false;
+      const d = new Date(c.renewalDate);
+      return d >= now && d <= cutoff30;
+    }).length;
+  })();
   const showStats = hasScore || checklist.length > 0;
+
+  // vBusinessProfile-LivingDashboard-Polish: ref to smooth-scroll body to the
+  // Recommended Forms section when the user taps the health ring.
+  const recommendedFormsSectionRef = useRef<HTMLDivElement | null>(null);
+
+  // vSeamlessProfileFormFillerBridge: tracks which form's "Complete with AI" button
+  // was tapped so we can show a brief "Opening…" state before the profile closes.
+  // Cleared automatically after 1 s (in case the parent returns without closing the view).
+  const [pendingFormId, setPendingFormId] = useState<string | null>(null);
+
+  // vZoningSmartRecommendations ──────────────────────────────────────────────
+  // Derive the set of form IDs that are directly relevant to the current zoning
+  // result. Two sources are checked:
+  //   1. Live `zoningResult` (freshly run check in the panel) — uses requiredPermits
+  //      formId fields + keyword scan of zoneType / restrictions / notes.
+  //   2. `attachedZoningDoc` (persisted from a prior check) — uses matchedFormIds
+  //      from AI analysis + keyword scan of the analysis text fields.
+  // The resulting Set<string> is used to (a) reorder recommended forms so
+  // zoning-matched cards surface first, and (b) render a cyan "Zoning-aware"
+  // badge on each matched card.
+  const zoningAwareFormIds = useMemo((): Set<string> => {
+    const ids = new Set<string>();
+
+    // Scan a text corpus for zoning-related keywords and add matching form IDs.
+    const addFromCorpus = (corpus: string) => {
+      const c = corpus.toLowerCase();
+      // Residential zone → home occupation permit
+      if (/\bresidential\b|r-[123]|r1\b|r2\b|r3\b|\brm\b/.test(c))
+        ids.add("home-occupation-permit");
+      // Food production / service → food service permit
+      if (/\bfood\b|restaurant|cottage\s+food|bakery|catering|kitchen|food\s+service/.test(c))
+        ids.add("food-service-permit");
+      // Mobile vending / food truck → mobile food vendor
+      if (/mobile\s+food|food\s+truck|\bvendor\b|commissary/.test(c))
+        ids.add("mobile-food-vendor");
+      // Short-term rental → occupancy tax
+      if (/short.term\s+rental|vacation\s+rental|\bstr\b|airbnb|vrbo/.test(c))
+        ids.add("str-local-occupancy-tax");
+      // Retail / commercial → sales tax + business license
+      if (/\bretail\b|commercial|c-[12]\b|\bdowntown\b/.test(c)) {
+        ids.add("sales-tax-registration");
+        ids.add("business-license");
+      }
+      // Salon / beauty / cosmetology → cosmetology license + home occupation
+      if (/\bsalon\b|beauty|cosmetolog|hair\s+braid/.test(c)) {
+        ids.add("cosmetologist-individual-license");
+        ids.add("home-occupation-permit");
+      }
+      // Any match → always ensure business-license is flagged (minimum permit)
+      if (ids.size > 0) ids.add("business-license");
+    };
+
+    // 1. Live freshly-run zoning result (highest fidelity — includes requiredPermits)
+    if (zoningResult) {
+      zoningResult.requiredPermits.forEach(p => { if (p.formId) ids.add(p.formId); });
+      addFromCorpus([
+        zoningResult.zoneType,
+        ...zoningResult.restrictions,
+        zoningResult.notes ?? "",
+      ].join(" "));
+    }
+
+    // 2. Persisted attached zoning doc (used when the panel is closed after a prior check)
+    if (attachedZoningDoc && !zoningResult) {
+      (attachedZoningDoc.analysis?.matchedFormIds ?? []).forEach(id => ids.add(id));
+      addFromCorpus([
+        attachedZoningDoc.analysis?.issuingAuthority ?? "",
+        ...(Array.isArray(attachedZoningDoc.analysis?.suggestions)
+          ? (attachedZoningDoc.analysis!.suggestions as string[])
+          : []),
+        attachedZoningDoc.analysis?.summary ?? "",
+      ].join(" "));
+    }
+
+    return ids;
+  }, [zoningResult, attachedZoningDoc]);
+
+  // vZoningSmartRecommendations: reorder recommendedForms so zoning-matched cards
+  // surface first. Within each group, original parent-supplied order is preserved.
+  const zoningAwareSortedForms = useMemo(() => {
+    if (zoningAwareFormIds.size === 0) return recommendedForms;
+    const aware = recommendedForms.filter(f => zoningAwareFormIds.has(f.id));
+    const rest   = recommendedForms.filter(f => !zoningAwareFormIds.has(f.id));
+    return [...aware, ...rest];
+  }, [recommendedForms, zoningAwareFormIds]);
 
   // ── Render ───────────────────────────────────────────────────────────────
 
@@ -877,9 +1093,11 @@ export default function BusinessProfileView({
                   <h2 className="text-sm font-bold text-white leading-tight">Zoning Compliance Check</h2>
                   <p className="text-xs text-slate-400 leading-tight truncate">{address}</p>
                 </div>
+                {/* vBusinessProfile-LivingDashboard-Polish: min-h-[44px] min-w-[44px]
+                    (was h-7 w-7 = 28px — below minimum touch target). */}
                 <button
                   onClick={() => setZoningViewDoc(null)}
-                  className="h-7 w-7 flex items-center justify-center rounded-lg border border-white/15 text-slate-400 hover:text-white hover:border-white/30 transition-colors shrink-0"
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-white/15 text-slate-400 hover:text-white hover:border-white/30 transition-colors shrink-0 pointer-events-auto"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -1087,7 +1305,7 @@ export default function BusinessProfileView({
               return (
                 <div className="space-y-4">
 
-                  {/* Status banner */}
+                  {/* vZoning-panel-completion: Status banner — status + zone type + check date */}
                   <div
                     className="flex items-center gap-4 px-5 py-4 rounded-2xl"
                     style={{ background: sc.bg, border: `1.5px solid ${sc.border}` }}
@@ -1097,25 +1315,37 @@ export default function BusinessProfileView({
                       <p className={`text-lg font-bold leading-tight ${sc.color}`}>
                         {sc.label}
                       </p>
-                      <p className="text-xs text-slate-400 leading-tight mt-0.5 truncate">
-                        {zoningResult.zoneType}
-                      </p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Checked</p>
-                      <p className="text-xs text-slate-400">
-                        {new Date(zoningResult.checkedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      <p className="text-[11px] text-slate-400 leading-tight mt-0.5">
+                        Checked {new Date(zoningResult.checkedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                       </p>
                     </div>
                   </div>
 
+                  {/* vZoning-panel-completion: Zone type — dedicated row so it's never truncated
+                      In the prior design zoneType was only a tiny truncated subtitle inside the
+                      status banner. Promoting it to its own card makes it scannable at a glance. */}
+                  {zoningResult.zoneType && (
+                    <div
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl"
+                      style={{ background: "rgba(34,211,238,0.06)", border: "1px solid rgba(34,211,238,0.18)" }}
+                    >
+                      <MapPin className="h-4 w-4 text-cyan-400 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 leading-none mb-0.5">Zone Type</p>
+                        <p className="text-sm font-semibold text-white leading-snug">{zoningResult.zoneType}</p>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Summary notes */}
-                  <div
-                    className="px-4 py-3 rounded-xl text-xs text-slate-300 leading-relaxed"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
-                  >
-                    {zoningResult.notes}
-                  </div>
+                  {zoningResult.notes && (
+                    <div
+                      className="px-4 py-3 rounded-xl text-xs text-slate-300 leading-relaxed"
+                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+                    >
+                      {zoningResult.notes}
+                    </div>
+                  )}
 
                   {/* Required permits — v67: category badge on each permit chip */}
                   {zoningResult.requiredPermits.length > 0 && (
@@ -1144,15 +1374,18 @@ export default function BusinessProfileView({
                                 </div>
                                 <p className="text-[10px] text-slate-400 leading-snug">{permit.description}</p>
                               </div>
+                              {/* vZoning-panel-completion: "Learn More" label (was "Apply") — clearer
+                                  intent for informational permit links that may not all be direct
+                                  application portals (some link to info pages, code sections, etc.) */}
                               {permit.url && (
                                 <a
                                   href={permit.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="shrink-0 inline-flex items-center gap-1 text-[10px] font-semibold text-cyan-400 hover:text-cyan-300 transition-colors"
+                                  className="shrink-0 inline-flex items-center gap-1 text-[10px] font-semibold text-cyan-400 hover:text-cyan-300 transition-colors min-h-[44px] py-1"
                                 >
                                   <ExternalLink className="h-3 w-3" />
-                                  Apply
+                                  Learn More
                                 </a>
                               )}
                             </div>
@@ -1260,6 +1493,11 @@ export default function BusinessProfileView({
             {/* When results visible */}
             {zoningResult && !zoningLoading && (
               <>
+                {/* vZoning-panel-completion: all footer buttons get min-h-[48px] + pointer-events-auto
+                    for reliable 48px touch targets on iOS Safari. Primary CTAs were py-2.5 (~40px)
+                    which fell short of the 48px minimum. pointer-events-auto ensures taps reach
+                    the button even if a parent has reduced pointer events in some layouts. */}
+
                 {/* v67 — "Update for new address" is primary when stale */}
                 {zoningIsStale && zoningAttached ? (
                   <button
@@ -1270,7 +1508,7 @@ export default function BusinessProfileView({
                       setZoningAddress(business.location);
                     }}
                     disabled={!onCheckZoning}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-[#0d1b35] disabled:opacity-40 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 min-h-[48px] rounded-xl text-sm font-bold text-[#0d1b35] disabled:opacity-40 transition-colors pointer-events-auto"
                     style={{ background: "rgb(251,191,36)" }}
                     onMouseEnter={e => (e.currentTarget.style.background = "rgb(252,211,77)")}
                     onMouseLeave={e => (e.currentTarget.style.background = "rgb(251,191,36)")}
@@ -1280,7 +1518,7 @@ export default function BusinessProfileView({
                   </button>
                 ) : zoningAttached ? (
                   <div
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold"
+                    className="w-full flex items-center justify-center gap-2 min-h-[48px] rounded-xl text-sm font-bold"
                     style={{ background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.35)", color: "rgb(110,231,183)" }}
                   >
                     <CheckCircle2 className="h-4 w-4" />
@@ -1290,7 +1528,7 @@ export default function BusinessProfileView({
                   <button
                     onClick={handleAttachZoning}
                     disabled={!onAttachZoningResult}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-[#0d1b35] disabled:opacity-40 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 min-h-[48px] rounded-xl text-sm font-bold text-[#0d1b35] disabled:opacity-40 transition-colors pointer-events-auto"
                     style={{ background: "rgb(52,211,153)" }}
                     onMouseEnter={e => (e.currentTarget.style.background = "rgb(110,231,183)")}
                     onMouseLeave={e => (e.currentTarget.style.background = "rgb(52,211,153)")}
@@ -1301,7 +1539,7 @@ export default function BusinessProfileView({
                 )}
                 <button
                   onClick={() => { setZoningResult(null); setZoningError(null); setZoningAttached(false); }}
-                  className="w-full text-center text-xs text-slate-500 hover:text-slate-300 transition-colors py-1"
+                  className="w-full text-center text-xs text-slate-500 hover:text-slate-300 transition-colors min-h-[44px] flex items-center justify-center pointer-events-auto"
                 >
                   {zoningAttached ? "Re-run check for different address" : "Check another address"}
                 </button>
@@ -1309,11 +1547,12 @@ export default function BusinessProfileView({
             )}
 
             {/* When on input form */}
+            {/* vZoning-panel-completion: min-h-[48px] + pointer-events-auto for iOS tap reliability */}
             {!zoningResult && !zoningLoading && (
               <button
                 onClick={() => { void handleRunZoningCheck(); }}
                 disabled={!zoningAddress.trim()}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-[#0d1b35] disabled:opacity-40 transition-colors"
+                className="w-full flex items-center justify-center gap-2 min-h-[48px] rounded-xl text-sm font-bold text-[#0d1b35] disabled:opacity-40 transition-colors pointer-events-auto"
                 style={{ background: "rgb(34,211,238)" }}
                 onMouseEnter={e => { if (zoningAddress.trim()) e.currentTarget.style.background = "rgb(103,232,249)"; }}
                 onMouseLeave={e => (e.currentTarget.style.background = "rgb(34,211,238)")}
@@ -1348,9 +1587,12 @@ export default function BusinessProfileView({
           Header — dark navy with cyan hairline border
           vMobile-scale-fix: shrink-0 keeps header pinned; safe-area-inset-top
           handled at the body level by app/layout.tsx env() padding.
+          vMobile-RegressionFixPass: pointer-events-auto ensures all header
+          buttons (Back to Chat, Check Zoning) receive touch events reliably
+          even when iOS Safari's compositing layer is involved.
           ════════════════════════════════════════════════════════════════════ */}
       <div
-        className="shrink-0 px-4 sm:px-6 py-4 sm:py-5"
+        className="shrink-0 px-4 sm:px-6 py-4 sm:py-5 pointer-events-auto"
         style={{ borderBottom: "1px solid rgba(34,211,238,0.15)" }}
       >
         {/* vMobile-stabilization-pass: flex-wrap REMOVED → flex-nowrap (default).
@@ -1364,9 +1606,11 @@ export default function BusinessProfileView({
           {/* Left: back arrow + building icon + name + location */}
           <div className="flex items-start gap-3 min-w-0">
 
+            {/* vMobile-RegressionFixPass: was h-8 w-8 = 32px — below the 44px minimum
+                touch target. Enlarged to min-h-[44px] min-w-[44px]. */}
             <button
               onClick={() => handleLeaveAttempt(onBackToChat)}
-              className="h-8 w-8 flex items-center justify-center rounded-lg border border-white/15 text-slate-400 hover:text-white hover:border-white/30 transition-colors shrink-0 mt-0.5"
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-white/15 text-slate-400 hover:text-white hover:border-white/30 transition-colors shrink-0 pointer-events-auto"
               title="Back to Chat"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -1575,9 +1819,11 @@ export default function BusinessProfileView({
                   <span className={`text-[10px] font-bold ${sc.color}`}>{sc.label}</span>
                   {zone ? <span className="text-[10px] text-slate-400 ml-1">· {zone}</span> : null}
                 </div>
+                {/* vBusinessProfile-LivingDashboard-Polish: min-h-[44px] + pointer-events-auto
+                    (was bare text-[10px] with no touch target height). */}
                 <button
                   onClick={handleOpenZoningPanel}
-                  className="shrink-0 text-[10px] font-semibold text-cyan-400 hover:text-cyan-300 transition-colors"
+                  className="shrink-0 text-[10px] font-semibold text-cyan-400 hover:text-cyan-300 transition-colors min-h-[44px] flex items-center px-1 pointer-events-auto"
                 >
                   View
                 </button>
@@ -1601,9 +1847,11 @@ export default function BusinessProfileView({
                   <ChevronRight className="h-3 w-3 text-amber-400 shrink-0" />
                 </button>
               ) : (
+                /* vBusinessProfile-LivingDashboard-Polish: enlarged from py-0.5 to min-h-[44px]
+                   flex items-center justify-center — was too small for reliable iOS tap target. */
                 <button
                   onClick={handleOpenZoningPanel}
-                  className="w-full text-center text-[10px] text-slate-500 hover:text-cyan-400 transition-colors py-0.5"
+                  className="w-full flex items-center justify-center text-[10px] text-slate-500 hover:text-cyan-400 transition-colors min-h-[44px] pointer-events-auto"
                 >
                   Update zoning check
                 </button>
@@ -1638,71 +1886,208 @@ export default function BusinessProfileView({
         <div className="px-4 sm:px-6 py-5 sm:py-7 space-y-8 sm:space-y-10 max-w-4xl mx-auto w-full">
 
           {/* ── v36/v41 — Compliance Stats (live from checklist) ────────── */}
+          {/* vBusinessProfile-LivingDashboard-Polish: stats card redesigned for narrow phones.
+              - Vertical h-10 w-px dividers removed: they orphan visually when flex-wrap fires
+                on phones <380px (ring + 3 stat columns > viewport width).
+              - Ring wrapped in <button> so tapping it scrolls to Recommended Forms below.
+              - Pending + Expiring moved into a bottom 2-col grid so they never wrap into the
+                ring column. This keeps the top row to ring + compliance label only.
+              - Last-checked timestamp added below the compliance status label.
+              - urgentCount drives red color (30d), expiringCount drives amber (60d). */}
           {showStats && (
             <section
-              className="flex items-center gap-4 sm:gap-5 p-4 sm:p-5 rounded-xl flex-wrap"
+              className="p-4 sm:p-5 rounded-xl"
               style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
             >
-              {/* SVG health ring */}
-              <div className="relative shrink-0 w-[72px] h-[72px]">
-                <svg viewBox="0 0 72 72" className="w-full h-full -rotate-90" aria-hidden>
-                  <circle cx="36" cy="36" r={RING_R} fill="none" strokeWidth="6" stroke="rgba(255,255,255,0.08)" />
-                  {hasScore && (
-                    <circle
-                      cx="36" cy="36" r={RING_R} fill="none" strokeWidth="6"
-                      strokeLinecap="round"
-                      stroke={score >= 80 ? "#34d399" : score >= 50 ? "#fbbf24" : "#f87171"}
-                      strokeDasharray={RING_CIRC}
-                      strokeDashoffset={RING_CIRC * (1 - score / 100)}
-                    />
-                  )}
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  {hasScore ? (
-                    <span className={`text-sm font-bold tabular-nums ${hc.cls}`}>{score}%</span>
-                  ) : (
-                    <span className="text-xs text-slate-500">—</span>
-                  )}
-                </div>
-              </div>
+              {/* Top row: clickable ring + compliance label */}
+              <div className="flex items-center gap-4">
+                {/* vBusinessProfile-LivingDashboard-Polish: ring is a button — tapping scrolls to
+                    the Recommended Forms section. min-h/min-w 56px ensures ≥48px tap target with
+                    the 72px SVG centered inside. pointer-events-auto for iOS Safari reliability. */}
+                <button
+                  onClick={() => recommendedFormsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                  className="relative shrink-0 w-[72px] h-[72px] min-h-[56px] min-w-[56px] flex items-center justify-center rounded-full pointer-events-auto transition-opacity hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50"
+                  aria-label={hasScore ? `Compliance score ${score}% — tap to jump to required forms` : "Compliance ring — tap to jump to required forms"}
+                  title="Jump to Recommended Forms"
+                >
+                  <svg viewBox="0 0 72 72" className="absolute inset-0 w-full h-full -rotate-90" aria-hidden>
+                    <circle cx="36" cy="36" r={RING_R} fill="none" strokeWidth="6" stroke="rgba(255,255,255,0.08)" />
+                    {hasScore && (
+                      <circle
+                        cx="36" cy="36" r={RING_R} fill="none" strokeWidth="6"
+                        strokeLinecap="round"
+                        stroke={score >= 80 ? "#34d399" : score >= 50 ? "#fbbf24" : "#f87171"}
+                        strokeDasharray={RING_CIRC}
+                        strokeDashoffset={RING_CIRC * (1 - score / 100)}
+                      />
+                    )}
+                  </svg>
+                  <span className="relative z-10">
+                    {hasScore ? (
+                      <span className={`text-sm font-bold tabular-nums ${hc.cls}`}>{score}%</span>
+                    ) : (
+                      <span className="text-xs text-slate-500">—</span>
+                    )}
+                  </span>
+                </button>
 
-              {/* Stats columns */}
-              <div className="flex-1 flex items-center gap-6 flex-wrap">
-                <div className="min-w-[90px]">
+                {/* Compliance label + last-checked */}
+                <div className="flex-1 min-w-0">
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Compliance</p>
                   <p className={`text-sm font-bold leading-tight mt-0.5 ${hasScore ? hc.cls : "text-slate-400"}`}>
                     {hasScore ? hc.text : "No data yet"}
                   </p>
                   {hasScore && (
-                    <p className="text-[10px] text-slate-500 mt-0.5">{done}/{total} forms done</p>
+                    <p className="text-[10px] text-slate-500 mt-0.5 tabular-nums">{done}/{total} forms done</p>
+                  )}
+                  {/* vBusinessProfile-LivingDashboard-Polish: last-checked timestamp */}
+                  {business.lastChecked && (
+                    <p className="text-[10px] text-slate-600 mt-1 flex items-center gap-1">
+                      <Activity className="h-2.5 w-2.5 shrink-0" />
+                      Last reviewed {timeAgo(business.lastChecked)}
+                    </p>
                   )}
                 </div>
+              </div>
 
-                <div className="h-10 w-px" style={{ background: "rgba(255,255,255,0.08)" }} />
-
-                {checklist.length > 0 && (
-                  <div className="min-w-[70px]">
+              {/* Bottom row: Pending + Expiring in 2-col grid (only when checklist exists) */}
+              {/* vBusinessProfile-LivingDashboard-Polish: grid layout prevents these from
+                  wrapping into the ring column on phones <380px. No vertical dividers needed —
+                  the grid gutter provides enough visual separation. */}
+              {checklist.length > 0 && (
+                <div
+                  className="mt-3 pt-3 grid grid-cols-2 gap-3"
+                  style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}
+                >
+                  <div>
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Pending</p>
                     <p className={`text-xl font-bold tabular-nums leading-tight mt-0.5 ${pendingCount > 0 ? "text-amber-400" : "text-emerald-400"}`}>
                       {pendingCount}
                     </p>
                     <p className="text-[10px] text-slate-500">items remaining</p>
                   </div>
-                )}
-
-                {checklist.length > 0 && (
-                  <div className="h-10 w-px" style={{ background: "rgba(255,255,255,0.08)" }} />
-                )}
-
-                {checklist.length > 0 && (
-                  <div className="min-w-[90px]">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Expiring (60d)</p>
-                    <p className={`text-xl font-bold tabular-nums leading-tight mt-0.5 ${expiringCount > 0 ? "text-amber-400" : "text-emerald-400"}`}>
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                      Renewals due
+                      {urgentCount > 0 && <span className="text-red-400 ml-1">(!)</span>}
+                    </p>
+                    <p className={`text-xl font-bold tabular-nums leading-tight mt-0.5 ${
+                      urgentCount > 0 ? "text-red-400" : expiringCount > 0 ? "text-amber-400" : "text-emerald-400"
+                    }`}>
                       {expiringCount}
                     </p>
-                    <p className="text-[10px] text-slate-500">renewals due soon</p>
+                    <p className="text-[10px] text-slate-500">
+                      {urgentCount > 0 ? `${urgentCount} within 30 days` : "within 60 days"}
+                    </p>
                   </div>
-                )}
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* ── vRuleChangeAlerts-Profile-Integration: Recent Rule Changes ── */}
+          {/* Shown only when there are active (non-dismissed) alerts for this business.
+              Hidden entirely when ruleAlerts is empty or undefined — no empty-state card,
+              keeping the profile clean. Each card participates in the existing
+              flex-1 min-h-0 overflow-y-auto scroll chain with no additional wrapper. */}
+          {ruleAlerts && ruleAlerts.length > 0 && (
+            <section>
+              {/* Section header */}
+              <div className="flex items-center gap-2 mb-3">
+                <div
+                  className="h-6 w-6 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ background: "rgba(251,191,36,0.15)", border: "1px solid rgba(251,191,36,0.35)" }}
+                >
+                  <Zap className="h-3.5 w-3.5 text-amber-400" />
+                </div>
+                <h2 className="text-sm font-bold text-white">Recent Rule Changes</h2>
+                {/* Alert count badge */}
+                <span
+                  className="text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-full"
+                  style={{
+                    background: "rgba(251,191,36,0.18)",
+                    border:     "1px solid rgba(251,191,36,0.40)",
+                    color:      "rgb(251,191,36)",
+                  }}
+                >
+                  {ruleAlerts.length}
+                </span>
+              </div>
+
+              {/* Alert cards */}
+              <div className="space-y-2.5">
+                {ruleAlerts.map(alert => (
+                  <div
+                    key={alert.id}
+                    className="rounded-xl p-4 flex flex-col gap-2"
+                    style={{
+                      background: "rgba(251,191,36,0.06)",
+                      border:     "1px solid rgba(251,191,36,0.28)",
+                    }}
+                  >
+                    {/* Top row: title + dismiss × */}
+                    <div className="flex items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        {/* Alert date — relative */}
+                        <p className="text-[10px] font-semibold text-amber-500/80 mb-0.5">
+                          {timeAgo(alert.date)}
+                        </p>
+                        <p className="text-xs font-bold text-white leading-snug">
+                          {alert.title}
+                        </p>
+                      </div>
+                      {/* vRuleChangeAlerts-Profile-Integration: dismiss button
+                          min-h-[44px] min-w-[44px] + pointer-events-auto for iOS tap target */}
+                      {onDismissAlert && (
+                        <button
+                          onClick={() => onDismissAlert(alert.id)}
+                          className="shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-500 hover:text-amber-300 transition-colors rounded-lg hover:bg-white/5 pointer-events-auto -mr-1 -mt-1"
+                          aria-label="Dismiss alert"
+                          title="Dismiss this alert"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Description — 2-line clamp so cards stay compact */}
+                    <p className="text-[11px] text-slate-400 leading-relaxed line-clamp-2">
+                      {alert.description}
+                    </p>
+
+                    {/* Footer: affected forms chip + Review Impact CTA */}
+                    <div className="flex items-center justify-between gap-2 pt-0.5">
+                      {/* Affected forms count chip */}
+                      {alert.affectedForms.length > 0 && (
+                        <span className="text-[10px] text-slate-500 flex items-center gap-1">
+                          <FileText className="h-2.5 w-2.5 shrink-0" />
+                          {alert.affectedForms.length} form{alert.affectedForms.length !== 1 ? "s" : ""} affected
+                        </span>
+                      )}
+
+                      {/* vRuleChangeAlerts-Profile-Integration: "Review Impact" button.
+                          min-h-[48px] touch target + pointer-events-auto for iOS Safari.
+                          Calls onReviewImpact (opens the full modal in page.tsx with
+                          affected filings, what to do next, and deadline risk summary). */}
+                      {onReviewImpact && (
+                        <button
+                          onClick={() => onReviewImpact(alert.id)}
+                          className="ml-auto shrink-0 min-h-[48px] flex items-center gap-1.5 px-3 text-xs font-bold rounded-xl transition-colors pointer-events-auto"
+                          style={{
+                            background: "rgba(251,191,36,0.12)",
+                            border:     "1px solid rgba(251,191,36,0.38)",
+                            color:      "rgb(251,191,36)",
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.background = "rgba(251,191,36,0.20)")}
+                          onMouseLeave={e => (e.currentTarget.style.background = "rgba(251,191,36,0.12)")}
+                        >
+                          <Zap className="h-3 w-3 shrink-0" />
+                          Review Impact
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             </section>
           )}
@@ -1841,11 +2226,22 @@ export default function BusinessProfileView({
           </section>
 
           {/* ── v35: Recommended Forms with drag-and-drop ────────────────── */}
-          {recommendedForms.length > 0 && (
-            <section>
-              <div className="flex items-center gap-2 mb-1">
-                <Sparkles className="h-4 w-4 text-amber-400" />
+          {/* vBusinessProfile-LivingDashboard-Polish: ref enables ring → scroll-to-forms */}
+          {/* vZoningSmartRecommendations: zoningAwareSortedForms used instead of         */}
+          {/*   recommendedForms directly — zoning-matched cards bubble to the top.       */}
+          {zoningAwareSortedForms.length > 0 && (
+            <section ref={recommendedFormsSectionRef}>
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <Sparkles className="h-4 w-4 text-amber-400 shrink-0" />
                 <h2 className="text-sm font-bold text-white">Recommended Forms</h2>
+                {/* vZoningSmartRecommendations: "Zoning-smart" pill shown when a zoning
+                    result is active — signals to the user that the list is personalised. */}
+                {zoningAwareFormIds.size > 0 && (
+                  <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-cyan-300 bg-cyan-500/15 border border-cyan-400/40 rounded-full px-1.5 py-0.5 shrink-0">
+                    <MapPin className="h-2.5 w-2.5" />
+                    Zoning-smart
+                  </span>
+                )}
                 {business.location && (
                   <span className="text-xs text-slate-500">
                     {business.businessType ? `${business.businessType} · ` : ""}
@@ -1860,7 +2256,7 @@ export default function BusinessProfileView({
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {recommendedForms.map(entry => {
+                {zoningAwareSortedForms.map(entry => {
                   const isDownloadable = entry.isDownloadable && !!entry.pdfPath;
                   const downloaded     = downloadedIds.has(entry.id);
                   const isDragTarget   = dragTargetId === entry.id;
@@ -1882,6 +2278,14 @@ export default function BusinessProfileView({
                   // v67 — derive FEDERAL/STATE/COUNTY/CITY/TOWN label for this card
                   const { label: entryLabel, cls: entryCls } = getCatLabel(entry);
 
+                  // vZoningSmartRecommendations: whether this card is flagged by zoning
+                  const isZoningAware = zoningAwareFormIds.has(entry.id);
+                  // vZoningSmartRecommendations: cyan left-border accent for zoning-aware
+                  // cards that are not yet completed (completed uses emerald border instead).
+                  const zoningBorderLeft = (isZoningAware && !isCompleted && !isDragTarget)
+                    ? "2px solid rgba(34,211,238,0.55)"
+                    : undefined;
+
                   return (
                     <div
                       key={entry.id}
@@ -1896,7 +2300,10 @@ export default function BusinessProfileView({
                           ? "rgba(34,211,238,0.08)"
                           : isCompleted
                             ? "rgba(52,211,153,0.07)"
-                            : "rgba(255,255,255,0.05)",
+                            // vZoningSmartRecommendations: subtle cyan tint for matched cards
+                            : isZoningAware
+                              ? "rgba(34,211,238,0.05)"
+                              : "rgba(255,255,255,0.05)",
                         border: isDragTarget
                           ? "1.5px solid rgba(34,211,238,0.55)"
                           : isCompleted
@@ -1904,18 +2311,33 @@ export default function BusinessProfileView({
                             : cardDraft
                               ? "1px solid rgba(251,191,36,0.30)"
                               : "1px solid rgba(255,255,255,0.09)",
+                        // vZoningSmartRecommendations: cyan left accent overrides the
+                        // shorthand border only on the left side for matched cards.
+                        borderLeft: zoningBorderLeft,
                         boxShadow: isDragTarget
                           ? "0 0 0 3px rgba(34,211,238,0.12)"
                           : isCompleted
                             ? "0 0 0 1px rgba(52,211,153,0.18)"
-                            : undefined,
+                            : isZoningAware
+                              ? "0 0 0 1px rgba(34,211,238,0.10)"
+                              : undefined,
                       }}
                     >
                       {/* Badge row — v67: FEDERAL/STATE/COUNTY/CITY/TOWN pill */}
                       <div className="flex items-start justify-between gap-2 flex-wrap">
-                        <span className={`inline-flex ${BADGE_CLS} ${entryCls}`}>
-                          {entryLabel}
-                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className={`inline-flex ${BADGE_CLS} ${entryCls}`}>
+                            {entryLabel}
+                          </span>
+                          {/* vZoningSmartRecommendations: cyan "Zoning-aware" badge shown
+                              when this form ID is flagged by the active zoning result. */}
+                          {isZoningAware && (
+                            <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-cyan-300 bg-cyan-500/15 border border-cyan-400/40 rounded-full px-1.5 py-0.5">
+                              <MapPin className="h-2.5 w-2.5" />
+                              Zoning-aware
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-1.5 flex-wrap">
                           {/* v44 — green "Completed" badge; uses isCompleted for clarity */}
                           {isCompleted && (
@@ -2056,11 +2478,24 @@ export default function BusinessProfileView({
                           </a>
                         )}
 
-                        {/* v75 — "Complete with AI" button: always visible, disabled when already completed */}
+                        {/* v75 / vSeamlessProfileFormFillerBridge — "Complete with AI" button.
+                            Always visible; disabled when already completed.
+                            Shows "Opening…" briefly (pendingFormId) so the user gets
+                            immediate tap feedback before the profile view closes. */}
                         {onStartForm && (
                           <button
-                            onClick={() => { if (!isCompleted) onStartForm(entry.id); }}
-                            disabled={isCompleted}
+                            onClick={() => {
+                              if (!isCompleted && !pendingFormId) {
+                                // vSeamlessProfileFormFillerBridge: brief visual feedback
+                                // before parent closes the profile view and opens FormFiller.
+                                setPendingFormId(entry.id);
+                                onStartForm(entry.id);
+                                // Safety reset — if parent doesn't close the view (no template),
+                                // clear the pending state after 1 s so the button recovers.
+                                setTimeout(() => setPendingFormId(null), 1000);
+                              }
+                            }}
+                            disabled={isCompleted || pendingFormId === entry.id}
                             title={isCompleted ? "Already completed — view document above" : `Complete ${entry.name} with AI assistance`}
                             className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors min-h-[44px] pointer-events-auto ${
                               isCompleted
@@ -2072,7 +2507,7 @@ export default function BusinessProfileView({
                             onMouseLeave={e => { if (!isCompleted) (e.currentTarget as HTMLButtonElement).style.background = "rgb(34,211,238)"; }}
                           >
                             <Sparkles className="h-3 w-3" />
-                            Complete with AI
+                            {pendingFormId === entry.id ? "Opening…" : "Complete with AI"}
                           </button>
                         )}
 
