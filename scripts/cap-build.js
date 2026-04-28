@@ -19,6 +19,26 @@ const ROOT     = path.resolve(__dirname, '..');
 const API_DIR  = path.join(ROOT, 'app', 'api');
 const STUB_SRC = path.join(__dirname, 'route-stub.ts');
 
+// ── 0. Aggressive clean — eliminates stale chunks that cause NotFoundError ───
+// v285: rm -rf .next out ios/App/App/public android/app/src/main/assets/public
+// Root cause of chunk 404 (00nvzi6qb_-1r.js): prior build artifacts left old
+// content-hash chunk files in ios/App/App/public alongside new-build chunks.
+// WKWebView loads the new build manifest pointing to new chunks but finds the
+// old chunk file still cached on disk → NotFoundError → "page couldn't load".
+const CLEAN_DIRS = [
+  path.join(ROOT, '.next'),
+  path.join(ROOT, 'out'),
+  path.join(ROOT, 'ios', 'App', 'App', 'public'),
+  path.join(ROOT, 'android', 'app', 'src', 'main', 'assets', 'public'),
+];
+console.log('[cap-build] v285: Cleaning stale build artifacts…');
+for (const dir of CLEAN_DIRS) {
+  try {
+    fs.rmSync(dir, { recursive: true, force: true });
+    console.log(`[cap-build]   removed ${path.relative(ROOT, dir)}`);
+  } catch (_) {}
+}
+
 // ── 1. Find all route.ts files under app/api/ ────────────────────────────────
 function findRoutes(dir) {
   const results = [];

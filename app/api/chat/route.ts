@@ -1101,6 +1101,16 @@ DO NOT:
   • Add this parenthetical if no genuinely non-obvious preparation is required.
 `;
 
+// v285: explicit CORS — belt-and-suspenders for WKWebView cross-origin fetch.
+const CORS = {
+  'Access-Control-Allow-Origin':  '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: CORS });
+}
+
 export async function POST(request: NextRequest) {
   const requestId = `chat-${Date.now()}`;
 
@@ -1109,7 +1119,7 @@ export async function POST(request: NextRequest) {
     console.error(`[chat] [${requestId}] ANTHROPIC_API_KEY is missing`);
     return Response.json(
       { content: "Anthropic API key is not configured. Please set ANTHROPIC_API_KEY in your environment.", formMap: null, formClarify: null },
-      { status: 500 },
+      { status: 500, headers: CORS },
     );
   }
 
@@ -1197,7 +1207,7 @@ export async function POST(request: NextRequest) {
       content,
       formMap: formMap.length > 0 ? formMap : null,
       formClarify: null,
-    });
+    }, { headers: CORS });
 
   } catch (error) {
     if (error instanceof APIError) {
@@ -1247,7 +1257,7 @@ export async function POST(request: NextRequest) {
     console.error(`[chat] [${requestId}] Unexpected error:`, error);
     return Response.json(
       { content: `Sorry, I had trouble connecting (${msg}). Please try again.`, formMap: null, formClarify: null },
-      { status: 500 },
+      { status: 500, headers: CORS },
     );
   }
 }

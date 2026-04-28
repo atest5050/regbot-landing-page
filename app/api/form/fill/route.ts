@@ -1,5 +1,15 @@
+// v285: explicit CORS for WKWebView cross-origin fetch.
 import { NextRequest, NextResponse } from 'next/server';
 import { PDFDocument, PDFTextField, PDFCheckBox } from 'pdf-lib';
+
+const CORS = {
+  'Access-Control-Allow-Origin':  '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: CORS });
+}
 
 export async function POST(req: NextRequest) {
   let body: { pdfBase64?: unknown; fieldValues?: unknown };

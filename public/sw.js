@@ -1,4 +1,4 @@
-// vUnified-20260428-final-ship-lock-v284 — GPS fallback fix; CORS deployed. Cache bump v158/v145/v145.
+// vUnified-20260428-v285-production-lock — chunk clean fix; CORS in routes; Stripe real routes. Cache v159/v146/v146.
 // vUnified-20260414-national-expansion-v130 — fire-and-forget SW unregister. v7.
 // vUnified-20260414-national-expansion-v129 — SW unregister before navigate. v6.
 // vUnified-20260414-national-expansion-v128 — '/chat/index.html' added. v5.
@@ -7,9 +7,9 @@
 // vUnified-20260414-national-expansion-v16 — Enhanced SW: cache-first for static assets,
 //   network-first for pages, cache-then-network for PDF API responses.
 
-const CACHE_NAME = 'regpulse-v158';
-const STATIC_CACHE = 'regpulse-static-v145';
-const PDF_CACHE = 'regpulse-pdf-v145';
+const CACHE_NAME = 'regpulse-v159';
+const STATIC_CACHE = 'regpulse-static-v146';
+const PDF_CACHE = 'regpulse-pdf-v146';
 
 // Static asset patterns to cache on install.
 // '/chat/' with trailing slash matches Next.js trailingSlash:true static export output.

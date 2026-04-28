@@ -1,4 +1,4 @@
-// vUnified-20260428-final-ship-lock-v284 — GPS: @capacitor/geolocation → navigator.geolocation fallback; CORS deployed.
+// vUnified-20260428-v285-production-lock — chunk clean; CORS in every route; Stripe real routes; Info.plist CFBundleDisplayName.
 //        v90 CHANGES (no changes to this file):
 //          ROOT CAUSE CONFIRMED: Capacitor WebView loads out/index.html (route "/") on launch.
 //          AppSplashOverlay (z-[400]) + OnboardingFlow (z-[300]) live in this file (/chat) and
@@ -1248,7 +1248,9 @@ import {
 
 // SavedBusiness is now imported from lib/regbot-types.ts
 
-// v283: All Capacitor API routes are stubs — prefix every fetch with the live Vercel URL.
+// v285: All Capacitor API routes are stubs — prefix every fetch with the live Vercel URL.
+// NEXT_PUBLIC_API_BASE_URL is baked in at build:cap time from .env.local.
+// Falls back to '' on web (Vercel), where same-origin requests need no prefix.
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
 
 /** Calculates the living-profile stats from the current checklist + completed forms. */
@@ -3465,7 +3467,9 @@ export default function ChatPage() {
         const newIds = extractAndAddToChecklist(data.content, data.formMap);
         if (newIds.length > 0) showAutoSaveToast(newIds.length, newIds);
       }
-    } catch {
+    } catch (err) {
+      // v285: surface the real error so it appears in Xcode console for debugging.
+      console.error('[callApi] fetch failed:', err, '| API_BASE:', API_BASE);
       setMessages(prev => [...prev, {
         id:      (Date.now() + 1).toString(),
         role:    "assistant",

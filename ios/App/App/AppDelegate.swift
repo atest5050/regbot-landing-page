@@ -2,7 +2,7 @@ import UIKit
 import Capacitor
 import WebKit
 
-// vUnified-20260428-final-ship-lock-v284 — GPS fallback fix; CORS deployed to Vercel.
+// vUnified-20260428-final-ship-lock-v285 — GPS fallback fix; CORS deployed to Vercel.
 // Root cause of SIGKILL 9 confirmed: UILongPressGestureRecognizer fired during WKWebView gesture unwind,
 // tearing down the web content process. Fix: gesture removed entirely.
 // Navigation path: React onPointerDown/onClick/onTouchEnd → bridge postMessage({action:"navigate"})
@@ -65,7 +65,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, WKNavigationDelegate {
         webView.scrollView.contentInsetAdjustmentBehavior = .never
 
         bridgeSetupComplete = true
-        NSLog("[v284][RegPulse] Bridge setup complete — WKScriptMessageHandler registered (no native gesture)")
+        NSLog("[v285][RegPulse] Bridge setup complete — WKScriptMessageHandler registered (no native gesture)")
 
         capVC.setNeedsUpdateOfHomeIndicatorAutoHidden()
     }
@@ -93,13 +93,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate, WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
         let url = webView.url?.absoluteString ?? "nil"
-        NSLog("[v284][RegPulse] didFail — url='\(url)' error='\(error)'")
+        NSLog("[v285][RegPulse] didFail — url='\(url)' error='\(error)'")
         originalNavigationDelegate?.webView?(webView, didFail: navigation, withError: error)
     }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
         let url = webView.url?.absoluteString ?? "nil"
-        NSLog("[v284][RegPulse] didFailProvisionalNavigation — url='\(url)' error='\(error)'")
+        NSLog("[v285][RegPulse] didFailProvisionalNavigation — url='\(url)' error='\(error)'")
         originalNavigationDelegate?.webView?(webView, didFailProvisionalNavigation: navigation, withError: error)
     }
 

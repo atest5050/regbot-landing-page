@@ -18,6 +18,15 @@
 import { NextResponse } from "next/server";
 import Anthropic, { APIError } from "@anthropic-ai/sdk";
 
+const CORS = {
+  'Access-Control-Allow-Origin':  '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: CORS });
+}
+
 const MODEL = "claude-haiku-4-5-20251001";
 
 const client = new Anthropic({

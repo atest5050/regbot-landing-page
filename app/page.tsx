@@ -1,4 +1,4 @@
-// vUnified-20260428-final-ship-lock-v284 — GPS fallback fix; CORS deployed to Vercel.
+// vUnified-20260428-v285-production-lock — chunk clean; CORS in every route; Info.plist fix.
 // v276 ROOT CAUSE + FIX:
 //   Every approach to window.location.replace('/chat/') caused SIGKILL 9 on physical iOS
 //   because WKWebView terminates the web content process during document navigation when
@@ -176,7 +176,7 @@ function NativeApp() {
   // onComplete: Pro/Business only — free tier handled by __rpStartFreeTriggered watcher above.
   return (
     <OnboardingFlow
-      key="onboarding-v284"
+      key="onboarding-v285"
       visible={true}
       onComplete={(tier: OnboardingTier) => {
         if (tier === "free") return;

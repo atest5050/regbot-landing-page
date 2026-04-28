@@ -1,7 +1,17 @@
+// v285: explicit CORS for WKWebView cross-origin fetch.
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { toDb, fromDb } from "@/lib/checklist";
 import type { DbChecklistItem } from "@/lib/checklist";
+
+const CORS = {
+  'Access-Control-Allow-Origin':  '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: CORS });
+}
 
 // ── Helper: get authenticated user or return 401 ──────────────────────────────
 async function getAuthedClient() {
