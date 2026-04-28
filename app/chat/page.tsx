@@ -1,4 +1,4 @@
-// vUnified-20260428-v285-production-lock — chunk clean; CORS in every route; Stripe real routes; Info.plist CFBundleDisplayName.
+// vUnified-20260428-v286-production-polish — 52px touch targets; glassmorphism input bar; Info.plist NSCoreLocationUsageDescription.
 //        v90 CHANGES (no changes to this file):
 //          ROOT CAUSE CONFIRMED: Capacitor WebView loads out/index.html (route "/") on launch.
 //          AppSplashOverlay (z-[400]) + OnboardingFlow (z-[300]) live in this file (/chat) and
@@ -7440,7 +7440,7 @@ export default function ChatPage() {
                                 <button
                                   key={opt}
                                   onClick={() => sendQuickReply(opt)}
-                                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                                  className={`text-xs px-4 py-2.5 min-h-[44px] flex items-center rounded-full border transition-colors ${
                                     isDarkMode
                                       ? "border-blue-700/60 text-blue-200 bg-blue-900/40 hover:bg-blue-800/50"
                                       : "border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100"
@@ -7667,7 +7667,7 @@ export default function ChatPage() {
                 onAnalysisComplete={handleDocumentAnalysisComplete}
                 disabled={isLoading}
               />
-              <div className="flex-1 flex items-center bg-slate-50/90 dark:bg-[#1a2740]/90 border border-slate-200/70 dark:border-slate-600/40 rounded-2xl px-4 backdrop-blur-sm focus-within:ring-2 focus-within:ring-blue-100 dark:focus-within:ring-blue-900/40 focus-within:border-blue-300 dark:focus-within:border-blue-700/60 transition-all">
+              <div className="flex-1 flex items-center min-h-[52px] bg-slate-50/90 dark:bg-[#1a2740]/90 border border-slate-200/70 dark:border-slate-600/40 rounded-2xl px-4 backdrop-blur-sm focus-within:ring-2 focus-within:ring-blue-100 dark:focus-within:ring-blue-900/40 focus-within:border-blue-300 dark:focus-within:border-blue-700/60 transition-all">
                 <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
@@ -7680,7 +7680,7 @@ export default function ChatPage() {
               <button
                 onClick={sendMessage}
                 disabled={!input.trim() || isLoading}
-                className="min-h-[48px] min-w-[48px] flex items-center justify-center bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl transition-colors shrink-0 pointer-events-auto"
+                className="min-h-[52px] min-w-[52px] flex items-center justify-center bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl transition-colors shrink-0 pointer-events-auto"
               >{/* vMobile-icon-fix-v3: 48px touch target + pointer-events-auto for iOS Safari */}
                 <Send className="h-4 w-4" />
               </button>

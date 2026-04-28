@@ -1,6 +1,6 @@
 "use client";
 
-// vUnified-20260414-national-expansion-v85 — Exact next-steps docs + final store submission verification.
+// vUnified-20260428-v286-production-polish — 52px touch targets; glassmorphism; adaptive permit rows; SW v160/v147.
 //        v85 CHANGES (no layout changes in BusinessProfileView):
 //          store:prepare 11/11 ✅. tsc EXIT:0. build EXIT:0 0 warnings. build:cap EXIT:0 (1.088s). cap doctor ✓.
 //          build:cap now syncs to BOTH ios/ + android/ — sync time ~1s (expected with both platforms present).
@@ -3006,7 +3006,7 @@ export default function BusinessProfileView({
 
                       <button
                         onClick={() => viewDoc(doc)}
-                        className="shrink-0 inline-flex items-center gap-1.5 text-[11px] font-semibold text-cyan-400 border border-cyan-400/30 bg-cyan-400/10 hover:bg-cyan-400/20 rounded-lg px-3 py-1.5 transition-colors"
+                        className="shrink-0 inline-flex items-center gap-1.5 text-[11px] font-semibold text-cyan-400 border border-cyan-400/30 bg-cyan-400/10 hover:bg-cyan-400/20 rounded-lg px-3 py-1.5 min-h-[44px] transition-all duration-200 backdrop-blur-sm"
                       >
                         <ExternalLink className="h-3 w-3" />
                         View
@@ -3086,7 +3086,7 @@ export default function BusinessProfileView({
                       onDragOver={handleCardDragOver}
                       onDragLeave={e => handleCardDragLeave(e, entry.id)}
                       onDrop={e => handleCardDrop(e, entry.id, entry.name)}
-                      className="flex flex-col gap-2.5 p-4 rounded-xl transition-all duration-200"
+                      className="flex flex-col gap-2.5 p-4 rounded-xl transition-all duration-300 ease-in-out"
                       style={{
                         // v44: completed cards get a distinct emerald treatment
                         background: isDragTarget
@@ -3421,7 +3421,7 @@ export default function BusinessProfileView({
           <button
             onClick={() => { void handleSave(); }}
             disabled={saving}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white transition-all duration-200 disabled:opacity-60"
+            className="w-full flex items-center justify-center gap-2 min-h-[52px] py-3 rounded-xl text-sm font-bold text-white transition-all duration-300 ease-in-out disabled:opacity-60"
             style={{
               background: saving ? "#1d4ed8" : "#2563eb",
               boxShadow: "0 0 0 1px rgba(37,99,235,0.5)",

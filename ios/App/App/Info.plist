@@ -48,8 +48,8 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>RegPulse would like to use your location to provide hyper-local compliance guidance.</string>
+	<string>RegPulse would like to use your current location to provide hyper-local compliance guidance.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>RegPulse would like to use your location to provide hyper-local compliance guidance.</string>
+	<string>RegPulse would like to use your current location to provide hyper-local compliance guidance.</string>
 </dict>
 </plist>
