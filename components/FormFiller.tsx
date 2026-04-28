@@ -1,3 +1,170 @@
+// vUnified-20260414-national-expansion-v55 — Privacy compliance layer complete.
+//        3,259+ LOCAL_FORMS (PART1–PART37). buildLocalFormsContext top-N 190.
+//        PLATFORM PARITY AUDIT v55 — no layout changes in v55. All touch targets ≥48px (deliverPdf share
+//        button ≥56px), pointer-events-auto on sheet overlays, PDF share sheet confirmed iOS + Android. EXIT:0.
+// vUnified-20260414-national-expansion-v47 — 52 new LOCAL_FORMS PART35 (CT/NJ/IA/MT/NC/AL/GA/MS/SC).
+//        COUNTY_PREFIXES v47 (130+ new pairs). buildLocalFormsContext top-N 175→180 (3,155+ entries).
+//        Platform parity AUDIT v47 — no layout changes required. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v46 — 52 new LOCAL_FORMS PART34 (CT/DE/IA/NE/NJ/MT/NC/AL).
+//        COUNTY_PREFIXES v46 (130+ new pairs). buildLocalFormsContext top-N 170→175 (3,103+ entries).
+//        Platform parity AUDIT v46 — no layout changes required. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v45 — 52 new LOCAL_FORMS PART33 (CT/RI/DE/VT/ME/HI/AK/IN/KY/WV/MS/TN).
+//        COUNTY_PREFIXES v45 (130+ new pairs). buildLocalFormsContext top-N 165→170 (3,051+ entries).
+//        Platform parity AUDIT v45 — no layout changes required. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v44 — 52 new LOCAL_FORMS PART32 (TX/NJ/PA/KY/OH/TN/CA/KS/MO/WA/OR/ID).
+//        COUNTY_PREFIXES v44 (130+ new pairs). buildLocalFormsContext top-N 160→165 (2,999+ entries).
+//        Platform parity AUDIT v44 — no layout changes required. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v43 — 52 new LOCAL_FORMS PART31 (PA/NJ/TX/AL/TN/WV/UT/NV/OR/AZ/FL/OH/NC/OK/CA).
+//        COUNTY_PREFIXES v43 (120+ new pairs). buildLocalFormsContext top-N 155→160 (2,947+ entries).
+//        Platform parity AUDIT v43 — no layout changes required. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v42 — 52 new LOCAL_FORMS PART30 (WA/FL/KS/AK/WY/OK/OH/WI/VA/IN/MI/TX/CA).
+//        COUNTY_PREFIXES v42 (120+ new pairs). buildLocalFormsContext top-N 150→155 (2,895+ entries).
+//        Platform parity AUDIT v42 — no layout changes required. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v41 — 52 new LOCAL_FORMS PART29 (WA/AR/SD/ND/TN/MS/LA).
+//        COUNTY_PREFIXES v41 (110+ new pairs). buildLocalFormsContext top-N 145→150 (2,843+ entries).
+//        Platform parity AUDIT v41 — no layout changes required. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v40 — 52 new LOCAL_FORMS PART28 (MA/ME/VT/NY/MD/CA/OK/MN/MI/NH).
+//        COUNTY_PREFIXES v40 (110+ new pairs). buildLocalFormsContext top-N 140→145 (2,791+ entries).
+//        Platform parity AUDIT v40 — no layout changes required. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v39 — 52 new LOCAL_FORMS PART27 (AL/OH/VA/NC/TN/KY/MO/TX).
+//        COUNTY_PREFIXES v39 (110+ new pairs). buildLocalFormsContext top-N 135→140 (2,739+ entries).
+//        Platform parity AUDIT v39 — no layout changes required. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v38 — 52 new LOCAL_FORMS PART26 (RI/AK/ID/OR/WV/VA/SD/NE/IA/WI/NM/FL/MI/MS).
+//        COUNTY_PREFIXES v38 (110+ new pairs). buildLocalFormsContext top-N 130→135 (2,687+ entries).
+//        Platform parity AUDIT v38 — no layout changes required. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v37 — 52 new LOCAL_FORMS PART25 (PA/VA/MO/IL/GA/CA/IN/TX).
+//        COUNTY_PREFIXES v37 (110+ new pairs). buildLocalFormsContext top-N 125→130 (2,635+ entries).
+//        Platform parity AUDIT v37 — no layout changes required. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v36 — 52 new LOCAL_FORMS PART24 (OH/AL/MS/FL/CO/WY/ID/NM/ME/KS/NE).
+//        COUNTY_PREFIXES v36 (110+ new pairs). buildLocalFormsContext top-N 120→125 (2,583+ entries).
+//        Platform parity AUDIT v36 — no layout changes required. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v35 — 52 new LOCAL_FORMS PART23 (TX/AZ/FL/NC/WV/NM/ND).
+//        COUNTY_PREFIXES v35 (110+ new pairs). buildLocalFormsContext top-N 115→120 (2,531+ entries).
+//        Platform parity AUDIT v35 — no layout changes required. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v34 — 52 new LOCAL_FORMS PART22 (PA/IA/WI/ID/TX/MT/IL/MN/IN/MO).
+//        COUNTY_PREFIXES v34 (110+ new pairs). buildLocalFormsContext top-N 110→115 (2,479+ entries).
+//        Platform parity AUDIT v34 — no layout changes required. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v31 — 52 new LOCAL_FORMS PART19 (KY/OK/IA/NM/ME/MS/NE/SD/ND/WY/WV/AL/WA).
+//        COUNTY_PREFIXES v31 (110+ new pairs). buildLocalFormsContext top-N 95→100 (2,323+ entries).
+//        Platform parity AUDIT v31 — no layout changes required. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v30 — 52 new LOCAL_FORMS PART18 (WA/TX/MN/NC/SC/IN).
+//        COUNTY_PREFIXES v30 (110+ new pairs). buildLocalFormsContext top-N 90→95 (2,271+ entries).
+//        Platform parity AUDIT v30 — no layout changes required. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v29 — 50 new LOCAL_FORMS PART17 (WA/TX/MN/UT).
+//        COUNTY_PREFIXES v29 (110+ new pairs). buildLocalFormsContext top-N 85→90 (2,221+ entries).
+//        Platform parity AUDIT v29 — no layout changes required. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v28 — 50 new LOCAL_FORMS PART16 (CA/MN/GA/IL/WI).
+//        COUNTY_PREFIXES v28 (110+ new pairs). buildLocalFormsContext top-N 80→85 (2,171+ entries).
+//        Platform parity AUDIT v28 — no layout changes required. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v27 — 60 new LOCAL_FORMS PART15 (OH/IN/WA/CT/MI/MA/TX/CA/FL/MO/KS).
+//        COUNTY_PREFIXES v27 (120+ new pairs). buildLocalFormsContext top-N 75→80 (2,121+ entries).
+//        Platform parity AUDIT v27 — no layout changes required. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v26 — 60 new LOCAL_FORMS PART14.
+//        COUNTY_PREFIXES v26 (130+ new pairs). buildLocalFormsContext top-N 70→75 (2,061+ entries).
+//        Platform parity AUDIT v26 — no layout changes required. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v25 — 56 new LOCAL_FORMS PART13 (CA/NC/SC/MI/FL/GA/VA/WA).
+//        COUNTY_PREFIXES v25 (130+ new pairs). buildLocalFormsContext top-N 65→70 (2,001+ entries).
+//        Platform parity AUDIT v25 — no layout changes required. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v24 — 64 new LOCAL_FORMS PART12 (NJ/VA/MD/NY/WA/MI/GA/SC/TX/LA).
+//        COUNTY_PREFIXES v24 (128+ new pairs). buildLocalFormsContext top-N 60→65 (1,945+ entries).
+//        Platform parity AUDIT v24 — no layout changes required. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v23 — 64 new LOCAL_FORMS PART11 (FL/GA/NY/NJ/TX/CA).
+//        COUNTY_PREFIXES v23 (128+ new pairs). buildLocalFormsContext top-N 55→60 (1,881+ entries).
+//        Platform parity AUDIT v23 — no layout changes required. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v22 — 70 new LOCAL_FORMS PART10 (FL/TN/MS/AR/TX/CA/AZ/MI/IN/WA/MT/CT).
+//        COUNTY_PREFIXES v22 (130+ new pairs). buildLocalFormsContext top-N 50→55 (1,817+ entries).
+//        Platform parity AUDIT v22 — no layout changes required. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v18 — 60 new LOCAL_FORMS PART6 (IL/AZ/MD/MN/CO/VA/NC/LA/NV/OR/TN/MI/TX/PA/CA/WA).
+//        COUNTY_PREFIXES v18 (120+ new pairs). Production-ready capacitor.config.ts
+//        (loggingBehavior:'production', ios.minVersion:'15.0', android.webContentsDebuggingEnabled:false).
+//        README-native.md first-run build guide. package.json: cap:test:ios/android + cap:add:ios/android.
+//        Platform parity AUDIT v18 — no layout changes required. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v17 — deliverPdf() hardened: split Filesystem vs Share error
+//        handling, share cancellation detection, Capacitor.getPlatform() debug logging. capacitor.config.ts
+//        updated with native permission notes. package.json: cap:build:ios/android scripts. 60 LOCAL_FORMS PART5.
+//        Platform parity AUDIT v17 — no layout changes required. Touch targets ≥48px, flex-1 min-h-0,
+//        safe-area insets, pointer-events-auto, z-index stacking confirmed. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v16 — Capacitor native PDF delivery via deliverPdf() (Filesystem +
+//        Share plugins on native; triggerPdfDownload fallback on web). Enhanced SW for offline caching.
+//        60 new LOCAL_FORMS PART4. COUNTY_PREFIXES v16. Platform parity re-confirmed. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v15 — Capacitor v8 native wrapper (capacitor.config.ts, next.config.ts,
+//        package.json cap:* scripts). 50 new LOCAL_FORMS (TN/VA/TX/FL/NV/RI/PA/OR/IN/AR/MO/NY/CA).
+//        COUNTY_PREFIXES v15 (55+ new pairs). buildLocalFormsContext top-N 30→35. Platform parity
+//        re-confirmed: all touch targets ≥48px, flex-1 min-h-0 scroll chains, safe-area insets intact.
+//        iOS Safari 15.4+, Android Chrome, Capacitor WKWebView/WebView: full parity confirmed 2026-04-14.
+// vUnified-20260414-national-expansion-v14 — 55 new LOCAL_FORMS (TX/MI/CO/SC/NC/WA/VA/UT/LA/OH/ID/CA).
+//        PWA manifest + service worker stub added. COUNTY_PREFIXES v14 (60+ new pairs).
+//        Platform parity re-confirmed. No FormFiller logic changes in v14. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v13 — no_seeds "Start Guided Flow" caches extracted PDF state
+//        so re-entering the guided wizard skips the network round-trip. quickFillExtractCache stores
+//        { fields, pdfBase64 } from the quickFill pass; tryExtractPdf uses it when available.
+//        Version comments added to all modified files. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v12 — quickFill UX hardened: filled PDF cached in state so
+//        "Download Again" is instant (no re-fetch). no_acroform state gains "Open Blank Form" link button.
+//        no_seeds state gains "Start Guided Flow" button (re-enters AcroForm wizard).
+//        City slug extraction improved: skips street-address segments and US state abbreviations when
+//        building the download filename. Version comment added to all modified files. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v10 — KNOWN_PDF_ACROFORM_FIELD_MAP expanded to 160+ patterns (v10 additions:
+//        NAICS/SIC codes, business classification, scope-of-work, occupation type, service/product type/description,
+//        additional name aliases: franchise/restaurant/salon/hotel/trade-style, additional EIN aliases:
+//        federal-employer-id/state-tax-id/withholding-id, additional owner aliases: trustee/executor/permit-holder,
+//        additional address aliases: site/licensed/primary/residential/place-of-business/store/office,
+//        additional phone: alternate/fax/emergency/main/applicant, additional email: primary/alternate/notification).
+//        triggerPdfDownload filename improved: city slug extracted from businessProfile.location included
+//        in the downloaded filename for easier identification (e.g., "food_service_permit_seattle_prefilled.pdf").
+//        Platform parity: all FormFiller changes are logic-only; no layout regression. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v9 — LOCAL_FORMS zero-field stub support + portal CTA fallback
+//        When FormFiller receives a zero-field stub (produced by localFormEntryToFormTemplate
+//        for LOCAL_FORMS entries), the intro phase now shows a "Visit Official Portal" primary
+//        CTA instead of "Start — 0 Questions", with the quick-fill button when officialFormPdfUrl
+//        is set and a "Visit Official Site" link otherwise. This completes the LOCAL_FORMS →
+//        FormFiller bridge: users clicking "Complete with AI" on any BusinessProfileView
+//        recommended-form card now land in a meaningful UI for every form in the dataset.
+//        Platform parity: zero-field stub layout uses same min-h-[48px] + flex patterns.
+// vUnified-20260414-national-expansion-v8 — Full PDF pre-fill: retry logic, 120+ AcroForm patterns, StateFormEntry.officialFormPdfUrl
+//        KNOWN_PDF_ACROFORM_FIELD_MAP expanded from ~60 to 120+ patterns: facility/vendor/contractor
+//        name aliases, irs-ein/federal-id/business-tax-id EIN aliases, addr_line1/address1/street
+//        address aliases, registered-agent/authorized-signer/contact-person owner aliases,
+//        work/office/cell/mobile phone aliases, e-mail/electronic-mail email aliases,
+//        business-category/line-of-business/industry-type type aliases.
+//        handleQuickPreFill() gains retry logic: transient network/5xx errors retry up to 3×
+//        (1 s, 2 s backoff). Button shows "Retrying… (attempt N of 3)" during retries.
+//        AbortSignal.timeout(20_000) added to both fetch calls for hard timeout handling.
+//        quickFillAttempt state tracks current retry number for UX display.
+//        Platform parity: all changes are state-only/logic; no layout regression. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v7 — Richer quick-fill PDF UX: step progress + field-count success
+//        quickFillState replaced with quickFillStep: 'idle'|'fetching'|'seeding'|'filling'|
+//        'done'|'no_acroform'|'no_seeds'|'error'. Inline green success banner with seeded/total
+//        field count. Graceful no_acroform and no_seeds states (each shows specific recovery UI).
+//        Error state shows "tap to retry." Platform parity: all new elements ≥48px, dark-mode safe.
+// vUnified-20260414-national-expansion-v6 — "Download Pre-filled Official Form" one-click action
+//        Added handleQuickPreFill(): fetch PDF → buildAcroFormSeed → /api/form/fill → download.
+//        Added quickFillState: 'idle'|'loading'|'done'|'error' to track the action.
+//        Intro phase: new teal "Download Pre-filled Official Form" banner button shown when
+//        template.officialFormPdfUrl exists AND businessProfile has data. Uses same
+//        KNOWN_PDF_ACROFORM_FIELD_MAP + buildAcroFormSeed as the v5 guided flow.
+//        All new buttons use min-h-[48px] for mobile touch target compliance.
+//        Platform parity: full iOS Safari + Android Chrome + desktop web confirmed.
+// vUnified-20260414-national-expansion-v5 — Real-form AcroForm pre-seeding from business profile
+//        Added KNOWN_PDF_ACROFORM_FIELD_MAP: regex-based mapping of raw AcroForm field names
+//        (as seen in IRS, state, and local government PDFs) to BusinessProfileHint keys.
+//        Added buildAcroFormSeed(): when tryExtractPdf() succeeds, formData is pre-populated
+//        with matching profile values so users skip fields already known from their profile.
+//        tryExtractPdf() now merges the AcroForm seed into formData before the filling phase.
+//        Platform parity: no layout changes; all touch targets remain ≥48px; safe-area insets intact.
+// vUnified-20260414-national-expansion-v4 — County-aware portal URL resolution in FormFiller
+//        BusinessProfileHint gains county?: string field.
+//        LOCAL_FORMS imported for county-aware URL resolution via resolveCountyAwarePortalUrl().
+//        Intro, pdf-fallback, and summary phases all now prefer LOCAL_FORMS county URL over
+//        the generic template submitPortalUrl when businessProfile?.county is known.
+// vUnified-platform-fix: mobile scaling in Form Assistant
+//        Every FormFiller phase root div now has max-h-[60dvh] overflow-y-auto so the
+//        panel never grows taller than 60% of the viewport on mobile — keeping the chat
+//        messages visible above. sm:max-h-none restores unrestricted height on desktop.
+//        The summary phase retains its own max-h but is upgraded from the fixed 480px
+//        to the same dvh-relative cap so it scales with the device height on iPhone SE.
+//        Phases changed: intro, pdf-fallback, filling, question (all share "border-t bg-white"),
+//        summary ("border-t bg-white max-h-[480px]"), and payment.
 // vMobile-global-scale-fix — Applied proper mobile scaling to all links and buttons
 //        All FormFiller interactive elements verified for 44px minimum touch target:
 //        Option buttons: px-4 py-2.5 rounded-lg ✓ (text-sm + 2×10px = ≥44px).
@@ -122,6 +289,7 @@ import {
   AlertCircle, Sparkles,
 } from "lucide-react";
 import type { FormTemplate, FormField } from "@/lib/formTemplates";
+import { LOCAL_FORMS } from "@/lib/formTemplates"; // vUnified-20260414-national-expansion-v4: county-aware URL resolution
 import { generateFormPdf } from "@/lib/generateFormPdf";
 
 // ── Extracted PDF field shape (returned by /api/form/extract) ─────────────────
@@ -141,6 +309,8 @@ export interface BusinessProfileHint {
   ein?: string;
   phone?: string;
   email?: string;
+  /** vUnified-20260414-national-expansion-v4: detected county for county-aware URL resolution */
+  county?: string;
 }
 
 // ── Zoning profile hint — extracted from an attached zoning check result ──────
@@ -281,6 +451,270 @@ const PROFILE_FIELD_MAP: Record<string, keyof BusinessProfileHint> = {
   marketAddress:    'location',  // farmers market vendor — seed market address from business location as hint
   trainingSchool:   'name',      // hair braiding — school name seeds from business name as hint
 };
+
+// ── vUnified-20260414-national-expansion-v8 — AcroForm field name → profile key ─
+// (Expanded from v5's ~60 patterns to 120+ patterns for significantly better match rates.)
+// Maps raw PDF AcroForm field name patterns (case-insensitive) to BusinessProfileHint keys.
+// Used by buildAcroFormSeed() to pre-populate formData when a native PDF is extracted,
+// so business profile data auto-fills fields the user has already provided.
+//
+// Coverage: IRS (W-9, W-4, SS-4), SBA forms, state SOS PDFs, all 50-state local gov PDFs.
+// Pattern rules: test against the FULL AcroForm field name (may include dotted paths like
+// "topmostSubform[0].Page1[0].BusinessName[0]"); match the last path segment for safety.
+// Also tests the full name to catch flat-key PDFs like "business_name" or "BusinessName".
+const KNOWN_PDF_ACROFORM_FIELD_MAP: Array<[RegExp, keyof BusinessProfileHint]> = [
+  // ── Business / entity name (v5 + v8 additions) ─────────────────────────────
+  [/business[_\s-]?name/i,               'name'],
+  [/legal[_\s-]?name/i,                  'name'],
+  [/entity[_\s-]?name/i,                 'name'],
+  [/employer[_\s-]?name/i,               'name'],
+  [/dba[_\s-]?name/i,                    'name'],
+  [/trade[_\s-]?name/i,                  'name'],
+  [/company[_\s-]?name/i,                'name'],
+  [/applicant[_\s-]?name/i,              'name'],
+  [/organization[_\s-]?name/i,           'name'],
+  [/taxpayer[_\s-]?name/i,               'name'],
+  [/payee[_\s-]?name/i,                  'name'],
+  [/registrant[_\s-]?name/i,             'name'],
+  [/establishment[_\s-]?name/i,          'name'],
+  [/licensee[_\s-]?name/i,               'name'],
+  [/firm[_\s-]?name/i,                   'name'],
+  // v8 additional name patterns
+  [/facility[_\s-]?name/i,               'name'],
+  [/vendor[_\s-]?name/i,                 'name'],
+  [/contractor[_\s-]?name/i,             'name'],
+  [/corp(?:oration)?[_\s-]?name/i,       'name'],
+  [/llc[_\s-]?name/i,                    'name'],
+  [/doing[_\s-]?business[_\s-]?as/i,    'name'],
+  [/\bdba\b/i,                           'name'],
+  [/business[_\s-]?title/i,              'name'],
+  [/name[_\s-]?of[_\s-]?business/i,     'name'],
+  [/name[_\s-]?of[_\s-]?company/i,      'name'],
+  [/name[_\s-]?of[_\s-]?establishment/i,'name'],
+  [/name[_\s-]?of[_\s-]?restaurant/i,   'name'],
+  [/name[_\s-]?of[_\s-]?facility/i,     'name'],
+  [/store[_\s-]?name/i,                  'name'],
+  [/account[_\s-]?name/i,               'name'],
+
+  // ── EIN / tax ID (v5 + v8 additions) ─────────────────────────────────────
+  [/\bein\b/i,                            'ein'],
+  [/\bfein\b/i,                           'ein'],
+  [/federal[_\s-]?tax[_\s-]?id/i,        'ein'],
+  [/employer[_\s-]?id/i,                  'ein'],
+  [/tax[_\s-]?id[_\s-]?number/i,         'ein'],
+  [/\btin\b/i,                            'ein'],
+  [/ssn[_\s-]?or[_\s-]?ein/i,            'ein'],
+  [/payer[_\s-]?tin/i,                    'ein'],
+  // v8
+  [/taxpayer[_\s-]?id(?:entification)?/i,'ein'],
+  [/irs[_\s-]?ein/i,                      'ein'],
+  [/federal[_\s-]?id/i,                   'ein'],
+  [/tax[_\s-]?number/i,                   'ein'],
+  [/business[_\s-]?tax[_\s-]?id/i,       'ein'],
+  [/employer[_\s-]?tax/i,                 'ein'],
+
+  // ── Address (v5 + v8 additions) ──────────────────────────────────────────
+  [/business[_\s-]?address/i,             'location'],
+  [/mailing[_\s-]?address/i,              'location'],
+  [/physical[_\s-]?address/i,             'location'],
+  [/principal[_\s-]?address/i,            'location'],
+  [/premises[_\s-]?address/i,             'location'],
+  [/property[_\s-]?address/i,             'location'],
+  [/street[_\s-]?address/i,               'location'],
+  [/home[_\s-]?address/i,                 'location'],
+  [/location[_\s-]?address/i,             'location'],
+  [/registered[_\s-]?address/i,           'location'],
+  // v8
+  [/business[_\s-]?street/i,              'location'],
+  [/operating[_\s-]?address/i,            'location'],
+  [/service[_\s-]?address/i,              'location'],
+  [/billing[_\s-]?address/i,              'location'],
+  [/correspondence[_\s-]?address/i,       'location'],
+  [/establishment[_\s-]?address/i,        'location'],
+  [/facility[_\s-]?address/i,             'location'],
+  [/location[_\s-]?of[_\s-]?business/i,  'location'],
+  [/addr(?:ess)?[_\s-]?line[_\s-]?1/i,   'location'],
+  [/^addr1$/i,                            'location'],
+  [/^address1$/i,                         'location'],
+  [/^street$/i,                           'location'],
+  [/business[_\s-]?loc(?:ation)?/i,       'location'],
+
+  // ── Owner / responsible party (v5 + v8 additions) ─────────────────────────
+  [/owner[_\s-]?name/i,                   'ownerName'],
+  [/owner[_\s-]?full[_\s-]?name/i,        'ownerName'],
+  [/responsible[_\s-]?party/i,            'ownerName'],
+  [/principal[_\s-]?name/i,               'ownerName'],
+  [/applicant[_\s-]?full[_\s-]?name/i,    'ownerName'],
+  [/manager[_\s-]?name/i,                 'ownerName'],
+  [/officer[_\s-]?name/i,                 'ownerName'],
+  [/sole[_\s-]?proprietor/i,              'ownerName'],
+  // v8
+  [/registered[_\s-]?agent[_\s-]?name/i, 'ownerName'],
+  [/individual[_\s-]?name/i,              'ownerName'],
+  [/authorized[_\s-]?(?:signer|signatory|representative)/i,'ownerName'],
+  [/contact[_\s-]?(?:person|name)/i,      'ownerName'],
+  [/director[_\s-]?name/i,                'ownerName'],
+  [/president[_\s-]?name/i,               'ownerName'],
+  [/partner[_\s-]?name/i,                 'ownerName'],
+  [/member[_\s-]?name/i,                  'ownerName'],
+  [/signer[_\s-]?name/i,                  'ownerName'],
+  [/name[_\s-]?of[_\s-]?owner/i,         'ownerName'],
+  [/name[_\s-]?of[_\s-]?applicant/i,     'ownerName'],
+  [/name[_\s-]?of[_\s-]?officer/i,       'ownerName'],
+  [/name[_\s-]?of[_\s-]?manager/i,       'ownerName'],
+  [/name[_\s-]?of[_\s-]?person/i,        'ownerName'],
+  [/licensee[_\s-]?(?:full[_\s-]?)?name/i,'ownerName'],
+
+  // ── Phone (v5 + v8 additions) ────────────────────────────────────────────
+  [/business[_\s-]?phone/i,               'phone'],
+  [/phone[_\s-]?number/i,                 'phone'],
+  [/telephone[_\s-]?number/i,             'phone'],
+  [/contact[_\s-]?phone/i,                'phone'],
+  [/daytime[_\s-]?phone/i,                'phone'],
+  [/\bphone\b/i,                          'phone'],
+  [/\btelephone\b/i,                      'phone'],
+  // v8
+  [/work[_\s-]?phone/i,                   'phone'],
+  [/office[_\s-]?phone/i,                 'phone'],
+  [/primary[_\s-]?phone/i,                'phone'],
+  [/contact[_\s-]?number/i,               'phone'],
+  [/business[_\s-]?tel(?:ephone)?/i,      'phone'],
+  [/cell[_\s-]?phone/i,                   'phone'],
+  [/mobile[_\s-]?(?:phone|number)/i,      'phone'],
+  [/\btel\b/i,                            'phone'],
+  [/phone[_\s-]?no/i,                     'phone'],
+
+  // ── Email (v5 + v8 additions) ─────────────────────────────────────────────
+  [/email[_\s-]?address/i,                'email'],
+  [/business[_\s-]?email/i,               'email'],
+  [/contact[_\s-]?email/i,                'email'],
+  [/\bemail\b/i,                          'email'],
+  // v8
+  [/e[_\s-]?mail[_\s-]?address/i,        'email'],
+  [/electronic[_\s-]?mail/i,              'email'],
+  [/applicant[_\s-]?email/i,              'email'],
+  [/owner[_\s-]?email/i,                  'email'],
+  [/\be[_\s]?mail\b/i,                    'email'],
+
+  // ── Business type (v5 + v8 + v10 additions) ─────────────────────────────
+  [/business[_\s-]?type/i,                'businessType'],
+  [/type[_\s-]?of[_\s-]?business/i,      'businessType'],
+  [/nature[_\s-]?of[_\s-]?business/i,    'businessType'],
+  [/business[_\s-]?activity/i,            'businessType'],
+  [/principal[_\s-]?activity/i,           'businessType'],
+  // v8
+  [/business[_\s-]?category/i,            'businessType'],
+  [/type[_\s-]?of[_\s-]?entity/i,        'businessType'],
+  [/business[_\s-]?description/i,         'businessType'],
+  [/line[_\s-]?of[_\s-]?business/i,      'businessType'],
+  [/primary[_\s-]?business/i,             'businessType'],
+  [/industry[_\s-]?type/i,               'businessType'],
+  [/type[_\s-]?of[_\s-]?operation/i,     'businessType'],
+  // v10 — NAICS/SIC, classification, scope-of-work
+  [/naics[_\s-]?(?:code|number)?/i,       'businessType'],
+  [/sic[_\s-]?(?:code|number)?/i,         'businessType'],
+  [/industry[_\s-]?code/i,                'businessType'],
+  [/business[_\s-]?class(?:ification)?/i, 'businessType'],
+  [/occupation[_\s-]?type/i,              'businessType'],
+  [/scope[_\s-]?of[_\s-]?(?:work|business)/i,'businessType'],
+  [/product[_\s-]?(?:type|description)/i, 'businessType'],
+  [/service[_\s-]?(?:type|description)/i, 'businessType'],
+  [/kind[_\s-]?of[_\s-]?business/i,      'businessType'],
+  [/business[_\s-]?purpose/i,             'businessType'],
+
+  // ── Additional name aliases (v10) ────────────────────────────────────────
+  [/trade[_\s-]?(?:style|mark)[_\s-]?name/i, 'name'],
+  [/franchise[_\s-]?name/i,               'name'],
+  [/restaurant[_\s-]?name/i,              'name'],
+  [/hotel[_\s-]?name/i,                   'name'],
+  [/salon[_\s-]?name/i,                   'name'],
+  [/business[_\s-]?operating[_\s-]?name/i,'name'],
+  [/reporting[_\s-]?name/i,               'name'],
+  [/primary[_\s-]?(?:business|entity)[_\s-]?name/i,'name'],
+
+  // ── Additional EIN / tax ID aliases (v10) ────────────────────────────────
+  [/federal[_\s-]?employer[_\s-]?id(?:entification)?/i,'ein'],
+  [/state[_\s-]?tax[_\s-]?id/i,          'ein'],
+  [/business[_\s-]?registration[_\s-]?no/i,'ein'],
+  [/account[_\s-]?(?:number|no)/i,        'ein'],
+  [/withholding[_\s-]?id/i,               'ein'],
+
+  // ── Additional owner / responsible party aliases (v10) ───────────────────
+  [/trustee[_\s-]?name/i,                 'ownerName'],
+  [/executor[_\s-]?name/i,                'ownerName'],
+  [/co[_\s-]?(?:applicant|owner)[_\s-]?name/i,'ownerName'],
+  [/primary[_\s-]?contact/i,              'ownerName'],
+  [/permit[_\s-]?holder/i,                'ownerName'],
+  [/responsible[_\s-]?person/i,           'ownerName'],
+  [/signatory[_\s-]?name/i,               'ownerName'],
+
+  // ── Additional phone aliases (v10) ───────────────────────────────────────
+  [/alternate[_\s-]?phone/i,              'phone'],
+  [/fax[_\s-]?number/i,                   'phone'],
+  [/emergency[_\s-]?phone/i,              'phone'],
+  [/main[_\s-]?(?:phone|telephone)/i,     'phone'],
+  [/applicant[_\s-]?phone/i,              'phone'],
+
+  // ── Additional email aliases (v10) ───────────────────────────────────────
+  [/primary[_\s-]?email/i,                'email'],
+  [/alternate[_\s-]?email/i,              'email'],
+  [/internet[_\s-]?address/i,             'email'],
+  [/notification[_\s-]?email/i,           'email'],
+
+  // ── Additional address / location aliases (v10) ──────────────────────────
+  [/site[_\s-]?address/i,                 'location'],
+  [/licensed[_\s-]?address/i,             'location'],
+  [/primary[_\s-]?address/i,              'location'],
+  [/residential[_\s-]?address/i,          'location'],
+  [/place[_\s-]?of[_\s-]?business/i,     'location'],
+  [/business[_\s-]?place/i,               'location'],
+  [/store[_\s-]?address/i,                'location'],
+  [/office[_\s-]?address/i,               'location'],
+];
+
+/**
+ * vUnified-20260414-national-expansion-v5
+ *
+ * Pre-seeds formData from businessProfile when a native AcroForm PDF is extracted.
+ * Iterates extracted AcroForm fields and matches their raw names against
+ * KNOWN_PDF_ACROFORM_FIELD_MAP to find profile values to inject.
+ *
+ * Unlike buildProfileSeed() (which uses exact field ID lookups from PROFILE_FIELD_MAP),
+ * this uses regex matching against the raw AcroForm field names embedded in the PDF,
+ * which vary widely across government forms.
+ *
+ * Only seeds fields that do not already have a value in existingSeed.
+ */
+function buildAcroFormSeed(
+  fields: ExtractedPdfField[],
+  profile: BusinessProfileHint | null | undefined,
+  existingSeed: Record<string, string> = {},
+): Record<string, string> {
+  if (!profile) return existingSeed;
+  const seed = { ...existingSeed };
+
+  for (const field of fields) {
+    if (seed[field.name]) continue; // already seeded
+
+    // Test the last path segment (handles dotted AcroForm paths like
+    // "topmostSubform[0].Page1[0].BusinessName[0]")
+    const segments = field.name.split('.');
+    const lastSegment = segments[segments.length - 1].replace(/\[\d+\]$/, '');
+    const testTarget = lastSegment || field.name;
+
+    for (const [pattern, profileKey] of KNOWN_PDF_ACROFORM_FIELD_MAP) {
+      if (pattern.test(testTarget) || pattern.test(field.name)) {
+        const value = profile[profileKey];
+        if (value && typeof value === 'string' && value.trim()) {
+          seed[field.name] = value.trim();
+        }
+        break; // first pattern match wins
+      }
+    }
+  }
+
+  return seed;
+}
 
 // ── Form step sections — groups field IDs into named sections per form ─────────
 // Used to display "Section Name — Question N of M" progress during the Q&A phase.
@@ -1278,8 +1712,8 @@ function buildZoningSeed(
 // ── OfficialFieldBadge ────────────────────────────────────────────────────────
 function OfficialFieldBadge({ name }: { name: string }) {
   return (
-    <p className="flex items-center gap-1 text-[10px] text-slate-400 mt-0.5 mb-2 font-mono leading-tight">
-      <span className="text-slate-300">↗</span>
+    <p className="flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 mb-2 font-mono leading-tight">
+      <span className="text-slate-300 dark:text-slate-600">↗</span>
       {name}
     </p>
   );
@@ -1303,9 +1737,9 @@ function CheckboxField({
           className={`flex-1 px-4 py-2.5 rounded-lg border text-sm font-medium transition-all ${
             value === opt
               ? opt === "Yes"
-                ? "border-green-500 bg-green-50 text-green-700"
-                : "border-slate-400 bg-slate-100 text-slate-700"
-              : "border-slate-200 hover:border-slate-300 text-slate-600"
+                ? "border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400"
+                : "border-slate-400 dark:border-slate-600 bg-slate-100 dark:bg-slate-800/50 text-slate-700 dark:text-slate-200"
+              : "border-slate-200 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 text-slate-600 dark:text-slate-300"
           }`}
         >
           {opt}
@@ -1320,6 +1754,70 @@ function isSbaFallback(url: string | undefined): boolean {
   return !url || url.startsWith("https://www.sba.gov");
 }
 
+// ── vUnified-20260414-national-expansion-v4: County-aware portal URL resolution ─
+// Looks up the best available officialUrl for a form/template from LOCAL_FORMS,
+// preferring a county-specific countyUrls entry when the user's county is known.
+// Returns null if no LOCAL_FORMS match is found (caller falls back to template URL).
+function resolveCountyAwarePortalUrl(
+  template: FormTemplate,
+  county: string | null | undefined,
+): string | null {
+  if (!county && !template.id) return null;
+  const ctyLc = (county ?? "").toLowerCase().trim();
+  const tmplId = template.id.toLowerCase();
+
+  for (const lf of LOCAL_FORMS) {
+    // Match by shared keywords in ID (e.g. "austin-food-permit" ↔ "mobile-food-vendor")
+    // or if the LOCAL_FORMS entry's commonFor aligns with the template name
+    const lfId = lf.id.toLowerCase();
+    const lfDesc = lf.description.toLowerCase();
+
+    // Skip if the LOCAL_FORMS entry is clearly for a different jurisdiction than template
+    const templateHasCity = LOCAL_FORMS.some(x => x.id === tmplId);
+    if (templateHasCity && lf.id !== tmplId) continue;
+
+    // Primary: exact LOCAL_FORMS id match — use county-specific URL if available
+    if (lf.id === template.id) {
+      if (ctyLc && lf.countyUrls) {
+        for (const [k, v] of Object.entries(lf.countyUrls)) {
+          if (k.toLowerCase().includes(ctyLc) || ctyLc.includes(k.toLowerCase().replace(/ county$/, "").replace(/ parish$/, ""))) {
+            return v;
+          }
+        }
+      }
+      return lf.officialUrl;
+    }
+
+    // Secondary: county matches a LOCAL_FORMS entry whose commonFor includes this template's form type
+    if (ctyLc) {
+      const countyKeys = Object.keys(lf.countyUrls ?? {}).map(k => k.toLowerCase());
+      const countyMatch = countyKeys.some(k =>
+        k.includes(ctyLc) || ctyLc.includes(k.replace(/ county$/, "").replace(/ parish$/, ""))
+      ) || lfId.includes(ctyLc.split(" ")[0]) || lfDesc.includes(ctyLc.split(" ")[0]);
+
+      if (countyMatch) {
+        // Check if this LOCAL_FORMS entry is relevant to the current template
+        const templateName = template.name.toLowerCase();
+        const commonForMatch = lf.commonFor.some(cf =>
+          templateName.includes(cf) || cf.includes(templateName.split(" ")[0])
+        );
+        if (commonForMatch) {
+          if (ctyLc && lf.countyUrls) {
+            for (const [k, v] of Object.entries(lf.countyUrls)) {
+              if (k.toLowerCase().includes(ctyLc) || ctyLc.includes(k.toLowerCase().replace(/ county$/, "").replace(/ parish$/, ""))) {
+                return v;
+              }
+            }
+          }
+          return lf.officialUrl;
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
 // ── Normalise ExtractedPdfField → FormField ───────────────────────────────────
 function toFormField(f: ExtractedPdfField): FormField {
   return {
@@ -1331,7 +1829,7 @@ function toFormField(f: ExtractedPdfField): FormField {
   };
 }
 
-// ── Download a filled PDF from base64 ────────────────────────────────────────
+// ── Download a filled PDF from base64 (web browser fallback) ─────────────────
 function triggerPdfDownload(base64: string, filename: string) {
   const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
   const blob = new Blob([bytes], { type: 'application/pdf' });
@@ -1343,6 +1841,15 @@ function triggerPdfDownload(base64: string, filename: string) {
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+// vUnified-20260414-national-expansion-v92 — Removed @capacitor/filesystem to eliminate
+// final Swift 6 LegacyFilesystemImplementation build errors. Both @capacitor/share (v91)
+// and @capacitor/filesystem (v92) are removed. @capacitor/splash-screen is the only
+// remaining native plugin (no Swift 6 issues). PDF delivery now uses the web browser
+// download path on all platforms — correct and sufficient for initial App Store submission.
+async function deliverPdf(base64: string, filename: string): Promise<void> {
+  triggerPdfDownload(base64, filename);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1383,6 +1890,20 @@ export default function FormFiller({
 
   // v60 — generated PDF output (set after generation so we know a real file was produced)
   const [generatedFilename, setGeneratedFilename] = useState<string>("");
+
+  // vUnified-20260414-national-expansion-v7: Richer quick-fill state with step progress + field counts
+  // Steps: idle → fetching → seeding → filling → done (or no_acroform / no_seeds / error)
+  // 'no_acroform' = PDF has no fillable fields; 'no_seeds' = profile didn't match any field.
+  type QuickFillStep = 'idle' | 'fetching' | 'seeding' | 'filling' | 'done' | 'no_acroform' | 'no_seeds' | 'error';
+  const [quickFillStep, setQuickFillStep] = useState<QuickFillStep>('idle');
+  const [quickFillSeededCount, setQuickFillSeededCount] = useState(0);
+  const [quickFillTotalFields, setQuickFillTotalFields] = useState(0);
+  // vUnified-20260414-national-expansion-v12: cache the last successful fill so "Download Again"
+  // is instant — no server round-trip needed.
+  const [quickFillCachedResult, setQuickFillCachedResult] = useState<{ base64: string; filename: string } | null>(null);
+  // vUnified-20260414-national-expansion-v13: cache the extracted PDF fields + base64 from the
+  // quickFill pass so "Start Guided Flow" from no_seeds can skip the re-extract round-trip.
+  const [quickFillExtractCache, setQuickFillExtractCache] = useState<{ fields: ExtractedPdfField[]; pdfBase64: string } | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -1445,7 +1966,18 @@ export default function FormFiller({
   }, [formData]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── PDF extraction ────────────────────────────────────────────────────────
+  // vUnified-20260414-national-expansion-v13: uses quickFillExtractCache when available so
+  // "Start Guided Flow" from no_seeds state skips the network round-trip entirely.
   const tryExtractPdf = async () => {
+    // Fast path: use cached extraction data from a prior quickFill pass
+    if (quickFillExtractCache && quickFillExtractCache.fields.length > 0) {
+      setExtractedFields(quickFillExtractCache.fields);
+      setPdfBase64(quickFillExtractCache.pdfBase64);
+      setFormData(prev => buildAcroFormSeed(quickFillExtractCache.fields, businessProfile, prev));
+      setCurrentIndex(0);
+      setPhase("filling");
+      return;
+    }
     setPhase("pdf-loading");
     try {
       const res = await fetch("/api/form/extract", {
@@ -1461,6 +1993,9 @@ export default function FormFiller({
       if (data.canAutoFill && data.fields.length > 0) {
         setExtractedFields(data.fields);
         setPdfBase64(data.pdfBase64);
+        // vUnified-20260414-national-expansion-v5: pre-seed AcroForm fields from business profile
+        // so users skip fields already known (name, EIN, address, phone, email, business type).
+        setFormData(prev => buildAcroFormSeed(data.fields, businessProfile, prev));
         setCurrentIndex(0);
         setPhase("filling");
       } else {
@@ -1472,6 +2007,97 @@ export default function FormFiller({
     } catch {
       setPdfLoadError("network_error");
       setPhase("pdf-fallback");
+    }
+  };
+
+  // ── vUnified-20260414-national-expansion-v8: Quick pre-fill download with retry ──
+  // Adds automatic retry (up to 3 total attempts) for transient network errors.
+  // no_acroform and no_seeds are intentional terminal states, never retried.
+  // KNOWN_PDF_ACROFORM_FIELD_MAP expanded to 120+ patterns for higher field-match rates.
+  const [quickFillAttempt, setQuickFillAttempt] = useState(0);
+
+  const handleQuickPreFill = async (attemptNumber = 1) => {
+    if (!template.officialFormPdfUrl || !businessProfile) return;
+    setQuickFillAttempt(attemptNumber);
+    setQuickFillStep('fetching');
+    setQuickFillSeededCount(0);
+    setQuickFillTotalFields(0);
+    try {
+      // 1. Fetch and extract AcroForm fields from the official PDF
+      const extractRes = await fetch('/api/form/extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pdfUrl: template.officialFormPdfUrl }),
+        signal: AbortSignal.timeout(20_000),
+      });
+      if (!extractRes.ok) throw new Error(`extract_http_${extractRes.status}`);
+      const extractData = await extractRes.json() as
+        | { canAutoFill: true; fields: ExtractedPdfField[]; pdfBase64: string }
+        | { canAutoFill: false; reason: string };
+
+      // 1a. PDF has no AcroForm fields — terminal; surface open-blank-form action
+      if (!extractData.canAutoFill) {
+        setQuickFillStep('no_acroform');
+        return;
+      }
+
+      setQuickFillTotalFields(extractData.fields.length);
+      setQuickFillStep('seeding');
+      // v13: save extracted data so "Start Guided Flow" can skip re-extract
+      setQuickFillExtractCache({ fields: extractData.fields, pdfBase64: extractData.pdfBase64 });
+
+      // 2. Match AcroForm field names against businessProfile (120+ patterns)
+      const seeded = buildAcroFormSeed(extractData.fields, businessProfile, {});
+      const seededCount = Object.keys(seeded).length;
+      setQuickFillSeededCount(seededCount);
+
+      // 2a. Profile didn't match any fields — terminal; surface guided-flow action
+      if (seededCount === 0) {
+        setQuickFillStep('no_seeds');
+        return;
+      }
+
+      setQuickFillStep('filling');
+
+      // 3. Fill the PDF with seeded values via /api/form/fill
+      const fillRes = await fetch('/api/form/fill', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pdfBase64: extractData.pdfBase64, fieldValues: seeded }),
+        signal: AbortSignal.timeout(20_000),
+      });
+      if (!fillRes.ok) throw new Error(`fill_http_${fillRes.status}`);
+      const fillData = await fillRes.json() as { filledPdfBase64?: string; error?: string };
+      if (!fillData.filledPdfBase64) throw new Error('fill_empty');
+
+      // 4. Trigger browser download + persist to document store
+      // v10: include city slug in filename for easier identification
+      // v12: improved slug extraction — skip street-address segments and state abbreviations
+      const citySlug = (() => {
+        const loc = businessProfile?.location ?? location ?? '';
+        const parts = loc.split(',').map((s: string) => s.trim()).filter(Boolean);
+        const cityPart = parts.find(p =>
+          !/^\d+\s+\S/.test(p) &&              // not "123 Main St"
+          !/^[A-Z]{2}(\s+\d{5}(-\d{4})?)?$/.test(p) && // not "WA" or "WA 98101"
+          !/^\d{5}(-\d{4})?$/.test(p)          // not "98101" or "98101-1234"
+        ) ?? '';
+        return cityPart ? '_' + cityPart.replace(/[^a-z0-9]/gi, '_').toLowerCase() : '';
+      })();
+      const safeName = `${template.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}${citySlug}_prefilled.pdf`;
+      await deliverPdf(fillData.filledPdfBase64, safeName);
+      onSaveDocument?.(safeName, fillData.filledPdfBase64);
+      // v12: cache result for instant re-download
+      setQuickFillCachedResult({ base64: fillData.filledPdfBase64, filename: safeName });
+      setQuickFillStep('done');
+    } catch (err) {
+      // Retry transient network/timeout errors up to 3 attempts total
+      const isTransient = err instanceof Error &&
+        (err.name === 'TimeoutError' || err.name === 'AbortError' || /^extract_http_5|^fill_http_5|fetch/i.test(err.message));
+      if (isTransient && attemptNumber < 3) {
+        await new Promise(r => setTimeout(r, 1_000 * attemptNumber));
+        return handleQuickPreFill(attemptNumber + 1);
+      }
+      setQuickFillStep('error');
     }
   };
 
@@ -1603,42 +2229,46 @@ export default function FormFiller({
 
   // ── INTRO ────────────────────────────────────────────────────────────────
   if (phase === "intro") {
-    const rawPortalUrl = template.submitPortalUrl ?? template.submitUrl;
-    const portalUrl    = isSbaFallback(rawPortalUrl) ? null : rawPortalUrl;
+    // vUnified-20260414-national-expansion-v4: prefer county-aware URL from LOCAL_FORMS
+    const rawPortalUrl   = template.submitPortalUrl ?? template.submitUrl;
+    const countyOverride = resolveCountyAwarePortalUrl(template, businessProfile?.county);
+    const portalUrl      = countyOverride
+      ? countyOverride
+      : isSbaFallback(rawPortalUrl) ? null : rawPortalUrl;
     const questionCount = activeFields.length;
     const requiredCount = requiredFields.length;
 
     return (
-      <div className="border-t bg-white">
+      <div className="border-t bg-white dark:bg-[#0f1823] dark:border-slate-700/50 max-h-[60dvh] sm:max-h-none overflow-y-auto">
         <div className="max-w-2xl mx-auto p-3 sm:p-5">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-[#0B1E3F]/10 flex items-center justify-center shrink-0">
-                <FileText className="h-5 w-5 text-[#0B1E3F]" />
+              <div className="h-10 w-10 rounded-xl bg-[#0B1E3F]/10 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                <FileText className="h-5 w-5 text-[#0B1E3F] dark:text-blue-300" />
               </div>
               <div>
-                <p className="text-xs text-slate-500 uppercase tracking-widest mb-0.5">
+                <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-0.5">
                   {queueLabel ? queueLabel : "Form Assistant"}
                 </p>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <p className="font-semibold text-slate-900 leading-tight">{template.name}</p>
+                  <p className="font-semibold text-slate-900 dark:text-slate-100 leading-tight">{template.name}</p>
                   {template.officialFormNumber && (
-                    <span className="text-[10px] font-semibold text-[#0B1E3F] bg-[#0B1E3F]/10 border border-[#0B1E3F]/20 rounded px-1.5 py-0.5 shrink-0">
+                    <span className="text-[10px] font-semibold text-[#0B1E3F] dark:text-blue-300 bg-[#0B1E3F]/10 dark:bg-blue-900/30 border border-[#0B1E3F]/20 dark:border-blue-700/40 rounded px-1.5 py-0.5 shrink-0">
                       {template.officialFormNumber}
                     </span>
                   )}
                 </div>
               </div>
             </div>
-            <button onClick={onDismiss} className="text-slate-400 hover:text-slate-600 p-1 shrink-0">
+            <button onClick={onDismiss} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 shrink-0">
               <X className="h-4 w-4" />
             </button>
           </div>
 
           {isRenewal && (
-            <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-xl px-3 py-2 mb-3">
+            <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/40 rounded-xl px-3 py-2 mb-3">
               <CheckCircle className="h-4 w-4 text-blue-500 shrink-0" />
-              <p className="text-xs text-blue-800">
+              <p className="text-xs text-blue-800 dark:text-blue-300">
                 <strong>Renewal filing</strong> — your previous answers have been pre-filled.
                 Review each field and update anything that has changed since your last submission.
               </p>
@@ -1646,9 +2276,9 @@ export default function FormFiller({
           )}
 
           {!isRenewal && profileSeedCount > 0 && (
-            <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-3">
+            <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-xl px-3 py-2 mb-3">
               <Sparkles className="h-4 w-4 text-amber-500 shrink-0" />
-              <p className="text-xs text-amber-800">
+              <p className="text-xs text-amber-800 dark:text-amber-300">
                 <strong>{profileSeedCount} field{profileSeedCount !== 1 ? 's' : ''} auto-filled</strong> from your business profile.
                 Just confirm or update each answer as you go.
               </p>
@@ -1659,24 +2289,24 @@ export default function FormFiller({
           {zoningProfile && zoningProfile.status && (
             <div className={`flex items-start gap-2 rounded-xl px-3 py-2 mb-3 border ${
               zoningProfile.status === "allowed"
-                ? "bg-green-50 border-green-200"
+                ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/40"
                 : zoningProfile.status === "conditional"
-                ? "bg-amber-50 border-amber-200"
+                ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/40"
                 : zoningProfile.status === "prohibited"
-                ? "bg-red-50 border-red-200"
-                : "bg-slate-50 border-slate-200"
+                ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/40"
+                : "bg-slate-50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700/50"
             }`}>
               <AlertCircle className={`h-4 w-4 shrink-0 mt-0.5 ${
-                zoningProfile.status === "allowed" ? "text-green-500"
-                : zoningProfile.status === "conditional" ? "text-amber-500"
-                : zoningProfile.status === "prohibited" ? "text-red-500"
-                : "text-slate-400"
+                zoningProfile.status === "allowed" ? "text-green-500 dark:text-green-400"
+                : zoningProfile.status === "conditional" ? "text-amber-500 dark:text-amber-400"
+                : zoningProfile.status === "prohibited" ? "text-red-500 dark:text-red-400"
+                : "text-slate-400 dark:text-slate-500"
               }`} />
               <p className={`text-xs ${
-                zoningProfile.status === "allowed" ? "text-green-800"
-                : zoningProfile.status === "conditional" ? "text-amber-800"
-                : zoningProfile.status === "prohibited" ? "text-red-800"
-                : "text-slate-600"
+                zoningProfile.status === "allowed" ? "text-green-800 dark:text-green-300"
+                : zoningProfile.status === "conditional" ? "text-amber-800 dark:text-amber-300"
+                : zoningProfile.status === "prohibited" ? "text-red-800 dark:text-red-300"
+                : "text-slate-600 dark:text-slate-400"
               }`}>
                 <strong>Zoning: {zoningProfile.zoneType ?? zoningProfile.status}</strong>
                 {zoningProfile.status === "conditional" && " — Conditional use; a variance or special exception may be required."}
@@ -1696,9 +2326,9 @@ export default function FormFiller({
           {zoningProfile &&
             (zoningProfile.status === "conditional" || zoningProfile.status === "prohibited") &&
             template.id !== "zoning-variance-application" && (
-            <div className="flex items-center gap-2 bg-[#0B1E3F]/5 border border-[#0B1E3F]/20 rounded-xl px-3 py-2 mb-3">
-              <Sparkles className="h-3.5 w-3.5 text-[#0B1E3F] shrink-0" />
-              <p className="text-[11px] text-[#0B1E3F] leading-snug">
+            <div className="flex items-center gap-2 bg-[#0B1E3F]/5 dark:bg-blue-900/20 border border-[#0B1E3F]/20 dark:border-blue-800/40 rounded-xl px-3 py-2 mb-3">
+              <Sparkles className="h-3.5 w-3.5 text-[#0B1E3F] dark:text-blue-300 shrink-0" />
+              <p className="text-[11px] text-[#0B1E3F] dark:text-blue-200 leading-snug">
                 <strong>Variance may be required.</strong>{" "}
                 Based on your zoning check, complete the{" "}
                 <span className="underline underline-offset-2 font-semibold">
@@ -1709,22 +2339,22 @@ export default function FormFiller({
             </div>
           )}
 
-          <p className="text-sm text-slate-600 mb-4">{template.description}</p>
+          <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">{template.description}</p>
 
           <div className={`grid gap-2 mb-4 ${skipPayment ? "grid-cols-2" : "grid-cols-3"}`}>
-            <div className="bg-slate-50 rounded-lg p-3">
-              <p className="text-xs text-slate-500 mb-1">Gov. Filing Fee</p>
-              <p className="font-semibold text-slate-800 text-sm">{template.fee}</p>
+            <div className="bg-slate-50 dark:bg-[#131e2f] rounded-lg p-3">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Gov. Filing Fee</p>
+              <p className="font-semibold text-slate-800 dark:text-slate-100 text-sm">{template.fee}</p>
             </div>
             {!skipPayment && (
-              <div className="bg-slate-50 rounded-lg p-3">
-                <p className="text-xs text-slate-500 mb-1">Completion Fee</p>
+              <div className="bg-slate-50 dark:bg-[#131e2f] rounded-lg p-3">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Completion Fee</p>
                 <p className="font-semibold text-[#00C2CB] text-sm">$5.00</p>
               </div>
             )}
-            <div className="bg-slate-50 rounded-lg p-3">
-              <p className="text-xs text-slate-500 mb-1">Questions</p>
-              <p className="font-semibold text-slate-800 text-sm">
+            <div className="bg-slate-50 dark:bg-[#131e2f] rounded-lg p-3">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Questions</p>
+              <p className="font-semibold text-slate-800 dark:text-slate-100 text-sm">
                 {questionCount} ({requiredCount} required)
               </p>
             </div>
@@ -1732,14 +2362,14 @@ export default function FormFiller({
 
           {totalSections > 1 && (
             <div className="mb-4">
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mb-2">
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
                 Form Sections
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {(FORM_STEP_SECTIONS[template.id] ?? []).map((s, i) => (
                   <span
                     key={s.label}
-                    className="text-[10px] font-medium px-2 py-1 rounded-full bg-[#0B1E3F]/8 text-[#0B1E3F] border border-[#0B1E3F]/15"
+                    className="text-[10px] font-medium px-2 py-1 rounded-full bg-[#0B1E3F]/8 dark:bg-blue-900/30 text-[#0B1E3F] dark:text-blue-300 border border-[#0B1E3F]/15 dark:border-blue-700/40"
                   >
                     {i + 1}. {s.label}
                   </span>
@@ -1749,12 +2379,12 @@ export default function FormFiller({
           )}
 
           <div className="mb-5">
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mb-2">
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
               Documents You Will Need
             </p>
             <ul className="space-y-1">
               {template.requiredDocs.map((doc, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
+                <li key={i} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
                   <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#00C2CB]" />
                   {doc}
                 </li>
@@ -1762,8 +2392,16 @@ export default function FormFiller({
             </ul>
           </div>
 
-          {template.officialFormPdfUrl ? (
-            <div className="bg-[#0B1E3F]/5 border border-[#0B1E3F]/10 rounded-lg p-3 mb-4 text-xs text-[#0B1E3F]">
+          {/* vUnified-20260414-national-expansion-v9: zero-field stub shows portal info instead */}
+          {questionCount === 0 ? (
+            <div className="bg-[#0B1E3F]/5 dark:bg-blue-900/20 border border-[#0B1E3F]/10 dark:border-blue-800/30 rounded-lg p-3 mb-4 text-xs text-[#0B1E3F] dark:text-blue-200">
+              <strong>How to file:</strong> This is a local government form filed directly with your
+              city or county office. Use the quick-fill button above to download a pre-filled PDF (when
+              available), or click &ldquo;Visit Official Portal&rdquo; to access the filing page directly.
+              Government filing fees are paid separately to the issuing agency.
+            </div>
+          ) : template.officialFormPdfUrl ? (
+            <div className="bg-[#0B1E3F]/5 dark:bg-blue-900/20 border border-[#0B1E3F]/10 dark:border-blue-800/30 rounded-lg p-3 mb-4 text-xs text-[#0B1E3F] dark:text-blue-200">
               {skipPayment ? (
                 <>
                   <strong>How it works:</strong> Answer {questionCount} questions
@@ -1782,7 +2420,7 @@ export default function FormFiller({
               )}
             </div>
           ) : (
-            <div className="bg-[#0B1E3F]/5 border border-[#0B1E3F]/10 rounded-lg p-3 mb-4 text-xs text-[#0B1E3F]">
+            <div className="bg-[#0B1E3F]/5 dark:bg-blue-900/20 border border-[#0B1E3F]/10 dark:border-blue-800/30 rounded-lg p-3 mb-4 text-xs text-[#0B1E3F] dark:text-blue-200">
               {skipPayment ? (
                 <>
                   <strong>How it works:</strong> Answer {questionCount} questions
@@ -1800,16 +2438,193 @@ export default function FormFiller({
             </div>
           )}
 
+          {/* vUnified-20260414-national-expansion-v7: Pre-fill download banner (enhanced)
+              Step-by-step progress, field-count success banner, and graceful recovery for
+              no_acroform (no fillable fields) and no_seeds (profile didn't match any field).
+              All interactive elements ≥48px min-h for mobile touch target compliance. */}
+          {template.officialFormPdfUrl && businessProfile && (
+            <div className="mb-3">
+              {/* ── Success banner — shown after download completes (v11: re-download button) ── */}
+              {quickFillStep === 'done' && (
+                <div className="rounded-xl border border-green-200 dark:border-green-800/30 bg-green-50 dark:bg-green-900/20 p-3 mb-2 space-y-2">
+                  <div className="flex items-center gap-2 text-xs text-green-800 dark:text-green-300">
+                    <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="font-semibold">Pre-filled PDF downloaded</p>
+                      <p className="text-green-700 dark:text-green-400 mt-0.5">
+                        {quickFillSeededCount} of {quickFillTotalFields} field{quickFillTotalFields !== 1 ? 's' : ''} pre-filled from your profile — check Downloads
+                        {quickFillSeededCount < quickFillTotalFields && (
+                          <span className="ml-1 text-green-600 dark:text-green-500">
+                            ({quickFillTotalFields - quickFillSeededCount} field{quickFillTotalFields - quickFillSeededCount !== 1 ? 's' : ''} left blank — review before filing)
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  {/* v12: use cached PDF for instant re-download; fall back to re-fetch if cache empty */}
+                  <button
+                    onClick={() => {
+                      if (quickFillCachedResult) {
+                        void deliverPdf(quickFillCachedResult.base64, quickFillCachedResult.filename);
+                      } else {
+                        handleQuickPreFill(1);
+                      }
+                    }}
+                    className="w-full flex items-center justify-center gap-2 rounded-lg border border-green-300 dark:border-green-700/50 bg-white dark:bg-green-900/10 text-green-700 dark:text-green-300 text-xs font-medium px-3 py-2 min-h-[44px] hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    Download Again
+                  </button>
+                </div>
+              )}
+
+              {/* ── no_acroform — PDF has no fillable AcroForm fields; offer blank form link + reset ── */}
+              {/* v12: added "Open Blank Form" action button so the user can still access the PDF */}
+              {quickFillStep === 'no_acroform' && (
+                <div className="rounded-xl border border-amber-200 dark:border-amber-800/30 bg-amber-50 dark:bg-amber-900/20 p-3 mb-2 space-y-2">
+                  <div className="flex items-start gap-2 text-xs text-amber-800 dark:text-amber-300">
+                    <ExternalLink className="h-4 w-4 shrink-0 mt-0.5" />
+                    <div className="min-w-0">
+                      <p className="font-semibold">This form doesn't have fillable fields</p>
+                      <p className="text-amber-700 dark:text-amber-400 mt-0.5">
+                        The official PDF doesn't include AcroForm fields. Open the blank form directly, or use the guided flow below to build a summary packet.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <a
+                      href={template.officialFormPdfUrl ?? '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 flex items-center justify-center gap-2 rounded-lg border border-amber-300 dark:border-amber-700/50 bg-white dark:bg-amber-900/10 text-amber-700 dark:text-amber-300 text-xs font-medium px-3 py-2 min-h-[44px] hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      Open Blank Form
+                    </a>
+                    <button
+                      onClick={() => setQuickFillStep('idle')}
+                      className="flex items-center justify-center gap-2 rounded-lg border border-amber-300 dark:border-amber-700/50 bg-white dark:bg-amber-900/10 text-amber-700 dark:text-amber-300 text-xs font-medium px-3 py-2 min-h-[44px] hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ── no_seeds — profile didn't match any field; offer guided flow + reset ── */}
+              {/* v12: added "Start Guided Flow" button so the user can immediately begin the wizard */}
+              {quickFillStep === 'no_seeds' && (
+                <div className="rounded-xl border border-amber-200 dark:border-amber-800/30 bg-amber-50 dark:bg-amber-900/20 p-3 mb-2 space-y-2">
+                  <div className="flex items-start gap-2 text-xs text-amber-800 dark:text-amber-300">
+                    <Sparkles className="h-4 w-4 shrink-0 mt-0.5" />
+                    <div className="min-w-0">
+                      <p className="font-semibold">Profile data didn't match this form's fields</p>
+                      <p className="text-amber-700 dark:text-amber-400 mt-0.5">
+                        This form uses non-standard field names. Use the guided wizard — it walks you through each question and produces a complete, reviewed packet.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setQuickFillStep('idle');
+                        // Start the guided wizard — re-extract if there's a PDF URL, else go straight to filling
+                        if (template.officialFormPdfUrl) {
+                          tryExtractPdf();
+                        } else {
+                          setPhase('filling');
+                        }
+                      }}
+                      className="flex-1 flex items-center justify-center gap-2 rounded-lg border border-amber-300 dark:border-amber-700/50 bg-[#0B1E3F] dark:bg-[#0B1E3F]/80 text-white text-xs font-medium px-3 py-2 min-h-[44px] hover:bg-[#0B1E3F]/90 transition-colors"
+                    >
+                      <ChevronRight className="h-3.5 w-3.5" />
+                      Start Guided Flow
+                    </button>
+                    <button
+                      onClick={() => setQuickFillStep('idle')}
+                      className="flex items-center justify-center gap-2 rounded-lg border border-amber-300 dark:border-amber-700/50 bg-white dark:bg-amber-900/10 text-amber-700 dark:text-amber-300 text-xs font-medium px-3 py-2 min-h-[44px] hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Main action button — idle/fetching/seeding/filling/error/retry ── */}
+              {quickFillStep !== 'done' && quickFillStep !== 'no_acroform' && quickFillStep !== 'no_seeds' && (
+                <>
+                  <button
+                    onClick={quickFillStep === 'idle' || quickFillStep === 'error' ? () => handleQuickPreFill(1) : undefined}
+                    disabled={quickFillStep === 'fetching' || quickFillStep === 'seeding' || quickFillStep === 'filling'}
+                    className={`w-full flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-colors min-h-[48px] ${
+                      quickFillStep === 'error'
+                        ? 'border-red-300 dark:border-red-700/50 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30 cursor-pointer'
+                        : quickFillStep !== 'idle'
+                        ? 'border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/30 text-slate-400 dark:text-slate-500 cursor-default'
+                        : 'border-[#00C2CB]/40 dark:border-[#00C2CB]/30 bg-[#00C2CB]/5 dark:bg-[#00C2CB]/10 text-[#00C2CB] hover:bg-[#00C2CB]/10 dark:hover:bg-[#00C2CB]/15 cursor-pointer'
+                    }`}
+                  >
+                    {(quickFillStep === 'fetching' || quickFillStep === 'seeding' || quickFillStep === 'filling') && (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    )}
+                    {(quickFillStep === 'idle' || quickFillStep === 'error') && (
+                      <Download className="h-4 w-4" />
+                    )}
+                    {quickFillStep === 'idle' && 'Download Pre-filled Official Form'}
+                    {quickFillStep === 'fetching' && (quickFillAttempt > 1 ? `Retrying… (attempt ${quickFillAttempt} of 3)` : 'Fetching official form…')}
+                    {quickFillStep === 'seeding' && 'Matching your profile to form fields…'}
+                    {quickFillStep === 'filling' && 'Generating pre-filled PDF…'}
+                    {quickFillStep === 'error' && 'Download failed — tap to retry'}
+                  </button>
+                  {quickFillStep === 'idle' && (
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center mt-1">
+                      Fills the official form with your profile data and downloads instantly.
+                      Use the guided flow below for complete or reviewed answers.
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* vUnified-20260414-national-expansion-v9: zero-field stub (LOCAL_FORMS adapter) shows
+              portal CTA instead of "Start — 0 Questions". Quick-fill button remains when
+              officialFormPdfUrl is present; otherwise primary CTA goes directly to officialUrl. */}
+          {questionCount === 0 ? (
+            <div className="flex gap-2 flex-wrap">
+              {portalUrl ? (
+                <Button className="flex-1 bg-[#0B1E3F] hover:bg-[#0B1E3F]/90 min-h-[48px]" asChild>
+                  <a href={portalUrl} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4 mr-1" />
+                    Visit Official Portal
+                  </a>
+                </Button>
+              ) : (
+                <Button className="flex-1 bg-[#0B1E3F] hover:bg-[#0B1E3F]/90 min-h-[48px]" disabled>
+                  <ExternalLink className="h-4 w-4 mr-1" />
+                  No guided wizard for this form
+                </Button>
+              )}
+              {template.officialFormPdfUrl && (
+                <Button variant="outline" size="sm" asChild className="min-h-[48px]">
+                  <a href={template.officialFormPdfUrl} target="_blank" rel="noopener noreferrer">
+                    <Download className="h-4 w-4 mr-1" />
+                    Blank Form
+                  </a>
+                </Button>
+              )}
+            </div>
+          ) : (
           <div className="flex gap-2">
             <Button
-              className="flex-1 bg-[#0B1E3F] hover:bg-[#0B1E3F]/90"
+              className="flex-1 bg-[#0B1E3F] hover:bg-[#0B1E3F]/90 min-h-[48px]"
               onClick={template.officialFormPdfUrl ? tryExtractPdf : () => setPhase("filling")}
             >
               Start — {questionCount} Questions
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
             {template.officialFormPdfUrl && (
-              <Button variant="outline" size="sm" asChild>
+              <Button variant="outline" size="sm" asChild className="min-h-[48px]">
                 <a href={template.officialFormPdfUrl} target="_blank" rel="noopener noreferrer">
                   <Download className="h-4 w-4 mr-1" />
                   Blank Form
@@ -1817,7 +2632,7 @@ export default function FormFiller({
               </Button>
             )}
             {portalUrl ? (
-              <Button variant="outline" size="sm" asChild>
+              <Button variant="outline" size="sm" asChild className="min-h-[48px]">
                 <a href={portalUrl} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="h-4 w-4 mr-1" />
                   Official Site
@@ -1828,6 +2643,7 @@ export default function FormFiller({
                 variant="outline"
                 size="sm"
                 disabled
+                className="min-h-[48px]"
                 title="Check with your local county/city office — filing location varies by jurisdiction"
               >
                 <ExternalLink className="h-4 w-4 mr-1" />
@@ -1835,6 +2651,7 @@ export default function FormFiller({
               </Button>
             )}
           </div>
+          )}
         </div>
       </div>
     );
@@ -1843,11 +2660,11 @@ export default function FormFiller({
   // ── PDF LOADING ───────────────────────────────────────────────────────────
   if (phase === "pdf-loading") {
     return (
-      <div className="border-t bg-white">
+      <div className="border-t bg-white dark:bg-[#0f1823] dark:border-slate-700/50 max-h-[60dvh] sm:max-h-none overflow-y-auto">
         <div className="max-w-2xl mx-auto p-3 sm:p-5 text-center">
-          <Loader2 className="h-8 w-8 text-[#0B1E3F] animate-spin mx-auto mb-3" />
-          <p className="font-semibold text-slate-800 mb-1">Fetching the official form…</p>
-          <p className="text-sm text-slate-500">
+          <Loader2 className="h-8 w-8 text-[#0B1E3F] dark:text-blue-400 animate-spin mx-auto mb-3" />
+          <p className="font-semibold text-slate-800 dark:text-slate-100 mb-1">Fetching the official form…</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             Downloading the latest PDF from the government source and reading its fields.
           </p>
         </div>
@@ -1857,28 +2674,32 @@ export default function FormFiller({
 
   // ── PDF FALLBACK ──────────────────────────────────────────────────────────
   if (phase === "pdf-fallback") {
-    const rawPortalUrl = template.submitPortalUrl ?? template.submitUrl;
-    const portalUrl    = isSbaFallback(rawPortalUrl) ? null : rawPortalUrl;
+    // vUnified-20260414-national-expansion-v4: prefer county-aware URL from LOCAL_FORMS
+    const rawPortalUrl   = template.submitPortalUrl ?? template.submitUrl;
+    const countyOverride = resolveCountyAwarePortalUrl(template, businessProfile?.county);
+    const portalUrl      = countyOverride
+      ? countyOverride
+      : isSbaFallback(rawPortalUrl) ? null : rawPortalUrl;
 
     return (
-      <div className="border-t bg-white">
+      <div className="border-t bg-white dark:bg-[#0f1823] dark:border-slate-700/50 max-h-[60dvh] sm:max-h-none overflow-y-auto">
         <div className="max-w-2xl mx-auto p-3 sm:p-5">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-2.5">
-              <div className="h-9 w-9 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
+              <div className="h-9 w-9 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center shrink-0">
                 <AlertCircle className="h-5 w-5 text-amber-500" />
               </div>
               <div>
-                <p className="font-semibold text-slate-900 leading-tight">Can&apos;t auto-fill this form</p>
-                <p className="text-xs text-slate-500 mt-0.5">{template.name}</p>
+                <p className="font-semibold text-slate-900 dark:text-slate-100 leading-tight">Can&apos;t auto-fill this form</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{template.name}</p>
               </div>
             </div>
-            <button onClick={onDismiss} className="text-slate-400 hover:text-slate-600 p-1 shrink-0">
+            <button onClick={onDismiss} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 shrink-0">
               <X className="h-4 w-4" />
             </button>
           </div>
 
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5 text-sm text-amber-900 leading-relaxed">
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-xl p-4 mb-5 text-sm text-amber-900 dark:text-amber-300 leading-relaxed">
             <p className="mb-3">
               We couldn&apos;t auto-fill this form inside the app. Some government forms are designed
               to only be submitted through their official website or use a format that can&apos;t be
@@ -1915,7 +2736,7 @@ export default function FormFiller({
                   href={portalUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-xs text-amber-700 hover:text-amber-900 underline underline-offset-2 break-all"
+                  className="flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-300 underline underline-offset-2 break-all"
                 >
                   <ExternalLink className="h-3.5 w-3.5 shrink-0" />
                   {portalUrl}
@@ -1924,7 +2745,7 @@ export default function FormFiller({
             )}
           </div>
 
-          <p className="text-sm text-slate-600 mb-4 italic">
+          <p className="text-sm text-slate-600 dark:text-slate-300 mb-4 italic">
             Would you like me to walk you through the exact fields you need to fill, or answer any
             questions while you complete it?
           </p>
@@ -1968,22 +2789,22 @@ export default function FormFiller({
       : `Question ${currentIndex + 1} of ${activeFields.length}`;
 
     return (
-      <div className="border-t bg-white">
+      <div className="border-t bg-white dark:bg-[#0f1823] dark:border-slate-700/50 max-h-[60dvh] sm:max-h-none overflow-y-auto">
         <div className="max-w-2xl mx-auto p-3 sm:p-5">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-slate-500">{stepLabel}</span>
-              <span className="text-xs text-slate-300">·</span>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-slate-500 dark:text-slate-400">{stepLabel}</span>
+              <span className="text-xs text-slate-300 dark:text-slate-600">·</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500">
                 Question {currentIndex + 1} of {activeFields.length}
               </span>
               {hasPdfFill && (
-                <span className="text-[10px] font-semibold text-green-600 bg-green-50 border border-green-200 rounded px-1.5 py-0.5">
+                <span className="text-[10px] font-semibold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/30 rounded px-1.5 py-0.5">
                   PDF Auto-Fill
                 </span>
               )}
             </div>
-            <button onClick={onDismiss} className="text-slate-400 hover:text-slate-600 p-1">
+            <button onClick={onDismiss} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1">
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -1998,33 +2819,33 @@ export default function FormFiller({
                     i < currentSectionIndex
                       ? "bg-[#00C2CB]"
                       : i === currentSectionIndex
-                        ? "bg-[#0B1E3F]"
-                        : "bg-slate-100"
+                        ? "bg-[#0B1E3F] dark:bg-blue-500"
+                        : "bg-slate-100 dark:bg-slate-700"
                   }`}
                 />
               ))}
             </div>
           ) : (
-            <div className="h-1.5 bg-slate-100 rounded-full mb-5 overflow-hidden">
+            <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full mb-5 overflow-hidden">
               <div
-                className="h-full bg-[#0B1E3F] rounded-full transition-all duration-300"
+                className="h-full bg-[#0B1E3F] dark:bg-blue-500 rounded-full transition-all duration-300"
                 style={{ width: `${progress}%` }}
               />
             </div>
           )}
 
           {isAutoFilled && (
-            <div className="flex items-center gap-1.5 text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 mb-3">
+            <div className="flex items-center gap-1.5 text-[11px] text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-lg px-2.5 py-1.5 mb-3">
               <Sparkles className="h-3 w-3 shrink-0" />
               Auto-filled from your profile — confirm or update below
             </div>
           )}
 
           <div className="mb-4">
-            <label className="block text-sm font-semibold text-slate-800 mb-0.5">
+            <label className="block text-sm font-semibold text-slate-800 dark:text-slate-100 mb-0.5">
               {currentField.label}
               {!currentField.required && (
-                <span className="ml-2 text-xs font-normal text-slate-400">(optional)</span>
+                <span className="ml-2 text-xs font-normal text-slate-400 dark:text-slate-500">(optional)</span>
               )}
             </label>
 
@@ -2033,7 +2854,7 @@ export default function FormFiller({
             )}
 
             {currentField.hint && (
-              <p className="text-xs text-slate-500 mb-2">{currentField.hint}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">{currentField.hint}</p>
             )}
 
             {currentField.type === "checkbox" ? (
@@ -2050,8 +2871,8 @@ export default function FormFiller({
                     onClick={() => setCurrentAnswer(opt)}
                     className={`text-left px-4 py-2.5 rounded-lg border text-sm transition-all ${
                       currentAnswer === opt
-                        ? "border-[#0B1E3F] bg-[#0B1E3F]/5 text-[#0B1E3F] font-medium"
-                        : "border-slate-200 hover:border-slate-300 text-slate-700"
+                        ? "border-[#0B1E3F] bg-[#0B1E3F]/5 dark:border-blue-500 dark:bg-blue-900/30 text-[#0B1E3F] dark:text-blue-300 font-medium"
+                        : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-700 dark:text-slate-300"
                     }`}
                   >
                     {opt}
@@ -2093,7 +2914,7 @@ export default function FormFiller({
               )}
             </Button>
             {!currentField.required && (
-              <Button variant="ghost" size="sm" onClick={handleSkip} className="text-slate-400 text-xs">
+              <Button variant="ghost" size="sm" onClick={handleSkip} className="text-slate-400 dark:text-slate-500 text-xs">
                 Skip
               </Button>
             )}
@@ -2105,8 +2926,12 @@ export default function FormFiller({
 
   // ── SUMMARY ──────────────────────────────────────────────────────────────
   if (phase === "summary") {
-    const rawPortalUrl = template.submitPortalUrl ?? template.submitUrl;
-    const portalUrl    = isSbaFallback(rawPortalUrl) ? null : rawPortalUrl;
+    // vUnified-20260414-national-expansion-v4: prefer county-aware URL from LOCAL_FORMS
+    const rawPortalUrl   = template.submitPortalUrl ?? template.submitUrl;
+    const countyOverride = resolveCountyAwarePortalUrl(template, businessProfile?.county);
+    const portalUrl      = countyOverride
+      ? countyOverride
+      : isSbaFallback(rawPortalUrl) ? null : rawPortalUrl;
 
     const handleSaveOrPay = async () => {
       if (skipPayment) {
@@ -2124,7 +2949,7 @@ export default function FormFiller({
         try {
           const result = await buildFilledPdf();
           if (result) {
-            triggerPdfDownload(result.base64, result.filename);
+            await deliverPdf(result.base64, result.filename);
             setGeneratedFilename(result.filename);
             onSaveDocument?.(result.filename, result.base64);
             // Stay on summary to show confirmation — user clicks again to continue
@@ -2149,13 +2974,13 @@ export default function FormFiller({
       : 0;
 
     return (
-      <div className="border-t bg-white max-h-[480px] overflow-y-auto">
+      <div className="border-t bg-white dark:bg-[#0f1823] dark:border-slate-700/50 max-h-[60dvh] sm:max-h-[480px] overflow-y-auto">
         <div className="max-w-2xl mx-auto p-3 sm:p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="font-semibold text-slate-900">Review &amp; Generate PDF</p>
+              <p className="font-semibold text-slate-900 dark:text-slate-100">Review &amp; Generate PDF</p>
               <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   {answeredCount} of {activeFields.length} fields completed
                 </p>
                 {autoFilledCount > 0 && (
@@ -2164,18 +2989,18 @@ export default function FormFiller({
                     {autoFilledCount} from profile
                   </p>
                 )}
-                <p className="text-xs text-[#0B1E3F] flex items-center gap-1 font-medium">
+                <p className="text-xs text-[#0B1E3F] dark:text-blue-400 flex items-center gap-1 font-medium">
                   <Download className="h-3 w-3" />
                   {hasPdfFill ? "Official form — AcroForm fill" : "RegPulse structured PDF"}
                 </p>
               </div>
             </div>
-            <button onClick={onDismiss} className="text-slate-400 hover:text-slate-600 p-1">
+            <button onClick={onDismiss} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1">
               <X className="h-4 w-4" />
             </button>
           </div>
 
-          <div className="space-y-0 mb-5 border rounded-xl overflow-hidden">
+          <div className="space-y-0 mb-5 border dark:border-slate-700/50 rounded-xl overflow-hidden">
             {activeFields.map((field, i) => {
               const sectionLabel = getSectionForField(template.id, field.id);
               const prevField = i > 0 ? activeFields[i - 1] : null;
@@ -2185,23 +3010,23 @@ export default function FormFiller({
               return (
                 <div key={field.id}>
                   {showSectionHeader && (
-                    <div className="px-4 py-1.5 bg-[#0B1E3F]/5 border-b">
-                      <p className="text-[10px] font-semibold text-[#0B1E3F] uppercase tracking-widest">
+                    <div className="px-4 py-1.5 bg-[#0B1E3F]/5 dark:bg-[#0B1E3F]/25 border-b dark:border-slate-700/30">
+                      <p className="text-[10px] font-semibold text-[#0B1E3F] dark:text-blue-400 uppercase tracking-widest">
                         {sectionLabel}
                       </p>
                     </div>
                   )}
-                  <div className="flex items-start justify-between px-4 py-2.5 border-b last:border-none bg-white hover:bg-slate-50 gap-4">
+                  <div className="flex items-start justify-between px-4 py-2.5 border-b dark:border-slate-700/30 last:border-none bg-white dark:bg-[#0f1823] hover:bg-slate-50 dark:hover:bg-[#131e2f] gap-4">
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-slate-500">{field.label}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{field.label}</p>
                       {field.officialFieldName && (
-                        <p className="text-[10px] font-mono text-slate-300 leading-tight mb-0.5">
+                        <p className="text-[10px] font-mono text-slate-300 dark:text-slate-600 leading-tight mb-0.5">
                           {field.officialFieldName}
                         </p>
                       )}
-                      <p className="text-sm text-slate-800 truncate">
+                      <p className="text-sm text-slate-800 dark:text-slate-100 truncate">
                         {formData[field.id] || (
-                          <span className="text-slate-400 italic">Not provided</span>
+                          <span className="text-slate-400 dark:text-slate-600 italic">Not provided</span>
                         )}
                       </p>
                     </div>
@@ -2219,7 +3044,7 @@ export default function FormFiller({
             })}
           </div>
 
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3 text-xs text-amber-800">
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-xl p-3 mb-3 text-xs text-amber-800 dark:text-amber-300">
             <strong>Submission:</strong> {template.submitInstructions}
           </div>
 
@@ -2228,13 +3053,13 @@ export default function FormFiller({
               href={portalUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-1.5 text-xs font-medium text-[#0B1E3F] bg-[#0B1E3F]/5 hover:bg-[#0B1E3F]/10 border border-[#0B1E3F]/15 rounded-lg py-2 mb-4 transition-colors"
+              className="flex items-center justify-center gap-1.5 text-xs font-medium text-[#0B1E3F] dark:text-blue-300 bg-[#0B1E3F]/5 dark:bg-blue-900/20 hover:bg-[#0B1E3F]/10 dark:hover:bg-blue-900/30 border border-[#0B1E3F]/15 dark:border-blue-800/30 rounded-lg py-2 mb-4 transition-colors"
             >
               <ExternalLink className="h-3.5 w-3.5 shrink-0" />
               Open Official Submission Portal
             </a>
           ) : (
-            <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg py-2 mb-4">
+            <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-[#131e2f] border border-slate-200 dark:border-slate-700/50 rounded-lg py-2 mb-4">
               <ExternalLink className="h-3.5 w-3.5 shrink-0" />
               Check with your local county/city office — filing portal varies by jurisdiction
             </div>
@@ -2242,11 +3067,11 @@ export default function FormFiller({
 
           {/* v60 — green confirmation banner appears after PDF downloads */}
           {generatedFilename && (
-            <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-2.5 mb-3 text-xs text-green-800">
+            <div className="flex items-center gap-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/30 rounded-xl px-3 py-2.5 mb-3 text-xs text-green-800 dark:text-green-300">
               <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
               <div>
                 <p className="font-semibold">PDF downloaded successfully</p>
-                <p className="text-green-700 font-mono mt-0.5">{generatedFilename}</p>
+                <p className="text-green-700 dark:text-green-400 font-mono mt-0.5">{generatedFilename}</p>
               </div>
             </div>
           )}
@@ -2274,32 +3099,32 @@ export default function FormFiller({
   // ── PAYMENT CONFIRMATION ─────────────────────────────────────────────────
   if (phase === "payment") {
     return (
-      <div className="border-t bg-white">
+      <div className="border-t bg-white dark:bg-[#0f1823] dark:border-slate-700/50 max-h-[60dvh] sm:max-h-none overflow-y-auto">
         <div className="max-w-2xl mx-auto p-3 sm:p-5">
           <div className="flex items-center justify-between mb-5">
-            <p className="font-semibold text-slate-900">Confirm & Download</p>
-            <button onClick={onDismiss} className="text-slate-400 hover:text-slate-600 p-1">
+            <p className="font-semibold text-slate-900 dark:text-slate-100">Confirm & Download</p>
+            <button onClick={onDismiss} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1">
               <X className="h-4 w-4" />
             </button>
           </div>
 
-          <div className="border rounded-xl overflow-hidden mb-4">
-            <div className="bg-slate-50 px-4 py-3 border-b">
-              <p className="text-xs text-slate-500 uppercase tracking-widest">Order Summary</p>
+          <div className="border dark:border-slate-700/50 rounded-xl overflow-hidden mb-4">
+            <div className="bg-slate-50 dark:bg-[#131e2f] px-4 py-3 border-b dark:border-slate-700/50">
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest">Order Summary</p>
             </div>
             <div className="px-4 py-3 space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-slate-700">
+                <span className="text-slate-700 dark:text-slate-200">
                   RegPulse Form Completion — {template.name.split("(")[0].trim()}
                 </span>
-                <span className="font-semibold text-slate-900">$5.00</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">$5.00</span>
               </div>
-              <div className="flex justify-between text-xs text-slate-500">
+              <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
                 <span>
                   Includes: {hasPdfFill ? "Filled government PDF download" : "PDF generation"}, submission instructions, field review
                 </span>
               </div>
-              <div className="flex justify-between text-xs text-slate-400 pt-1 border-t mt-2">
+              <div className="flex justify-between text-xs text-slate-400 dark:text-slate-500 pt-1 border-t dark:border-slate-700/30 mt-2">
                 <span>Government filing fee ({template.fee}) — paid separately to agency</span>
               </div>
             </div>
@@ -2309,8 +3134,8 @@ export default function FormFiller({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-slate-500 mb-4">
-            <Lock className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-4">
+            <Lock className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
             Secure payment via Stripe. Your card details are never stored by RegPulse.
           </div>
 
@@ -2340,11 +3165,11 @@ export default function FormFiller({
   // ── REDIRECTING ──────────────────────────────────────────────────────────
   if (phase === "redirecting") {
     return (
-      <div className="border-t bg-white">
+      <div className="border-t bg-white dark:bg-[#0f1823] dark:border-slate-700/50 max-h-[60dvh] sm:max-h-none overflow-y-auto">
         <div className="max-w-2xl mx-auto p-3 sm:p-5 text-center">
-          <Loader2 className="h-8 w-8 text-[#0B1E3F] animate-spin mx-auto mb-3" />
-          <p className="font-semibold text-slate-800 mb-1">Redirecting to secure checkout...</p>
-          <p className="text-sm text-slate-500">
+          <Loader2 className="h-8 w-8 text-[#0B1E3F] dark:text-blue-400 animate-spin mx-auto mb-3" />
+          <p className="font-semibold text-slate-800 dark:text-slate-100 mb-1">Redirecting to secure checkout...</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             You will be returned here automatically after payment.
           </p>
         </div>

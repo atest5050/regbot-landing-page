@@ -123,6 +123,9 @@ interface ProfileRow {
   is_pro: boolean;
   usage_month: string | null;
   usage_count: number;
+  // vUnified-20260414-national-expansion-v86: Stripe subscription fields
+  subscription_status: string | null;
+  stripe_customer_id: string | null;
 }
 
 function rowToBusiness(row: BusinessRow): SavedBusiness {

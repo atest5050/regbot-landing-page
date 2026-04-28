@@ -6,11 +6,31 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "build:cap": "node scripts/cap-build.js",
+    "cap:sync": "npx cap sync",
+    "cap:ios": "npx cap open ios",
+    "cap:android": "npx cap open android",
+    "cap:run:ios": "npx cap run ios",
+    "cap:run:android": "npx cap run android",
+    "cap:doctor": "npx cap doctor",
+    "cap:build:ios": "npm run build:cap && npx cap build ios",
+    "cap:build:android": "npm run build:cap && npx cap build android",
+    "cap:build": "npm run cap:build:ios && npm run cap:build:android",
+    "cap:test:ios": "npm run build:cap && npx cap run ios --configuration=Debug",
+    "cap:test:android": "npm run build:cap && npx cap run android --configuration=Debug",
+    "cap:add:ios": "npx cap add ios",
+    "cap:add:android": "npx cap add android",
+    "store:prepare": "node scripts/store-assets-check.js",
+    "store:icons": "node scripts/store-assets-check.js --icons-only"
   },
   "dependencies": {
     "@ai-sdk/openai": "^0.0.70",
     "@anthropic-ai/sdk": "^0.80.0",
+    "@capacitor/android": "^8.3.0",
+    "@capacitor/core": "^8.3.0",
+    "@capacitor/geolocation": "^8.2.0",
+    "@capacitor/ios": "^8.3.0",
     "@radix-ui/react-accordion": "^1.2.2",
     "@radix-ui/react-dialog": "^1.1.4",
     "@radix-ui/react-separator": "^1.1.1",
@@ -29,9 +49,14 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "stripe": "^21.0.1",
-    "tailwind-merge": "^2.6.0"
+    "tailwind-merge": "^2.6.0",
+    "vercel": "^50.44.0"
+  },
+  "overrides": {
+    "swr": "^2.3.3"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.3.0",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",

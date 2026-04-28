@@ -274,19 +274,20 @@ function categoryLabel(entry: LibraryEntry): string {
 const JURISDICTION_BADGE_CLS =
   "text-[9px] font-bold tracking-wide border rounded-md px-1.5 py-0.5";
 
-/** Color classes for the jurisdiction badge. FEDERAL=blue, STATE=indigo, LOCAL=violet. */
+/** Color classes for the jurisdiction badge. FEDERAL=blue, STATE=indigo, LOCAL=violet.
+ *  Includes dark: variants so the badge works in both light + dark contexts.     */
 function categoryBadgeClass(category: string): string {
   switch (category) {
-    case "federal": return "bg-blue-50 text-blue-700 border-blue-200";
-    case "state":   return "bg-indigo-50 text-indigo-700 border-indigo-200";
-    case "local":   return "bg-violet-50 text-violet-700 border-violet-200";
-    default:        return "bg-slate-50 text-slate-600 border-slate-200";
+    case "federal": return "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/40";
+    case "state":   return "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800/40";
+    case "local":   return "bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800/40";
+    default:        return "bg-slate-50 dark:bg-slate-800/30 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700/50";
   }
 }
 
 function stateBadgeClass(): string {
-  // Neutral teal badge for state/locality labels
-  return "bg-teal-50 text-teal-700 border-teal-200";
+  // Neutral teal badge for state/locality labels — includes dark variants
+  return "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800/40";
 }
 
 function renewalText(months: number): string {
@@ -432,9 +433,9 @@ export default function FormsLibrary({
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Sparkles className="h-4 w-4 text-amber-500" />
-              <h2 className="text-sm font-semibold text-slate-700">Recommended for You</h2>
+              <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Recommended for You</h2>
               {(bizType || bizState) && (
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-slate-400 dark:text-slate-500">
                   Based on your{bizType ? ` ${bizType}` : ""}{bizState ? ` business in ${bizState}` : ""}
                 </span>
               )}
@@ -448,7 +449,7 @@ export default function FormsLibrary({
                 return (
                   <div
                     key={entry.id}
-                    className="snap-start shrink-0 w-60 flex flex-col gap-2 bg-white rounded-xl border border-amber-200 shadow-sm p-4"
+                    className="snap-start shrink-0 w-60 flex flex-col gap-2 bg-white dark:bg-[#0f1c2e] rounded-xl border border-amber-200 dark:border-amber-800/40 shadow-sm p-4"
                   >
                     {/* v28 — unified jurisdiction badge (same class as grid + sidebar) */}
                     <div className="flex items-start justify-between gap-2">
@@ -461,8 +462,8 @@ export default function FormsLibrary({
                         </span>
                       )}
                     </div>
-                    <p className="text-xs font-semibold text-slate-800 leading-tight line-clamp-2">{entry.name}</p>
-                    <p className="text-xs text-slate-500 leading-relaxed line-clamp-3 flex-1">{entry.description}</p>
+                    <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 leading-tight line-clamp-2">{entry.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-3 flex-1">{entry.description}</p>
                     <div className="flex gap-2 mt-auto pt-1">
                       {isDownloadable ? (
                         <a
@@ -471,7 +472,7 @@ export default function FormsLibrary({
                           rel="noopener noreferrer"
                           download
                           onClick={() => handleDownload(entry.id)}
-                          className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                          className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors"
                         >
                           {downloaded ? <Check className="h-3 w-3" /> : <Download className="h-3 w-3" />}
                           {downloaded ? "Downloaded" : "Download"}
@@ -481,7 +482,7 @@ export default function FormsLibrary({
                           href={entry.officialUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                          className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors"
                         >
                           <ExternalLink className="h-3 w-3" />
                           Open Form
@@ -493,7 +494,7 @@ export default function FormsLibrary({
                           <button
                             title="Upload completed form"
                             onClick={() => fileInputRefs.current[entry.id]?.click()}
-                            className="shrink-0 flex items-center justify-center h-10 w-10 min-h-[44px] min-w-[44px] rounded-lg border border-slate-200 bg-white text-slate-500 hover:border-blue-300 hover:text-blue-600 transition-colors"
+                            className="shrink-0 flex items-center justify-center h-10 w-10 min-h-[44px] min-w-[44px] rounded-lg border border-slate-200 dark:border-slate-700/50 bg-white dark:bg-[#131e2f] text-slate-500 dark:text-slate-400 hover:border-blue-300 dark:hover:border-blue-700/50 hover:text-blue-600 dark:hover:text-blue-300 transition-colors"
                           >
                             <Paperclip className="h-3.5 w-3.5" />
                           </button>
@@ -522,18 +523,18 @@ export default function FormsLibrary({
         <div className="flex flex-col sm:flex-row gap-3">
           {/* Search input */}
           <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
             <input
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search by form name, description, or state…"
-              className="w-full pl-10 pr-9 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 placeholder:text-slate-400 transition-colors"
+              className="w-full pl-10 pr-9 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-[#131e2f] text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:focus:ring-blue-700/40 focus:border-blue-300 dark:focus:border-blue-700/50 placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-colors"
             />
             {search && (
               <button
                 onClick={() => setSearch("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                 aria-label="Clear search"
               >
                 <X className="h-4 w-4" />
@@ -546,7 +547,7 @@ export default function FormsLibrary({
             <select
               value={stateFilter}
               onChange={e => setStateFilter(e.target.value)}
-              className="appearance-none w-full sm:w-48 pl-3 pr-8 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition-colors cursor-pointer"
+              className="appearance-none w-full sm:w-48 pl-3 pr-8 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-[#131e2f] text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:focus:ring-blue-700/40 focus:border-blue-300 dark:focus:border-blue-700/50 transition-colors cursor-pointer"
               aria-label="Filter by state"
             >
               <option value="all">All States</option>
@@ -556,7 +557,7 @@ export default function FormsLibrary({
                 </option>
               ))}
             </select>
-            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
           </div>
         </div>
 
@@ -570,12 +571,12 @@ export default function FormsLibrary({
                 className={`text-sm font-semibold px-3.5 py-1.5 rounded-full border transition-colors ${
                   category === tab.id
                     ? "bg-blue-600 text-white border-blue-600 shadow-sm"
-                    : "bg-white text-slate-500 border-slate-200 hover:border-blue-300 hover:text-blue-600"
+                    : "bg-white dark:bg-[#131e2f] text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700/50 hover:border-blue-300 dark:hover:border-blue-700/50 hover:text-blue-600 dark:hover:text-blue-300"
                 }`}
               >
                 {tab.label}
                 <span className={`ml-1.5 text-xs tabular-nums ${
-                  category === tab.id ? "text-blue-200" : "text-slate-400"
+                  category === tab.id ? "text-blue-200" : "text-slate-400 dark:text-slate-500"
                 }`}>
                   {categoryCounts[tab.id]}
                 </span>
@@ -584,19 +585,19 @@ export default function FormsLibrary({
           </div>
 
           {/* v24 — result count */}
-          <p className="text-sm text-slate-400 tabular-nums shrink-0">
-            Showing <span className="font-semibold text-slate-600">{filtered.length}</span>{" "}
-            of <span className="font-semibold text-slate-600">{allEntries.length}</span> forms
+          <p className="text-sm text-slate-400 dark:text-slate-500 tabular-nums shrink-0">
+            Showing <span className="font-semibold text-slate-600 dark:text-slate-300">{filtered.length}</span>{" "}
+            of <span className="font-semibold text-slate-600 dark:text-slate-300">{allEntries.length}</span> forms
           </p>
         </div>
 
         {/* ── Form card grid ── */}
         {filtered.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-sm font-medium text-slate-500 mb-1">No forms match your filters.</p>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">No forms match your filters.</p>
             <button
               onClick={() => { setSearch(""); setCategory("all"); setStateFilter("all"); }}
-              className="text-xs text-blue-600 hover:text-blue-700 transition-colors"
+              className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
             >
               Clear all filters
             </button>
@@ -611,11 +612,11 @@ export default function FormsLibrary({
               return (
                 <div
                   key={entry.id}
-                  className="rounded-2xl border border-slate-200 bg-white p-5 flex flex-col gap-3 hover:border-blue-200 hover:shadow-md transition-all"
+                  className="rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-white dark:bg-[#0f1c2e] p-5 flex flex-col gap-3 hover:border-blue-200 dark:hover:border-blue-700/50 hover:shadow-md dark:hover:shadow-blue-900/20 transition-all"
                 >
                   {/* ── Name + badges row ── */}
                   <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-semibold text-slate-800 leading-snug flex-1">
+                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-snug flex-1">
                       {entry.name}
                     </p>
                     {/* v28 — unified jurisdiction badge */}
@@ -633,13 +634,13 @@ export default function FormsLibrary({
                   </div>
 
                   {/* ── Description ── */}
-                  <p className="text-xs text-slate-500 leading-relaxed line-clamp-3 flex-1">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-3 flex-1">
                     {entry.description}
                   </p>
 
                   {/* ── Renewal info ── */}
                   {entry.renewalMonths !== null && (
-                    <p className="text-[11px] text-slate-400 font-medium">
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
                       {renewalText(entry.renewalMonths)}
                     </p>
                   )}
@@ -663,7 +664,7 @@ export default function FormsLibrary({
                         href={entry.officialUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl px-3 py-2.5 transition-colors"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/40 hover:bg-slate-100 dark:hover:bg-slate-700/40 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-2.5 transition-colors"
                       >
                         <ExternalLink className="h-3.5 w-3.5" />
                         Official Site
@@ -671,7 +672,7 @@ export default function FormsLibrary({
                     )}
                     {/* v21 — Downloaded badge */}
                     {downloaded && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-green-700 bg-green-50 border border-green-200 rounded-lg px-2 py-1">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/40 rounded-lg px-2 py-1">
                         <Check className="h-3 w-3" />
                         Downloaded
                       </span>
@@ -695,18 +696,18 @@ export default function FormsLibrary({
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 pointer-events-none" />
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 dark:text-slate-500 pointer-events-none" />
         <input
           type="text"
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search forms…"
-          className="w-full pl-7 pr-7 py-2 text-[11px] rounded-lg border border-slate-200 bg-slate-50 focus:outline-none focus:ring-1 focus:ring-blue-300 focus:border-blue-300 placeholder:text-slate-400 transition-colors"
+          className="w-full pl-7 pr-7 py-2 text-[11px] rounded-lg border border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-[#131e2f] text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-300 dark:focus:ring-blue-700/40 focus:border-blue-300 dark:focus:border-blue-700/50 placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-colors"
         />
         {search && (
           <button
             onClick={() => setSearch("")}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
             aria-label="Clear search"
           >
             <X className="h-3 w-3" />
@@ -723,7 +724,7 @@ export default function FormsLibrary({
             className={`text-[10px] font-semibold px-2 py-1.5 rounded-full border transition-colors ${
               category === tab.id
                 ? "bg-blue-600 text-white border-blue-600"
-                : "bg-white text-slate-500 border-slate-200 hover:border-blue-300 hover:text-blue-600"
+                : "bg-white dark:bg-[#131e2f] text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700/50 hover:border-blue-300 dark:hover:border-blue-700/50 hover:text-blue-600 dark:hover:text-blue-300"
             }`}
           >
             {tab.label}
@@ -733,14 +734,14 @@ export default function FormsLibrary({
 
       {/* Result count — shown only when search/filter is active */}
       {(search || category !== "all") && (
-        <p className="text-[10px] text-slate-400 tabular-nums">
+        <p className="text-[10px] text-slate-400 dark:text-slate-500 tabular-nums">
           {filtered.length} form{filtered.length !== 1 ? "s" : ""} found
         </p>
       )}
 
       {/* Form cards */}
       {filtered.length === 0 ? (
-        <p className="text-[11px] text-slate-400 text-center py-3">No forms match your search.</p>
+        <p className="text-[11px] text-slate-400 dark:text-slate-500 text-center py-3">No forms match your search.</p>
       ) : (
         <div className="space-y-1.5">
           {filtered.map(entry => {
@@ -750,11 +751,11 @@ export default function FormsLibrary({
             return (
               <div
                 key={entry.id}
-                className="rounded-xl border border-slate-200 bg-white p-2.5 space-y-1.5 hover:border-slate-300 hover:shadow-sm transition-all"
+                className="rounded-xl border border-slate-200 dark:border-slate-700/50 bg-white dark:bg-[#0f1c2e] p-2.5 space-y-1.5 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-sm transition-all"
               >
                 {/* Name + category badge */}
                 <div className="flex items-start justify-between gap-1.5">
-                  <p className="text-[11px] font-semibold text-slate-800 leading-snug flex-1">
+                  <p className="text-[11px] font-semibold text-slate-800 dark:text-slate-100 leading-snug flex-1">
                     {entry.name}
                   </p>
                   {/* v28 — unified jurisdiction badge (matches grid + recommended) */}
@@ -772,13 +773,13 @@ export default function FormsLibrary({
                 </div>
 
                 {/* Description */}
-                <p className={`text-[10px] text-slate-500 leading-snug ${compact ? "line-clamp-2" : "line-clamp-3"}`}>
+                <p className={`text-[10px] text-slate-500 dark:text-slate-400 leading-snug ${compact ? "line-clamp-2" : "line-clamp-3"}`}>
                   {entry.description}
                 </p>
 
                 {/* Renewal info */}
                 {entry.renewalMonths !== null && (
-                  <p className="text-[9px] text-slate-400">
+                  <p className="text-[9px] text-slate-400 dark:text-slate-500">
                     {renewalText(entry.renewalMonths)}
                   </p>
                 )}
@@ -801,7 +802,7 @@ export default function FormsLibrary({
                       href={entry.officialUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg px-2 py-2 transition-colors"
+                      className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/40 hover:bg-slate-100 dark:hover:bg-slate-700/40 border border-slate-200 dark:border-slate-700/50 rounded-lg px-2 py-2 transition-colors"
                     >
                       <ExternalLink className="h-3 w-3" />
                       Official Site
@@ -809,7 +810,7 @@ export default function FormsLibrary({
                   )}
                   {/* v21 — Downloaded badge */}
                   {downloaded && (
-                    <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-green-700 bg-green-50 border border-green-200 rounded px-1.5 py-0.5">
+                    <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/40 rounded px-1.5 py-0.5">
                       <Check className="h-2.5 w-2.5" />
                       Downloaded
                     </span>

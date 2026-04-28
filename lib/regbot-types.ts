@@ -66,6 +66,12 @@ export interface SavedBusiness {
    */
   notificationPrefs?: NotificationPrefs;
   /**
+   * v25 — Rolling health score history (last 6 saves) for trend sparkline.
+   * Each element is a score 0–100. Oldest first, newest last.
+   * Appended by handleSaveBusiness; trimmed to 6 entries.
+   */
+  scoreHistory?: number[];
+  /**
    * Optional array of locations for multi-location businesses.
    * When present and non-empty, the active location's checklist / completedForms /
    * chatHistory / healthScore fields are used instead of the top-level ones.
@@ -91,6 +97,13 @@ export interface RuleAlert {
   /** ISO date string YYYY-MM-DD */
   date: string;
   dismissed: boolean;
+  /**
+   * v32 — Unix timestamp (ms) until which this alert is snoozed.
+   * While Date.now() < snoozedUntil the alert is hidden from the active count
+   * and the card list, but NOT permanently dismissed. After expiry it reappears.
+   * Undefined = never snoozed.
+   */
+  snoozedUntil?: number;
 }
 
 // ── BusinessLocation ──────────────────────────────────────────────────────────

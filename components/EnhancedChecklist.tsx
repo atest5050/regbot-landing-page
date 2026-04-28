@@ -204,19 +204,19 @@ function renewalDaysLeft(renewalDate: string): number {
 
 /** Returns Tailwind color classes for a renewal badge based on days remaining. */
 function renewalBadgeColor(days: number): string {
-  if (days < 0)   return "text-red-700 bg-red-50 border-red-200";
-  if (days <= 30) return "text-red-700 bg-red-50 border-red-200";
-  if (days <= 60) return "text-amber-700 bg-amber-50 border-amber-200";
-  if (days <= 90) return "text-green-700 bg-green-50 border-green-200";
-  return "text-slate-600 bg-slate-50 border-slate-200";
+  if (days < 0)   return "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/40";
+  if (days <= 30) return "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/40";
+  if (days <= 60) return "text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700/50";
+  if (days <= 90) return "text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/40";
+  return "text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700/50";
 }
 
 /** Returns Tailwind color classes for a Renew Now button based on days remaining. */
 function renewButtonColor(days: number): string {
-  if (days <= 30) return "text-red-700 bg-red-50 hover:bg-red-100 border-red-200";
-  if (days <= 60) return "text-amber-700 bg-amber-50 hover:bg-amber-100 border-amber-200";
-  if (days <= 90) return "text-green-700 bg-green-50 hover:bg-green-100 border-green-200";
-  return "text-slate-600 bg-slate-50 hover:bg-slate-100 border-slate-200";
+  if (days <= 30) return "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 border-red-200 dark:border-red-800/40";
+  if (days <= 60) return "text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40 border-amber-200 dark:border-amber-700/50";
+  if (days <= 90) return "text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40 border-green-200 dark:border-green-800/40";
+  return "text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-700/40 border-slate-200 dark:border-slate-700/50";
 }
 
 /** Human-readable renewal countdown label. */
@@ -344,6 +344,7 @@ export default function EnhancedChecklist({
   const [sortBy, setSortBy]           = useState<"default" | "due-date" | "status">("default");
   // Which confirmation bar is open: "reset" | "clear-done" | "clear-all" | null
   const [confirmAction, setConfirmAction] = useState<"reset" | "clear-done" | "clear-all" | null>(null);
+  const [exporting, setExporting]     = useState(false);
 
   // ── Derived stats ──────────────────────────────────────────────────────────
   const doneCount = useMemo(() => items.filter(i => i.status === "done").length, [items]);
@@ -410,110 +411,147 @@ export default function EnhancedChecklist({
 
   // ── PDF export ─────────────────────────────────────────────────────────────
   const handleExport = async () => {
-    const { default: jsPDF } = await import("jspdf");
-    const doc = new jsPDF();
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const { default: jsPDF } = await import("jspdf");
+      const doc = new jsPDF();
 
-    // Header
-    doc.setFillColor(37, 99, 235);
-    doc.rect(0, 0, 210, 30, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.text("RegPulse — Compliance Checklist", 14, 17);
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.text(
-      `Exported ${new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`,
-      14, 25
-    );
-
-    // Summary
-    doc.setTextColor(30, 41, 59);
-    doc.setFontSize(10);
-    let y = 42;
-    doc.text(`Progress: ${doneCount} of ${items.length} items complete (${progress}%)`, 14, y);
-    y += 6;
-    if (totalFees > 0) {
-      doc.text(`Estimated remaining fees: $${totalFees.toFixed(0)}${hasFeeRanges ? "+" : ""}`, 14, y);
-      y += 6;
-    }
-    y += 4;
-
-    const statusLabel: Record<ChecklistStatus, string> = {
-      todo: "[ ] To Do", "in-progress": "[>] In Progress", done: "[x] Done", blocked: "[!] Blocked",
-    };
-
-    for (const item of items) {
-      if (y > 268) { doc.addPage(); y = 20; }
-
+      // Header — taller to accommodate business name subtitle
+      const headerH = loadedBusiness ? 36 : 30;
+      doc.setFillColor(37, 99, 235);
+      doc.rect(0, 0, 210, headerH, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(16);
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(8);
-      doc.setTextColor(100, 116, 139);
-      doc.text(statusLabel[item.status], 14, y);
-
-      doc.setFont("helvetica", "normal");
+      doc.text("RegPulse — Compliance Checklist", 14, 15);
       doc.setFontSize(9);
-      doc.setTextColor(30, 41, 59);
-      const textLines = doc.splitTextToSize(stripLinksToText(item.text), 148);
-      doc.text(textLines, 46, y);
-
-      if (item.fee) {
-        doc.setTextColor(37, 99, 235);
-        doc.text(item.fee, 196, y, { align: "right" });
-        doc.setTextColor(30, 41, 59);
+      doc.setFont("helvetica", "normal");
+      if (loadedBusiness) {
+        doc.text(loadedBusiness.name, 14, 23);
+        doc.text(
+          `Exported ${new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`,
+          14, 31
+        );
+      } else {
+        doc.text(
+          `Exported ${new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`,
+          14, 25
+        );
       }
-      y += textLines.length * 5 + 2;
 
-      if (item.dueDate) {
+      // Summary
+      doc.setTextColor(30, 41, 59);
+      doc.setFontSize(10);
+      let y = headerH + 12;
+      doc.text(`Progress: ${doneCount} of ${items.length} items complete (${progress}%)`, 14, y);
+      y += 6;
+      if (totalFees > 0) {
+        doc.text(`Estimated remaining fees: $${totalFees.toFixed(0)}${hasFeeRanges ? "+" : ""}`, 14, y);
+        y += 6;
+      }
+      y += 4;
+
+      const statusLabel: Record<ChecklistStatus, string> = {
+        todo: "[ ] To Do", "in-progress": "[>] In Progress", done: "[x] Done", blocked: "[!] Blocked",
+      };
+
+      for (const item of items) {
+        if (y > 268) { doc.addPage(); y = 20; }
+
+        const itemHasAlert = !!item.formId && (alertedFormIds?.has(item.formId) ?? false);
+
+        doc.setFont("helvetica", "bold");
         doc.setFontSize(8);
         doc.setTextColor(100, 116, 139);
-        doc.text(
-          `Due: ${new Date(item.dueDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
-          46, y
-        );
+        doc.text(statusLabel[item.status], 14, y);
+
+        // Alert marker — amber ⚠ prefix when rule has changed
+        if (itemHasAlert) {
+          doc.setTextColor(217, 119, 6);
+          doc.text("! UPDATED", 46, y);
+          doc.setTextColor(30, 41, 59);
+          y += 4;
+        }
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
         doc.setTextColor(30, 41, 59);
-        y += 5;
+        const textLines = doc.splitTextToSize(stripLinksToText(item.text), 148);
+        doc.text(textLines, 46, y);
+
+        if (item.fee) {
+          doc.setTextColor(37, 99, 235);
+          doc.text(item.fee, 196, y, { align: "right" });
+          doc.setTextColor(30, 41, 59);
+        }
+        y += textLines.length * 5 + 2;
+
+        if (item.dueDate) {
+          doc.setFontSize(8);
+          doc.setTextColor(100, 116, 139);
+          doc.text(
+            `Due: ${new Date(item.dueDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
+            46, y
+          );
+          doc.setTextColor(30, 41, 59);
+          y += 5;
+        }
+
+        if (item.renewalDate) {
+          doc.setFontSize(8);
+          doc.setTextColor(100, 116, 139);
+          doc.text(
+            `Renewal: ${new Date(item.renewalDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
+            46, y
+          );
+          doc.setTextColor(30, 41, 59);
+          y += 5;
+        }
+
+        if (item.notes) {
+          doc.setFontSize(8);
+          doc.setTextColor(71, 85, 105);
+          const noteLines = doc.splitTextToSize(`Note: ${item.notes}`, 148);
+          doc.text(noteLines, 46, y);
+          doc.setTextColor(30, 41, 59);
+          y += noteLines.length * 4 + 2;
+        }
+
+        if (item.completedVia) {
+          doc.setFontSize(8);
+          doc.setTextColor(22, 163, 74);
+          doc.text(`>> ${item.completedVia}`, 46, y);
+          doc.setTextColor(30, 41, 59);
+          y += 5;
+        }
+
+        doc.setDrawColor(226, 232, 240);
+        doc.line(14, y, 196, y);
+        y += 6;
       }
 
-      if (item.notes) {
+      const pageCount = doc.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
         doc.setFontSize(8);
-        doc.setTextColor(71, 85, 105);
-        const noteLines = doc.splitTextToSize(`Note: ${item.notes}`, 148);
-        doc.text(noteLines, 46, y);
-        doc.setTextColor(30, 41, 59);
-        y += noteLines.length * 4 + 2;
+        doc.setTextColor(148, 163, 184);
+        doc.text("RegPulse — Not legal advice. Verify requirements with official government sources.", 14, 290);
+        doc.text(`Page ${i} of ${pageCount}`, 196, 290, { align: "right" });
       }
 
-      if (item.completedVia) {
-        doc.setFontSize(8);
-        doc.setTextColor(22, 163, 74);
-        doc.text(`>> ${item.completedVia}`, 46, y);
-        doc.setTextColor(30, 41, 59);
-        y += 5;
-      }
-
-      doc.setDrawColor(226, 232, 240);
-      doc.line(14, y, 196, y);
-      y += 6;
+      const slug = loadedBusiness ? loadedBusiness.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") : "checklist";
+      doc.save(`regpulse-${slug}.pdf`);
+    } finally {
+      setExporting(false);
     }
-
-    const pageCount = doc.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8);
-      doc.setTextColor(148, 163, 184);
-      doc.text("RegPulse — Not legal advice. Verify requirements with official government sources.", 14, 290);
-      doc.text(`Page ${i} of ${pageCount}`, 196, 290, { align: "right" });
-    }
-
-    doc.save("regpulse-checklist.pdf");
   };
 
   // ── Empty state ────────────────────────────────────────────────────────────
   if (items.length === 0) {
     return (
-      <div className="flex-1 bg-slate-50 border rounded-xl flex items-center justify-center p-6">
-        <p className="text-xs text-slate-400 italic text-center leading-relaxed">
+      <div className="flex-1 bg-slate-50 dark:bg-[#0a121c] border dark:border-slate-700/50 rounded-xl flex items-center justify-center p-6">
+        <p className="text-xs text-slate-400 dark:text-slate-500 italic text-center leading-relaxed">
           Compliance items from the chat<br />will appear here
         </p>
       </div>
@@ -533,7 +571,7 @@ export default function EnhancedChecklist({
         const tf = loadedBusiness.totalForms ?? 0;
         const cf = loadedBusiness.completedFormsCount ?? 0;
         return (
-          <div className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-2.5 shrink-0 flex items-center gap-3">
+          <div className="bg-blue-50 dark:bg-[#0d1b35] border border-blue-200 dark:border-blue-900/40 rounded-xl px-3 py-2.5 shrink-0 flex items-center gap-3">
             {/* Mini SVG ring */}
             <svg width="36" height="36" viewBox="0 0 36 36" className="shrink-0 -rotate-90">
               <circle cx="18" cy="18" r="14" fill="none" stroke="#e2e8f0" strokeWidth="3.5" />
@@ -549,10 +587,10 @@ export default function EnhancedChecklist({
               />
             </svg>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-slate-800 truncate leading-tight">
+              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate leading-tight">
                 {loadedBusiness.name}
               </p>
-              <p className="text-xs text-slate-500 truncate leading-tight">
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate leading-tight">
                 {loadedBusiness.location}
                 {tf > 0 && <> &middot; {cf}/{tf} forms</>}
               </p>
@@ -568,12 +606,12 @@ export default function EnhancedChecklist({
       })()}
 
       {/* ── Summary + Dashboard card ───────────────────────────────────────── */}
-      <div className="bg-white border rounded-xl p-3 space-y-3 shrink-0">
+      <div className="bg-white dark:bg-[#0a121c] border dark:border-slate-700/50 rounded-xl p-3 space-y-3 shrink-0">
 
         {/* Progress header with inline health indicator */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-medium text-slate-600">
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
               {doneCount} of {items.length} complete
             </span>
             <div className="flex items-center gap-1.5">
@@ -603,7 +641,7 @@ export default function EnhancedChecklist({
               </span>
             </div>
           </div>
-          <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+          <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-500 ${progressBarColor(progress)}`}
               style={{ width: `${progress}%` }}
@@ -613,10 +651,10 @@ export default function EnhancedChecklist({
 
         {/* Remaining fee total */}
         {totalFees > 0 && (
-          <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-100 rounded-lg px-2.5 py-1.5">
+          <div className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded-lg px-2.5 py-1.5">
             <DollarSign className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-            <span className="text-xs text-slate-600 flex-1">Est. remaining fees</span>
-            <span className="text-xs font-bold text-blue-700">
+            <span className="text-xs text-slate-600 dark:text-slate-300 flex-1">Est. remaining fees</span>
+            <span className="text-xs font-bold text-blue-700 dark:text-blue-400">
               ${totalFees.toFixed(0)}{hasFeeRanges ? "+" : ""}
             </span>
           </div>
@@ -630,7 +668,7 @@ export default function EnhancedChecklist({
               <button
                 onClick={handleMarkAllDone}
                 disabled={doneCount === items.length}
-                className="flex flex-col items-center gap-1 px-1 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-green-50 hover:border-green-300 hover:text-green-700 transition-all disabled:opacity-30 disabled:cursor-not-allowed text-center"
+                className="flex flex-col items-center gap-1 px-1 py-2 rounded-lg border border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/30 text-slate-600 dark:text-slate-400 hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-300 dark:hover:border-green-800/50 hover:text-green-700 dark:hover:text-green-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed text-center"
                 title="Mark all items as done"
               >
                 <CheckCheck className="h-3.5 w-3.5" />
@@ -641,7 +679,7 @@ export default function EnhancedChecklist({
               <button
                 onClick={() => doneItems.length > 0 && setConfirmAction("clear-done")}
                 disabled={doneItems.length === 0}
-                className="flex flex-col items-center gap-1 px-1 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700 transition-all disabled:opacity-30 disabled:cursor-not-allowed text-center"
+                className="flex flex-col items-center gap-1 px-1 py-2 rounded-lg border border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/30 text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:border-amber-300 dark:hover:border-amber-700/50 hover:text-amber-700 dark:hover:text-amber-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed text-center"
                 title="Remove all completed items"
               >
                 <X className="h-3.5 w-3.5" />
@@ -651,7 +689,7 @@ export default function EnhancedChecklist({
               {/* Reset Checklist */}
               <button
                 onClick={() => setConfirmAction("reset")}
-                className="flex flex-col items-center gap-1 px-1 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-all text-center"
+                className="flex flex-col items-center gap-1 px-1 py-2 rounded-lg border border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/30 text-slate-600 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-300 dark:hover:border-red-800/50 hover:text-red-600 dark:hover:text-red-400 transition-all text-center"
                 title="Delete all items"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
@@ -748,7 +786,7 @@ export default function EnhancedChecklist({
           <select
             value={sortBy}
             onChange={e => setSortBy(e.target.value as typeof sortBy)}
-            className="flex-1 text-xs border rounded-lg px-2 py-1.5 bg-slate-50 text-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-400"
+            className="flex-1 text-xs border dark:border-slate-700/50 rounded-lg px-2 py-1.5 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-400"
           >
             <option value="default">Sort: Default</option>
             <option value="due-date">Sort: Due Date</option>
@@ -759,10 +797,18 @@ export default function EnhancedChecklist({
             size="sm"
             className="h-7 px-2.5 text-xs shrink-0"
             onClick={handleExport}
+            disabled={exporting}
             title="Export checklist as PDF"
           >
-            <Download className="h-3 w-3 mr-1" />
-            PDF
+            {exporting ? (
+              <svg className="h-3 w-3 mr-1 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+              </svg>
+            ) : (
+              <Download className="h-3 w-3 mr-1" />
+            )}
+            {exporting ? "Exporting…" : "PDF"}
           </Button>
         </div>
       </div>
@@ -822,8 +868,8 @@ export default function EnhancedChecklist({
           return (
             <div
               key={item.id}
-              className={`rounded-xl border bg-white overflow-hidden transition-shadow ${
-                isExpanded ? "shadow-md border-slate-300" : "border-slate-200 hover:shadow-sm hover:border-slate-300"
+              className={`rounded-xl border bg-white dark:bg-[#0a121c] overflow-hidden transition-shadow ${
+                isExpanded ? "shadow-md border-slate-300 dark:border-slate-600" : "border-slate-200 dark:border-slate-700/50 hover:shadow-sm hover:border-slate-300 dark:hover:border-slate-600"
               } ${item.status === "done" ? "opacity-55" : ""}`}
             >
               {/* ── Collapsed row ─────────────────────────────────────── */}
@@ -845,7 +891,7 @@ export default function EnhancedChecklist({
 
                 <div className="flex-1 min-w-0">
                   <p className={`text-xs leading-snug ${
-                    item.status === "done" ? "line-through text-slate-400" : "text-slate-800 font-medium"
+                    item.status === "done" ? "line-through text-slate-400 dark:text-slate-600" : "text-slate-800 dark:text-slate-100 font-medium"
                   }`}>
                     {renderItemText(item.text)}
                   </p>
@@ -853,23 +899,23 @@ export default function EnhancedChecklist({
                   {/* Badge row */}
                   <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                     {item.fee && (
-                      <span className="inline-flex items-center gap-0.5 text-[10px] text-blue-700 bg-blue-50 border border-blue-100 rounded px-1.5 py-0.5 font-medium">
+                      <span className="inline-flex items-center gap-0.5 text-[10px] text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/40 rounded px-1.5 py-0.5 font-medium">
                         {item.fee}
                       </span>
                     )}
                     {item.dueDate && (
                       <span className={`inline-flex items-center gap-0.5 text-[10px] rounded px-1.5 py-0.5 font-medium border ${
                         isOverdue
-                          ? "text-red-700 bg-red-50 border-red-200"
-                          : "text-slate-500 bg-slate-50 border-slate-200"
+                          ? "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/40"
+                          : "text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700/50"
                       }`}>
                         <Calendar className="h-2.5 w-2.5" />
                         {formatDueDate(item.dueDate)}
                       </span>
                     )}
-                    {/* "AI Filled" badge — shown when completed via RegBot form filler */}
+                    {/* "AI Filled" badge */}
                     {item.completedVia && (
-                      <span className="inline-flex items-center gap-0.5 text-[10px] text-green-700 bg-green-50 border border-green-200 rounded px-1.5 py-0.5 font-medium">
+                      <span className="inline-flex items-center gap-0.5 text-[10px] text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/40 rounded px-1.5 py-0.5 font-medium">
                         ✦ AI Filled
                       </span>
                     )}
@@ -880,121 +926,115 @@ export default function EnhancedChecklist({
                         {renewalLabel(renewalDays)}
                       </span>
                     )}
-                    {/* "Included with Pro" badge — shown on renewal items for Pro users */}
-                    {showRenewalBadge && isPro && (
-                      <span className="inline-flex items-center gap-0.5 text-[8px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded px-1 py-0.5">
-                        <Crown className="h-2 w-2" />
-                        Pro
-                      </span>
-                    )}
                     {/* Rule change alert badge */}
                     {hasAlert && (
-                      <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-300 rounded px-1.5 py-0.5">
+                      <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700/50 rounded px-1.5 py-0.5 animate-alert-pulse">
                         <AlertTriangle className="h-2.5 w-2.5" />
                         Updated
                       </span>
                     )}
-                    {/* "Included with Pro" badge — shown on alerted items for Pro users */}
-                    {hasAlert && isPro && (
-                      <span className="inline-flex items-center gap-0.5 text-[8px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded px-1 py-0.5">
-                        <Crown className="h-2 w-2" />
-                        Pro
-                      </span>
-                    )}
-                    {/* v21 — Downloaded badge: green pill when blank form has been downloaded */}
+                    {/* v21 — Downloaded badge */}
                     {isDownloaded && (
-                      <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-green-700 bg-green-50 border border-green-200 rounded px-1.5 py-0.5">
+                      <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/40 rounded px-1.5 py-0.5">
                         <Download className="h-2.5 w-2.5" />
                         Downloaded
                       </span>
                     )}
                     {item.notes && !isExpanded && (
                       <span title="Has notes">
-                        <StickyNote className="h-3 w-3 text-slate-300" />
+                        <StickyNote className="h-3 w-3 text-slate-300 dark:text-slate-600" />
                       </span>
                     )}
                   </div>
 
-                  {/*
-                    "Complete Form with AI" CTA — visible in the collapsed row
-                    whenever the item has a linked formId and isn't done.
-                    Clicking it calls onStartForm without expanding the detail panel.
-                  */}
-                  {showCompleteFormCta && !isFormLimited && (
-                    <button
-                      onClick={e => {
-                        e.stopPropagation();
-                        onStartForm!(item);
-                      }}
-                      className="mt-2 flex items-center gap-1 text-[10px] font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg px-2 py-1 transition-colors"
-                    >
-                      <FileText className="h-3 w-3" />
-                      Complete Form with AI
-                      {!isPro && (
-                        <span className="ml-0.5 tabular-nums text-blue-400">
-                          ({monthlyFormsUsed}/{freeMonthlyLimit})
-                        </span>
+                  {/* vUnified-platform-fix: redesigned form action buttons into compact inline chips.
+                      Old design: 4-5 tall stacked buttons (mt-2 each) made collapsed rows very busy.
+                      New design: tiny single-line chips (py-0.5) that sit flush in the badge row.
+                      Premium actions (AI fill, Renew, Review) show an amber ⚡PRO pill.
+                      All actions are also available in the full 2-col grid when expanded. */}
+                  {(showCompleteFormCta || showViewCompletedFormCta || showRenewCta || showAlertCta || downloadPdfPath) && (
+                    <div className="mt-1.5 flex items-center gap-1 flex-wrap">
+                      {/* Complete Form with AI chip */}
+                      {showCompleteFormCta && !isFormLimited && (
+                        <button
+                          onClick={e => { e.stopPropagation(); onStartForm!(item); }}
+                          className="inline-flex items-center gap-0.5 text-[9px] font-bold text-blue-600 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/40 rounded px-1.5 py-0.5 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors pointer-events-auto"
+                          style={{ touchAction: "manipulation" }}
+                          title="Complete this form with AI assistance"
+                        >
+                          <FileText className="h-2.5 w-2.5 shrink-0" />
+                          Fill with AI
+                          <span className="ml-0.5 inline-flex items-center gap-0.5 bg-gradient-to-r from-amber-400 to-amber-500 text-white text-[7px] font-bold px-1 py-px rounded-full leading-none shrink-0">
+                            <Crown className="h-1.5 w-1.5" />PRO
+                          </span>
+                        </button>
                       )}
-                    </button>
-                  )}
-                  {showCompleteFormCta && isFormLimited && (
-                    <button
-                      onClick={e => { e.stopPropagation(); onUpgradeClick?.(); }}
-                      className="mt-2 flex items-center gap-1 text-[10px] font-semibold text-slate-500 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg px-2 py-1 transition-colors"
-                      title={`${monthlyFormsUsed}/${freeMonthlyLimit} free completions used — upgrade for unlimited`}
-                    >
-                      <Lock className="h-3 w-3" />
-                      Upgrade to Pro
-                    </button>
-                  )}
-                  {showViewCompletedFormCta && (
-                    <button
-                      onClick={e => {
-                        e.stopPropagation();
-                        onViewCompletedForm!(item.formId!);
-                      }}
-                      className="mt-2 flex items-center gap-1 text-[10px] font-semibold text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg px-2 py-1 transition-colors"
-                    >
-                      <Eye className="h-3 w-3" />
-                      View Completed Form
-                    </button>
-                  )}
-                  {showRenewCta && renewalDays !== null && (
-                    <button
-                      onClick={e => {
-                        e.stopPropagation();
-                        onRenewForm!(item);
-                      }}
-                      className={`mt-2 flex items-center gap-1 text-[10px] font-semibold border rounded-lg px-2 py-1 transition-colors ${renewButtonColor(renewalDays)}`}
-                    >
-                      <RefreshCw className="h-3 w-3" />
-                      Renew Now
-                    </button>
-                  )}
-                  {showAlertCta && (
-                    <button
-                      onClick={e => {
-                        e.stopPropagation();
-                        onViewRuleAlert!(item.formId!);
-                      }}
-                      className="mt-2 flex items-center gap-1 text-[10px] font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-lg px-2 py-1 transition-colors"
-                    >
-                      <AlertTriangle className="h-3 w-3" />
-                      Review Update
-                    </button>
-                  )}
-                  {/* v19 — Download Blank Form button (collapsed row) */}
-                  {downloadPdfPath && (
-                    <a
-                      href={downloadPdfPath}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={e => e.stopPropagation()}
-                      className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg px-2 py-1 transition-colors"
-                    >
-                      <Download className="h-3 w-3" />
-                      Download Blank Form
-                    </a>
+                      {/* Locked upgrade chip */}
+                      {showCompleteFormCta && isFormLimited && (
+                        <button
+                          onClick={e => { e.stopPropagation(); onUpgradeClick?.(); }}
+                          className="inline-flex items-center gap-0.5 text-[9px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50 rounded px-1.5 py-0.5 hover:bg-slate-100 dark:hover:bg-slate-700/30 transition-colors pointer-events-auto"
+                          style={{ touchAction: "manipulation" }}
+                          title={`${monthlyFormsUsed}/${freeMonthlyLimit} free completions used`}
+                        >
+                          <Lock className="h-2.5 w-2.5 shrink-0" />
+                          Upgrade
+                        </button>
+                      )}
+                      {/* View Completed Form chip */}
+                      {showViewCompletedFormCta && (
+                        <button
+                          onClick={e => { e.stopPropagation(); onViewCompletedForm!(item.formId!); }}
+                          className="inline-flex items-center gap-0.5 text-[9px] font-semibold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/40 rounded px-1.5 py-0.5 hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors pointer-events-auto"
+                          style={{ touchAction: "manipulation" }}
+                        >
+                          <Eye className="h-2.5 w-2.5 shrink-0" />
+                          View Form
+                        </button>
+                      )}
+                      {/* Renew Now chip */}
+                      {showRenewCta && renewalDays !== null && (
+                        <button
+                          onClick={e => { e.stopPropagation(); onRenewForm!(item); }}
+                          className={`inline-flex items-center gap-0.5 text-[9px] font-semibold border rounded px-1.5 py-0.5 transition-colors pointer-events-auto ${renewButtonColor(renewalDays)}`}
+                          style={{ touchAction: "manipulation" }}
+                        >
+                          <RefreshCw className="h-2.5 w-2.5 shrink-0" />
+                          Renew
+                          <span className="ml-0.5 inline-flex items-center gap-0.5 bg-gradient-to-r from-amber-400 to-amber-500 text-white text-[7px] font-bold px-1 py-px rounded-full leading-none shrink-0">
+                            <Crown className="h-1.5 w-1.5" />PRO
+                          </span>
+                        </button>
+                      )}
+                      {/* Review Update chip */}
+                      {showAlertCta && (
+                        <button
+                          onClick={e => { e.stopPropagation(); onViewRuleAlert!(item.formId!); }}
+                          className="inline-flex items-center gap-0.5 text-[9px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded px-1.5 py-0.5 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors pointer-events-auto"
+                          style={{ touchAction: "manipulation" }}
+                        >
+                          <AlertTriangle className="h-2.5 w-2.5 shrink-0" />
+                          Review
+                          <span className="ml-0.5 inline-flex items-center gap-0.5 bg-gradient-to-r from-amber-400 to-amber-500 text-white text-[7px] font-bold px-1 py-px rounded-full leading-none shrink-0">
+                            <Crown className="h-1.5 w-1.5" />PRO
+                          </span>
+                        </button>
+                      )}
+                      {/* Download Blank PDF chip */}
+                      {downloadPdfPath && (
+                        <a
+                          href={downloadPdfPath}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={e => e.stopPropagation()}
+                          className="inline-flex items-center gap-0.5 text-[9px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50 rounded px-1.5 py-0.5 hover:bg-slate-100 dark:hover:bg-slate-700/40 transition-colors pointer-events-auto"
+                          style={{ touchAction: "manipulation" }}
+                        >
+                          <Download className="h-2.5 w-2.5 shrink-0" />
+                          Blank PDF
+                        </a>
+                      )}
+                    </div>
                   )}
                 </div>
 
@@ -1007,104 +1047,129 @@ export default function EnhancedChecklist({
               {/* ── Expanded detail panel ──────────────────────────────── */}
               {isExpanded && (
                 <div
-                  className="px-3 pb-3 border-t border-slate-100 pt-3 space-y-3"
+                  className="px-3 pb-3 border-t border-slate-100 dark:border-slate-700/50 pt-3 space-y-3"
                   onClick={e => e.stopPropagation()}
                 >
-                  {/* Quick action row */}
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <button
-                      onClick={() => onUpdate(item.id, { status: item.status === "done" ? "todo" : "done" })}
-                      className={`flex items-center gap-1 text-[10px] font-semibold rounded-full px-2.5 py-1 border transition-colors ${
-                        item.status === "done"
-                          ? "text-slate-600 bg-slate-50 border-slate-200 hover:bg-slate-100"
-                          : "text-green-700 bg-green-50 border-green-200 hover:bg-green-100"
-                      }`}
-                    >
-                      <CheckCircle2 className="h-3 w-3 shrink-0" />
-                      {item.status === "done" ? "Mark as To Do" : "Mark as Done"}
-                    </button>
+                  {/* vUnified-platform-fix: redesigned expanded action area — clean 2-column grid.
+                      Old design: flex-wrap pill soup with inconsistent sizing and no visual hierarchy.
+                      New design: 2-col grid of uniform 36px+ buttons; premium actions labeled with
+                      an amber gradient ⚡PRO pill; destructive Remove isolated at the bottom. */}
 
+                  {/* ── Action grid ── */}
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {/* Complete Form with AI — primary blue, PRO badge */}
                     {showCompleteFormCta && !isFormLimited && (
                       <button
                         onClick={() => { setExpandedId(null); onStartForm!(item); }}
-                        className="flex items-center gap-1 text-[10px] font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-2.5 py-1 hover:bg-blue-100 transition-colors"
+                        className="flex items-center gap-1.5 text-[10px] font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/50 rounded-lg px-2.5 py-2 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors pointer-events-auto min-h-[36px]"
+                        style={{ touchAction: "manipulation" }}
                       >
                         <FileText className="h-3 w-3 shrink-0" />
-                        Complete Form
-                        {!isPro && (
-                          <span className="text-blue-400 tabular-nums">
-                            ({monthlyFormsUsed}/{freeMonthlyLimit})
-                          </span>
-                        )}
+                        <span className="truncate">Complete with AI</span>
+                        <span className="ml-auto inline-flex items-center gap-0.5 bg-gradient-to-r from-amber-400 to-amber-500 text-white text-[7px] font-bold px-1 py-0.5 rounded-full leading-none shrink-0">
+                          <Crown className="h-1.5 w-1.5" />PRO
+                        </span>
                       </button>
                     )}
+                    {/* Locked — upgrade CTA */}
                     {showCompleteFormCta && isFormLimited && (
                       <button
                         onClick={() => { setExpandedId(null); onUpgradeClick?.(); }}
-                        className="flex items-center gap-1 text-[10px] font-semibold text-slate-500 bg-slate-50 border border-slate-200 rounded-full px-2.5 py-1 hover:bg-slate-100 transition-colors"
+                        className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50 rounded-lg px-2.5 py-2 hover:bg-slate-100 dark:hover:bg-slate-700/30 transition-colors pointer-events-auto min-h-[36px]"
+                        style={{ touchAction: "manipulation" }}
                         title={`${monthlyFormsUsed}/${freeMonthlyLimit} free completions used`}
                       >
                         <Lock className="h-3 w-3 shrink-0" />
-                        Upgrade to Pro
+                        <span className="truncate">Upgrade to Pro</span>
                       </button>
                     )}
-                    {showViewCompletedFormCta && (
-                      <button
-                        onClick={() => { setExpandedId(null); onViewCompletedForm!(item.formId!); }}
-                        className="flex items-center gap-1 text-[10px] font-semibold text-green-700 bg-green-50 border border-green-200 rounded-full px-2.5 py-1 hover:bg-green-100 transition-colors"
-                      >
-                        <Eye className="h-3 w-3 shrink-0" />
-                        View Completed Form
-                      </button>
-                    )}
-                    {showRenewCta && renewalDays !== null && (
-                      <button
-                        onClick={() => { setExpandedId(null); onRenewForm!(item); }}
-                        className={`flex items-center gap-1 text-[10px] font-semibold border rounded-full px-2.5 py-1 transition-colors ${renewButtonColor(renewalDays)}`}
-                      >
-                        <RefreshCw className="h-3 w-3 shrink-0" />
-                        Renew Now
-                      </button>
-                    )}
-                    {showAlertCta && (
-                      <button
-                        onClick={() => { setExpandedId(null); onViewRuleAlert!(item.formId!); }}
-                        className="flex items-center gap-1 text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-300 rounded-full px-2.5 py-1 hover:bg-amber-100 transition-colors"
-                      >
-                        <AlertTriangle className="h-3 w-3 shrink-0" />
-                        Review Update
-                      </button>
-                    )}
-                    {/* v19 — Download Blank Form button (expanded panel) */}
+                    {/* Download Blank Form */}
                     {downloadPdfPath && (
                       <a
                         href={downloadPdfPath}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-[10px] font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-2.5 py-1 hover:bg-blue-100 transition-colors"
+                        className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50 rounded-lg px-2.5 py-2 hover:bg-slate-100 dark:hover:bg-slate-700/40 transition-colors pointer-events-auto min-h-[36px]"
+                        style={{ touchAction: "manipulation" }}
                       >
                         <Download className="h-3 w-3 shrink-0" />
-                        Download Blank Form
+                        <span className="truncate">Download Form</span>
                       </a>
                     )}
+                    {/* Renew Now — urgency color, PRO badge */}
+                    {showRenewCta && renewalDays !== null && (
+                      <button
+                        onClick={() => { setExpandedId(null); onRenewForm!(item); }}
+                        className={`flex items-center gap-1.5 text-[10px] font-semibold border rounded-lg px-2.5 py-2 transition-colors pointer-events-auto min-h-[36px] ${renewButtonColor(renewalDays)}`}
+                        style={{ touchAction: "manipulation" }}
+                      >
+                        <RefreshCw className="h-3 w-3 shrink-0" />
+                        <span className="truncate">Renew Now</span>
+                        <span className="ml-auto inline-flex items-center gap-0.5 bg-gradient-to-r from-amber-400 to-amber-500 text-white text-[7px] font-bold px-1 py-0.5 rounded-full leading-none shrink-0">
+                          <Crown className="h-1.5 w-1.5" />PRO
+                        </span>
+                      </button>
+                    )}
+                    {/* View Completed Form */}
+                    {showViewCompletedFormCta && (
+                      <button
+                        onClick={() => { setExpandedId(null); onViewCompletedForm!(item.formId!); }}
+                        className="flex items-center gap-1.5 text-[10px] font-semibold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/40 rounded-lg px-2.5 py-2 hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors pointer-events-auto min-h-[36px]"
+                        style={{ touchAction: "manipulation" }}
+                      >
+                        <Eye className="h-3 w-3 shrink-0" />
+                        <span className="truncate">View Completed</span>
+                      </button>
+                    )}
+                    {/* Review Update — amber, PRO badge */}
+                    {showAlertCta && (
+                      <button
+                        onClick={() => { setExpandedId(null); onViewRuleAlert!(item.formId!); }}
+                        className="flex items-center gap-1.5 text-[10px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-lg px-2.5 py-2 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors pointer-events-auto min-h-[36px]"
+                        style={{ touchAction: "manipulation" }}
+                      >
+                        <AlertTriangle className="h-3 w-3 shrink-0" />
+                        <span className="truncate">Review Update</span>
+                        <span className="ml-auto inline-flex items-center gap-0.5 bg-gradient-to-r from-amber-400 to-amber-500 text-white text-[7px] font-bold px-1 py-0.5 rounded-full leading-none shrink-0">
+                          <Crown className="h-1.5 w-1.5" />PRO
+                        </span>
+                      </button>
+                    )}
+                    {/* Mark as Done / Mark as To Do */}
+                    <button
+                      onClick={() => onUpdate(item.id, { status: item.status === "done" ? "todo" : "done" })}
+                      className={`flex items-center gap-1.5 text-[10px] font-semibold rounded-lg px-2.5 py-2 border transition-colors pointer-events-auto min-h-[36px] ${
+                        item.status === "done"
+                          ? "text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700/40"
+                          : "text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/40 hover:bg-green-100 dark:hover:bg-green-900/40"
+                      }`}
+                      style={{ touchAction: "manipulation" }}
+                    >
+                      <CheckCircle2 className="h-3 w-3 shrink-0" />
+                      <span className="truncate">{item.status === "done" ? "Mark as To Do" : "Mark as Done"}</span>
+                    </button>
+                  </div>
 
+                  {/* Remove — isolated at bottom so it can't be tapped accidentally */}
+                  <div className="flex justify-end">
                     <button
                       onClick={() => { onDelete(item.id); setExpandedId(null); }}
-                      className="flex items-center gap-1 text-[10px] font-semibold text-red-500 bg-red-50 border border-red-200 rounded-full px-2.5 py-1 hover:bg-red-100 transition-colors ml-auto"
+                      className="inline-flex items-center gap-1 text-[9px] font-semibold text-red-400 dark:text-red-400/80 hover:text-red-600 dark:hover:text-red-300 transition-colors pointer-events-auto"
+                      style={{ touchAction: "manipulation" }}
                     >
                       <Trash2 className="h-3 w-3 shrink-0" />
-                      Remove
+                      Remove item
                     </button>
                   </div>
 
                   {/* Status + Due date selectors */}
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[10px] text-slate-500 block mb-1 font-semibold uppercase tracking-wider">Status</label>
+                      <label className="text-[10px] text-slate-500 dark:text-slate-400 block mb-1 font-semibold uppercase tracking-wider">Status</label>
                       <select
                         value={item.status}
                         onChange={e => onUpdate(item.id, { status: e.target.value as ChecklistStatus })}
-                        className="w-full text-xs border rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+                        className="w-full text-xs border border-slate-200 dark:border-slate-700/50 rounded-lg px-2 py-1.5 bg-white dark:bg-[#131e2f] text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-400 dark:focus:ring-blue-700/50"
                       >
                         <option value="todo">To Do</option>
                         <option value="in-progress">In Progress</option>
@@ -1113,31 +1178,31 @@ export default function EnhancedChecklist({
                       </select>
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-500 block mb-1 font-semibold uppercase tracking-wider">Due Date</label>
+                      <label className="text-[10px] text-slate-500 dark:text-slate-400 block mb-1 font-semibold uppercase tracking-wider">Due Date</label>
                       <input
                         type="date"
                         value={item.dueDate ?? ""}
                         onChange={e => onUpdate(item.id, { dueDate: e.target.value || undefined })}
-                        className="w-full text-xs border rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+                        className="w-full text-xs border border-slate-200 dark:border-slate-700/50 rounded-lg px-2 py-1.5 bg-white dark:bg-[#131e2f] text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-400 dark:focus:ring-blue-700/50"
                       />
                     </div>
                   </div>
 
                   {/* Notes textarea */}
                   <div>
-                    <label className="text-[10px] text-slate-500 block mb-1 font-semibold uppercase tracking-wider">Notes</label>
+                    <label className="text-[10px] text-slate-500 dark:text-slate-400 block mb-1 font-semibold uppercase tracking-wider">Notes</label>
                     <textarea
                       value={item.notes ?? ""}
                       onChange={e => onUpdate(item.id, { notes: e.target.value || undefined })}
                       placeholder="Add private notes..."
                       rows={2}
-                      className="w-full text-xs border rounded-lg px-2 py-1.5 bg-white resize-none focus:outline-none focus:ring-1 focus:ring-blue-400 placeholder:text-slate-300"
+                      className="w-full text-xs border border-slate-200 dark:border-slate-700/50 rounded-lg px-2 py-1.5 bg-white dark:bg-[#131e2f] text-slate-800 dark:text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-blue-400 dark:focus:ring-blue-700/50 placeholder:text-slate-300 dark:placeholder:text-slate-600"
                     />
                   </div>
 
                   {/* completedVia badge */}
                   {item.completedVia && (
-                    <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5">
+                    <p className="text-xs text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/40 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5">
                       <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                       Completed via: {item.completedVia}
                     </p>

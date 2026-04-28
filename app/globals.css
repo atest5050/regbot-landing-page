@@ -55,6 +55,44 @@
   }
 }
 
+/* ── vUnified-platform-fix: Dark mode CSS variables ─────────────────────────
+   Activated when the `.dark` class is present on any ancestor (Tailwind
+   darkMode: "class" strategy). Overrides the light-mode HSL tokens so every
+   component that consumes `hsl(var(--background))` etc. flips automatically.
+   The sidebar and compliance dashboard are already dark-navy; only the chat
+   area and form panels require these overrides to look right in dark mode.    */
+.dark {
+  --background:   220 47%  8%;
+  --foreground:   210 20% 92%;
+  --card:         220 42% 11%;
+  --card-foreground: 210 20% 92%;
+  --popover:      220 42% 11%;
+  --popover-foreground: 210 20% 92%;
+  --secondary:    220 35% 18%;
+  --secondary-foreground: 210 20% 92%;
+  --muted:        220 35% 18%;
+  --muted-foreground: 215  16% 57%;
+  --accent:       220 35% 18%;
+  --accent-foreground: 210 20% 92%;
+  --destructive:    0 63% 50%;
+  --destructive-foreground: 210 40% 98%;
+  --border:       220 25% 22%;
+  --input:        220 25% 22%;
+}
+
+/* ── vUnified-platform-fix: Rule-change alert badge pulse ────────────────────
+   Draws attention to the amber "Updated" badge without being distracting.
+   A subtle repeating box-shadow ring — safe on both light and dark themes.   */
+@layer utilities {
+  @keyframes rp-alert-pulse {
+    0%,  100% { box-shadow: 0 0 0 0   rgba(251,191,36,0);    }
+    50%        { box-shadow: 0 0 0 3px rgba(251,191,36,0.30); }
+  }
+  .animate-alert-pulse {
+    animation: rp-alert-pulse 2.4s ease-in-out infinite;
+  }
+}
+
 /* ── RegPulse logo hover-glow ────────────────────────────────────────────────
    Any .rp-icon-svg inside a .rp-logomark element gets a soft cyan drop-shadow
    on hover/focus-visible. The transition is on the SVG element directly so it

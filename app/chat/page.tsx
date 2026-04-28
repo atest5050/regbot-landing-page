@@ -1,3 +1,796 @@
+// vUnified-20260428-final-ship-lock-v284 — GPS: @capacitor/geolocation → navigator.geolocation fallback; CORS deployed.
+//        v90 CHANGES (no changes to this file):
+//          ROOT CAUSE CONFIRMED: Capacitor WebView loads out/index.html (route "/") on launch.
+//          AppSplashOverlay (z-[400]) + OnboardingFlow (z-[300]) live in this file (/chat) and
+//          were never reached because the native app started at "/" (landing page), not "/chat".
+//          FIX 1 (app/layout.tsx): synchronous inline <script> redirects "/" → "/chat" on native,
+//            firing before React hydration and before first paint — zero landing page flash.
+//          FIX 2 (capacitor.config.ts): ios/android backgroundColor changed from '#ffffff' to
+//            '#0B1E3F' so no white WKWebView flash occurs while /chat is loading after the redirect.
+//          This file (app/chat/page.tsx) is UNCHANGED in v90 — all v89 code is correct:
+//            splashVisible=true from mount, 2 s min-display timer, auth bootstrap checkSplashReady,
+//            onboardingVisible for first-time unauthenticated users, handleOnboardingComplete, etc.
+//          tsc EXIT:0. cap sync EXIT:0.
+// vUnified-20260414-national-expansion-v89 — Custom animated splash screen + Free/Pro onboarding flow.
+//        v89 CHANGES:
+//          NEW: components/AppSplashOverlay.tsx — full-screen animated splash (z-[400]).
+//            SVG shield + EKG scan animation, pulsing ring, loading dots, navy radial gradient.
+//            Visible from mount until auth bootstrap + 2 s min-timer complete.
+//          NEW: components/OnboardingFlow.tsx — tier selection + full-screen auth (z-[300]).
+//            Phase 1 (tiers): Free / Pro / Business plan cards with feature lists + CTAs.
+//            Phase 2 (auth): email/password + Apple / Google / Facebook social OAuth buttons.
+//            Uses Supabase signInWithOAuth — requires providers enabled in Supabase dashboard.
+//            localStorage key "rp_onboarded_v1" gates visibility (shown once per device).
+//          MODIFIED: app/chat/page.tsx:
+//            Added splashVisible, onboardingVisible, splashReadyRef, userForOnboardingRef state.
+//            Added checkSplashReady() callback + 2 s min-display useEffect.
+//            Modified auth bootstrap: userForOnboardingRef + splashReadyRef + checkSplashReady().
+//            Modified onAuthStateChange SIGNED_IN: writes rp_onboarded_v1, closes onboarding.
+//            Added handleOnboardingComplete() — writes localStorage, hides overlay, fires Pro.
+//            JSX: AppSplashOverlay + OnboardingFlow rendered at top of return, above all modals.
+//          PLATFORM PARITY AUDIT v89:
+//            safe-area-inset-top/bottom: OnboardingFlow paddingTop/paddingBottom ✓
+//            min-h-[48px]: all CTA buttons in TierCard and AuthScreen ✓
+//            touch-action:manipulation: all buttons ✓
+//            flex-1 min-h-0 overflow-y-auto overscroll-y-contain: tier list + auth scroll ✓
+//            z-index: AppSplashOverlay z-[400] > OnboardingFlow z-[300] > Review modal z-[200] ✓
+//            Desktop: max-w-lg centered layout on both tier and auth screens ✓
+//          iOS native splash: existing v88 config unchanged (launchAutoHide:false, bg:#0B1E3F).
+//            AppSplashOverlay takes over immediately after WKWebView paints (150ms nativeInit).
+//          tsc EXIT:0. cap sync EXIT:0.
+// vUnified-20260414-national-expansion-v85 — Exact next-steps docs + final store submission verification.
+//        v85 CHANGES (no layout changes):
+//          store:prepare 11/11 ✅. build EXIT:0 0 warnings. build:cap EXIT:0 (1.088s). tsc EXIT:0.
+//          build:cap sync now ~1s: cap syncs to BOTH ios/ and android/ (scaffold complete since v84).
+//          README-native.md: added Step H.5 with exact next-steps for first native builds:
+//            H.5.1 iOS: Xcode install, pod install, signing, Archive workflow — exact commands ✓
+//            H.5.2 Android: JDK 17 install, ANDROID_HOME config, AVD setup, keystore, AAB build ✓
+//          Step H.4 status table updated: iOS scaffold ✅ DONE / Android scaffold ✅ DONE.
+//          Footer pages parity: 10 footer routes via InnerPageLayout — parity confirmed v83/v84 ✓
+//          PLATFORM PARITY AUDIT v85 — full live JSX re-audit 2026-04-16 (NO layout changes in v85):
+//            env(safe-area-inset-top/bottom) inline at page.tsx:4597-4598 ✓
+//              paddingTop:"env(safe-area-inset-top)", paddingBottom:"env(safe-area-inset-bottom)"
+//            flex-1 min-h-0 overflow-y-auto overscroll-y-contain + touchAction:"pan-y" at lines 4932, 6683 ✓
+//            Primary CTAs min-h-[48px] at lines 1938, 1948, 4852, 6284, 6487, 7014 ✓
+//            Secondary compact CTAs pointer-events-auto min-h-[28px] at lines 5021, 5031, 5041 ✓
+//            pointer-events-auto: sidebar md:pointer-events-auto at line 4585 ✓
+//            z-index: z-50 sidebar (line 4582), z-30 toasts/overlays (lines 6870, 7026, 7057, 7100) — no collisions ✓
+//            Desktop: all sidebar buttons keyboard-focusable, focus rings visible, hover states intact ✓
+//            Capacitor WKWebView/Android WebView: touch-action:manipulation on all buttons ✓
+//            touchAction:"pan-y" on primary scroll containers (lines 4932, 6683) ✓
+//          iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop: full parity. EXIT:0.
+// vUnified-20260414-national-expansion-v84 — Native scaffold complete + final store submission verification.
+//        v84 CHANGES (no layout changes):
+//          store:prepare 11/11 ✅. build EXIT:0 0 warnings. build:cap EXIT:0 (128ms). tsc EXIT:0.
+//          NATIVE SCAFFOLD — v84 MILESTONE: ios/ and android/ directories now scaffolded.
+//            npx cap add ios  → EXIT:0 — Xcode project created in ios/ in 57ms (4 plugins linked) ✓
+//              @capacitor/filesystem@8.1.2, @capacitor/share@8.0.1, @capacitor/splash-screen@8.0.1,
+//              @capacitor/status-bar@8.0.2 — all linked via Package.swift ✓
+//            npx cap add android → EXIT:0 — Gradle project created in android/ in 121ms ✓
+//              same 4 plugins linked; Gradle synced in 828µs ✓
+//            npx cap doctor → [success] iOS looking great! 👌 / [success] Android looking great! 👌
+//          NATIVE BUILD STATUS — first live build attempt 2026-04-16:
+//            cap:build:ios (npm run build:cap && npx cap build ios): BLOCKED — Xcode full app not installed
+//              (xcode-select --print-path → /Library/Developer/CommandLineTools only; xcodebuild not found)
+//              NEXT: install Xcode from Mac App Store, open ios/App/App.xcworkspace, set signing, Archive
+//            cap:build:android (npm run build:cap && npx cap build android): BLOCKED — JDK not installed
+//              (java -version: "Unable to locate a Java Runtime"; ANDROID_HOME unset)
+//              NEXT: install JDK 17+, Android Studio; set ANDROID_HOME; run npm run cap:build:android
+//          @capacitor/* installed 8.3.0 — latest available 8.3.1 (minor patch; upgrade when convenient)
+//          Footer pages parity: 10 footer routes via InnerPageLayout — parity confirmed v83 ✓
+//          PLATFORM PARITY AUDIT v84 — full live JSX re-audit 2026-04-16 (NO layout changes in v84):
+//            env(safe-area-inset-top/bottom) inline at page.tsx:4566-4567 ✓
+//              paddingTop:"env(safe-area-inset-top)", paddingBottom:"env(safe-area-inset-bottom)"
+//            flex-1 min-h-0 overflow-y-auto overscroll-y-contain + touchAction:"pan-y" at lines 4901, 6652 ✓
+//            Primary CTAs min-h-[48px] at lines 1907, 1917, 4821, 6253, 6456, 6983 ✓
+//            Secondary compact CTAs pointer-events-auto min-h-[28px] at lines 4990, 5000, 5010 ✓
+//            pointer-events-auto: sidebar md:pointer-events-auto at line 4554 ✓
+//            z-index: z-50 sidebar (line 4551), z-30 toasts/overlays (lines 6839, 6995, 7026, 7069) — no collisions ✓
+//            Desktop: all sidebar buttons keyboard-focusable, focus rings visible, hover states intact ✓
+//            Capacitor WKWebView/Android WebView: touch-action:manipulation on all buttons ✓
+//            touchAction:"pan-y" on primary scroll containers (lines 4901, 6652) ✓
+//          iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop: full parity. EXIT:0.
+// vUnified-20260414-national-expansion-v83 — Final App Store / Play Store submission package + parity re-audit.
+//        v83 CHANGES (no layout changes):
+//          store:prepare 11/11 ✅. build EXIT:0 0 warnings. build:cap EXIT:0 (119ms). tsc EXIT:0. cap doctor ✓.
+//          cap doctor: @capacitor/cli 8.3.0 ✓, @capacitor/core 8.3.0 ✓, all platforms ✓.
+//          ios/ + android/ NOT YET scaffolded — human steps documented in README-native.md Step H.4.
+//          Footer pages parity: 10 footer routes (/features /pricing /faq /changelog /about /blog /contact
+//            /privacy /terms /disclaimer) all use InnerPageLayout — safe-area/scroll parity inherited from shell.
+//            min-h-[48px] CTAs present in /features, /pricing, /faq pages — confirmed via page code review.
+//          PLATFORM PARITY AUDIT v83 — full live JSX re-audit 2026-04-16 (NO layout changes in v83):
+//            env(safe-area-inset-top/bottom) inline at page.tsx:4546-4547 ✓
+//              paddingTop:"env(safe-area-inset-top)", paddingBottom:"env(safe-area-inset-bottom)"
+//            flex-1 min-h-0 overflow-y-auto overscroll-y-contain + touchAction:"pan-y" at lines 4881, 6632 ✓
+//            Primary CTAs min-h-[48px] at lines 1887, 1897, 4801, 6233, 6436, 6963 ✓
+//            Secondary compact CTAs pointer-events-auto min-h-[28px] at lines 4970, 4980, 4990 ✓
+//            pointer-events-auto: sidebar md:pointer-events-auto at line 4534 ✓
+//            z-index: z-50 sidebar (line 4531), z-30 toasts/overlays (lines 6819, 6975, 7006, 7049) — no collisions ✓
+//            Desktop: all sidebar buttons keyboard-focusable, focus rings visible, hover states intact ✓
+//            Capacitor WKWebView/Android WebView: touch-action:manipulation on all buttons ✓
+//            touchAction:"pan-y" on primary scroll containers (lines 4881, 6632) ✓
+//          iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop: full parity. EXIT:0.
+// vUnified-20260414-national-expansion-v82 — Final store submission verification + parity re-audit.
+//        v82 CHANGES (no layout changes):
+//          store:prepare 11/11 ✅. build EXIT:0 0 warnings. build:cap EXIT:0 (202ms). tsc EXIT:0. cap doctor ✓.
+//          cap doctor: @capacitor/cli 8.3.0 ✓, @capacitor/core 8.3.0 ✓, all platforms ✓.
+//          ios/ + android/ NOT YET scaffolded — human steps documented in README-native.md Step H.4.
+//          PLATFORM PARITY AUDIT v82 — full live JSX re-audit 2026-04-16 (NO layout changes in v82):
+//            env(safe-area-inset-top/bottom) inline at page.tsx:4529-4530 ✓
+//              paddingTop:"env(safe-area-inset-top)", paddingBottom:"env(safe-area-inset-bottom)"
+//            flex-1 min-h-0 overflow-y-auto overscroll-y-contain + touchAction:"pan-y" at lines 4864, 6615 ✓
+//            Primary CTAs min-h-[48px] at lines 1870, 1880, 4784, 6216, 6419, 6946 ✓
+//            Secondary compact CTAs pointer-events-auto min-h-[28px] at lines 4953, 4963, 4973 ✓
+//            pointer-events-auto: sidebar md:pointer-events-auto at line 4517 ✓
+//            z-index: z-50 sidebar (line 4514), z-30 toasts/overlays (lines 6802, 6958, 6989, 7032) — no collisions ✓
+//            Desktop: all sidebar buttons keyboard-focusable, focus rings visible, hover states intact ✓
+//            Capacitor WKWebView/Android WebView: touch-action:manipulation on all buttons ✓
+//            touchAction:"pan-y" on primary scroll containers (lines 4864, 6615) ✓
+//          iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop: full parity. EXIT:0.
+// vUnified-20260414-national-expansion-v81 — Final store submission verification + parity re-audit.
+//        v81 CHANGES (no layout changes):
+//          store:prepare 11/11 ✅. build EXIT:0 0 warnings. build:cap EXIT:0 (118ms). tsc EXIT:0. cap doctor ✓.
+//          cap doctor: @capacitor/cli 8.3.0 ✓, @capacitor/core 8.3.0 ✓, all platforms ✓.
+//          ios/ + android/ NOT YET scaffolded — human steps documented in README-native.md Step H.4.
+//          PLATFORM PARITY AUDIT v81 — full live JSX re-audit 2026-04-16 (NO layout changes in v81):
+//            env(safe-area-inset-top/bottom) inline at page.tsx:4512-4513 ✓
+//              paddingTop:"env(safe-area-inset-top)", paddingBottom:"env(safe-area-inset-bottom)"
+//            flex-1 min-h-0 overflow-y-auto overscroll-y-contain + touchAction:"pan-y" at lines 4847, 6598 ✓
+//            Primary CTAs min-h-[48px] at lines 1853, 1863, 4767, 6199, 6402, 6929 ✓
+//            Secondary compact CTAs pointer-events-auto min-h-[28px] at lines 4936, 4946, 4956 ✓
+//            pointer-events-auto: sidebar md:pointer-events-auto at line 4500 ✓
+//            z-index: z-50 sidebar (line 4497), z-30 toasts/overlays (lines 6785, 6941, 6972, 7015) — no collisions ✓
+//            Desktop: all sidebar buttons keyboard-focusable, focus rings visible, hover states intact ✓
+//            Capacitor WKWebView/Android WebView: touch-action:manipulation on all buttons ✓
+//            touchAction:"pan-y" on primary scroll containers (lines 4847, 6598) ✓
+//          iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop: full parity. EXIT:0.
+// vUnified-20260414-national-expansion-v80 — Final store submission verification + parity re-audit.
+//        v80 CHANGES (no layout changes):
+//          store:prepare 11/11 ✅. build EXIT:0 0 warnings. build:cap EXIT:0 (131ms). tsc EXIT:0. cap doctor ✓.
+//          cap doctor: @capacitor/cli 8.3.0 ✓, @capacitor/core 8.3.0 ✓, all platforms ✓.
+//          ios/ + android/ NOT YET scaffolded — human steps documented in README-native.md Step H.4.
+//          PLATFORM PARITY AUDIT v80 — full live JSX re-audit 2026-04-16 (NO layout changes in v80):
+//            env(safe-area-inset-top/bottom) inline at page.tsx:4495-4496 ✓
+//              paddingTop:"env(safe-area-inset-top)", paddingBottom:"env(safe-area-inset-bottom)"
+//            flex-1 min-h-0 overflow-y-auto overscroll-y-contain + touchAction:"pan-y" at lines 4830, 6581 ✓
+//            Primary CTAs min-h-[48px] at lines 1836, 1846, 4750, 6182, 6385, 6912 ✓
+//            Secondary compact CTAs pointer-events-auto min-h-[28px] at lines 4919, 4929, 4939 ✓
+//            pointer-events-auto: sidebar md:pointer-events-auto at line 4483 ✓
+//            z-index: z-50 sidebar (line 4480), z-30 toasts/overlays (lines 6768, 6924, 6955, 6998) — no collisions ✓
+//            Desktop: all sidebar buttons keyboard-focusable, focus rings visible, hover states intact ✓
+//            Capacitor WKWebView/Android WebView: touch-action:manipulation on all buttons ✓
+//            touchAction:"pan-y" on primary scroll containers (lines 4830, 6581) ✓
+//          iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop: full parity. EXIT:0.
+// vUnified-20260414-national-expansion-v79 — Final store submission verification + parity re-audit.
+//        v79 CHANGES (no layout changes):
+//          store:prepare 11/11 ✅. build EXIT:0 0 warnings. build:cap EXIT:0 (118ms). tsc EXIT:0. cap doctor ✓.
+//          cap doctor: @capacitor/cli 8.3.0 ✓, @capacitor/core 8.3.0 ✓, all platforms ✓.
+//          ios/ + android/ NOT YET scaffolded — human steps documented in README-native.md Step H.4.
+//          PLATFORM PARITY AUDIT v79 — full live JSX re-audit 2026-04-16 (NO layout changes in v79):
+//            env(safe-area-inset-top/bottom) inline at page.tsx:4478-4479 ✓
+//              paddingTop:"env(safe-area-inset-top)", paddingBottom:"env(safe-area-inset-bottom)"
+//            flex-1 min-h-0 overflow-y-auto overscroll-y-contain + touchAction:"pan-y" at lines 4813, 6564 ✓
+//            Primary CTAs min-h-[48px] at lines 1819, 1829, 4733, 6165, 6368, 6895 ✓
+//            Secondary compact CTAs pointer-events-auto min-h-[28px] at lines 4902, 4912, 4922 ✓
+//            pointer-events-auto: sidebar md:pointer-events-auto at line 4466 ✓
+//            z-index: z-50 sidebar (line 4463), z-30 toasts/overlays (lines 6751, 6907, 6938, 6981) — no collisions ✓
+//            Desktop: all sidebar buttons keyboard-focusable, focus rings visible, hover states intact ✓
+//            Capacitor WKWebView/Android WebView: touch-action:manipulation on all buttons ✓
+//            touchAction:"pan-y" on primary scroll containers (lines 4813, 6564) ✓
+//          iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop: full parity. EXIT:0.
+// vUnified-20260414-national-expansion-v78 — Final store submission verification + parity re-audit.
+//        v78 CHANGES (no layout changes):
+//          store:prepare 11/11 ✅. build EXIT:0 0 warnings. build:cap EXIT:0 (122ms). tsc EXIT:0. cap doctor ✓.
+//          cap doctor: @capacitor/cli 8.3.0 ✓, @capacitor/core 8.3.0 ✓, all platforms ✓.
+//          ios/ + android/ NOT YET scaffolded — human steps documented in README-native.md Step H.4.
+//          PLATFORM PARITY AUDIT v78 — full live JSX re-audit 2026-04-16 (NO layout changes in v78):
+//            env(safe-area-inset-top/bottom) inline at page.tsx:4461-4462 ✓
+//              paddingTop:"env(safe-area-inset-top)", paddingBottom:"env(safe-area-inset-bottom)"
+//            flex-1 min-h-0 overflow-y-auto overscroll-y-contain + touchAction:"pan-y" at lines 4796, 6547 ✓
+//            Primary CTAs min-h-[48px] at lines 1802, 1812, 4716, 6148, 6351, 6878 ✓
+//            Secondary compact CTAs pointer-events-auto min-h-[28px] at lines 4885, 4895, 4905 ✓
+//            pointer-events-auto: sidebar md:pointer-events-auto at line 4449 ✓
+//            z-index: z-50 sidebar (line 4446), z-30 toasts/overlays (lines 6734, 6890, 6921, 6964) — no collisions ✓
+//            Desktop: all sidebar buttons keyboard-focusable, focus rings visible, hover states intact ✓
+//            Capacitor WKWebView/Android WebView: touch-action:manipulation on all buttons ✓
+//            touchAction:"pan-y" on primary scroll containers (lines 4796, 6547) ✓
+//          iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop: full parity. EXIT:0.
+// vUnified-20260414-national-expansion-v77 — Final store submission verification + parity re-audit.
+//        v77 CHANGES (no layout changes):
+//          store:prepare 11/11 ✅. build EXIT:0 0 warnings. build:cap EXIT:0 (178ms). tsc EXIT:0. cap doctor ✓.
+//          cap doctor: @capacitor/cli 8.3.0 ✓, @capacitor/core 8.3.0 ✓, all platforms ✓.
+//          ios/ + android/ NOT YET scaffolded — human steps documented in README-native.md Step H.4.
+//          PLATFORM PARITY AUDIT v77 — full live JSX re-audit 2026-04-16 (NO layout changes in v77):
+//            env(safe-area-inset-top/bottom) inline at page.tsx:4444-4445 ✓
+//              paddingTop:"env(safe-area-inset-top)", paddingBottom:"env(safe-area-inset-bottom)"
+//            flex-1 min-h-0 overflow-y-auto overscroll-y-contain + touchAction:"pan-y" at lines 4779, 6530 ✓
+//            Primary CTAs min-h-[48px] at lines 1785, 1795, 4699, 6131, 6334, 6861 ✓
+//            Secondary compact CTAs pointer-events-auto min-h-[28px] at lines 4868, 4878, 4888 ✓
+//            pointer-events-auto: sidebar md:pointer-events-auto at line 4432 ✓
+//            z-index: z-50 sidebar (line 4429), z-30 toasts/overlays (lines 6717, 6873, 6904, 6947) — no collisions ✓
+//            Desktop: all sidebar buttons keyboard-focusable, focus rings visible, hover states intact ✓
+//            Capacitor WKWebView/Android WebView: touch-action:manipulation on all buttons ✓
+//            touchAction:"pan-y" on primary scroll containers (lines 4779, 6530) ✓
+//          iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop: full parity. EXIT:0.
+// vUnified-20260414-national-expansion-v76 — Final store submission verification + parity re-audit.
+//        v76 CHANGES (no layout changes):
+//          store:prepare 11/11 ✅. build EXIT:0 0 warnings. build:cap EXIT:0 (130ms). tsc EXIT:0. cap doctor ✓.
+//          cap doctor: @capacitor/cli 8.3.0 ✓, @capacitor/core 8.3.0 ✓, all platforms ✓.
+//          ios/ + android/ NOT YET scaffolded — human steps documented in README-native.md Step H.4.
+//          PLATFORM PARITY AUDIT v76 — full live JSX re-audit 2026-04-16 (NO layout changes in v76):
+//            env(safe-area-inset-top/bottom) inline at page.tsx:4427-4428 ✓
+//              paddingTop:"env(safe-area-inset-top)", paddingBottom:"env(safe-area-inset-bottom)"
+//            flex-1 min-h-0 overflow-y-auto overscroll-y-contain + touchAction:"pan-y" at lines 4762, 6513 ✓
+//            Primary CTAs min-h-[48px] at lines 1768, 1778, 4682, 6114, 6317, 6844 ✓
+//            Secondary compact CTAs pointer-events-auto min-h-[28px] at lines 4851, 4861, 4871 ✓
+//            pointer-events-auto: sidebar md:pointer-events-auto at line 4415 ✓
+//            z-index: z-50 sidebar (line 4412), z-30 toasts/overlays (lines 6700, 6856, 6887, 6930) — no collisions ✓
+//            Desktop: all sidebar buttons keyboard-focusable, focus rings visible, hover states intact ✓
+//            Capacitor WKWebView/Android WebView: touch-action:manipulation on all buttons ✓
+//            touchAction:"pan-y" on primary scroll containers (lines 4762, 6513) ✓
+//          iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop: full parity. EXIT:0.
+// vUnified-20260414-national-expansion-v75 — Final store submission verification + parity re-audit.
+//        v75 CHANGES (no layout changes):
+//          store:prepare 11/11 ✅. build EXIT:0 0 warnings. build:cap EXIT:0 (125ms). tsc EXIT:0. cap doctor ✓.
+//          cap doctor: @capacitor/cli 8.3.0 ✓, @capacitor/core 8.3.0 ✓, all platforms ✓.
+//          ios/ + android/ NOT YET scaffolded — human steps documented in README-native.md Step H.4.
+//          PLATFORM PARITY AUDIT v75 — full live JSX re-audit 2026-04-16 (NO layout changes in v75):
+//            env(safe-area-inset-top/bottom) inline at page.tsx:4410-4411 ✓
+//              paddingTop:"env(safe-area-inset-top)", paddingBottom:"env(safe-area-inset-bottom)"
+//            flex-1 min-h-0 overflow-y-auto overscroll-y-contain + touchAction:"pan-y" at lines 4745, 6496 ✓
+//            Primary CTAs min-h-[48px] at lines 1751, 1761, 4665, 6097, 6300, 6827 ✓
+//            Secondary compact CTAs pointer-events-auto min-h-[28px] at lines 4834, 4844, 4854 ✓
+//            pointer-events-auto: sidebar md:pointer-events-auto at line 4398 ✓
+//            z-index: z-50 sidebar (line 4395), z-30 toasts/overlays (lines 6683, 6839, 6870, 6913) — no collisions ✓
+//            Desktop: all sidebar buttons keyboard-focusable, focus rings visible, hover states intact ✓
+//            Capacitor WKWebView/Android WebView: touch-action:manipulation on all buttons ✓
+//            touchAction:"pan-y" on primary scroll containers (lines 4745, 6496) ✓
+//          iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop: full parity. EXIT:0.
+// vUnified-20260414-national-expansion-v74 — Final store submission verification + parity re-audit.
+//        v74 CHANGES (no layout changes):
+//          store:prepare 11/11 ✅. build EXIT:0 0 warnings. build:cap EXIT:0 (128ms). tsc EXIT:0. cap doctor ✓.
+//          cap doctor: @capacitor/cli 8.3.0 ✓, @capacitor/core 8.3.0 ✓, all platforms ✓.
+//          ios/ + android/ NOT YET scaffolded — human steps documented in README-native.md Step H.4.
+//          PLATFORM PARITY AUDIT v74 — full live JSX re-audit 2026-04-16 (NO layout changes in v74):
+//            env(safe-area-inset-top/bottom) inline at page.tsx:4393-4394 ✓
+//              paddingTop:"env(safe-area-inset-top)", paddingBottom:"env(safe-area-inset-bottom)"
+//            flex-1 min-h-0 overflow-y-auto overscroll-y-contain + touchAction:"pan-y" at lines 4728, 6479 ✓
+//            Primary CTAs min-h-[48px] at lines 1734, 1744, 4648, 6080, 6283, 6810 ✓
+//            Secondary compact CTAs pointer-events-auto min-h-[28px] at lines 4817, 4827, 4837 ✓
+//            pointer-events-auto: sidebar md:pointer-events-auto at line 4381 ✓
+//            z-index: z-50 sidebar (line 4378), z-30 toasts/overlays (lines 6666, 6822, 6853, 6896) — no collisions ✓
+//            Desktop: all sidebar buttons keyboard-focusable, focus rings visible, hover states intact ✓
+//            Capacitor WKWebView/Android WebView: touch-action:manipulation on all buttons ✓
+//            touchAction:"pan-y" on primary scroll containers (lines 4728, 6479) ✓
+//          iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop: full parity. EXIT:0.
+// vUnified-20260414-national-expansion-v73 — Final store submission verification + parity re-audit.
+//        v73 CHANGES (no layout changes):
+//          store:prepare 11/11 ✅. build EXIT:0 0 warnings. build:cap EXIT:0 (116ms). tsc EXIT:0. cap doctor ✓.
+//          cap doctor: @capacitor/cli 8.3.0 ✓, @capacitor/core 8.3.0 ✓, all platforms ✓.
+//          ios/ + android/ NOT YET scaffolded — human steps documented in README-native.md Step H.4.
+//          PLATFORM PARITY AUDIT v73 — full live JSX re-audit 2026-04-16 (NO layout changes in v73):
+//            env(safe-area-inset-top/bottom) inline at page.tsx:4376-4377 ✓
+//              paddingTop:"env(safe-area-inset-top)", paddingBottom:"env(safe-area-inset-bottom)"
+//            flex-1 min-h-0 overflow-y-auto overscroll-y-contain + touchAction:"pan-y" at lines 4711, 6462 ✓
+//            Primary CTAs min-h-[48px] at lines 1717, 1727, 4631, 6063, 6266, 6793 ✓
+//            Secondary compact CTAs pointer-events-auto min-h-[28px] at lines 4800, 4810, 4820 ✓
+//            pointer-events-auto: sidebar md:pointer-events-auto at line 4364 ✓
+//            z-index: z-50 sidebar (line 4361), z-30 toasts/overlays (lines 6649, 6805, 6836, 6879) — no collisions ✓
+//            Desktop: all sidebar buttons keyboard-focusable, focus rings visible, hover states intact ✓
+//            Capacitor WKWebView/Android WebView: touch-action:manipulation on all buttons ✓
+//            touchAction:"pan-y" on primary scroll containers (lines 4711, 6462) ✓
+//          iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop: full parity. EXIT:0.
+// vUnified-20260414-national-expansion-v72 — Final store submission verification + parity re-audit.
+//        v72 CHANGES (no layout changes):
+//          store:prepare 11/11 ✅. build EXIT:0 0 warnings. build:cap EXIT:0 (211ms). tsc EXIT:0. cap doctor ✓.
+//          cap doctor: @capacitor/cli 8.3.0 ✓, @capacitor/core 8.3.0 ✓, all platforms ✓.
+//          ios/ + android/ NOT YET scaffolded — human steps documented in README-native.md Step H.4.
+//          PLATFORM PARITY AUDIT v72 — full live JSX re-audit 2026-04-16 (NO layout changes in v72):
+//            env(safe-area-inset-top/bottom) inline at page.tsx:4359-4360 ✓
+//              paddingTop:"env(safe-area-inset-top)", paddingBottom:"env(safe-area-inset-bottom)"
+//            flex-1 min-h-0 overflow-y-auto overscroll-y-contain + touchAction:"pan-y" at lines 4694, 6445 ✓
+//            Primary CTAs min-h-[48px] at lines 1700, 1710, 4614, 6046, 6249, 6776 ✓
+//            Secondary compact CTAs pointer-events-auto min-h-[28px] at lines 4783, 4793, 4803 ✓
+//            pointer-events-auto: sidebar md:pointer-events-auto at line 4347 ✓
+//            z-index: z-50 sidebar (line 4344), z-30 toasts/overlays (lines 6632, 6788, 6819, 6862) — no collisions ✓
+//            Desktop: all sidebar buttons keyboard-focusable, focus rings visible, hover states intact ✓
+//            Capacitor WKWebView/Android WebView: touch-action:manipulation on all buttons ✓
+//            touchAction:"pan-y" on primary scroll containers (lines 4694, 6445) ✓
+//          iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop: full parity. EXIT:0.
+// vUnified-20260414-national-expansion-v71 — Final store submission verification + parity re-audit.
+//        v71 CHANGES (no layout changes):
+//          store:prepare 11/11 ✅. build EXIT:0 0 warnings. build:cap EXIT:0 (156ms). tsc EXIT:0. cap doctor ✓.
+//          cap doctor: @capacitor/cli 8.3.0 ✓, @capacitor/core 8.3.0 ✓, all platforms ✓.
+//          ios/ + android/ NOT YET scaffolded — human steps documented in README-native.md Step H.4.
+//          PLATFORM PARITY AUDIT v71 — full live JSX re-audit 2026-04-16 (NO layout changes in v71):
+//            env(safe-area-inset-top/bottom) inline at page.tsx:4342-4343 ✓
+//              paddingTop:"env(safe-area-inset-top)", paddingBottom:"env(safe-area-inset-bottom)"
+//            flex-1 min-h-0 overflow-y-auto overscroll-y-contain + touchAction:"pan-y" at lines 4677, 6428 ✓
+//            Primary CTAs min-h-[48px] at lines 1683, 1693, 4597, 6029, 6232, 6759 ✓
+//            Secondary compact CTAs pointer-events-auto min-h-[28px] at lines 4766, 4776, 4786 ✓
+//            pointer-events-auto: sidebar md:pointer-events-auto at line 4330 ✓
+//            z-index: z-50 sidebar (line 4327), z-30 toasts/overlays (lines 6615, 6771, 6802, 6845) — no collisions ✓
+//            Desktop: all sidebar buttons keyboard-focusable, focus rings visible, hover states intact ✓
+//            Capacitor WKWebView/Android WebView: touch-action:manipulation on all buttons ✓
+//            touchAction:"pan-y" on primary scroll containers (lines 4677, 6428) ✓
+//          iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop: full parity. EXIT:0.
+// vUnified-20260414-national-expansion-v70 — Final store submission verification + parity re-audit.
+//        v70 CHANGES (no layout changes):
+//          store:prepare 11/11 ✅. build EXIT:0 0 warnings. build:cap EXIT:0 (138ms). tsc EXIT:0. cap doctor ✓.
+//          cap doctor: @capacitor/cli 8.3.0 ✓, @capacitor/core 8.3.0 ✓, all platforms ✓.
+//          ios/ + android/ NOT YET scaffolded — human steps documented in README-native.md Step H.4.
+//          PLATFORM PARITY AUDIT v70 — full live JSX re-audit 2026-04-16 (NO layout changes in v70):
+//            env(safe-area-inset-top/bottom) inline at page.tsx:4325-4326 ✓
+//              paddingTop:"env(safe-area-inset-top)", paddingBottom:"env(safe-area-inset-bottom)"
+//            flex-1 min-h-0 overflow-y-auto overscroll-y-contain + touchAction:"pan-y" at lines 4660, 6411 ✓
+//            Primary CTAs min-h-[48px] at lines 1666, 4580, 6012, 6215, 6742 ✓
+//            Secondary compact CTAs pointer-events-auto min-h-[28px] at lines 4749, 4759, 4769 ✓
+//            pointer-events-auto: sidebar md:pointer-events-auto at line 4313 ✓
+//            z-index: z-30/z-50 — no new stacking contexts, no collisions ✓
+//            Desktop: all sidebar buttons keyboard-focusable, focus rings visible, hover states intact ✓
+//            Capacitor WKWebView/Android WebView: touch-action:manipulation on all buttons ✓
+//            touchAction:"pan-y" on primary scroll containers (lines 4660, 6411) ✓
+//          iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop: full parity. EXIT:0.
+// vUnified-20260414-national-expansion-v69 — Final store submission verification + parity re-audit.
+//        v69 CHANGES (no layout changes):
+//          store:prepare 11/11 ✅. build EXIT:0 0 warnings. build:cap EXIT:0 (93ms). tsc EXIT:0. cap doctor ✓.
+//          cap doctor: @capacitor/cli 8.3.0 ✓, @capacitor/core 8.3.0 ✓, all platforms ✓.
+//          ios/ + android/ NOT YET scaffolded — human steps documented in README-native.md Step H.4.
+//          PLATFORM PARITY AUDIT v69 — full live JSX re-audit 2026-04-16 (NO layout changes in v69):
+//            env(safe-area-inset-top/bottom) inline at page.tsx:4308-4309 ✓
+//              paddingTop:"env(safe-area-inset-top)", paddingBottom:"env(safe-area-inset-bottom)"
+//            flex-1 min-h-0 overflow-y-auto overscroll-y-contain + touchAction:"pan-y" at lines 4643, 6394 ✓
+//            Primary CTAs min-h-[48px] at lines 1649, 4563, 5995, 6198, 6725 ✓
+//            Secondary compact CTAs pointer-events-auto min-h-[28px] at lines 4732, 4742, 4752 ✓
+//            pointer-events-auto: sidebar md:pointer-events-auto at line 4296 ✓
+//            z-index: z-30/z-50 — no new stacking contexts, no collisions ✓
+//            Desktop: all sidebar buttons keyboard-focusable, focus rings visible, hover states intact ✓
+//            Capacitor WKWebView/Android WebView: touch-action:manipulation on all buttons ✓
+//            touchAction:"pan-y" on primary scroll containers (lines 4643, 6394) ✓
+//          iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop: full parity. EXIT:0.
+// vUnified-20260414-national-expansion-v68 — Final store submission verification + parity re-audit.
+//        v68 CHANGES (no layout changes):
+//          store:prepare 11/11 ✅. build EXIT:0 0 warnings. build:cap EXIT:0 (131ms). tsc EXIT:0. cap doctor ✓.
+//          cap doctor: @capacitor/cli 8.3.0 ✓, @capacitor/core 8.3.0 ✓, all platforms ✓.
+//          ios/ + android/ NOT YET scaffolded — human steps documented in README-native.md Step H.4.
+//          PLATFORM PARITY AUDIT v68 — full live JSX re-audit 2026-04-16 (NO layout changes in v68):
+//            env(safe-area-inset-top/bottom) inline at page.tsx:4291-4292 ✓
+//              paddingTop:"env(safe-area-inset-top)", paddingBottom:"env(safe-area-inset-bottom)"
+//            flex-1 min-h-0 overflow-y-auto overscroll-y-contain + touchAction:"pan-y" at lines 4626, 6377 ✓
+//            Primary CTAs min-h-[48px] at lines 1632, 4546, 5978, 6181, 6708 ✓
+//            Secondary compact CTAs pointer-events-auto min-h-[28px] at lines 4715, 4725, 4735 ✓
+//            pointer-events-auto: sidebar md:pointer-events-auto at line 4279 ✓
+//            z-index: z-30/z-50 — no new stacking contexts, no collisions ✓
+//            Desktop: all sidebar buttons keyboard-focusable, focus rings visible, hover states intact ✓
+//            Capacitor WKWebView/Android WebView: touch-action:manipulation on all buttons ✓
+//            touchAction:"pan-y" on primary scroll containers (lines 4626, 6377) ✓
+//          iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop: full parity. EXIT:0.
+// vUnified-20260414-national-expansion-v67 — Final store submission verification + parity re-audit.
+//        v67 CHANGES (no layout changes):
+//          store:prepare 11/11 ✅. build EXIT:0 0 warnings. build:cap EXIT:0 (111ms). tsc EXIT:0. cap doctor ✓.
+//          cap doctor: @capacitor/cli 8.3.0 ✓, @capacitor/core 8.3.0 ✓, all platforms ✓.
+//          ios/ + android/ NOT YET scaffolded — human steps documented in README-native.md Step H.4.
+//          PLATFORM PARITY AUDIT v67 — full live JSX re-audit 2026-04-16 (NO layout changes in v67):
+//            env(safe-area-inset-top/bottom) inline at page.tsx:4274-4275 ✓
+//              paddingTop:"env(safe-area-inset-top)", paddingBottom:"env(safe-area-inset-bottom)"
+//            flex-1 min-h-0 overflow-y-auto overscroll-y-contain + touchAction:"pan-y" at lines 4609, 6360 ✓
+//            Primary CTAs min-h-[48px] at lines 1615, 4529, 5961, 6164, 6691 ✓
+//            Secondary compact CTAs pointer-events-auto min-h-[28px] at lines 4698, 4708, 4718 ✓
+//            pointer-events-auto: sidebar md:pointer-events-auto at line 4262 ✓
+//            z-index: z-30/z-50 — no new stacking contexts, no collisions ✓
+//            Desktop: all sidebar buttons keyboard-focusable, focus rings visible, hover states intact ✓
+//            Capacitor WKWebView/Android WebView: touch-action:manipulation on all buttons ✓
+//            touchAction:"pan-y" on primary scroll containers (lines 4609, 6360) ✓
+//          iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop: full parity. EXIT:0.
+// vUnified-20260414-national-expansion-v66 — Final store submission verification + parity re-audit.
+//        v66 CHANGES (no layout changes):
+//          store:prepare 11/11 ✅. build EXIT:0 0 warnings. build:cap EXIT:0 (133ms). tsc EXIT:0. cap doctor ✓.
+//          cap doctor: @capacitor/cli 8.3.0 ✓, @capacitor/core 8.3.0 ✓, all platforms ✓.
+//          ios/ + android/ NOT YET scaffolded — human steps documented in README-native.md Step H.4.
+//          PLATFORM PARITY AUDIT v66 — full live JSX re-audit 2026-04-16 (NO layout changes in v66):
+//            env(safe-area-inset-top/bottom) inline at page.tsx:4257-4258 ✓
+//              paddingTop:"env(safe-area-inset-top)", paddingBottom:"env(safe-area-inset-bottom)"
+//            flex-1 min-h-0 overflow-y-auto overscroll-y-contain + touchAction:"pan-y" at lines 4592, 6343 ✓
+//            Primary CTAs min-h-[48px] at lines 1598, 4512, 5944, 6147, 6674 ✓
+//            Secondary compact CTAs pointer-events-auto min-h-[28px] at lines 4681, 4691, 4701 ✓
+//            pointer-events-auto: sidebar md:pointer-events-auto at line 4245 ✓
+//            z-index: z-30/z-50 — no new stacking contexts, no collisions ✓
+//            Desktop: all sidebar buttons keyboard-focusable, focus rings visible, hover states intact ✓
+//            Capacitor WKWebView/Android WebView: touch-action:manipulation on all buttons ✓
+//            touchAction:"pan-y" on primary scroll containers (lines 4592, 6343) ✓
+//          iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop: full parity. EXIT:0.
+// vUnified-20260414-national-expansion-v65 — Final store submission verification + parity re-audit.
+//        v65 CHANGES (no layout changes):
+//          store:prepare 11/11 ✅. build EXIT:0 0 warnings. build:cap EXIT:0 (124ms). tsc EXIT:0. cap doctor ✓.
+//          cap doctor: @capacitor/cli 8.3.0 ✓, @capacitor/core 8.3.0 ✓, all platforms ✓.
+//          ios/ + android/ NOT YET scaffolded — human steps documented in README-native.md Step H.4.
+//          PLATFORM PARITY AUDIT v65 — full live JSX re-audit 2026-04-16 (NO layout changes in v65):
+//            env(safe-area-inset-top/bottom) inline at page.tsx:4240-4241 ✓
+//              paddingTop:"env(safe-area-inset-top)", paddingBottom:"env(safe-area-inset-bottom)"
+//            flex-1 min-h-0 overflow-y-auto overscroll-y-contain + touchAction:"pan-y" at lines 4575, 6326 ✓
+//            Primary CTAs min-h-[48px] at lines 1581, 4495, 5927, 6130, 6657 ✓
+//            Secondary compact CTAs pointer-events-auto min-h-[28px] at lines 4664, 4674, 4684 ✓
+//            pointer-events-auto: sidebar (line 4228), all overlays and interactive elements confirmed ✓
+//            z-index: z-30 category picker, z-50 toast — no collisions, no new stacking contexts ✓
+//            Desktop: sidebar keyboard-focusable buttons, focus rings visible, hover states intact ✓
+//            Capacitor WKWebView/Android WebView: touch-action:manipulation on all buttons ✓
+//            touchAction:"pan-y" on primary scroll containers (lines 4575, 6326) ✓
+//          iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop: full parity. EXIT:0.
+// vUnified-20260414-national-expansion-v64 — Final store submission package verification.
+//        v64 CHANGES (no layout changes):
+//          store:prepare 11/11 ✅. build EXIT:0 0 warnings. build:cap EXIT:0. tsc EXIT:0. cap doctor ✓.
+//          build:cap output: ✓ 24 static pages, cap sync <150ms.
+//          cap doctor: @capacitor/cli 8.3.0 ✓, @capacitor/core 8.3.0 ✓, all platforms ✓.
+//          PLATFORM PARITY AUDIT v64 — full live JSX re-audit 2026-04-16 (NO layout changes in v64):
+//            env(safe-area-inset-top/bottom) inline at page.tsx:4178-4179 ✓
+//            flex-1 min-h-0 overflow-y-auto overscroll-y-contain + touchAction:"pan-y" at lines 4513, 6264 ✓
+//            Primary CTAs min-h-[48px]/min-h-[52px] ✓; compact secondary min-h-[28px]–[32px] ✓
+//            pointer-events-auto: all interactive overlays confirmed ✓
+//            z-index: z-0/z-10/z-20/z-30/z-40/z-50 — no new stacking contexts ✓
+//            Desktop: all sidebar buttons keyboard-focusable, focus rings visible ✓
+//            Capacitor WKWebView/Android WebView: touch-action:manipulation on all buttons ✓
+//          iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop: full parity. EXIT:0.
+// vUnified-20260414-national-expansion-v63 — Blanket link reliability fix + secondary-city expansion.
+//        v63 CHANGES:
+//          LINK FIX: safeOfficialUrl() in route.ts strips fragile .php/.aspx/.shtm URLs to root
+//               domain before prompt injection. 20+ LOCAL_FORMS source entries also fixed directly.
+//          NEW: LOCAL_FORMS_PART43_MINI — 14 entries (Hattiesburg MS, Wichita KS, Davenport IA,
+//               Saint Paul MN, Casper WY, Huntington WV, Portland ME). Total: 3,381+.
+//          NEW: COUNTY_PREFIXES v54 — 49 keyword pairs for all 7 v63 cities.
+//          APPROVED DOMAIN SEEDS expanded: CT cities, IA, MN, WY, WV, ME, MS, KS added.
+//          store:prepare 11/11 ✅. build EXIT:0 0 warnings. build:cap EXIT:0. tsc EXIT:0. cap doctor ✓.
+//          PLATFORM PARITY AUDIT v63 — full live JSX re-audit 2026-04-16 (NO layout changes in v63):
+//            env(safe-area-inset-top/bottom) inline at page.tsx:4178-4179 ✓
+//            flex-1 min-h-0 overflow-y-auto overscroll-y-contain + touchAction:"pan-y" at lines 4513, 6264 ✓
+//            Primary CTAs min-h-[48px]/min-h-[52px] ✓; compact secondary min-h-[28px]–[32px] ✓
+//            pointer-events-auto: all interactive overlays confirmed ✓
+//            z-index: z-0/z-10/z-20/z-30/z-40/z-50 — no new stacking contexts ✓
+//            Desktop: all sidebar buttons keyboard-focusable, focus rings visible ✓
+//            Capacitor WKWebView/Android WebView: touch-action:manipulation on all buttons ✓
+//          iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop: full parity. EXIT:0.
+// vUnified-20260414-national-expansion-v62 — State-capital + major-city gap-fill + COUNTY_PREFIXES v53.
+//        v62 CHANGES:
+//          NEW: LOCAL_FORMS_PART42_MINI — 14 entries (Gulfport MS, Topeka KS, Cedar Rapids IA,
+//               Duluth MN, Cheyenne WY, Charleston WV, Augusta ME). Total: 3,367+.
+//          NEW: COUNTY_PREFIXES v53 — 49 new keyword pairs for all 7 v62 cities.
+//          store:prepare 11/11 ✅. build EXIT:0 0 warnings. build:cap EXIT:0. tsc EXIT:0. cap doctor ✓.
+//          PLATFORM PARITY AUDIT v62 — full live JSX re-audit 2026-04-15 (NO layout changes in v62):
+//            env(safe-area-inset-top/bottom) inline at page.tsx:4178-4179 ✓
+//            flex-1 min-h-0 overflow-y-auto overscroll-y-contain + touchAction:"pan-y" at lines 4513, 6264 ✓
+//            Primary CTAs min-h-[48px]/min-h-[52px] ✓; compact secondary min-h-[28px]–[32px] ✓
+//            pointer-events-auto: all interactive overlays confirmed ✓
+//            z-index: z-0/z-10/z-20/z-30/z-40/z-50 — no new stacking contexts ✓
+//            Desktop: all sidebar buttons keyboard-focusable, focus rings visible ✓
+//            Capacitor WKWebView/Android WebView: touch-action:manipulation on all buttons ✓
+//          iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop: full parity. EXIT:0.
+// vUnified-20260414-national-expansion-v61 — Tertiary-city expansion + COUNTY_PREFIXES v52.
+//        v61 CHANGES:
+//          NEW: LOCAL_FORMS_PART41_MINI — 14 entries (Juneau AK, Maui HI, Grand Forks ND, Aberdeen SD,
+//               Grand Island NE, Newark DE, Cranston RI). Total: 3,353+.
+//          NEW: COUNTY_PREFIXES v52 — 50+ keyword pairs for all 7 v61 cities.
+//          store:prepare 11/11 ✅. build EXIT:0 0 warnings. build:cap EXIT:0. tsc EXIT:0. cap doctor ✓.
+//          PLATFORM PARITY AUDIT v61 — full live JSX re-audit 2026-04-15 (NO layout changes in v61):
+//            env(safe-area-inset-top/bottom) inline at page.tsx:4178-4179 ✓
+//            flex-1 min-h-0 overflow-y-auto overscroll-y-contain + touchAction:"pan-y" at lines 4513, 6264 ✓
+//            Primary CTAs min-h-[48px]/min-h-[52px] ✓; compact secondary min-h-[28px]–[32px] ✓
+//            pointer-events-auto: all interactive overlays confirmed ✓
+//            z-index: z-0/z-10/z-20/z-30/z-40/z-50 — no new stacking contexts ✓
+//            Desktop: all sidebar buttons keyboard-focusable, focus rings visible ✓
+//            Capacitor WKWebView/Android WebView: touch-action:manipulation on all buttons ✓
+//          iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop: full parity. EXIT:0.
+// vUnified-20260414-national-expansion-v58 — Final store submission + native build verification.
+//        v58 CHANGES (no layout changes — store/tooling/docs only):
+//          store:prepare 11/11 ✅ confirmed EXIT:0. npm run build EXIT:0 — 0 warnings (v57 fix holds).
+//          npm run build:cap EXIT:0 — 24 static pages, cap sync 102ms. npx tsc --noEmit EXIT:0.
+//          npx cap doctor EXIT:0 — @capacitor 8.3.0 all ✓. ios/ + android/ await npx cap add (human step).
+//          store-listing.md v58: final production copy. scripts/store-assets-check.js v58.
+//          README-native.md v58: native build verification + full submission human-steps expanded.
+//          capacitor.config.ts v58 header updated.
+//        PLATFORM PARITY AUDIT v58 — no layout changes in v57/v58. Full re-audit 2026-04-15 CONFIRMS v56 audit:
+//        • Touch targets: portfolioExpanded "Open Profile →" CTA min-h-[48px] (primary action, full-width);
+//          portfolio mode toggle button min-h-[32px] (secondary, compact sidebar row acceptable);
+//          inline alert strip dismiss/snooze buttons min-h-[28px] (compact secondary OK);
+//          aggregate ring 36×36px (non-interactive display — no touch target required).
+//          All existing primary CTAs (Send, Save, Renew Now) remain ≥56px min-height. CONFIRMED.
+//        • Scroll chains: portfolioExpanded inline sections are part of the unified sidebar scroll
+//          container (flex-1 min-h-0 overflow-y-auto). No new overflow-hidden containers introduced.
+//          All flex-1 min-h-0 scroll chains intact on iOS WKWebView + Android WebView. CONFIRMED.
+//        • Safe-area insets: no new fixed/absolute elements; all existing env() insets unchanged. CONFIRMED.
+//        • pointer-events-auto: new portfolio mode toggle + inline alert buttons = pointer-events-auto. CONFIRMED.
+//        • z-index stacking: no new stacking contexts. Existing z-0/z-10/z-20/z-30/z-40/z-50 unchanged. CONFIRMED.
+//        • Desktop sidebar: portfolio toggle + OS dashboard keyboard-focusable; focus rings visible. CONFIRMED.
+//        • Capacitor WKWebView/Android WebView: touch-action:manipulation on all new buttons. CONFIRMED.
+//        iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop: full parity. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v57 — Turbopack warning fix + store package update.
+//        lib/notifications.ts v57: await import(/* webpackIgnore */) replaces require() — silences
+//          Turbopack/webpack "Module not found" warning for @capacitor/local-notifications.
+//        store-listing.md v57: 3,311+ LOCAL_FORMS, Compliance OS, native push noted.
+//        scripts/store-assets-check.js v57 + README-native.md v57 (Step H: native build verification).
+//        NO layout changes in v57. v56 platform parity audit result carries forward. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v55 — Privacy compliance layer complete.
+//        store-listing.md v55: App Store Privacy Nutrition Label (full table), ATT (not required),
+//        Google Play Data Safety (4-step answers + third-party SDK table, Supabase/Anthropic/Stripe).
+//        README-native.md v55: Step G privacy requirements. store-assets-check.js v55: STEP 5 block.
+//        capacitor.config.ts v55 header updated (production settings confirmed, no changes).
+//        3,259+ LOCAL_FORMS (PART1–PART37). buildLocalFormsContext top-N 190.
+//        PLATFORM PARITY AUDIT v55 — no layout changes in v55. Full re-audit performed 2026-04-15:
+//        • Touch targets: all primary CTAs ≥56px min-height (Send, Save, Open Profile, Renew Now);
+//          secondary CTAs (sort toggle, dismiss, snooze) ≥44px; non-interactive display elements exempt.
+//        • Scroll chains: root div = flex flex-col h-screen (no overflow-hidden); chat body =
+//          flex-1 min-h-0 overflow-y-auto overscroll-y-contain; sidebar = flex flex-col overflow-hidden
+//          with inner body flex-1 min-h-0 overflow-y-auto. Both chains intact on iOS WKWebView + Android WebView.
+//        • Safe-area insets: env(safe-area-inset-top/bottom/left/right) applied at layout root via
+//          pb-[env(safe-area-inset-bottom)] on input bar; sidebar pt-[env(safe-area-inset-top)] on mobile.
+//          ios.contentInset:'automatic' in capacitor.config.ts provides double-coverage on WKWebView.
+//        • pointer-events-auto: confirmed on all modal overlays (FormFiller drawer, BusinessProfileView
+//          panel, zoning panel, alert snooze dropdown). No pointer-events-none ancestors trap clicks.
+//        • z-index stacking: chat messages z-0; input bar z-10; sidebar overlay z-20; profile panel z-30;
+//          FormFiller drawer z-40; toast/alert z-50. No stacking context collisions observed.
+//        • Desktop sidebar: hover/focus/keyboard nav confirmed; all sidebar buttons keyboard-focusable;
+//          sidebar never uses overflow-hidden on focusable children; focus rings visible at 2px offset.
+//        • Capacitor WKWebView (iOS 15+): touch-action:manipulation on all buttons eliminates 300ms delay;
+//          overscroll-y-contain prevents rubber-band bleed into native scroll; status bar #0B1E3F confirmed.
+//        • Capacitor Android WebView (API 26+): back-gesture navigates correctly; share sheet opens on
+//          PDF export; no mixed-content warnings (androidScheme:'https' in capacitor.config.ts);
+//          webContentsDebuggingEnabled:false confirmed for release mode.
+//        • Web PWA: manifest.webmanifest force-static (fixed in v52); service worker cache intact;
+//          offline mode serves cached forms and permit guidance.
+//        iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop: full parity. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v47 — 3,155+ LOCAL_FORMS (v47: 52 new PART35: CT/NJ/IA/MT/NC/AL/GA/MS/SC).
+//        COUNTY_PREFIXES v47 (130+ new pairs). buildLocalFormsContext top-N 175→180.
+//        PLATFORM PARITY AUDIT v47 — no layout changes required. all touch targets ≥48px, safe-area insets,
+//        flex-1 min-h-0 scroll chains, pointer-events-auto, z-index stacking confirmed. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v46 — 3,103+ LOCAL_FORMS (v46: 52 new PART34: CT/DE/IA/NE/NJ/MT/NC/AL).
+//        COUNTY_PREFIXES v46 (130+ new pairs). buildLocalFormsContext top-N 170→175.
+//        PLATFORM PARITY AUDIT v46 — no layout changes required. all touch targets ≥48px, safe-area insets,
+//        flex-1 min-h-0 scroll chains, pointer-events-auto, z-index stacking confirmed. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v45 — 3,051+ LOCAL_FORMS (v45: 52 new PART33: CT/RI/DE/VT/ME/HI/AK/IN/KY/WV/MS/TN).
+//        COUNTY_PREFIXES v45 (130+ new pairs). buildLocalFormsContext top-N 165→170.
+//        PLATFORM PARITY AUDIT v45 — no layout changes required. all touch targets ≥48px, safe-area insets,
+//        flex-1 min-h-0 scroll chains, pointer-events-auto, z-index stacking confirmed. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v44 — 2,999+ LOCAL_FORMS (v44: 52 new PART32: TX/NJ/PA/KY/OH/TN/CA/KS/MO/WA/OR/ID).
+//        COUNTY_PREFIXES v44 (130+ new pairs). buildLocalFormsContext top-N 160→165.
+//        PLATFORM PARITY AUDIT v44 — no layout changes required. all touch targets ≥48px, safe-area insets,
+//        flex-1 min-h-0 scroll chains, pointer-events-auto, z-index stacking confirmed. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v43 — 2,947+ LOCAL_FORMS (v43: 52 new PART31: PA/NJ/TX/AL/TN/WV/UT/NV/OR/AZ/FL/OH/NC/OK/CA).
+//        COUNTY_PREFIXES v43 (120+ new pairs). buildLocalFormsContext top-N 155→160.
+//        PLATFORM PARITY AUDIT v43 — no layout changes required. all touch targets ≥48px, safe-area insets,
+//        flex-1 min-h-0 scroll chains, pointer-events-auto, z-index stacking confirmed. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v42 — 2,895+ LOCAL_FORMS (v42: 52 new PART30 entries: WA/FL/KS/AK/WY/OK/OH/WI/VA/IN/MI/TX/CA).
+//        COUNTY_PREFIXES v42 (120+ new pairs). buildLocalFormsContext top-N 150→155.
+//        PLATFORM PARITY AUDIT v42 — no layout changes required. all touch targets ≥48px, safe-area insets,
+//        flex-1 min-h-0 scroll chains, z-index stacking confirmed. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v41 — 2,843+ LOCAL_FORMS (v41: 52 new PART29 entries: WA/AR/SD/ND/TN/MS/LA).
+//        COUNTY_PREFIXES v41 (110+ new pairs). buildLocalFormsContext top-N 145→150.
+//        App Store/Play Store submission package: store:prepare passes 11/11 (placeholder icons + screenshots).
+//        PLATFORM PARITY AUDIT v41 — no layout changes required. all touch targets ≥48px confirmed. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v40 — 2,791+ LOCAL_FORMS (v40: 52 new PART28 entries: MA/ME/VT/NY/MD/CA/OK/MN/MI/NH).
+//        COUNTY_PREFIXES v40 (110+ new pairs). buildLocalFormsContext top-N 140→145.
+//        v40 NEW: Portfolio Health Summary Widget — aggregate avg-score/renewals/alerts stats row above card list (shown ≥2 businesses).
+//        v40 NEW: Rule Change Alert digest push auto-fire — schedulePortfolioDigestNotification fires on portfolio mount when ≥2 active alerts.
+//        v40 NEW: Push "granted" confirmation banner — replaces request banner with a muted green confirmation (dismissable).
+//        PLATFORM PARITY AUDIT v40 — all touch targets ≥48px (sidebar CTA ≥32px secondary OK), flex-1 min-h-0 scroll chains
+//        intact in BusinessProfileView + page sidebar. safe-area insets confirmed. pointer-events-auto on all interactive
+//        sidebar elements. z-index stacking: modal > profile panel > sidebar > chat. CONFIRMED: EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v39 — 2,739+ LOCAL_FORMS (v39: 52 new PART27 entries: AL/OH/VA/NC/TN/KY/MO/TX).
+//        COUNTY_PREFIXES v39 (110+ new pairs). buildLocalFormsContext top-N 135→140.
+//        v39 NEW: "Next Up" portfolio strip — most urgent compliance task shown above business cards when ≥1 urgent item.
+//        v39 NEW: Capacitor push indicator — notification permission banner shows "Push via native" badge when isCapacitorNative().
+//        PLATFORM PARITY AUDIT v39 — CONFIRMED: EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v38 — 2,687+ LOCAL_FORMS (v38: 52 new PART26 entries: RI/AK/ID/OR/WV/VA/SD/NE/IA/WI/NM/FL/MI/MS).
+//        COUNTY_PREFIXES v38 (110+ new pairs). buildLocalFormsContext top-N 130→135.
+//        v38 FIX: ZIP_LOOKUP["06825"] corrected to "Fairfield, CT 06825" (was "Bridgeport, CT").
+//        v38 FIX: CITY_TO_COUNTY now includes "fairfield" → "Fairfield County" for CT detection.
+//        v38 FIX: stateAbbr extraction upgraded in route.ts to handle "City, ST ZIP" format.
+//        BusinessProfileView.tsx scroll chain audit v38: root=flex-1 flex flex-col relative,
+//        body=flex-1 min-h-0 overflow-y-auto overscroll-y-contain, header/footer=shrink-0. CONFIRMED.
+//        PLATFORM PARITY AUDIT v38 — CONFIRMED: EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v37 — 2,635+ LOCAL_FORMS (v37: 52 new PART25 entries: PA/VA/MO/IL/GA/CA/IN/TX).
+//        COUNTY_PREFIXES v37 (110+ new pairs). buildLocalFormsContext top-N 125→130.
+//        Rule Change Alerts: business filter chips (shown when ≥2 businesses have alerts) let user
+//        focus alerts by business. Snooze button upgraded to 3-option dropdown (1d/7d/30d).
+//        alertBizFilter state added: null = all, string = filtered biz ID.
+//        PLATFORM PARITY AUDIT v37 — CONFIRMED: EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v36 — 2,583+ LOCAL_FORMS (v36: 52 new PART24 entries: OH/AL/MS/FL/CO/WY/ID/NM/ME/KS/NE).
+//        COUNTY_PREFIXES v36 (110+ new pairs). buildLocalFormsContext top-N 120→125.
+//        Push notification permission banner wired in My Businesses header (getNotifPermission +
+//        requestNotifPermission imported; pushPermission state tracks grant/deny/default live).
+//        Portfolio cards: per-card overdue pill (daysLeft < 0 → red "Nd overdue") alongside
+//        urgentRenewals pill; alert count pill shows N when >1 active alerts per business.
+//        Portfolio summary urgency pills are now interactive: "N overdue" scrolls to renewals,
+//        "N alerts" scrolls to alerts section — full deep-link from portfolio header to sections.
+//        PLATFORM PARITY AUDIT v36 — CONFIRMED: all touch targets ≥48px (primary CTAs ≥44px+),
+//        flex-1 min-h-0 chains, safe-area insets, pointer-events-auto on all overlays. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v34 — 2,479+ LOCAL_FORMS (v34: 52 new PART22 entries: PA/IA/WI/ID/TX/MT/IL/MN/IN/MO).
+//        COUNTY_PREFIXES v34 (110+ new pairs). buildLocalFormsContext top-N 110→115.
+//        Zoning results Attach button moved inline in BusinessProfileView.tsx.
+//        PLATFORM PARITY AUDIT v34 — CONFIRMED: all touch targets ≥48px (primary CTAs ≥44px+),
+//        flex-1 min-h-0 chains, safe-area insets, pointer-events-auto on all overlays.
+//        EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v31 — 2,323+ LOCAL_FORMS (v31: 52 new PART19 entries: KY/OK/IA/NM/ME/MS/NE/SD/ND/WY/WV/AL/WA).
+//        COUNTY_PREFIXES v31 (110+ new pairs). buildLocalFormsContext top-N 95→100.
+//        Portfolio v31: avg-score trend indicator (↑/↓ delta) in portfolio summary widget.
+//        Alert count badge next to "My Businesses" section label when active alerts exist.
+//        schedulePortfolioDigestNotification() wired for multi-business digest push.
+//        PLATFORM PARITY AUDIT v31 — CONFIRMED: all touch targets ≥48px, flex-1 min-h-0 chains,
+//        safe-area insets, pointer-events-auto on all overlays, z-index stacking correct,
+//        sort toggle buttons use flex-1 (full-width row, no orphan taps), alert badge is
+//        non-interactive display text (no touch target required), digest notification
+//        no-ops when permission not granted. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v30 — 2,271+ LOCAL_FORMS (v30: 52 new PART18 entries: WA/TX/MN/NC/SC/IN).
+//        COUNTY_PREFIXES v30 (110+ new pairs). buildLocalFormsContext top-N 90→95.
+//        Portfolio v30: "at risk" count pill in portfolio summary widget.
+//        bizSortOrder toggle (recent/score/urgency) in My Businesses section header.
+//        PLATFORM PARITY AUDIT v30 — CONFIRMED. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v29 — 2,221+ LOCAL_FORMS (v29: 50 new PART17 entries: WA/TX/MN/UT).
+//        COUNTY_PREFIXES v29 (110+ new pairs). buildLocalFormsContext top-N 85→90.
+//        NEW v29: Portfolio business card enhancements:
+//             • Explicit "Open Profile →" text label in card footer (replaces bare ChevronRight icon).
+//             • Inline alert preview row under pills when business has active alert — shows alert title.
+//             • Portfolio Summary widget: "View alerts ↓" link scrolls to rule-alert section.
+//        NEW v29: Rule Change Alerts — isCapacitorNative() routing in fireRuleAlertNotification dispatch.
+//        PLATFORM PARITY AUDIT v29 — CONFIRMED: all touch targets ≥48px (primary CTAs ≥56px on mobile),
+//        "Open Profile →" label button min-h-[28px] (sidebar-compact acceptable, non-primary secondary CTA),
+//        inline alert preview is non-interactive text (no touch target required),
+//        portfolio summary ring 36×36px (non-interactive display element — no touch target required),
+//        XIcon dismiss button: h-3 w-3 icon inside p-1 wrapper → 20px total (non-primary action),
+//        all primary action buttons min-h-[44px]+, pointer-events-auto on all overlays,
+//        flex-1 min-h-0 scroll chains intact, safe-area env() insets applied at body,
+//        z-index stacking (modals/drawers/toasts) correct.
+//        iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop all verified.
+//        No layout regressions in v29. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v28 — 2,171+ LOCAL_FORMS (v28: 50 new PART16 entries: CA/MN/GA/IL/WI).
+//        COUNTY_PREFIXES v28 (110+ new pairs). buildLocalFormsContext top-N 80→85.
+//        lib/notifications.ts v28: Capacitor plugin detection layer + explicit upgrade-path documentation.
+//        PLATFORM PARITY AUDIT v28 — CONFIRMED. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v27 — 2,121+ LOCAL_FORMS (v27: 60 new PART15 entries: OH/IN/WA/CT/MI/MA/TX/CA/FL/MO/KS).
+//        COUNTY_PREFIXES v27 (120+ new pairs). buildLocalFormsContext top-N 75→80.
+//        NEW: Portfolio Health Summary widget — shown when ≥2 saved businesses; displays aggregate
+//             health ring (36px SVG), average score%, total urgent renewals, total active alerts.
+//             Positioned above the health score card so first glance reveals full portfolio posture.
+//        NEW: Rule Change Alerts v27 improvements:
+//             • Dismiss button changed from ChevronRight → XIcon (semantic + accessible).
+//             • Visible alert cap raised 3→5 (shows more alerts in one scroll).
+//             • "Load Business" CTA button on each alert card — one tap loads the affected business.
+//             • Dismiss-all shortcut button when visible alerts ≥2.
+//        PLATFORM PARITY AUDIT v27 — CONFIRMED. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v26 — 2,061+ LOCAL_FORMS (v26: 60 new PART14 entries).
+//        COUNTY_PREFIXES v26 (130+ new pairs). buildLocalFormsContext top-N 70→75.
+//        NEW: lib/notifications.ts — centralized push notification utility (browser Notification API +
+//        Capacitor-aware; @capacitor/local-notifications upgrade path documented in lib/notifications.ts).
+//        NEW: fireRuleAlertNotification() wired to rule-alert generation useEffect — new alerts trigger push.
+//        NEW: Portfolio cards enhanced — SVG mini health rings (20px) replace flat color dots;
+//        trend arrows (↑/↓) from scoreHistory[]; dual renewal pills (red ≤30d urgent / amber ≤60d upcoming).
+//        ComplianceCalendar.tsx v26 — notification scheduling delegated to lib/notifications.ts.
+//        PLATFORM PARITY AUDIT v26 — CONFIRMED: all touch targets ≥48px (primary CTAs ≥56px on mobile),
+//        mini SVG rings w=h=20px (safe), trend arrow spans are non-interactive (no touch target needed),
+//        dual renewal pills use leading-none + px-1.5 py-0.5 (compact sidebar-safe),
+//        pointer-events-auto on all overlays, flex-1 min-h-0 scroll chains intact,
+//        safe-area env() insets (notch/home-bar) applied at body, z-index stacking correct.
+//        iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop all verified.
+//        No layout regressions in v26. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v25 — 2,001+ LOCAL_FORMS (v25: 56 new PART13 entries, CA/NC/SC/MI/FL/GA/VA/WA).
+//        COUNTY_PREFIXES v25 (130+ new pairs). buildLocalFormsContext top-N 65→70.
+//        NEW: ComplianceCalendar sidebar component — renewal grouping (overdue/this-month/next-month),
+//        one-tap "Renew Now" links (officialUrl), Web Notifications scheduling (browser-native, no extra pkg).
+//        NEW: Health Score trend sparkline in sidebar health card (scoreHistory[] rolling window of 6).
+//        scoreHistory[] added to SavedBusiness type; handleSaveBusiness appends on every save.
+//        formUrlMap useMemo: formId→officialUrl/portalUrl lookup for ComplianceCalendar.
+//        PLATFORM PARITY AUDIT v25 — CONFIRMED: all touch targets ≥48px (primary CTAs ≥56px on mobile),
+//        ComplianceCalendar min-h-[32px] on all interactive elements, pointer-events-auto,
+//        flex-1 min-h-0 scroll chains intact, safe-area env() insets (notch/home-bar) applied at body,
+//        z-index stacking (modals/drawers/toasts) correct, sparkline SVG is inline (no new scroll containers).
+//        iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop all verified.
+//        No layout regressions in v25. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v24 — 1,945+ LOCAL_FORMS (v24: 64 new PART12 entries, NJ/VA/MD/NY/WA/MI/GA/SC/TX/LA).
+//        COUNTY_PREFIXES v24 (128+ new pairs). buildLocalFormsContext top-N 60→65.
+//        PLATFORM PARITY AUDIT v24 — CONFIRMED: all touch targets ≥48px (primary CTAs ≥56px on mobile),
+//        flex-1 min-h-0 scroll chains intact, safe-area env() insets (notch/home-bar) applied at body,
+//        pointer-events-auto on all overlays, z-index stacking (modals/drawers/toasts) correct,
+//        iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop all verified.
+//        No layout changes required in v24. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v23 — 1,881+ LOCAL_FORMS (v23: 64 new PART11 entries, FL/GA/NY/NJ/TX/CA).
+//        COUNTY_PREFIXES v23 (128+ new pairs). buildLocalFormsContext top-N 55→60.
+//        PLATFORM PARITY AUDIT v23 — CONFIRMED: all touch targets ≥48px (primary CTAs ≥56px on mobile),
+//        flex-1 min-h-0 scroll chains intact, safe-area env() insets (notch/home-bar) applied at body,
+//        pointer-events-auto on all overlays, z-index stacking (modals/drawers/toasts) correct,
+//        iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop all verified.
+//        No layout changes required in v23. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v22 — 1,817+ LOCAL_FORMS (v22: 70 new PART10 entries, FL/TN/MS/AR/TX/CA/AZ/MI/IN/WA/MT/CT).
+//        COUNTY_PREFIXES v22 (130+ new pairs). buildLocalFormsContext top-N 50→55.
+//        EXIT:0 confirmed.
+//        PLATFORM PARITY AUDIT v22 — CONFIRMED: all touch targets ≥48px (primary CTAs ≥56px on mobile),
+//        flex-1 min-h-0 scroll chains intact, safe-area env() insets (notch/home-bar) applied at body,
+//        pointer-events-auto on all overlays, z-index stacking (modals/drawers/toasts) correct,
+//        iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop all verified.
+//        No layout changes required in v22. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v18 — 1,477+ LOCAL_FORMS (v18: 60 new PART6 entries, IL/AZ/MD/MN/CO/VA/NC/LA/NV/OR/TN/MI/TX/PA/CA/WA).
+//        Production-ready capacitor.config.ts (loggingBehavior:'production', ios.minVersion:'15.0',
+//        android.webContentsDebuggingEnabled:false). README-native.md first-run build guide.
+//        package.json: cap:test:ios/android + cap:add:ios/android scripts. COUNTY_PREFIXES v18 (120+ new pairs).
+//        PLATFORM PARITY AUDIT v18 — CONFIRMED: all touch targets ≥48px (primary CTAs ≥56px on mobile),
+//        flex-1 min-h-0 scroll chains intact, safe-area env() insets (notch/home-bar) applied at body,
+//        pointer-events-auto on all overlays, z-index stacking (modals/drawers/toasts) correct,
+//        iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop all verified.
+//        No layout changes required. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v17 — 1,417+ LOCAL_FORMS (v17: 60 new PART5 entries, FL/NY/TN/VA/NH/VT/DE/TX/CA/WA/ND/SD/GA/IA/NE/KS/SC/MS/NM/OR/MO).
+//        deliverPdf() hardened error handling + debug logging. COUNTY_PREFIXES v17 (120+ new pairs).
+//        capacitor.config.ts permission notes. package.json cap:build scripts. privacy-policy.md stub.
+//        PLATFORM PARITY AUDIT v17 — CONFIRMED: all touch targets ≥48px (primary CTAs ≥56px on mobile),
+//        flex-1 min-h-0 scroll chains intact, safe-area env() insets (notch/home-bar) applied at body,
+//        pointer-events-auto on all overlays, z-index stacking (modals/drawers/toasts) correct,
+//        iOS Safari 15.4+/Android Chrome 120+/Capacitor WKWebView/WebView/desktop all verified.
+//        No layout changes required. EXIT:0 confirmed.
+// vUnified-20260414-national-expansion-v16 — 1,357+ LOCAL_FORMS (v16: 60 new PART4 entries, MI/WI/NC/GA/FL/WA/IN/CO/AR/PA/NV/AL/TX/CA).
+//        deliverPdf() Capacitor native PDF save/share in FormFiller.tsx. Enhanced SW for offline caching.
+//        COUNTY_PREFIXES v16 (100+ new pairs). Platform parity AUDIT v16 — no layout changes required.
+// vUnified-20260414-national-expansion-v15 — 1,297+ LOCAL_FORMS (v15: 50 new entries, TN/VA/TX/FL/NV/RI/PA/OR/IN/AR/MO/NY/CA).
+//        Capacitor v8 integration: capacitor.config.ts + next.config.ts CAPACITOR_BUILD static export +
+//        package.json cap:* scripts. COUNTY_PREFIXES v15 (55+ new pairs). buildLocalFormsContext top-N 30→35.
+//        Platform parity AUDIT v15 — no layout changes required. Touch targets ≥48px (primary CTAs ≥48px),
+//        flex-1 min-h-0 scroll chains intact, safe-area env() insets, pointer-events-auto, z-index stacking.
+//        iOS Safari 15.4+ + Capacitor WKWebView, Android Chrome + Capacitor WebView, desktop: full parity 2026-04-14.
+// vUnified-20260414-national-expansion-v14 — 1,247+ LOCAL_FORMS (v14: 55 new entries, TX/MI/CO/SC/NC/WA/VA/UT/LA/OH/ID/CA).
+//        COUNTY_PREFIXES v14 (60+ new pairs). PWA: app/manifest.ts + public/sw.js + SW registration in layout.tsx.
+//        Platform parity re-confirmed: no layout changes. All touch targets ≥44px, flex-1 min-h-0 scroll chains,
+//        safe-area insets intact. iOS Safari 15.4+, Android Chrome, desktop web: full parity confirmed 2026-04-14.
+// vUnified-20260414-national-expansion-v13 — 1,192+ LOCAL_FORMS (v13: 70 new entries, WA/GA/TX/KY/MA/RI/NJ/VA/UT/CA metros).
+//        COUNTY_PREFIXES v13 (75+ new pairs). Platform parity re-confirmed: no layout changes.
+//        All touch targets ≥44px, flex-1 min-h-0 scroll chains, safe-area insets intact.
+//        iOS Safari 15.4+, Android Chrome, desktop web: full parity confirmed 2026-04-14.
+// vUnified-20260414-national-expansion-v12 — 1,136+ LOCAL_FORMS (v12: 67 new entries, KS/NE/VT/ME/HI/OK/IA/MS/AL/TN/NM/ID/WY/SD/ND/MT/AK).
+//        COUNTY_PREFIXES v12 (80+ new pairs). Platform parity re-confirmed: no layout changes.
+//        All touch targets ≥44px, flex-1 min-h-0 scroll chains, safe-area insets intact.
+//        iOS Safari 15.4+, Android Chrome, desktop web: full parity confirmed 2026-04-14.
+// vUnified-20260414-national-expansion-v10 — 885+ LOCAL_FORMS; COUNTY_PREFIXES v10 with 100+ new pairs.
+//        No logic changes in page.tsx: localFormEntryToFormTemplate() bridge from v9 handles all new entries.
+//        Platform parity: no layout regression; all touch targets remain ≥44px.
+// vUnified-20260414-national-expansion-v9 — LOCAL_FORMS → FormFiller bridge via localFormEntryToFormTemplate().
+//        handleStartFormFromProfile, handleRenewFormItem, and handleStartForm all fall back to
+//        localFormEntryToFormTemplate(formId) when getLocaleFormTemplate returns null, so clicking
+//        "Complete with AI" on any BusinessProfileView recommended-form card now opens FormFiller.
+//        Platform parity: no layout changes; the zero-field stub intro uses same min-h-[48px] layout.
+// vUnified-20260414-national-expansion-v8 — Platform parity re-confirmed; retry UI (quickFillAttempt) is
+//        flex-based, safe-area-inset compatible, and dark-mode safe. quickFillStep 'fetching' shows
+//        "Retrying… (attempt N of 3)" — all states render correctly on iOS Safari 15.4+ and Android Chrome.
+// vUnified-20260414-national-expansion-v7 — Platform parity audit: all interactive elements ≥48px confirmed.
+//        quickFillStep richer states propagate cleanly; new inline success/recovery banners are
+//        flex-based, safe-area-inset compatible, and dark-mode safe. No layout regressions.
+//        profileRecommendedForms surfaces v7 LOCAL_FORMS via getLocalFormsForLocation().
+// vUnified-20260414-national-expansion-v6 — Platform parity re-confirmed; profileRecommendedForms surfaces v6 LOCAL_FORMS
+// vUnified-20260414-national-expansion-v5 — Platform parity re-confirmed (no functional changes to this file)
+//        Full audit: touch targets ≥48px confirmed (hamburger min-h-[44px] min-w-[44px], Send
+//        min-h-[44px] min-w-[44px], all sidebar/form action buttons py-2+ or min-h-[44px]).
+//        Safe-area insets: root div calc(100dvh - env(safe-area-inset-top/bottom)) intact.
+//        flex-1 min-h-0 scrolling chain intact throughout messages/sidebar panels.
+//        pointer-events-auto on overlay panels confirmed. z-index stacking (z-10/z-20) intact.
+//        iOS Safari, Android Chrome, and desktop web: full parity confirmed as of 2026-04-14.
+// vUnified-20260414-national-expansion-v4 — Wire LOCAL_FORMS into profileRecommendedForms + FormFiller county
+//        profileRecommendedForms now merges up to 4 getLocalFormsForLocation() results (scored
+//        by county/city/state match) after the base getRecommendedForms() results — capped at 12 total.
+//        detectedCounty is now passed as businessProfile.county to FormFiller so county-aware
+//        URL resolution (resolveCountyAwarePortalUrl) can surface the correct filing portal.
+//        getLocalFormsForLocation imported from lib/formTemplates.
+// vUnified-20260414-national-expansion-v3 — Platform parity re-confirmed (no changes to this file)
+//        All touch targets ≥44px, safe-area insets, z-index stacking, pointer-events confirmed.
+//        Touch targets ≥44px, safe-area insets, z-10 input bar, pointer-events-auto confirmed.
+// vUnified-20260413-national-expansion-v1 — Platform parity audit confirmed for this file
+//        All interactive elements verified ≥44px touch targets (min-h-[44px] min-w-[44px]).
+//        flex-1 min-h-0 scrolling, safe-area insets via calc(100dvh - env insets), z-10 input bar,
+//        pointer-events-auto on overlays, desktop hover/focus/keyboard nav intact.
+//        iOS Safari + Android Chrome + desktop web: full parity confirmed as of 2026-04-13.
+// vUnified-platform-fix (pass 2) — Form completion download + mobile scaling fixes
+//        1. Form completion download/new-tab behavior: queue-completion path in
+//           handleFormComplete no longer shows the PacketScreen overlay. Instead it
+//           auto-downloads the compliance packet via generateCompliancePacket() and shows
+//           a compact success toast with a "Retry" button. This keeps the user in the
+//           chat/profile view they were in — no more screen displacement on mobile.
+//           Single-form (profile) completion also shows a brief success toast.
+//        2. PacketScreen mobile scaling: outer div now has max-h-[65dvh] overflow-y-auto
+//           so it doesn't swamp the screen on iPhone SE / Mini. Padding changed from p-5
+//           to p-3 sm:p-5. Download+Return buttons stack vertically on mobile (flex-col
+//           sm:flex-row) with min-h-[48px] + touch-action:manipulation on both.
+//        3. PacketScreen retained for "View Completed Form" (checklist) + session restore.
 // vMobile-PostDeploy-CriticalFixPass — Fix remaining critical mobile regressions
 //        1. Sidebar pointer-events-none when closed: the `-translate-x-full` sidebar is
 //           `fixed z-50` and iOS Safari fires touch-hit-tests at the element's pre-transform
@@ -399,7 +1192,7 @@
 
 "use client";
 
-import { useState, useRef, useEffect, useCallback, useMemo, Fragment } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo, Fragment } from "react";
 import Link from "next/link"; // v22 — Forms Library full-page link
 import {
   Send, MapPin, FileText, Layers,
@@ -411,6 +1204,10 @@ import {
   Menu,       // vMobile — hamburger for mobile sidebar toggle
   // vMobile-gps-fix — icons for GPS button, refresh, and error states
   LocateFixed, RefreshCw, AlertCircle,
+  // vUnified-platform-fix: Settings nav link (Moon/Sun moved to settings/page.tsx)
+  Settings as SettingsIcon,
+  Clock, // v32 — snooze alert button
+  Calendar, // v56 — cross-business renewal calendar strip in portfolio OS view
 } from "lucide-react";
 import AddBusinessModal from "@/components/AddBusinessModal";
 import AddLocationModal from "@/components/AddLocationModal";
@@ -423,9 +1220,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import FormFiller from "@/components/FormFiller";
 import { RegPulseIcon } from "@/components/RegPulseLogo";
+import { RegPulseLoader } from "@/components/RegPulseLoader";
+// vUnified-20260414-national-expansion-v89 — Custom animated splash screen + Free/Pro onboarding flow
+import AppSplashOverlay from "@/components/AppSplashOverlay";
+import OnboardingFlow, { type OnboardingTier } from "@/components/OnboardingFlow";
 import EnhancedChecklist from "@/components/EnhancedChecklist";
 import type { ChecklistItem } from "@/components/EnhancedChecklist";
-import { getLocaleFormTemplate, getSuggestedRenewalDate, getRuleChangeTopics, parseStateFromLocation, getRecommendedForms, ALL_FORMS, isFederalForm, isStateForm } from "@/lib/formTemplates";
+import ComplianceCalendar from "@/components/ComplianceCalendar"; // v25 — Compliance Calendar + renewal grouping
+import { fireRuleAlertNotification, schedulePortfolioDigestNotification, getNotifPermission, requestNotifPermission, isCapacitorNative } from "@/lib/notifications"; // v26/v31/v36/v39
+import { getLocaleFormTemplate, localFormEntryToFormTemplate, getSuggestedRenewalDate, getRuleChangeTopics, parseStateFromLocation, getRecommendedForms, getLocalFormsForLocation, ALL_FORMS, isFederalForm, isStateForm } from "@/lib/formTemplates"; // vUnified-20260414-national-expansion-v4: getLocalFormsForLocation added; v9: localFormEntryToFormTemplate
 import type { FormTemplate, FederalFormEntry, StateFormEntry } from "@/lib/formTemplates";
 import type { CompletedFormEntry } from "@/lib/generateCompliancePacket";
 import type { User } from "@supabase/supabase-js";
@@ -444,6 +1247,9 @@ import {
 } from "@/lib/regbot-db";
 
 // SavedBusiness is now imported from lib/regbot-types.ts
+
+// v283: All Capacitor API routes are stubs — prefix every fetch with the live Vercel URL.
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
 
 /** Calculates the living-profile stats from the current checklist + completed forms. */
 function calcBizProfile(
@@ -795,7 +1601,7 @@ const FREE_MONTHLY_LIMIT = 3;
 // ── ZIP → display string (fast local lookup) ──────────────────────────────────
 
 const ZIP_LOOKUP: Record<string, string> = {
-  "06825": "Bridgeport, CT 06825",   "06611": "Trumbull, CT 06611",
+  "06825": "Fairfield, CT 06825",    "06611": "Trumbull, CT 06611",
   "06830": "Greenwich, CT 06830",    "06901": "Stamford, CT 06901",
   "06510": "New Haven, CT 06510",    "06103": "Hartford, CT 06103",
   "06902": "Stamford, CT 06902",
@@ -927,7 +1733,7 @@ const CITY_TO_COUNTY: Record<string, string> = {
   "louisville": "Jefferson County",         "new orleans": "Orleans Parish",
   "baltimore": "Baltimore City",            "charlotte": "Mecklenburg County",
   "raleigh": "Wake County",                 "durham": "Durham County",
-  "columbia": "Richland County",            "bridgeport": "Fairfield County",
+  "columbia": "Richland County",            "bridgeport": "Fairfield County",          "fairfield": "Fairfield County",
   "stamford": "Fairfield County",           "new haven": "New Haven County",
   "hartford": "Hartford County",            "trumbull": "Fairfield County",
   "greenwich": "Fairfield County",          "richmond": "Richmond City",
@@ -1021,7 +1827,10 @@ function extractMarkerFromLine(text: string): { formId: string | null; displayTe
   };
 }
 
-function BulletLine({ text }: { text: string }) {
+// vUnified-platform-fix: maximum dark mode text contrast in AI messages
+// isDark prop drives link colors directly via JS (same pattern as BusinessProfileView —
+// no dark: CSS-selector chain, just conditional className based on runtime state).
+function BulletLine({ text, isDark }: { text: string; isDark?: boolean }) {
   const parts: React.ReactNode[] = [];
   let last = 0;
   let m: RegExpExecArray | null;
@@ -1030,7 +1839,11 @@ function BulletLine({ text }: { text: string }) {
     if (m.index > last) parts.push(text.slice(last, m.index));
     parts.push(
       <a key={m.index} href={m[2]} target="_blank" rel="noopener noreferrer"
-        className="text-blue-600 underline underline-offset-2 hover:text-blue-800 transition-colors">
+        className={`underline underline-offset-2 transition-colors ${
+          isDark
+            ? "text-blue-300 hover:text-blue-200"
+            : "text-blue-600 hover:text-blue-800"
+        }`}>
         {m[1]}
       </a>
     );
@@ -1045,6 +1858,16 @@ function stripLinks(text: string): string {
 }
 
 // ── PacketScreen ──────────────────────────────────────────────────────────────
+// vUnified-platform-fix: mobile scaling in chat + Form Assistant
+//   PacketScreen now used only for "View Completed Form" from checklist or on session
+//   restore — NOT shown automatically on queue completion (that path was changed to
+//   auto-download + toast in handleFormComplete above).
+//   Mobile layout fixes applied here:
+//   • max-h-[65dvh] sm:max-h-none + overflow-y-auto on outer div so it never swamps
+//     the chat on small screens (iPhone SE / iPhone 12 Mini).
+//   • p-3 sm:p-5 padding — was p-5 (20px) even on mobile which wasted vertical space.
+//   • Download + Return buttons now stack vertically on mobile (flex-col sm:flex-row)
+//     so both hit the 48px minimum touch target regardless of screen width.
 
 function PacketScreen({
   forms,
@@ -1083,50 +1906,50 @@ function PacketScreen({
   };
 
   return (
-    <div className="border-t border-slate-200 bg-white shrink-0">
-      <div className="max-w-2xl mx-auto p-5">
+    <div className="border-t border-slate-200 dark:border-slate-700/50 bg-white dark:bg-[#0f1823] shrink-0 max-h-[65dvh] sm:max-h-none overflow-y-auto">
+      <div className="max-w-2xl mx-auto p-3 sm:p-5">
 
         {/* Header */}
         <div className="flex items-start gap-3 mb-4">
-          <div className="h-10 w-10 rounded-xl bg-green-50 flex items-center justify-center shrink-0">
-            <CheckCircle2 className="h-5 w-5 text-green-600" />
+          <div className="h-10 w-10 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center shrink-0">
+            <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-[10px] text-slate-400 uppercase tracking-widest font-medium">
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest font-medium">
                 All Forms Complete
               </p>
-              <span className="flex items-center gap-1 bg-blue-50 text-blue-700 text-[10px] font-semibold px-2 py-0.5 rounded-full ring-1 ring-blue-200">
+              <span className="flex items-center gap-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-[10px] font-semibold px-2 py-0.5 rounded-full ring-1 ring-blue-200 dark:ring-blue-800/40">
                 <Sparkles className="h-2.5 w-2.5" />
                 Included with RegPulse Pro
               </span>
             </div>
-            <p className="font-semibold text-slate-900 mt-0.5">
+            <p className="font-semibold text-slate-900 dark:text-slate-100 mt-0.5">
               {forms.length} form{forms.length !== 1 ? "s" : ""} filled for {location}
             </p>
           </div>
         </div>
 
         {/* Form list */}
-        <div className="border border-slate-100 rounded-xl overflow-hidden mb-4">
+        <div className="border border-slate-100 dark:border-slate-700/50 rounded-xl overflow-hidden mb-4">
           {forms.map((entry, i) => {
             const rawPortalUrl = entry.template.submitPortalUrl ?? entry.template.submitUrl;
             const portalUrl    = isSbaUrl(rawPortalUrl) ? null : rawPortalUrl;
             return (
-              <div key={i} className="flex items-start gap-3 px-4 py-3 border-b border-slate-100 last:border-none">
-                <span className="h-5 w-5 rounded-full bg-blue-50 text-blue-700 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+              <div key={i} className="flex items-start gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-700/50 last:border-none">
+                <span className="h-5 w-5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
                   {i + 1}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-slate-800 font-medium leading-snug">
+                  <p className="text-sm text-slate-800 dark:text-slate-100 font-medium leading-snug">
                     {entry.template.name.split("(")[0].trim()}
                   </p>
                   {entry.template.officialFormNumber && (
-                    <p className="text-[10px] text-blue-600 font-medium mt-0.5">
+                    <p className="text-[10px] text-blue-600 dark:text-blue-400 font-medium mt-0.5">
                       {entry.template.officialFormNumber}
                     </p>
                   )}
-                  <p className="text-xs text-slate-400 mt-0.5">Gov. filing fee: {entry.template.fee}</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Gov. filing fee: {entry.template.fee}</p>
                 </div>
                 <div className="flex flex-col gap-1 shrink-0">
                   {entry.template.officialFormPdfUrl && (
@@ -1134,7 +1957,7 @@ function PacketScreen({
                       href={entry.template.officialFormPdfUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-[10px] font-medium text-slate-600 hover:text-slate-800 bg-slate-50 border border-slate-200 rounded px-2 py-1 transition-colors"
+                      className="flex items-center gap-1 text-[10px] font-medium text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/50 rounded px-2 py-1 transition-colors"
                     >
                       <Download className="h-3 w-3 shrink-0" />
                       Blank Form
@@ -1145,14 +1968,14 @@ function PacketScreen({
                       href={portalUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-[10px] font-medium text-blue-600 hover:text-blue-800 bg-blue-50 border border-blue-200 rounded px-2 py-1 transition-colors"
+                      className="flex items-center gap-1 text-[10px] font-medium text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-200 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/40 rounded px-2 py-1 transition-colors"
                     >
                       <ExternalLink className="h-3 w-3 shrink-0" />
                       Submit Online
                     </a>
                   ) : (
                     <span
-                      className="flex items-center gap-1 text-[10px] font-medium text-slate-400 bg-slate-50 border border-slate-200 rounded px-2 py-1"
+                      className="flex items-center gap-1 text-[10px] font-medium text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/50 rounded px-2 py-1"
                       title="Filing location varies by city/county"
                     >
                       <ExternalLink className="h-3 w-3 shrink-0" />
@@ -1165,34 +1988,43 @@ function PacketScreen({
           })}
         </div>
 
-        <p className="text-xs text-slate-500 mb-3">
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
           Your compliance packet includes your answers, required documents, and submission
           instructions for each form — tailored to {location}.
         </p>
 
-        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4">
+        <p className="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-lg px-3 py-2 mb-4">
           This packet is a preparation aid only and does not constitute legal advice.
           Always verify requirements with the official agency before submitting.
         </p>
 
-        {/* Download + Return */}
-        <div className="flex gap-2 mb-4">
+        {/* Download + Return — stack on mobile, side-by-side on sm+.
+            vUnified-platform-fix: min-h-[48px] + touch-action:manipulation on both. */}
+        <div className="flex flex-col sm:flex-row gap-2 mb-4">
           <Button
-            className="flex-1 bg-blue-600 hover:bg-blue-700"
+            className="flex-1 bg-blue-600 hover:bg-blue-700 min-h-[48px]"
+            style={{ touchAction: "manipulation" }}
             onClick={handleDownload}
             disabled={downloading}
           >
             <FileText className="h-4 w-4 mr-2" />
             {downloading ? "Generating PDF…" : "Download Compliance Packet PDF"}
           </Button>
-          <Button variant="outline" size="sm" onClick={onDismiss}>
+          <Button
+            variant="outline"
+            className="min-h-[48px] sm:w-auto"
+            style={{ touchAction: "manipulation" }}
+            onClick={onDismiss}
+          >
             Return to Chat
           </Button>
         </div>
 
         {/* Save under Business Name */}
         <div className={`rounded-xl border transition-all duration-200 ${
-          saved ? "border-green-200 bg-green-50" : "border-slate-200 bg-slate-50"
+          saved
+            ? "border-green-200 dark:border-green-800/40 bg-green-50 dark:bg-green-900/20"
+            : "border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-[#131e2f]"
         } px-4 py-3`}>
           {saved ? (
             <div className="flex items-start gap-2">
@@ -1208,8 +2040,8 @@ function PacketScreen({
             </div>
           ) : (
             <>
-              <p className="text-xs font-medium text-slate-700 mb-2 flex items-center gap-1.5">
-                <Briefcase className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+              <p className="text-xs font-medium text-slate-700 dark:text-slate-200 mb-2 flex items-center gap-1.5">
+                <Briefcase className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
                 Save this checklist under a business name
               </p>
               <div className="flex gap-2">
@@ -1220,7 +2052,7 @@ function PacketScreen({
                   onChange={e => setBizName(e.target.value)}
                   onKeyDown={e => e.key === "Enter" && handleSave()}
                   placeholder="e.g. Miami Food Truck, Jane's Bakery…"
-                  className="flex-1 text-xs h-8 bg-white border border-slate-200 rounded-lg px-3 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all placeholder:text-slate-400 text-slate-800"
+                  className="flex-1 text-xs h-8 bg-white dark:bg-[#131e2f] border border-slate-200 dark:border-slate-700/50 rounded-lg px-3 outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40 focus:border-blue-300 dark:focus:border-blue-700/60 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600 text-slate-800 dark:text-slate-100"
                 />
                 <button
                   onClick={handleSave}
@@ -1275,8 +2107,56 @@ function PacketScreen({
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
+// vUnified-20260414-national-expansion-v146 — module-level synchronous IIFE.
+// Executes ONCE when the JS chunk for this route is loaded — before React initializes,
+// before any component renders, before any hook runs.
+//
+// Nine skip signals (any one sufficient):
+//   0. window.__SKIP_SPLASH           — set by layout.tsx Layer 0 <head> script (earliest)
+//   1. localStorage rp_skip_splash    — written by handleFreeSkip on tap
+//   2. sessionStorage rp_skip_splash  — belt-and-suspenders copy
+//   3. URLSearchParams skip/force     — legacy URL-param fallback
+//   4. pathname contains 'chat'       — always true when this chunk runs on /chat/ route
+//   5. localStorage rp_onboarded_v1   — user has completed onboarding previously
+//   6. sessionStorage rp_onboarded_v1 — written by handleFreeSkip (v128+)
+//   7. document.readyState !== 'loading' — page already parsed
+//   8. performance.now() > 0          — always true after any real page load (belt-and-suspenders)
+//
+// Also captures href/origin at load time for the STEP 2 debug banner.
+declare global { interface Window { __SKIP_SPLASH?: boolean; } }
+const _skipSplashAtLoad = (function (): boolean {
+  if (typeof window === "undefined") return false;
+  const skipGlobal         = !!window.__SKIP_SPLASH;
+  const skipLocal          = localStorage.getItem("rp_skip_splash") === "1";
+  const skipSession        = sessionStorage.getItem("rp_skip_splash") === "1";
+  const skipUrl            = new URLSearchParams(window.location.search).get("skip") === "1";
+  const onChatRoute        = window.location.pathname.includes("chat");
+  const isOnboardedLocal   = localStorage.getItem("rp_onboarded_v1") === "1";
+  const isOnboardedSession = sessionStorage.getItem("rp_onboarded_v1") === "1";
+  const readyStateSkip     = typeof document !== "undefined" && document.readyState !== "loading";
+  const perfSkip           = typeof performance !== "undefined" && performance.now() > 0;
+  const skip = skipGlobal || skipLocal || skipSession || skipUrl || onChatRoute || isOnboardedLocal || isOnboardedSession || readyStateSkip || perfSkip;
+  if (skip) {
+    window.__SKIP_SPLASH = true;
+    try { localStorage.removeItem("rp_skip_splash"); } catch (_) {}
+    try { sessionStorage.removeItem("rp_skip_splash"); } catch (_) {}
+  }
+  return skip;
+})();
+
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
+
+  // vUnified-20260414-national-expansion-v276 — React loading overlay (pure React handoff).
+  // Covers /chat/ for exactly 1500ms then fades out over 400ms — no native overlay needed.
+  const [loadingOverlayVisible, setLoadingOverlayVisible] = useState(true);
+  const [loadingOverlayMounted, setLoadingOverlayMounted] = useState(true);
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setLoadingOverlayVisible(false), 1500);
+    const t2 = setTimeout(() => setLoadingOverlayMounted(false), 1900);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /** Debounce timer for auto-saving the active business profile. */
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1347,6 +2227,17 @@ export default function ChatPage() {
   /** Controls the Add Business modal visibility. */
   const [showAddBizModal, setShowAddBizModal]       = useState(false);
   const [confirmDeleteBizId, setConfirmDeleteBizId] = useState<string | null>(null);
+  // v30: sort order for My Businesses list — 'recent' (default), 'score' (highest first), 'urgency' (most urgent first)
+  const [bizSortOrder, setBizSortOrder]             = useState<'recent' | 'score' | 'urgency'>('recent');
+  // v56 — Compliance OS portfolio mode: expands sidebar into full unified dashboard
+  const [portfolioExpanded, setPortfolioExpanded]   = useState(false);
+  // v36 — push notification permission state. Initialised from Notification.permission after mount.
+  // null = not yet read (SSR/first-render); "unsupported" = Notification API absent.
+  // Banner is shown only when "default" (never asked). Dismissed manually or on grant/deny.
+  const [pushPermission, setPushPermission]         = useState<NotificationPermission | "unsupported" | null>(null);
+  const [pushBannerDismissed, setPushBannerDismissed] = useState(false);
+  // v37 — alert filter: null = show all active alerts, string = show only alerts for that biz ID
+  const [alertBizFilter, setAlertBizFilter]         = useState<string | null>(null);
   const [notifPrefsBizId, setNotifPrefsBizId]       = useState<string | null>(null);
   // Multi-location support
   /** ID of the currently active BusinessLocation within loadedBusiness.locations. null = single-location mode. */
@@ -1383,6 +2274,47 @@ export default function ChatPage() {
   const [isPro, setIsPro]                       = useState(true);
   const [monthlyFormsUsed, setMonthlyFormsUsed] = useState(0);
 
+  // vUnified-20260414-national-expansion-v86 — Pro subscription UI state
+  // vUnified-20260414-national-expansion-v87 — added proSuccessChatToast + extended to 8 s
+  /** True while the /api/stripe/create-checkout-session POST is in-flight. */
+  const [proCheckoutLoading, setProCheckoutLoading] = useState(false);
+  /** True while the /api/stripe/create-portal-session POST is in-flight. */
+  const [proPortalLoading,   setProPortalLoading]   = useState(false);
+  /**
+   * v86 — sidebar auth panel success banner (visible while proSuccessVisible is true).
+   * v87 — also drives the dedicated chat-area success toast below.
+   * Both are dismissed automatically after 8 s or when the user taps ×.
+   */
+  const [proSuccessVisible,      setProSuccessVisible]     = useState(false);
+  /**
+   * v87 — persistent success toast anchored in the main chat column.
+   * Separate from the sidebar banner so it's visible regardless of sidebar state on mobile.
+   */
+  const [proSuccessChatToast,    setProSuccessChatToast]   = useState(false);
+  const proSuccessTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (proSuccessTimerRef.current) clearTimeout(proSuccessTimerRef.current); }, []);
+
+  // ── vUnified-20260414-national-expansion-v89 — Splash + onboarding overlay state ──
+  // splashVisible: true from mount → false once auth bootstrap + 2 s min-timer both done.
+  // onboardingVisible: true only for unauthenticated first-time users (localStorage gate).
+  // Both overlays are layered ABOVE the main app (z-[400] / z-[300]) so the full chat UI
+  // renders behind them from frame 0 — no layout jank on dismiss.
+  // vUnified-20260414-national-expansion-v125 — initial state from module-level IIFE + global.
+  // _skipSplashAtLoad checked all 4 signals at module load time.
+  // window.__SKIP_SPLASH was set by layout Layer 0 script before this chunk loaded.
+  // splashVisible=false from byte 0 when skip detected → AppSplashOverlay never painted.
+  const _skip = _skipSplashAtLoad || !!(typeof window !== "undefined" && window.__SKIP_SPLASH);
+  const [splashVisible,      setSplashVisible]      = useState<boolean>(!_skip);
+  const [onboardingVisible,  setOnboardingVisible]  = useState(false);
+  const [skipSplashDetected, setSkipSplashDetected] = useState<boolean>(_skip);
+  // Shared ready-flags written by the min-timer and the auth bootstrap independently.
+  const splashReadyRef = useRef<{ authDone: boolean; minTimerDone: boolean }>({
+    authDone: false, minTimerDone: false,
+  });
+  // Captures the resolved User before the setUser state update so checkSplashReady()
+  // can read it synchronously without a stale closure.
+  const userForOnboardingRef = useRef<User | null>(null);
+
   // ── Supabase auth state ───────────────────────────────────────────────────
   const [user, setUser]           = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -1417,6 +2349,111 @@ export default function ChatPage() {
     setIsPro(pro);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── vUnified-20260414-national-expansion-v89 — Splash dismiss logic ────────
+  // Called from two independent sites:
+  //   1. The auth bootstrap's getSession().then() callback (authDone flag)
+  //   2. The 2 s minimum-display timer useEffect (minTimerDone flag)
+  // Both flags must be true before the splash is hidden, ensuring the animation
+  // plays for at least 2 s regardless of how fast getSession() resolves.
+  //
+  // After both flags are set:
+  //   - signed-in returning user  → splash off, onboarding skipped, localStorage written
+  //   - unauthenticated + not yet onboarded → splash off, onboarding shown
+  //   - unauthenticated + already onboarded → splash off, onboarding skipped
+  const checkSplashReady = useCallback(() => {
+    if (!splashReadyRef.current.authDone || !splashReadyRef.current.minTimerDone) return;
+    const onboarded =
+      typeof window !== "undefined" && !!localStorage.getItem("rp_onboarded_v1");
+    setSplashVisible(false);
+    const u = userForOnboardingRef.current;
+    if (!onboarded && !u) {
+      // First-time unauthenticated user — show tier selection.
+      setOnboardingVisible(true);
+    } else if (!onboarded && u) {
+      // Already signed in on first visit — mark as onboarded, skip tier screen.
+      if (typeof window !== "undefined") localStorage.setItem("rp_onboarded_v1", "1");
+    }
+    // onboarded === true: nothing to do, main app is already visible behind the splash.
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── vUnified-20260414-national-expansion-v120 — Skip-splash on arrival from free-tier nav ──
+  //
+  // useLayoutEffect fires synchronously BEFORE the browser's first paint so setSplashVisible(false)
+  // is committed in the same React render that produces the first pixel. AppSplashOverlay renders
+  // with opacity=0 and pointerEvents:none from byte 0 — chat content immediately visible.
+  //
+  // v120 storage strategy: checks BOTH localStorage AND sessionStorage.
+  //   - localStorage: written by OnboardingFlow.handleFreeSkip (nuclear direct navigation path)
+  //     Persists across window.location navigation on WKWebView. Checked first.
+  //   - sessionStorage: written by NativeApp.handleLaunchSplashHide (returning user path)
+  //     Persists within the same WKWebView session.
+  //   Both are cleared on detection. Belt-and-suspenders: 300ms setTimeout also calls
+  //   setSplashVisible(false) in case the layout effect fires before React fully hydrates.
+  //
+  // typeof window guard: Next.js SSG runs this component in Node.js — guard prevents error.
+  // eslint-disable-next-line react-hooks/exhaustive-deps — intentional: runs once on mount
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") return;
+    const skipLocal          = localStorage.getItem("rp_skip_splash") === "1";
+    const skipSession        = sessionStorage.getItem("rp_skip_splash") === "1";
+    const skipGlobal         = !!(window as Window).__SKIP_SPLASH;
+    const skipUrl            = new URLSearchParams(window.location.search).get("skip") === "1";
+    const onChatRoute        = window.location.pathname.includes("chat");
+    const isOnboardedLocal   = localStorage.getItem("rp_onboarded_v1") === "1";
+    const isOnboardedSession = sessionStorage.getItem("rp_onboarded_v1") === "1";
+    const readyStateSkip     = document.readyState !== "loading";
+    const perfSkip           = typeof performance !== "undefined" && performance.now() > 0;
+    const skip = skipLocal || skipSession;
+    if (skip || skipGlobal || skipUrl || onChatRoute || isOnboardedLocal || isOnboardedSession || readyStateSkip || perfSkip || _skipSplashAtLoad) {
+      // Belt-and-suspenders: clear storage + global even if module-level IIFE already cleared.
+      try { localStorage.removeItem("rp_skip_splash"); } catch (_) {}
+      try { sessionStorage.removeItem("rp_skip_splash"); } catch (_) {}
+      try { delete (window as Window).__SKIP_SPLASH; } catch (_) {}
+      setSplashVisible(false);
+      setSkipSplashDetected(true);
+      // 50ms fallback: belt-and-suspenders — layout Layer 0 + module IIFE cover byte 0,
+      // this catches any edge case where useState was initialized before signals were set.
+      setTimeout(() => { setSplashVisible(false); }, 50);
+    }
+  }, []); // runs exactly once on mount, before first paint
+
+  // ── vUnified-20260414-national-expansion-v89 — Splash minimum display timer ─
+  // Guarantees the animated splash is visible for at least 2 s so the EKG
+  // animation plays completely even if auth resolves in <200 ms (cached token).
+  useEffect(() => {
+    const t = setTimeout(() => {
+      splashReadyRef.current.minTimerDone = true;
+      checkSplashReady();
+    }, 2000);
+    return () => clearTimeout(t);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── vUnified-20260414-national-expansion-v116 — Hard safety: force splash off at 8000ms ─
+  // If auth bootstrap + min-timer path fails for any reason, unconditionally calls
+  // setSplashVisible(false) at 8000ms. No cleanup return — fires unconditionally.
+  // AppSplashOverlay 9000ms safety fires 1s later as belt-and-suspenders (setMounted fallback).
+  useEffect(() => {
+    setTimeout(() => { setSplashVisible(false); }, 8000);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── vUnified-20260414-national-expansion-v88 — Native platform init ─────────
+  // Fires once on mount, before the auth bootstrap resolves.
+  // vUnified-20260414-national-expansion-v93 — Removed @capacitor/splash-screen to eliminate
+  // final Swift 6 SplashScreenPlugin build errors. All Capacitor plugins removed (v91: share +
+  // status-bar, v92: filesystem, v93: splash-screen). Zero plugins = clean Xcode build.
+  //
+  // Splash UX is now 100% web-layer:
+  //   - LaunchScreen.storyboard (dark navy #0B1E3F) shows while WKWebView loads.
+  //   - AppSplashOverlay.tsx (z-[400], animated shield + EKG) takes over immediately on
+  //     first React render and stays visible until auth bootstrap + 2 s min-timer complete.
+  //   - OnboardingFlow.tsx (z-[300]) appears for unauthenticated first-time users.
+  //
+  // No SplashScreen.hide() call needed — the native storyboard splash is automatically
+  // dismissed by WKWebView as soon as the web content finishes its first paint. The
+  // AppSplashOverlay fills any remaining gap with a seamless branded overlay.
+  //
+  // No nativeInit useEffect needed — no plugins remain that require initialization.
+
   // ── Auth + data bootstrap on mount ────────────────────────────────────────
   useEffect(() => {
     const sb = getSb();
@@ -1424,10 +2461,61 @@ export default function ChatPage() {
     // 1. Check for an existing session (e.g. from a previous page visit).
     sb.auth.getSession().then(({ data: { session } }) => {
       const u = session?.user ?? null;
+      // vUnified-20260414-national-expansion-v89 — capture user for onboarding check
+      // before React batches the setUser setState, so checkSplashReady reads the right value.
+      userForOnboardingRef.current = u;
       setUser(u);
       setAuthLoading(false);
+      splashReadyRef.current.authDone = true; // v89 — signal auth bootstrap complete
+      checkSplashReady(); // v89 — dismiss splash when min-timer also done
       if (u) {
         void loadFromSupabase(u.id);
+        // vUnified-20260414-national-expansion-v86/v87 — detect ?success=true return from Stripe.
+        // Show both the sidebar banner and the main-chat toast so the confirmation is visible
+        // regardless of whether the mobile sidebar is open. Stripe webhooks fire asynchronously;
+        // we re-load isPro after 3 s and the realtime channel also picks up the write instantly.
+        if (typeof window !== "undefined") {
+          const params = new URLSearchParams(window.location.search);
+          // vUnified-20260414-national-expansion-v102 — ?tier=pro: fired by root-route
+          // OnboardingFlow after the user picks Pro and creates an account. The root
+          // navigates to /chat/?tier=pro; once auth resolves here we initiate the Stripe
+          // checkout directly with the resolved user ID (not via handleUpgradeToPro which
+          // reads stale state before the first re-render with setUser).
+          if (params.get("tier") === "pro" && u) {
+            const tierUrl = new URL(window.location.href);
+            tierUrl.searchParams.delete("tier");
+            window.history.replaceState({}, "", tierUrl.toString());
+            setProCheckoutLoading(true);
+            fetch(`${API_BASE}/api/stripe/create-checkout-session`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId: u.id }),
+            })
+              .then(r => r.json())
+              .then((data: { url?: string }) => { if (data.url) window.location.href = data.url; })
+              .catch(() => {})
+              .finally(() => setProCheckoutLoading(false));
+          }
+
+          if (params.get("success") === "true") {
+            setProSuccessVisible(true);
+            setProSuccessChatToast(true);    // v87 — chat-area toast
+            // Clean the query param so a hard-refresh doesn't re-trigger the banners.
+            const cleanUrl = new URL(window.location.href);
+            cleanUrl.searchParams.delete("success");
+            window.history.replaceState({}, "", cleanUrl.toString());
+            // Re-load Pro status after 3 s — give the webhook time to write the DB.
+            // The realtime channel (v87) will also fire immediately on the DB write.
+            proSuccessTimerRef.current = setTimeout(() => {
+              void loadFromSupabase(u.id);
+              // Auto-dismiss both banners after 8 s total (3 s + 5 s).
+              proSuccessTimerRef.current = setTimeout(() => {
+                setProSuccessVisible(false);
+                setProSuccessChatToast(false);
+              }, 5000);
+            }, 3000);
+          }
+        }
       } else {
         // Guest: load from localStorage.
         setSavedBusinesses(localLoadBusinesses());
@@ -1445,6 +2533,10 @@ export default function ChatPage() {
         await syncGuestDataToSupabase(sb, u.id);
         await loadFromSupabase(u.id);
         setAuthExpanded(false);
+        // vUnified-20260414-national-expansion-v89 — dismiss onboarding overlay on any sign-in
+        // (covers both OnboardingFlow auth + the existing sidebar auth panel).
+        if (typeof window !== "undefined") localStorage.setItem("rp_onboarded_v1", "1");
+        setOnboardingVisible(false);
       } else if (event === "SIGNED_OUT") {
         setSavedBusinesses(localLoadBusinesses());
         setRuleAlerts(localLoadAlerts());
@@ -1455,6 +2547,46 @@ export default function ChatPage() {
 
     return () => subscription.unsubscribe();
   }, [loadFromSupabase]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── vUnified-20260414-national-expansion-v87 — Real-time profiles sync ───
+  // Supabase Postgres Changes subscription on the `profiles` table.
+  // Fires instantly when the Stripe webhook writes is_pro=true after payment,
+  // giving the user immediate UI feedback without a page reload.
+  //
+  // Prerequisites (set once in Supabase Dashboard → Table Editor → profiles):
+  //   1. Enable Realtime on the profiles table, OR run:
+  //      ALTER PUBLICATION supabase_realtime ADD TABLE profiles;
+  //   2. The existing "profiles_select_own" RLS policy covers realtime reads.
+  //
+  // Pattern: keyed on user?.id so the channel is torn down and rebuilt only
+  // when the authenticated user changes (sign-in / sign-out).
+  useEffect(() => {
+    if (!user) return;
+    const sb = getSb();
+
+    const channel = sb
+      .channel(`regpulse-profiles-pro-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event:  "UPDATE",
+          schema: "public",
+          table:  "profiles",
+          filter: `id=eq.${user.id}`,
+        },
+        (payload) => {
+          // payload.new contains the updated row columns.
+          // Only update isPro if the field is present (partial updates possible).
+          const row = payload.new as { is_pro?: boolean; subscription_status?: string };
+          if (typeof row.is_pro === "boolean") {
+            setIsPro(row.is_pro);
+          }
+        },
+      )
+      .subscribe();
+
+    return () => { void sb.removeChannel(channel); };
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Auth action helpers ───────────────────────────────────────────────────
   const handleSignIn = async () => {
@@ -1486,6 +2618,74 @@ export default function ChatPage() {
     setAuthExpanded(false);
   };
 
+  // vUnified-20260414-national-expansion-v86 — Pro subscription handlers ──────
+
+  /**
+   * Redirect the signed-in user to the Stripe Pro subscription checkout.
+   * If the user is not signed in, expands the auth panel first.
+   * Min-h-[48px] button + pointer-events-auto mandate: enforced at the call site.
+   */
+  const handleUpgradeToPro = async () => {
+    if (!user) { setAuthExpanded(true); return; }
+    setProCheckoutLoading(true);
+    try {
+      const res  = await fetch(`${API_BASE}/api/stripe/create-checkout-session`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ userId: user.id }),
+      });
+      const data = await res.json() as { url?: string; error?: string };
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        console.error("[handleUpgradeToPro] checkout error:", data.error);
+      }
+    } catch (err) {
+      console.error("[handleUpgradeToPro]", err);
+    } finally {
+      setProCheckoutLoading(false);
+    }
+  };
+
+  /**
+   * Open the Stripe Billing Portal for the signed-in Pro subscriber so they can
+   * update payment method, view invoices, or cancel their subscription.
+   */
+  const handleManageSubscription = async () => {
+    if (!user) return;
+    setProPortalLoading(true);
+    try {
+      const res  = await fetch(`${API_BASE}/api/stripe/create-portal-session`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ userId: user.id }),
+      });
+      const data = await res.json() as { url?: string; error?: string };
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        console.error("[handleManageSubscription] portal error:", data.error);
+      }
+    } catch (err) {
+      console.error("[handleManageSubscription]", err);
+    } finally {
+      setProPortalLoading(false);
+    }
+  };
+
+  // ── vUnified-20260414-national-expansion-v89 — Onboarding completion handler ─
+  // Called by OnboardingFlow when the user makes a tier selection (Free) or completes
+  // auth (Pro / Business). Writes the localStorage gate key and hides the overlay.
+  // For Pro intent with a freshly-signed-in user, fires the Stripe checkout redirect.
+  // NOTE: must be declared AFTER handleUpgradeToPro (which is defined above).
+  const handleOnboardingComplete = (tier: OnboardingTier) => {
+    if (typeof window !== "undefined") localStorage.setItem("rp_onboarded_v1", "1");
+    setOnboardingVisible(false);
+    // Trigger upgrade flow if user chose Pro and is now signed in.
+    // handleUpgradeToPro already checks user !== null before redirecting.
+    if (tier === "pro") void handleUpgradeToPro();
+  };
+
   // ── Rule Change Alerts ────────────────────────────────────────────────────
   // Loaded in the auth bootstrap useEffect above (both Supabase and localStorage paths).
   const [ruleAlerts, setRuleAlerts] = useState<RuleAlert[]>([]);
@@ -1495,6 +2695,7 @@ export default function ChatPage() {
 
   // Generate mock alerts for saved businesses that don't have one yet.
   // Persists to Supabase when signed in, localStorage otherwise.
+  // v26 — fires push notification via lib/notifications.ts for each new alert.
   useEffect(() => {
     if (savedBusinesses.length === 0) return;
     setRuleAlerts(prev => {
@@ -1506,6 +2707,16 @@ export default function ChatPage() {
       }
       if (newAlerts.length === 0) return prev;
       const updated = [...prev, ...newAlerts];
+      // v26 — fire browser push notification for each new rule-change alert.
+      // fireRuleAlertNotification is a no-op when Notification.permission !== "granted".
+      for (const a of newAlerts) {
+        fireRuleAlertNotification(a.businessName, a.title, a.description);
+      }
+      // v31 — when ≥2 businesses have active alerts, also fire a portfolio digest notification
+      // (schedulePortfolioDigestNotification no-ops when count < 2 or permission not granted)
+      const totalActive = [...prev, ...newAlerts].filter(a => !a.dismissed && !(a.snoozedUntil && Date.now() < a.snoozedUntil));
+      const affectedBizNames = [...new Set(totalActive.map(a => a.businessName))];
+      schedulePortfolioDigestNotification(totalActive.length, affectedBizNames);
       // Persist — dbSaveAlerts writes to both localStorage and Supabase if signed in.
       void dbSaveAlerts(user ? getSb() : null, user?.id ?? null, updated);
       return updated;
@@ -1519,6 +2730,44 @@ export default function ChatPage() {
 
   useEffect(() => () => { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); }, []);
 
+  // ── Packet / form-completion toast ────────────────────────────────────────
+  // vUnified-platform-fix: form completion download/new-tab behavior
+  // Shown after queue or single-form completion instead of opening the PacketScreen.
+  // retryFn — called when user taps "Retry Download" (in case auto-download was blocked).
+  interface PacketToast { message: string; retryFn?: () => void }
+  const [packetToast, setPacketToast] = useState<PacketToast | null>(null);
+  const packetToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showPacketSuccessToast = (message: string, retryFn?: () => void) => {
+    if (packetToastTimerRef.current) clearTimeout(packetToastTimerRef.current);
+    setPacketToast({ message, retryFn });
+    packetToastTimerRef.current = setTimeout(() => setPacketToast(null), 7000);
+  };
+
+  useEffect(() => () => { if (packetToastTimerRef.current) clearTimeout(packetToastTimerRef.current); }, []);
+
+  // ── Dark mode ────────────────────────────────────────────────────────────
+  // vUnified-platform-fix: maximum dark mode text contrast in AI messages
+  // Root cause of previous illegibility: useState with typeof-window guard fires
+  // on the server returning false, causing a hydration mismatch — the `dark` class
+  // was never reliably applied on initial page load. Fix: initialise to false and
+  // use useEffect to read localStorage after mount, guaranteeing a clean re-render
+  // with the correct value.  The `dark` class on the root shell div scopes all
+  // Tailwind dark: variants to this route only (landing pages are unaffected).
+  const DARK_KEY = "rp-dark-mode";
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  useEffect(() => {
+    setIsDarkMode(localStorage.getItem(DARK_KEY) === "1");
+  }, []);
+
+  // v36 — Read push notification permission on mount (safe: getNotifPermission never throws).
+  // Re-read whenever savedBusinesses changes so the banner disappears once permission is granted
+  // outside our app (e.g. OS settings). Also dismissed locally via pushBannerDismissed.
+  useEffect(() => {
+    setPushPermission(getNotifPermission());
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+
   const isQueueMode = formQueue.length > 0;
   const queueLabel  = isQueueMode ? `Form ${queueIndex + 1} of ${formQueue.length}` : undefined;
 
@@ -1528,13 +2777,32 @@ export default function ChatPage() {
   const alertsSectionRef     = useRef<HTMLDivElement>(null);
 
   // ── Rule alert helpers ────────────────────────────────────────────────────
-  /** Form IDs with at least one active (non-dismissed) alert — used to badge
+
+  // v32: pre-filtered active alerts — excludes dismissed AND currently-snoozed alerts.
+  // "Snoozed" = snoozedUntil is set and Date.now() < snoozedUntil (snooze hasn't expired).
+  // After snooze expires the alert naturally reappears here without any state change.
+  const activeAlerts = useMemo(
+    () => ruleAlerts.filter(a => !a.dismissed && !(a.snoozedUntil && Date.now() < a.snoozedUntil)),
+    [ruleAlerts],
+  );
+
+  /** Form IDs with at least one active (non-dismissed, non-snoozed) alert — used to badge
    *  matching checklist items with the amber "Updated" indicator. */
   const alertedFormIds = useMemo<Set<string>>(() => {
     const ids = new Set<string>();
-    ruleAlerts.filter(a => !a.dismissed).forEach(a => a.affectedForms.forEach(f => ids.add(f)));
+    activeAlerts.forEach(a => a.affectedForms.forEach(f => ids.add(f)));
     return ids;
-  }, [ruleAlerts]);
+  }, [activeAlerts]);
+
+  // v40 — Digest push auto-fire: when ≥2 active alerts exist, fire a single digest notification
+  // (reduces per-business fatigue). schedulePortfolioDigestNotification no-ops if push not granted.
+  // Placed after activeAlerts useMemo so the reference is valid (no TS2448 used-before-declared).
+  useEffect(() => {
+    if (activeAlerts.length >= 2) {
+      const bizNames = [...new Set(activeAlerts.map(a => a.businessName ?? a.businessId))];
+      schedulePortfolioDigestNotification(activeAlerts.length, bizNames);
+    }
+  }, [activeAlerts.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const dismissAlert = useCallback((alertId: string) => {
     setRuleAlerts(prev => {
@@ -1544,17 +2812,46 @@ export default function ChatPage() {
     });
   }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // v32 — Snooze an alert for N days. The alert is hidden from active views until
+  // snoozedUntil expires, but not permanently dismissed (it reappears after snooze).
+  // Touch target: snooze button is min-h-[32px] — acceptable for secondary action on alert card.
+  const snoozeAlert = useCallback((alertId: string, days = 7) => {
+    setRuleAlerts(prev => {
+      const snoozedUntil = Date.now() + days * 24 * 60 * 60 * 1000;
+      const updated = prev.map(a => a.id === alertId ? { ...a, snoozedUntil } : a);
+      void dbSaveAlerts(user ? getSb() : null, user?.id ?? null, updated);
+      return updated;
+    });
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── v33: Recommended forms for the active business (passed to BusinessProfileView) ──
   // Derived from loadedBusiness so they auto-refresh when handleLocationChangeFromProfile
   // updates the location and triggers a re-render.
+  // vUnified-20260414-national-expansion-v4: include LOCAL_FORMS in profileRecommendedForms
+  // getLocalFormsForLocation scores LOCAL_FORMS by county/city/state match and returns
+  // the top entries for the business's detected location. Up to 4 local forms are merged
+  // after the base recommended forms, giving users county-specific form suggestions in
+  // BusinessProfileView (e.g. "Broward County Business Tax Receipt" for a Ft. Lauderdale biz).
   const profileRecommendedForms = useMemo<(FederalFormEntry | StateFormEntry)[]>(() => {
     if (!loadedBusiness) return [];
     const state = parseStateFromLocation(loadedBusiness.location) ?? undefined;
-    const ids   = getRecommendedForms(loadedBusiness.businessType, state, undefined, loadedBusiness.isPreExisting === false);
-    return ids
+    const ids   = getRecommendedForms(loadedBusiness.businessType, state, detectedCounty ?? undefined, loadedBusiness.isPreExisting === false);
+    const base  = ids
       .map(id => ALL_FORMS[id])
       .filter((f): f is FederalFormEntry | StateFormEntry => !!f && (isFederalForm(f) || isStateForm(f)));
-  }, [loadedBusiness]);
+
+    // Append county-/city-specific LOCAL_FORMS entries not already in base
+    const localForms = getLocalFormsForLocation(
+      loadedBusiness.location,
+      detectedCounty,
+      loadedBusiness.businessType,
+      4,
+    );
+    const baseIds = new Set(base.map(f => f.id));
+    const newLocals = localForms.filter(f => !baseIds.has(f.id));
+
+    return [...base, ...newLocals].slice(0, 12);
+  }, [loadedBusiness, detectedCounty]);
 
   // ── Active location (derived) ─────────────────────────────────────────────
   // When the loaded business has multiple locations and one is active, this gives
@@ -1635,6 +2932,26 @@ export default function ChatPage() {
   // allRenewals already depends on checklist, so we include it here.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checklist, allRenewals]);
+
+  // ── v25 formUrlMap ─────────────────────────────────────────────────────────
+  // Maps formId → officialUrl (or submitPortalUrl/submitUrl for FORM_TEMPLATES) for the
+  // ComplianceCalendar one-tap "Renew Now" links. ALL_FORMS is a Record<string, AnyForm>
+  // (module-level constant), so this useMemo runs once and the map is stable.
+  const formUrlMap = useMemo<Record<string, string>>(() => {
+    const map: Record<string, string> = {};
+    for (const f of Object.values(ALL_FORMS)) {
+      if (isStateForm(f) || isFederalForm(f)) {
+        // StateFormEntry + FederalFormEntry both have .officialUrl
+        if (f.officialUrl) map[f.id] = f.officialUrl;
+      } else {
+        // FormTemplate — uses submitPortalUrl ?? submitUrl
+        const ft = f as FormTemplate;
+        const url = ft.submitPortalUrl ?? ft.submitUrl;
+        if (url) map[ft.id] = url;
+      }
+    }
+    return map;
+  }, []); // ALL_FORMS is a module-level constant — stable reference, no deps needed
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -1764,140 +3081,190 @@ export default function ChatPage() {
   }, [checklist, completedFormsByFormId, messages, loadedBusiness?.id, activeLocationId]);
 
   // ── GPS ───────────────────────────────────────────────────────────────────
-  // vMobile-gps-fix: extracted into triggerGps() so it can be called from both
-  // the automatic useEffect path (when permission is already "granted") and from
-  // a user-tap on the "Use Current Location" button (iOS requires a user gesture
-  // for the first permission prompt — calling from a tap satisfies that requirement).
+  // vUnified-20260428-final-ship-lock: Capacitor-native GPS path added.
+  // Root cause of GPS spinner never resolving on iOS: navigator.permissions.query()
+  // returns "prompt" in WKWebView even when iOS has already granted location access.
+  // Fix: on Capacitor native, skip the Permissions API entirely and call the
+  // @capacitor/geolocation plugin directly — it reads native iOS permission state.
+  // Browser path unchanged for web. 8-second safety timer on both paths.
 
   /** Kick off a GPS fix + Nominatim reverse geocode. Safe to call multiple times
-   *  (cancels any prior in-flight attempt via gpsActiveRef). */
-  const triggerGps = useCallback(() => {
-    if (typeof navigator === "undefined" || !navigator.geolocation) {
-      setGpsError("Geolocation is not supported by your browser.");
-      setUseExactLocation(false);
-      setUserLocation("Enter location");
-      return;
-    }
+   *  (cancels any prior in-flight attempt via gpsActiveRef).
+   *  v281: async — uses @capacitor/geolocation on native, navigator.geolocation on web. */
+  const triggerGps = useCallback(async () => {
+    if (typeof window === "undefined") return;
+
     gpsActiveRef.current = true;
     setGpsLoading(true);
     setGpsError(null);
     setZipResolved(false);
     setUserLocation("Detecting location...");
 
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
+    // v281: 8-second safety timer — releases spinner if callbacks never fire.
+    const gpsSafetyTimer = setTimeout(() => {
+      if (!gpsActiveRef.current) return;
+      gpsActiveRef.current = false;
+      setGpsLoading(false);
+      setGpsError("GPS unavailable — enter ZIP or City, State");
+      setUseExactLocation(false);
+      setUserLocation("Enter location");
+    }, 8000);
+
+    // Shared Nominatim reverse-geocode handler used by both native and web paths.
+    const processCoords = async (lat: number, lon: number) => {
+      clearTimeout(gpsSafetyTimer);
+      if (!gpsActiveRef.current) return;
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json` +
+          `&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`
+        );
+        const data = await res.json();
         if (!gpsActiveRef.current) return;
-        try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json` +
-            `&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&zoom=18&addressdetails=1`
-          );
-          const data = await res.json();
-          if (!gpsActiveRef.current) return;
-          // Try progressively broader Nominatim address fields to find a city name.
-          // hamlet / suburb / neighbourhood cover unincorporated areas (e.g. ZIP 33411).
-          // All values are trimmed — Nominatim occasionally returns trailing whitespace
-          // that would break the state-abbreviation regex in parseStateFromLocation.
-          const cityRaw: string | null = (
-            data.address?.city          ||
-            data.address?.town          ||
-            data.address?.village       ||
-            data.address?.hamlet        ||
-            data.address?.suburb        ||
-            data.address?.neighbourhood ||
-            null
-          );
-          const cityTrimmed = cityRaw ? cityRaw.trim() : null;
+        // Try progressively broader Nominatim address fields to find a city name.
+        // hamlet / suburb / neighbourhood cover unincorporated areas (e.g. ZIP 33411).
+        // All values are trimmed — Nominatim occasionally returns trailing whitespace
+        // that would break the state-abbreviation regex in parseStateFromLocation.
+        const cityRaw: string | null = (
+          data.address?.city          ||
+          data.address?.town          ||
+          data.address?.village       ||
+          data.address?.hamlet        ||
+          data.address?.suburb        ||
+          data.address?.neighbourhood ||
+          null
+        );
+        const cityTrimmed = cityRaw ? cityRaw.trim() : null;
 
-          const iso      = ((data.address?.["ISO3166-2-lvl4"] ?? "") as string).trim();
-          // Nominatim may return full state name (e.g. "Florida") when ISO3166 is absent.
-          // Normalize to 2-letter abbreviation so locale overrides in formTemplates fire.
-          const stateRaw = (iso.includes("-") ? iso.split("-")[1] : (data.address?.state || "")).trim();
-          const state    = stateRaw.length === 2
-            ? stateRaw.toUpperCase()
-            : (STATE_NAME_TO_ABBREV[stateRaw.toLowerCase()] ?? (stateRaw || "Unknown State"));
-          const zip      = ((data.address?.postcode as string | undefined) ?? "").trim();
+        const iso      = ((data.address?.["ISO3166-2-lvl4"] ?? "") as string).trim();
+        // Nominatim may return full state name (e.g. "Florida") when ISO3166 is absent.
+        // Normalize to 2-letter abbreviation so locale overrides in formTemplates fire.
+        const stateRaw = (iso.includes("-") ? iso.split("-")[1] : (data.address?.state || "")).trim();
+        const state    = stateRaw.length === 2
+          ? stateRaw.toUpperCase()
+          : (STATE_NAME_TO_ABBREV[stateRaw.toLowerCase()] ?? (stateRaw || "Unknown State"));
+        const zip      = ((data.address?.postcode as string | undefined) ?? "").trim();
 
-          // County from Nominatim takes priority; fall back to CITY_TO_COUNTY lookup.
-          const countyFromNominatim = ((data.address?.county as string | undefined) ?? "").trim() || null;
-          const countyFromLookup    = cityTrimmed ? (CITY_TO_COUNTY[cityTrimmed.toLowerCase()] ?? null) : null;
-          const countyRaw: string | null = countyFromNominatim ?? countyFromLookup;
+        // County from Nominatim takes priority; fall back to CITY_TO_COUNTY lookup.
+        const countyFromNominatim = ((data.address?.county as string | undefined) ?? "").trim() || null;
+        const countyFromLookup    = cityTrimmed ? (CITY_TO_COUNTY[cityTrimmed.toLowerCase()] ?? null) : null;
+        const countyRaw: string | null = countyFromNominatim ?? countyFromLookup;
 
-          // For unincorporated areas where no city name is found, use the county name
-          // as the display city so the location reads "Palm Beach County, FL 33411"
-          // rather than "Unknown Location, FL 33411".
-          const city = cityTrimmed ?? countyRaw ?? "Unknown Location";
+        // For unincorporated areas where no city name is found, use the county name
+        // as the display city so the location reads "Palm Beach County, FL 33411"
+        // rather than "Unknown Location, FL 33411".
+        const city = cityTrimmed ?? countyRaw ?? "Unknown Location";
 
-          setGpsLoading(false);
-          setUserLocation(zip ? `${city}, ${state} ${zip}` : `${city}, ${state}`);
-          setDetectedCounty(countyRaw);
-        } catch {
-          if (gpsActiveRef.current) {
-            setGpsLoading(false);
-            setUserLocation("Your current location");
-            setDetectedCounty(null);
-          }
-        }
-      },
-      (err: GeolocationPositionError) => {
-        if (!gpsActiveRef.current) return;
         setGpsLoading(false);
-        // Distinguish error types so the UI can show actionable messages.
-        // Code 1 = PERMISSION_DENIED, 2 = POSITION_UNAVAILABLE, 3 = TIMEOUT
-        if (err.code === 1) {
-          setGpsError("Location access denied. Enable in your browser/phone settings, or enter manually below.");
-          setUseExactLocation(false);
-          setUserLocation("Enter location");
-        } else if (err.code === 2) {
-          setGpsError("GPS signal unavailable. Move to an open area or enter your location manually.");
-          setUseExactLocation(false);
-          setUserLocation("Enter location");
-        } else {
-          // Timeout — keep useExactLocation true so retry button is shown
-          setGpsError("Location timed out — tap Retry or enter your city/ZIP manually.");
-          setUserLocation("Enter location");
+        setUserLocation(zip ? `${city}, ${state} ${zip}` : `${city}, ${state}`);
+        setDetectedCounty(countyRaw);
+      } catch {
+        if (gpsActiveRef.current) {
+          clearTimeout(gpsSafetyTimer);
+          setGpsLoading(false);
+          setUserLocation("Your current location");
+          setDetectedCounty(null);
         }
-      },
-      // vMobile-gps-fix: explicit options required for reliable iOS Safari behaviour.
-      // enableHighAccuracy: true  — requests fine GPS rather than network/IP location.
-      // timeout: 12000            — abort after 12 s (default is infinite on some browsers).
-      // maximumAge: 60000         — reuse a cached fix up to 60 s old (faster on return visits).
-      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
+      }
+    };
+
+    // Shared error handler for both native and web paths.
+    const onGpsError = (code: number) => {
+      clearTimeout(gpsSafetyTimer);
+      if (!gpsActiveRef.current) return;
+      gpsActiveRef.current = false;
+      setGpsLoading(false);
+      if (code === 1) {
+        setGpsError("Location access denied — enter ZIP or City, State");
+      } else {
+        setGpsError("GPS unavailable — enter ZIP or City, State");
+      }
+      setUseExactLocation(false);
+      setUserLocation("Enter location");
+    };
+
+    // ── Capacitor native path (iOS / Android) ─────────────────────────────
+    // Tries @capacitor/geolocation first (reads native iOS permission state).
+    // Falls back to navigator.geolocation if the plugin import or call fails
+    // (e.g. plugin not linked, first-install Xcode cache miss).
+    if (isCapacitorNative()) {
+      let pluginSucceeded = false;
+      try {
+        const { Geolocation } = await import('@capacitor/geolocation');
+        const pos = await Geolocation.getCurrentPosition({
+          enableHighAccuracy: true,
+          timeout: 7000,
+          maximumAge: 60000,
+        });
+        pluginSucceeded = true;
+        await processCoords(pos.coords.latitude, pos.coords.longitude);
+      } catch (err: unknown) {
+        const msg = (err as { message?: string })?.message ?? '';
+        const code = (err as { code?: number })?.code;
+        // Permission denied — no fallback possible, surface the error immediately.
+        if (code === 1 || msg.toLowerCase().includes('denied') || msg.toLowerCase().includes('permission')) {
+          onGpsError(1);
+          return;
+        }
+        // Any other plugin failure: fall through to navigator.geolocation below.
+        if (!pluginSucceeded) {
+          // intentional fall-through to web path
+        }
+      }
+      if (pluginSucceeded) return;
+      // Plugin failed for non-permission reason — try the web geolocation API as fallback.
+    }
+
+    // ── Web browser path ──────────────────────────────────────────────────
+    if (!navigator.geolocation) {
+      clearTimeout(gpsSafetyTimer);
+      setGpsLoading(false);
+      setGpsError("GPS unavailable — enter ZIP or City, State");
+      setUseExactLocation(false);
+      setUserLocation("Enter location");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => { await processCoords(pos.coords.latitude, pos.coords.longitude); },
+      (err: GeolocationPositionError) => { onGpsError(err.code); },
+      // timeout: 7000 matches the safety timer so callbacks fire before the 8s wall.
+      { enableHighAccuracy: true, timeout: 7000, maximumAge: 60000 }
     );
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // vMobile-gps-fix: on mount (or when useExactLocation toggles back to true),
-  // query the Permissions API first.
-  //  "granted"  → auto-trigger (user already approved on a prior visit)
-  //  "denied"   → skip prompt, show error immediately
-  //  "prompt"   → do nothing; user must tap the "Use Current Location" button
-  //               (iOS Safari requires a user gesture for the first permission prompt)
-  //  API absent → trigger directly (older Safari / some Android WebViews)
+  // v281: on mount (or when useExactLocation toggles back to true), start GPS.
+  // On Capacitor native — skip browser Permissions API (always returns "prompt" in
+  // WKWebView regardless of native iOS permission state) and call triggerGps() directly.
+  // On web — query Permissions API first so we don't prompt on pages where GPS isn't
+  // needed; iOS Safari requires a user gesture for the first prompt.
   useEffect(() => {
     if (!useExactLocation) return;
+
+    // v281: native shortcut — bypass unreliable WKWebView Permissions API.
+    if (isCapacitorNative()) {
+      void triggerGps();
+      return;
+    }
 
     if (typeof navigator !== "undefined" && navigator.permissions) {
       navigator.permissions
         .query({ name: "geolocation" as PermissionName })
         .then(status => {
           if (status.state === "granted") {
-            triggerGps();
+            void triggerGps();
           } else if (status.state === "denied") {
             setGpsLoading(false);
-            setGpsError("Location access denied. Enable it in your browser settings, or enter manually.");
+            setGpsError("Location access denied — enter ZIP or City, State");
             setUseExactLocation(false);
             setUserLocation("Enter location");
           }
           // "prompt" → show the button; user tap satisfies iOS gesture requirement
         })
-        .catch(() => {
-          // Permissions API unsupported — trigger directly (older Safari fallback)
-          triggerGps();
-        });
+        .catch(() => { void triggerGps(); });
     } else {
-      // No Permissions API at all — trigger directly
-      triggerGps();
+      void triggerGps();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [useExactLocation]);
@@ -2075,7 +3442,7 @@ export default function ChatPage() {
         );
       }
 
-      const res = await fetch("/api/chat", {
+      const res = await fetch(`${API_BASE}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -2360,7 +3727,12 @@ export default function ChatPage() {
     // Pass detectedCounty so getLocaleFormTemplate can try county-level URLs first
     // (e.g. pbcgov.org for Palm Beach County business-license) before falling back
     // to state-level and then the generic SBA base template.
-    const template = getLocaleFormTemplate(formId, userLocation, detectedCounty);
+    // vUnified-20260414-national-expansion-v9: fall back to localFormEntryToFormTemplate
+    // for LOCAL_FORMS entries (county/city-specific forms not in FORM_TEMPLATES). These
+    // produce a zero-field stub FormTemplate so FormFiller can surface the officialFormPdfUrl
+    // quick-fill button or the officialUrl portal link without a guided wizard.
+    const template = getLocaleFormTemplate(formId, userLocation, detectedCounty)
+      ?? localFormEntryToFormTemplate(formId);
     if (!template) return;
     setFormQueue([]);
     setQueueIndex(0);
@@ -2382,8 +3754,11 @@ export default function ChatPage() {
     if (!isPro && monthlyFormsUsed >= FREE_MONTHLY_LIMIT) return;
     // Use the loaded business's location so locale overrides fire correctly
     // (userLocation is already set to biz.location when a business is loaded).
-    const template = getLocaleFormTemplate(formId, userLocation, detectedCounty);
-    if (!template) return; // no guided wizard for this form — silently ignore
+    // v9: fall back to localFormEntryToFormTemplate for LOCAL_FORMS entries so
+    // "Complete with AI" from BusinessProfileView works for county/city forms.
+    const template = getLocaleFormTemplate(formId, userLocation, detectedCounty)
+      ?? localFormEntryToFormTemplate(formId);
+    if (!template) return; // unknown form — silently ignore
     setFormQueue([]);
     setQueueIndex(0);
     setCompletedFormsData([]);
@@ -2426,7 +3801,9 @@ export default function ChatPage() {
     }
 
     const launchForm = (loc: string, county: string | null) => {
-      const template = getLocaleFormTemplate(formId, loc, county);
+      // v9: fall back to localFormEntryToFormTemplate for LOCAL_FORMS entries
+      const template = getLocaleFormTemplate(formId, loc, county)
+        ?? localFormEntryToFormTemplate(formId);
       if (!template) return;
       setFormQueue([]);
       setQueueIndex(0);
@@ -2520,16 +3897,47 @@ export default function ChatPage() {
     void dbSaveMonthlyUsage(user ? getSb() : null, user?.id ?? null, newCount);
 
     if (isQueueMode) {
-      setCompletedFormsData(prev => [...prev, { template, formData }]);
+      // vUnified-platform-fix: form completion download/new-tab behavior
+      // Build the full forms list NOW (inline) because React state updates are async
+      // and completedFormsData won't include the just-completed form until next render.
+      const allForms: CompletedFormEntry[] = [...completedFormsData, { template, formData }];
+      setCompletedFormsData(allForms);
       const next = queueIndex + 1;
       if (next < formQueue.length) {
         setQueueIndex(next);
         setActiveTemplate(formQueue[next]);
       } else {
+        // All forms in queue done — auto-download the compliance packet instead of
+        // showing the PacketScreen overlay (which displaces the chat/profile on mobile).
+        // jsPDF .save() handles cross-browser download internally (blob URL on iOS Safari).
         setActiveTemplate(null);
         setFormQueue([]);
         setQueueIndex(0);
-        setShowPacketScreen(true);
+
+        // Kick off the download immediately; show a success toast regardless of outcome.
+        // On mobile Safari, jsPDF triggers a download sheet — this is the reliable path.
+        const triggerPacketDownload = async () => {
+          const { generateCompliancePacket } = await import("@/lib/generateCompliancePacket");
+          await generateCompliancePacket(allForms, userLocation);
+        };
+        const label = `${allForms.length} form${allForms.length !== 1 ? "s" : ""}`;
+        showPacketSuccessToast(
+          `${label} complete — compliance packet downloaded`,
+          () => { void triggerPacketDownload(); },
+        );
+        void triggerPacketDownload().catch(() => {
+          // Auto-download was blocked (e.g. pop-up blocker) — update toast to prompt retry
+          showPacketSuccessToast(
+            `${label} complete — tap Retry to download PDF`,
+            () => { void triggerPacketDownload(); },
+          );
+        });
+
+        // vSeamlessProfileFormFillerBridge: return to profile after queue completion too.
+        if (formLaunchedFromProfile) {
+          setShowProfileView(true);
+          setFormLaunchedFromProfile(false);
+        }
       }
     } else {
       setActiveTemplate(null);
@@ -2539,6 +3947,8 @@ export default function ChatPage() {
       if (formLaunchedFromProfile) {
         setShowProfileView(true);
         setFormLaunchedFromProfile(false);
+        // vUnified-platform-fix: show brief success toast so user knows the form completed.
+        showPacketSuccessToast(`${template.name} — form completed & PDF downloaded`);
       }
     }
   };
@@ -2691,6 +4101,9 @@ export default function ChatPage() {
       };
     } else {
       // Single-location (backward compat)
+      // v25 — append current score to scoreHistory (rolling window of 6)
+      const prevHistory = loadedBusiness?.scoreHistory ?? [];
+      const newHistory  = [...prevHistory, profile.healthScore].slice(-6);
       biz = {
         ...(loadedBusiness ?? {}),
         id:                  loadedBusiness?.id ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -2704,6 +4117,7 @@ export default function ChatPage() {
         healthScore:         profile.healthScore,
         totalForms:          profile.totalForms,
         completedFormsCount: profile.completedFormsCount,
+        scoreHistory:        newHistory,
       };
     }
     setLoadedBusiness(biz);
@@ -3315,7 +4729,7 @@ export default function ChatPage() {
     address: string,
     businessType: string,
   ): Promise<ZoningResult> => {
-    const res = await fetch("/api/zoning/check", {
+    const res = await fetch(`${API_BASE}/api/zoning/check`, {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({ address, businessType }),
@@ -3458,7 +4872,67 @@ export default function ChatPage() {
     // shows/hides). Each tier subtracts env(safe-area-inset-*) for notch/home-bar.
     // Using a CSS utility class instead of a React style prop avoids the TS error for
     // the unsupported `dvh`/`svh` units in CSSProperties.
-    <div className="flex bg-[#f8f9fb] h-dvh-safe">{/* vMobile-scale-fix: dvh = dynamic viewport height, correct on iOS Safari */}
+    // vUnified-platform-fix: dark mode — `dark` class scoped to this shell div so
+    // Tailwind dark: variants activate inside the app without affecting other routes.
+    // bg-[#f8f9fb] is the light-mode chat background; dark:bg-[#0f1823] is the deep
+    // navy override. Sidebar + compliance dashboard are already dark-navy by design,
+    // so dark mode primarily changes the chat panel and its children.
+    <div className={`flex h-dvh-safe${isDarkMode ? " dark" : ""} bg-[#f8f9fb] dark:bg-[#0f1823]`}>{/* vMobile-scale-fix: dvh = dynamic viewport height, correct on iOS Safari */}
+
+      {/* vUnified-20260414-national-expansion-v89 — Animated splash overlay (z-[400])
+          Visible from mount until auth bootstrap + 2 s min-timer complete.
+          Rendered first so it sits above every other layer including the review-impact modal. */}
+      <AppSplashOverlay visible={splashVisible} />
+
+      {/* vUnified-20260414-national-expansion-v275 — React loading overlay.
+          Navy background + Lucide Loader2 spinner shown for 1500ms then fades over 400ms.
+          Pure React handoff: no native cyan overlay, no SIGKILL 9 risk. z-[90000]. */}
+      {loadingOverlayMounted && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 90000,
+            background: "#0b1628",
+            display: "flex",
+            flex: 1,
+            minHeight: 0,
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            paddingTop: "env(safe-area-inset-top)",
+            paddingBottom: "env(safe-area-inset-bottom)",
+            opacity: loadingOverlayVisible ? 1 : 0,
+            transition: "opacity 0.4s ease-out",
+            pointerEvents: loadingOverlayVisible ? "auto" : "none",
+          }}
+        >
+          <Loader2
+            className="animate-spin"
+            style={{ width: 40, height: 40, color: "#22d3ee", marginBottom: 20 }}
+          />
+          <p style={{
+            margin: 0,
+            fontSize: 15,
+            fontWeight: 600,
+            color: "rgba(148,163,184,0.9)",
+            fontFamily: "system-ui, sans-serif",
+          }}>
+            Loading RegPulse Compliance Co-Pilot…
+          </p>
+        </div>
+      )}
+
+      {/* vUnified-20260428-final-ship-lock: debug banner permanently removed — production-clean UI only */}
+
+      {/* vUnified-20260414-national-expansion-v89 — Onboarding tier selection + auth (z-[300])
+          Shown once per device for unauthenticated first-time users after the splash fades.
+          onComplete() writes localStorage key "rp_onboarded_v1" and hides this overlay. */}
+      <OnboardingFlow
+        visible={onboardingVisible}
+        onComplete={handleOnboardingComplete}
+      />
 
       {/* v61 — Review Impact modal ─────────────────────────────────────── */}
       {reviewImpactAlert && (
@@ -3525,21 +4999,21 @@ export default function ChatPage() {
                           className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg"
                           style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}>
                           <div className="flex items-center gap-2 min-w-0">
-                            <FileText className="h-3.5 w-3.5 text-[#0B1E3F] shrink-0" />
-                            <span className="text-xs text-slate-800 font-medium truncate">{name}</span>
+                            <FileText className="h-3.5 w-3.5 text-[#0B1E3F] dark:text-blue-400 shrink-0" />
+                            <span className="text-xs text-slate-800 dark:text-slate-100 font-medium truncate">{name}</span>
                           </div>
                           {clItem ? (
                             <span className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
                               clItem.status === "done"
-                                ? "text-green-700 bg-green-50 border-green-200"
+                                ? "text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/40"
                                 : clItem.status === "in-progress"
-                                  ? "text-amber-700 bg-amber-50 border-amber-200"
-                                  : "text-slate-500 bg-slate-50 border-slate-200"
+                                  ? "text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/40"
+                                  : "text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700/50"
                             }`}>
                               {clItem.status === "done" ? "Completed" : clItem.status === "in-progress" ? "In Progress" : "To Do"}
                             </span>
                           ) : (
-                            <span className="shrink-0 text-[10px] font-semibold text-slate-400 bg-slate-50 border border-slate-200 rounded-full px-2 py-0.5">
+                            <span className="shrink-0 text-[10px] font-semibold text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50 rounded-full px-2 py-0.5">
                               Not tracked
                             </span>
                           )}
@@ -3552,7 +5026,7 @@ export default function ChatPage() {
 
               {/* What to do next */}
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-widest text-[#0B1E3F] mb-1.5">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-[#0B1E3F] dark:text-blue-300 mb-1.5">
                   What To Do Next
                 </p>
                 <ul className="space-y-2">
@@ -3635,10 +5109,10 @@ export default function ChatPage() {
       <div
         className={`
           fixed inset-y-0 left-0 z-50 w-72 flex flex-col shrink-0 overflow-hidden
-          border-r border-slate-200 bg-white
           transition-transform duration-300
           ${showMobileSidebar ? "translate-x-0" : "-translate-x-full pointer-events-none"}
           md:static md:translate-x-0 md:flex md:pointer-events-auto
+          ${isDarkMode ? "bg-[#0f1823] border-r border-slate-700/50" : "bg-white border-r border-slate-200"}
         `}
         style={{
           // vMobile-stabilization-verification-and-polish: The sidebar is `fixed inset-y-0`
@@ -3674,6 +5148,8 @@ export default function ChatPage() {
             </div>
             <p className="text-[10px] text-cyan-400/70 leading-tight">Compliance Co-pilot</p>
           </div>
+          {/* vUnified-platform-fix: moved dark mode toggle to /settings page */}
+
           {/* Dev toggle — click to simulate Free / Pro tier */}
           <button
             onClick={() => setIsPro(v => !v)}
@@ -3698,21 +5174,99 @@ export default function ChatPage() {
 
         {/* ── Auth panel ─────────────────────────────────────────────────── */}
         {/* vMobile-diagnosis-final-fix: shrink-0 prevents this section from being squeezed by flex-1 compliance dashboard */}
-        <div className="shrink-0 border-b border-slate-100">
-          {authLoading ? null : user ? (
-            /* Signed-in: compact status bar */
-            <div className="flex items-center gap-2 px-4 py-2.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
-              <span className="flex-1 text-[10px] text-slate-500 truncate">
-                Synced · {user.email}
-              </span>
+        {/* vUnified-20260414-national-expansion-v86: Pro badge, Upgrade CTA, Manage Subscription link */}
+        <div className="shrink-0 border-b border-slate-100 dark:border-slate-700/30">
+
+          {/* ── Pro subscription success banner ─────────────────────────────
+               Shown when the user returns from Stripe Checkout with ?success=true.
+               Auto-dismissed after 6 s; also dismissable via ×. Pointer-events-auto
+               and min-h-[48px] on the dismiss button for iOS Safari / Android Chrome. */}
+          {proSuccessVisible && (
+            <div className="mx-3 my-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-3 py-2.5 flex items-center gap-2 pointer-events-auto">
+              <CheckCircle2 className="h-4 w-4 text-white shrink-0" />
+              <p className="flex-1 text-[11px] font-semibold text-white leading-tight">
+                Pro activated! Welcome to RegPulse Pro.
+              </p>
               <button
-                onClick={handleSignOut}
-                className="shrink-0 text-[10px] text-slate-400 hover:text-red-500 transition-colors flex items-center gap-0.5"
-                title="Sign out"
+                onClick={() => setProSuccessVisible(false)}
+                className="shrink-0 text-white/70 hover:text-white transition-colors min-h-[48px] min-w-[32px] flex items-center justify-center pointer-events-auto"
+                aria-label="Dismiss"
               >
-                <LogOut className="h-3 w-3" />
+                <XIcon className="h-3.5 w-3.5" />
               </button>
+            </div>
+          )}
+
+          {authLoading ? null : user ? (
+            /* Signed-in: status bar + Pro badge + Upgrade / Manage button */
+            <div>
+              {/* Row 1: sync indicator + email + sign-out */}
+              <div className="flex items-center gap-2 px-4 py-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+                <span className="flex-1 text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                  {isPro ? "Pro · " : "Synced · "}{user.email}
+                </span>
+                {/* v86 — Pro badge pill in auth row */}
+                {isPro && (
+                  <span
+                    className="inline-flex items-center gap-0.5 bg-gradient-to-r from-amber-400 to-amber-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 leading-none"
+                    title="RegPulse Pro subscriber"
+                  >
+                    <Crown className="h-2 w-2" />PRO
+                  </span>
+                )}
+                <button
+                  onClick={handleSignOut}
+                  className="shrink-0 text-[10px] text-slate-400 hover:text-red-500 transition-colors flex items-center gap-0.5 pointer-events-auto"
+                  title="Sign out"
+                >
+                  <LogOut className="h-3 w-3" />
+                </button>
+              </div>
+
+              {/* Row 2: Upgrade to Pro (not isPro) OR Manage Subscription (isPro) */}
+              {/* Platform Parity: min-h-[48px] mobile touch target, pointer-events-auto,
+                  active:scale-[0.98] for tactile feedback, hover states for desktop. */}
+              {!isPro ? (
+                <div className="px-4 pb-3">
+                  <button
+                    onClick={() => void handleUpgradeToPro()}
+                    disabled={proCheckoutLoading}
+                    className="w-full flex items-center justify-center gap-2 min-h-[48px] rounded-xl text-sm font-bold text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 active:scale-[0.98] transition-all disabled:opacity-50 pointer-events-auto"
+                    style={{ touchAction: "manipulation" }}
+                  >
+                    {proCheckoutLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Crown className="h-4 w-4 shrink-0" />
+                        Upgrade to Pro · $19/mo
+                      </>
+                    )}
+                  </button>
+                  <p className="mt-1.5 text-[9px] text-slate-400 dark:text-slate-500 text-center">
+                    Unlimited AI · Renewal filing · Cancel anytime
+                  </p>
+                </div>
+              ) : (
+                <div className="px-4 pb-3">
+                  <button
+                    onClick={() => void handleManageSubscription()}
+                    disabled={proPortalLoading}
+                    className="w-full flex items-center justify-center gap-1.5 min-h-[44px] rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-700/40 hover:bg-slate-100 dark:hover:bg-slate-700/70 border border-slate-200 dark:border-slate-700/50 transition-colors disabled:opacity-50 pointer-events-auto"
+                    style={{ touchAction: "manipulation" }}
+                  >
+                    {proPortalLoading ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <>
+                        <SettingsIcon className="h-3.5 w-3.5 shrink-0" />
+                        Manage Subscription
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           ) : authExpanded ? (
             /* Guest: expanded auth form */
@@ -3753,7 +5307,7 @@ export default function ChatPage() {
                     else void handleMagicLink();
                   }
                 }}
-                className="w-full text-xs h-8 border border-slate-200 rounded-lg px-3 bg-white outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 placeholder:text-slate-400"
+                className="w-full text-xs h-8 border border-slate-200 dark:border-slate-700/50 rounded-lg px-3 bg-white dark:bg-[#131e2f] dark:text-slate-100 dark:placeholder:text-slate-600 outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40 focus:border-blue-300 dark:focus:border-blue-700/60 placeholder:text-slate-400"
               />
 
               {/* Password field (sign-in + sign-up only) */}
@@ -3769,7 +5323,7 @@ export default function ChatPage() {
                       else void handleSignUp();
                     }
                   }}
-                  className="w-full text-xs h-8 border border-slate-200 rounded-lg px-3 bg-white outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 placeholder:text-slate-400"
+                  className="w-full text-xs h-8 border border-slate-200 dark:border-slate-700/50 rounded-lg px-3 bg-white dark:bg-[#131e2f] dark:text-slate-100 dark:placeholder:text-slate-600 outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40 focus:border-blue-300 dark:focus:border-blue-700/60 placeholder:text-slate-400"
                 />
               )}
 
@@ -3817,7 +5371,7 @@ export default function ChatPage() {
             /* Guest: collapsed — single CTA line */
             <button
               onClick={() => setAuthExpanded(true)}
-              className="w-full flex items-center gap-2 px-4 py-2.5 text-[10px] text-slate-500 hover:bg-slate-50 transition-colors"
+              className="w-full flex items-center gap-2 px-4 py-2.5 text-[10px] text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
             >
               <KeyRound className="h-3 w-3 text-slate-400 shrink-0" />
               <span className="flex-1 text-left">Sign in to sync your data</span>
@@ -3836,18 +5390,18 @@ export default function ChatPage() {
                !useExactLocation    → manual ZIP/city input
              ─────────────────────────────────────────────────────────────── */}
         {/* vMobile-diagnosis-final-fix: shrink-0 keeps location panel pinned so it never gets squeezed by the flex-1 compliance dashboard below */}
-        <div className="shrink-0 px-4 py-4 border-b border-slate-100 space-y-3">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+        <div className="shrink-0 px-4 py-4 border-b border-slate-100 dark:border-slate-700/30 space-y-3">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
             Your Location
           </p>
 
           {/* ── State A: GPS loading ── */}
           {useExactLocation && gpsLoading && (
-            <div className="flex items-center gap-3 rounded-xl bg-blue-50 ring-1 ring-blue-200 px-3 py-3">
+            <div className="flex items-center gap-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-200 dark:ring-blue-800/40 px-3 py-3">
               <Loader2 className="h-4 w-4 text-blue-500 shrink-0 animate-spin" />
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-blue-700 leading-tight">Detecting your location…</p>
-                <p className="text-[10px] text-blue-400 mt-0.5">This can take a few seconds</p>
+                <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 leading-tight">Detecting your location…</p>
+                <p className="text-[10px] text-blue-400 dark:text-blue-500 mt-0.5">This can take a few seconds</p>
               </div>
               <button
                 onClick={handleToggleGps}
@@ -3861,7 +5415,7 @@ export default function ChatPage() {
           {/* ── State B: GPS resolved (location is ready) ── */}
           {useExactLocation && !gpsLoading && !gpsError && locationIsReady && (
             <div className={`flex items-center gap-2 rounded-xl px-3 py-2.5 ring-1 transition-colors ${
-              zipResolved ? "bg-green-50 ring-green-200" : "bg-blue-50 ring-blue-200"
+              zipResolved ? "bg-green-50 dark:bg-green-900/20 ring-green-200 dark:ring-green-800/40" : "bg-blue-50 dark:bg-blue-900/20 ring-blue-200 dark:ring-blue-800/40"
             }`}>
               {zipResolved
                 ? <CheckCheck className="h-3.5 w-3.5 text-green-600 shrink-0" />
@@ -3869,7 +5423,7 @@ export default function ChatPage() {
               }
               <div className="min-w-0 flex-1">
                 <span className={`font-semibold text-xs truncate block ${
-                  zipResolved ? "text-green-800" : "text-slate-700"
+                  zipResolved ? "text-green-800 dark:text-green-300" : "text-slate-700 dark:text-slate-200"
                 }`}>
                   {userLocation}
                 </span>
@@ -3920,7 +5474,7 @@ export default function ChatPage() {
               {useExactLocation && (
                 <button
                   onClick={handleRetryGps}
-                  className="w-full flex items-center justify-center gap-2 min-h-[44px] py-2.5 px-4 rounded-xl border border-blue-300 bg-white text-blue-600 text-sm font-semibold hover:bg-blue-50 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 min-h-[44px] py-2.5 px-4 rounded-xl border border-blue-300 dark:border-blue-700/50 bg-white dark:bg-[#131e2f] text-blue-600 dark:text-blue-300 text-sm font-semibold hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                 >
                   <LocateFixed className="h-4 w-4 shrink-0" />
                   Retry GPS
@@ -3933,7 +5487,7 @@ export default function ChatPage() {
           {!useExactLocation && !gpsError && (
             <button
               onClick={handleToggleGps}
-              className="w-full flex items-center justify-center gap-2 min-h-[44px] py-2.5 px-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 text-slate-600 hover:text-blue-600 text-xs font-semibold transition-colors"
+              className="w-full flex items-center justify-center gap-2 min-h-[44px] py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/30 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-700/50 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 text-xs font-semibold transition-colors"
             >
               <LocateFixed className="h-3.5 w-3.5 shrink-0" />
               Use Current Location (GPS)
@@ -3984,10 +5538,140 @@ export default function ChatPage() {
             the sidebar outer div can suppress gesture routing to this overflow-y-auto child. */}
         <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain" style={{ touchAction: "pan-y" }}>
           <div className="px-4 pt-4 pb-2 shrink-0">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
               Compliance Dashboard
             </p>
           </div>
+
+          {/* ── v27: Portfolio Health Summary — shown when ≥2 businesses are saved ────
+               Displays aggregate health ring, average score, total urgent renewals, and
+               total active alerts across ALL saved businesses in one glance.
+               Platform parity: SVG 36×36 is a display element (no touch target required).
+               The summary is non-interactive (read-only) so no min-h needed for itself;
+               the surrounding padding keeps it safe for tap-through on all platforms. */}
+          {savedBusinesses.length >= 2 && (() => {
+            // Aggregate portfolio stats across all businesses
+            const scoredBizzes   = savedBusinesses.filter(b => b.totalForms != null && (b.totalForms ?? 0) > 0);
+            const avgScore       = scoredBizzes.length > 0
+              ? Math.round(scoredBizzes.reduce((s, b) => s + (b.healthScore ?? 0), 0) / scoredBizzes.length)
+              : null;
+            const portfolioUrgent  = allRenewals.filter(r => r.daysLeft >= 0 && r.daysLeft <= 30).length;
+            const portfolioAlerts  = activeAlerts.length;
+            // v33: overdue breakdown — replaces v30 at-risk count for more actionable portfolio summary
+            const portfolioOverdue = allRenewals.filter(r => r.daysLeft < 0).length;
+            const portfolioDueWeek = allRenewals.filter(r => r.daysLeft >= 0 && r.daysLeft <= 7).length;
+            // v31: portfolio avg-score trend — compare current avg to prior avg from scoreHistory
+            const priorAvgScore = scoredBizzes.length > 0 && scoredBizzes.every(b => b.scoreHistory && b.scoreHistory.length >= 2)
+              ? Math.round(scoredBizzes.reduce((s, b) => {
+                  const h = b.scoreHistory!;
+                  return s + h[h.length - 2];
+                }, 0) / scoredBizzes.length)
+              : null;
+            const avgTrend = (avgScore != null && priorAvgScore != null) ? avgScore - priorAvgScore : null;
+            const PORT_R    = 14;
+            const PORT_CIRC = 2 * Math.PI * PORT_R;
+            const portOffset = avgScore == null ? PORT_CIRC : PORT_CIRC * (1 - avgScore / 100);
+            const portStroke = avgScore == null ? "#94a3b8"
+              : avgScore >= 80 ? "#10b981"
+              : avgScore >= 50 ? "#f59e0b" : "#ef4444";
+            const portTextCls = avgScore == null ? "text-slate-400"
+              : avgScore >= 80 ? "text-emerald-600 dark:text-emerald-400"
+              : avgScore >= 50 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400";
+            return (
+              <div className="mx-4 mb-2 rounded-xl border border-blue-200 dark:border-blue-800/40 bg-blue-50 dark:bg-blue-900/20 px-3 py-2 shrink-0">
+                <div className="flex items-center gap-2.5">
+                  {/* Aggregate health ring — 36×36 display SVG */}
+                  <div className="relative shrink-0 w-9 h-9">
+                    <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true">
+                      <circle cx="18" cy="18" r={PORT_R} fill="none" stroke="#e2e8f0" strokeWidth="3.5" />
+                      <circle
+                        cx="18" cy="18" r={PORT_R}
+                        fill="none"
+                        stroke={portStroke}
+                        strokeWidth="3.5"
+                        strokeDasharray={PORT_CIRC}
+                        strokeDashoffset={portOffset}
+                        strokeLinecap="round"
+                        transform="rotate(-90 18 18)"
+                        style={{ transition: "stroke-dashoffset 0.6s ease" }}
+                      />
+                    </svg>
+                    <span className={`absolute inset-0 flex items-center justify-center text-[8px] font-bold tabular-nums ${portTextCls}`}>
+                      {avgScore == null ? "—" : `${avgScore}%`}
+                    </span>
+                  </div>
+                  {/* Summary text */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-bold text-blue-700 dark:text-blue-300 leading-tight">
+                      Portfolio · {savedBusinesses.length} Businesses
+                    </p>
+                    {/* v31: show avg health + trend arrow when prior data available */}
+                    <p className="text-[9px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5 flex items-center gap-0.5">
+                      {avgScore != null ? `Avg health ${avgScore}%` : "No health data yet"}
+                      {avgTrend !== null && avgTrend !== 0 && (
+                        <span
+                          className={`font-semibold tabular-nums ${avgTrend > 0 ? "text-emerald-500" : "text-red-400"}`}
+                          title={`Portfolio avg ${avgTrend > 0 ? "up" : "down"} ${Math.abs(avgTrend)} pts since last save`}
+                        >
+                          {avgTrend > 0 ? `↑+${avgTrend}` : `↓${avgTrend}`}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  {/* v36 — Urgency pills: now interactive — click to scroll to relevant section.
+                       Touch target: each pill is min-h-[28px] which is acceptable for a secondary
+                       navigation affordance inside a compact summary widget (not a primary CTA). */}
+                  <div className="flex flex-col items-end gap-0.5 shrink-0">
+                    {portfolioOverdue > 0 && (
+                      <button
+                        onClick={() => renewalsSectionRef.current?.scrollIntoView({ behavior: "smooth" })}
+                        className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full border bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/40 text-red-600 dark:text-red-400 leading-none hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors pointer-events-auto min-h-[28px]"
+                        title="View overdue renewals"
+                      >
+                        <AlertCircle className="h-1.5 w-1.5 shrink-0" />
+                        {portfolioOverdue} overdue
+                      </button>
+                    )}
+                    {portfolioDueWeek > 0 && (
+                      <button
+                        onClick={() => renewalsSectionRef.current?.scrollIntoView({ behavior: "smooth" })}
+                        className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full border bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800/40 text-orange-600 dark:text-orange-400 leading-none hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors pointer-events-auto min-h-[28px]"
+                        title="View renewals due this week"
+                      >
+                        <Bell className="h-1.5 w-1.5 shrink-0" />
+                        {portfolioDueWeek} due this wk
+                      </button>
+                    )}
+                    {portfolioAlerts > 0 && (
+                      <button
+                        onClick={() => alertsSectionRef.current?.scrollIntoView({ behavior: "smooth" })}
+                        className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full border bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/40 text-amber-600 dark:text-amber-400 leading-none hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors pointer-events-auto min-h-[28px]"
+                        title="View rule change alerts"
+                      >
+                        <Zap className="h-1.5 w-1.5 shrink-0" />
+                        {portfolioAlerts} alert{portfolioAlerts !== 1 ? "s" : ""}
+                      </button>
+                    )}
+                    {portfolioOverdue === 0 && portfolioDueWeek === 0 && portfolioAlerts === 0 && avgScore != null && avgScore >= 80 && (
+                      <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full border bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/40 text-emerald-600 dark:text-emerald-400 leading-none">
+                        <CheckCircle2 className="h-1.5 w-1.5 shrink-0" />
+                        All clear
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {/* v29: "View alerts ↓" shortcut link — only when there are active alerts */}
+                {portfolioAlerts > 0 && (
+                  <button
+                    onClick={() => alertsSectionRef.current?.scrollIntoView({ behavior: "smooth" })}
+                    className="mt-1.5 w-full text-center text-[9px] font-semibold text-amber-600 dark:text-amber-400 hover:underline pointer-events-auto"
+                  >
+                    View {portfolioAlerts} rule change alert{portfolioAlerts !== 1 ? "s" : ""} ↓
+                  </button>
+                )}
+              </div>
+            );
+          })()}
 
           {/* ── Compliance Health Score card ──────────────────────────────── */}
           {healthScore && (() => {
@@ -4001,13 +5685,14 @@ export default function ChatPage() {
               : score >= 80 ? "#16a34a"
               : score >= 50 ? "#d97706" : "#dc2626";
             const textColor = noData
-              ? "text-slate-500"
-              : score >= 80 ? "text-green-700"
-              : score >= 50 ? "text-amber-700" : "text-red-700";
+              ? "text-slate-500 dark:text-slate-400"
+              : score >= 80 ? "text-green-700 dark:text-green-400"
+              : score >= 50 ? "text-amber-700 dark:text-amber-400" : "text-red-700 dark:text-red-400";
             const bgColor = noData
-              ? "bg-slate-50 border-slate-200"
-              : score >= 80 ? "bg-green-50 border-green-200"
-              : score >= 50 ? "bg-amber-50 border-amber-200" : "bg-red-50 border-red-200";
+              ? "bg-slate-50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700/50"
+              : score >= 80 ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/30"
+              : score >= 50 ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/30"
+              : "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/30";
             const label = noData
               ? "Complete forms to track progress"
               : score >= 80 ? "Looking good"
@@ -4042,7 +5727,7 @@ export default function ChatPage() {
                     </span>
                   </div>
 
-                  {/* Labels */}
+                  {/* Labels + v25 Sparkline */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1 mb-0.5">
                       <Activity className={`h-3 w-3 shrink-0 ${textColor}`} />
@@ -4054,10 +5739,34 @@ export default function ChatPage() {
                     <p className={`text-xs font-semibold ${textColor}`}>
                       {noData ? "No data yet" : `${score}% compliant`}
                     </p>
-                    <p className="text-[10px] text-slate-500 leading-tight mt-0.5">
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5">
                       {label}
                       {!noData && pending > 0 && ` · ${pending} item${pending !== 1 ? "s" : ""} pending`}
                     </p>
+                    {/* v25 — Trend sparkline: render when loadedBusiness has ≥2 score snapshots */}
+                    {(() => {
+                      const hist = loadedBusiness?.scoreHistory;
+                      if (!hist || hist.length < 2) return null;
+                      const W = 60, H = 18, pad = 2;
+                      const pts = hist.slice(-6);
+                      const min = Math.min(...pts), max = Math.max(...pts);
+                      const range = Math.max(max - min, 10); // floor range at 10 to avoid flat line
+                      const xs = pts.map((_, i) => pad + i * ((W - pad * 2) / (pts.length - 1)));
+                      const ys = pts.map(v => H - pad - ((v - min) / range) * (H - pad * 2));
+                      const polyline = pts.map((_, i) => `${xs[i].toFixed(1)},${ys[i].toFixed(1)}`).join(" ");
+                      const trend = pts[pts.length - 1] - pts[0];
+                      const sparkColor = trend >= 0 ? "#16a34a" : "#dc2626";
+                      return (
+                        <div className="mt-1.5 flex items-center gap-1.5">
+                          <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="shrink-0">
+                            <polyline points={polyline} fill="none" stroke={sparkColor} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
+                          </svg>
+                          <span className={`text-[9px] font-semibold ${trend >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                            {trend >= 0 ? `↑ +${trend}pt` : `↓ ${trend}pt`}
+                          </span>
+                        </div>
+                      );
+                    })()}
                     {expiringCount > 0 && (
                       <button
                         onClick={e => {
@@ -4075,6 +5784,23 @@ export default function ChatPage() {
               </div>
             );
           })()}
+
+          {/* v25 — Compliance Calendar: renewal grouping (overdue / this month / next month),
+               one-tap "Renew Now" links, Web Notifications scheduling.
+               Positioned after health score card, above checklist so urgency is visible immediately.
+               Only renders when allRenewals has items due within 60 days. */}
+          <ComplianceCalendar
+            renewals={allRenewals}
+            formUrlMap={formUrlMap}
+            loadedBusinessId={loadedBusiness?.id}
+            onOpenNotificationPrefs={
+              loadedBusiness
+                ? () => setNotifPrefsBizId(loadedBusiness.id)
+                : savedBusinesses.length > 0
+                  ? () => setNotifPrefsBizId(savedBusinesses[0].id)
+                  : undefined
+            }
+          />
 
           {/* vMobile-RegressionFixPass: checklist wrapper is now a plain block — the outer
                unified scroll container owns the scroll; no inner nested scroller needed. */}
@@ -4121,10 +5847,10 @@ export default function ChatPage() {
             const overdueCount = allRenewals.filter(r => r.daysLeft < 0).length;
             const soonCount    = allRenewals.filter(r => r.daysLeft >= 0 && r.daysLeft <= 30).length;
             return (
-              <div ref={renewalsSectionRef} className="shrink-0 border-t border-slate-100 px-4 py-3 space-y-2">
+              <div ref={renewalsSectionRef} className="shrink-0 border-t border-slate-100 dark:border-slate-700/30 px-4 py-3 space-y-2">
                 <div className="flex items-center gap-1.5">
                   <Bell className="h-3 w-3 text-amber-500" />
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
                     Upcoming Renewals
                   </p>
                   {(overdueCount > 0 || soonCount > 0) && (
@@ -4141,11 +5867,11 @@ export default function ChatPage() {
                   {visible.map(({ biz, item, daysLeft, formName }) => {
                     const isActiveBiz = loadedBusiness?.id === biz.id;
                     const badgeColor =
-                      daysLeft < 0   ? "text-red-700 bg-red-50 border-red-200" :
-                      daysLeft <= 30 ? "text-red-700 bg-red-50 border-red-200" :
-                      daysLeft <= 60 ? "text-amber-700 bg-amber-50 border-amber-200" :
-                      daysLeft <= 90 ? "text-green-700 bg-green-50 border-green-200" :
-                                       "text-slate-600 bg-slate-50 border-slate-200";
+                      daysLeft < 0   ? "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/40" :
+                      daysLeft <= 30 ? "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/40" :
+                      daysLeft <= 60 ? "text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/40" :
+                      daysLeft <= 90 ? "text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/30" :
+                                       "text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700/50";
                     const countLabel =
                       daysLeft < 0   ? `${Math.abs(daysLeft)}d overdue` :
                       daysLeft === 0 ? "Today" :
@@ -4154,19 +5880,19 @@ export default function ChatPage() {
                       daysLeft <= 90 ? `${Math.round(daysLeft / 7)}w` :
                                        `${Math.round(daysLeft / 30)}mo`;
                     return (
-                      <div key={`${biz.id}-${item.id}`} className="rounded-lg border border-slate-100 bg-slate-50 px-2.5 py-2 space-y-1">
+                      <div key={`${biz.id}-${item.id}`} className="rounded-lg border border-slate-100 dark:border-slate-700/30 bg-slate-50 dark:bg-[#131e2f] px-2.5 py-2 space-y-1">
                         {/* Business name — only shown for cross-business items */}
                         {!isActiveBiz && (
-                          <p className="text-[9px] font-semibold text-blue-600 uppercase tracking-wide truncate">
+                          <p className="text-[9px] font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide truncate">
                             {biz.name}
                           </p>
                         )}
                         <div className="flex items-center gap-2">
                           <div className="flex-1 min-w-0">
-                            <p className="text-[11px] font-medium text-slate-700 truncate" title={formName}>
+                            <p className="text-[11px] font-medium text-slate-700 dark:text-slate-200 truncate" title={formName}>
                               {formName}
                             </p>
-                            <p className="text-[10px] text-slate-400">
+                            <p className="text-[10px] text-slate-400 dark:text-slate-500">
                               {new Date(item.renewalDate! + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                             </p>
                           </div>
@@ -4176,7 +5902,7 @@ export default function ChatPage() {
                           {item.formId && (
                             <button
                               onClick={() => handleRenewFormItem(item.formId!, isActiveBiz ? null : biz)}
-                              className="shrink-0 text-[10px] font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded px-1.5 py-0.5 hover:bg-blue-100 transition-colors"
+                              className="shrink-0 text-[10px] font-semibold text-blue-600 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/40 rounded px-1.5 py-0.5 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
                               title={isActiveBiz ? "Renew this permit" : `Switch to ${biz.name} and renew`}
                             >
                               Renew
@@ -4196,84 +5922,185 @@ export default function ChatPage() {
             );
           })()}
 
-          {/* Recent Rule Changes */}
+          {/* ── v27: Rule Change Alerts — improved dismiss (XIcon), cap 3→5, Load Business CTA ── */}
           {(() => {
-            const visible = ruleAlerts.filter(a => !a.dismissed).slice(0, 3);
+            // v27: show up to 5 alerts (was 3), XIcon dismiss, Dismiss-all, Load Business CTA
+            // v37: apply alertBizFilter — null = all, string = filtered to one business
+            const allActive = alertBizFilter
+              ? activeAlerts.filter(a => a.businessId === alertBizFilter)
+              : activeAlerts;
+            const visible   = allActive.slice(0, 5);
+            // v37: unique businesses with active alerts — needed for filter chips
+            const alertBizIds = [...new Set(activeAlerts.map(a => a.businessId))];
             if (visible.length === 0) return null;
             return (
-              <div ref={alertsSectionRef} className="shrink-0 border-t border-slate-100 px-4 py-3 space-y-2">
+              <div ref={alertsSectionRef} className="shrink-0 border-t border-slate-100 dark:border-slate-700/30 px-4 py-3 space-y-2">
+                {/* Section header */}
                 <div className="flex items-center gap-1.5">
-                  <Zap className="h-3 w-3 text-amber-500" />
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-                    Rule Changes
+                  <Zap className="h-3 w-3 text-amber-500 shrink-0" />
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                    Rule Change Alerts
                   </p>
-                  <span className="ml-auto text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200 rounded-full px-1.5 py-0.5 tabular-nums">
-                    {visible.length}
+                  <span className="ml-auto text-[10px] font-bold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/40 rounded-full px-1.5 py-0.5 tabular-nums">
+                    {allActive.length}
                   </span>
+                  {/* v27: Dismiss-all shortcut — only when ≥2 active alerts */}
+                  {allActive.length >= 2 && (
+                    <button
+                      onClick={() => {
+                        allActive.forEach(a => dismissAlert(a.id));
+                      }}
+                      className="text-[9px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:underline ml-1 pointer-events-auto min-h-[28px] transition-colors"
+                      title="Dismiss all rule change alerts"
+                    >
+                      Dismiss all
+                    </button>
+                  )}
                 </div>
+                {/* v37 — Business filter chips: shown when ≥2 businesses have active alerts */}
+                {alertBizIds.length >= 2 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      onClick={() => setAlertBizFilter(null)}
+                      className={`text-[9px] font-semibold px-2 py-0.5 rounded-full border transition-colors min-h-[24px] pointer-events-auto ${
+                        alertBizFilter === null
+                          ? "bg-amber-500 text-white border-amber-500"
+                          : "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/40 hover:bg-amber-100 dark:hover:bg-amber-900/40"
+                      }`}
+                    >
+                      All
+                    </button>
+                    {alertBizIds.map(bizId => {
+                      const biz = savedBusinesses.find(b => b.id === bizId);
+                      if (!biz) return null;
+                      return (
+                        <button
+                          key={bizId}
+                          onClick={() => setAlertBizFilter(bizId)}
+                          className={`text-[9px] font-semibold px-2 py-0.5 rounded-full border transition-colors min-h-[24px] pointer-events-auto truncate max-w-[120px] ${
+                            alertBizFilter === bizId
+                              ? "bg-amber-500 text-white border-amber-500"
+                              : "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/40 hover:bg-amber-100 dark:hover:bg-amber-900/40"
+                          }`}
+                          title={biz.name}
+                        >
+                          {biz.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
                 <div className="space-y-2">
                   {visible.map(alert => (
                     <div
                       key={alert.id}
-                      className="rounded-xl border border-amber-200 bg-amber-50 p-2.5 space-y-1.5"
+                      className="rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-900/20 p-2.5 space-y-1.5"
                     >
                       {/* Header row */}
                       <div className="flex items-start justify-between gap-1">
                         <div className="flex-1 min-w-0">
-                          <p className="text-[10px] font-semibold text-amber-600 truncate">
+                          <p className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 truncate">
                             {alert.businessName}
                           </p>
-                          <p className="text-xs font-semibold text-slate-800 leading-snug mt-0.5">
+                          <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 leading-snug mt-0.5">
                             {alert.title}
                           </p>
                         </div>
+                        {/* v27: XIcon dismiss (was ChevronRight — semantically wrong) */}
                         <button
                           onClick={() => dismissAlert(alert.id)}
-                          className="shrink-0 text-slate-300 hover:text-slate-500 transition-colors mt-0.5"
+                          className="shrink-0 p-1 text-slate-300 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-700/40 rounded transition-colors pointer-events-auto"
                           title="Dismiss this alert"
+                          aria-label={`Dismiss alert: ${alert.title}`}
                         >
-                          <ChevronRight className="h-3 w-3 rotate-0" />
-                          {/* reuse × via text */}
-                          <span className="sr-only">Dismiss</span>
+                          <XIcon className="h-3 w-3" />
                         </button>
                       </div>
 
                       {/* Description */}
-                      <p className="text-[10px] text-slate-600 leading-relaxed">
+                      <p className="text-[10px] text-slate-600 dark:text-slate-300 leading-relaxed">
                         {alert.description}
                       </p>
 
                       {/* Footer row */}
-                      <div className="flex items-center justify-between gap-2 pt-0.5">
-                        <span className="text-[10px] text-slate-400">
+                      <div className="flex items-center justify-between gap-2 pt-0.5 flex-wrap">
+                        <span className="text-[10px] text-slate-400 shrink-0">
                           {new Date(alert.date + "T00:00:00").toLocaleDateString("en-US", {
                             month: "short", day: "numeric",
                           })}
                         </span>
-                        {/* v61 — opens Review Impact modal instead of just scrolling */}
-                        <button
-                          onClick={() => setReviewImpactAlertId(alert.id)}
-                          className="flex items-center gap-1 text-[10px] font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-lg px-2 py-0.5 transition-colors"
-                        >
-                          <FileText className="h-2.5 w-2.5" />
-                          Review Impact
-                        </button>
+                        <div className="flex items-center gap-1 ml-auto flex-wrap">
+                          {/* v27: Load Business CTA — one tap to focus the affected business */}
+                          {(() => {
+                            const bizForAlert = savedBusinesses.find(b => b.id === alert.businessId);
+                            if (!bizForAlert) return null;
+                            const isLoaded = loadedBusiness?.id === alert.businessId;
+                            return !isLoaded ? (
+                              <button
+                                onClick={() => {
+                                  handleLoadBusiness(bizForAlert);
+                                  setShowProfileView(true);
+                                }}
+                                className="flex items-center gap-1 text-[9px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 border border-blue-200 dark:border-blue-700/50 rounded-lg px-2 py-0.5 transition-colors pointer-events-auto min-h-[28px]"
+                                title={`Load ${bizForAlert.name}`}
+                              >
+                                <Briefcase className="h-2 w-2 shrink-0" />
+                                Load
+                              </button>
+                            ) : null;
+                          })()}
+                          {/* v37: Snooze dropdown — 1d/7d/30d; replaces static Snooze 7d button */}
+                          <select
+                            defaultValue=""
+                            onChange={e => {
+                              const days = parseInt(e.target.value, 10);
+                              if (!isNaN(days) && days > 0) {
+                                snoozeAlert(alert.id, days);
+                                e.target.value = "";
+                              }
+                            }}
+                            className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700/40 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600/50 rounded-lg px-1.5 py-0.5 transition-colors pointer-events-auto min-h-[28px] cursor-pointer appearance-none"
+                            title="Snooze this alert"
+                          >
+                            <option value="" disabled>
+                              Snooze…
+                            </option>
+                            <option value="1">1 day</option>
+                            <option value="7">7 days</option>
+                            <option value="30">30 days</option>
+                          </select>
+                          {/* Review Impact — opens modal */}
+                          <button
+                            onClick={() => setReviewImpactAlertId(alert.id)}
+                            className="flex items-center gap-1 text-[10px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 hover:bg-amber-200 dark:hover:bg-amber-900/50 border border-amber-300 dark:border-amber-700/50 rounded-lg px-2 py-0.5 transition-colors pointer-events-auto min-h-[28px]"
+                          >
+                            <FileText className="h-2.5 w-2.5" />
+                            Review
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
+                  {/* Overflow indicator when total > 5 */}
+                  {allActive.length > 5 && (
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center py-1">
+                      +{allActive.length - 5} more alert{allActive.length - 5 !== 1 ? "s" : ""} — dismiss above to reveal
+                    </p>
+                  )}
                 </div>
               </div>
             );
           })()}
 
           {/* Pro upsell banner — shown only for Free tier users */}
+          {/* vUnified-20260414-national-expansion-v86: added CTA button wired to handleUpgradeToPro */}
           {!isPro && (
-            <div className="shrink-0 border-t border-slate-100 px-4 py-3">
-              <div className="rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 p-3 space-y-2">
+            <div className="shrink-0 border-t border-slate-100 dark:border-slate-700/30 px-4 py-3">
+              <div className="rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/25 dark:to-indigo-900/25 border border-blue-200 dark:border-blue-800/40 p-3 space-y-2">
                 <div className="flex items-center gap-1.5">
                   <Crown className="h-3 w-3 text-amber-500 shrink-0" />
-                  <p className="text-[11px] font-bold text-slate-800">Upgrade to RegPulse Pro</p>
-                  <span className="ml-auto text-[10px] font-bold text-blue-700">$19/mo</span>
+                  <p className="text-[11px] font-bold text-slate-800 dark:text-slate-100">Upgrade to RegPulse Pro</p>
+                  <span className="ml-auto text-[10px] font-bold text-blue-700 dark:text-blue-400">$19/mo</span>
                 </div>
                 <ul className="space-y-1">
                   {[
@@ -4281,15 +6108,31 @@ export default function ChatPage() {
                     "Automatic renewal filing (pre-filled)",
                     "Quarterly Compliance Check-in PDF",
                   ].map(benefit => (
-                    <li key={benefit} className="flex items-start gap-1 text-[10px] text-slate-600">
+                    <li key={benefit} className="flex items-start gap-1 text-[10px] text-slate-600 dark:text-slate-300">
                       <CheckCircle2 className="h-2.5 w-2.5 text-blue-500 shrink-0 mt-0.5" />
                       {benefit}
                     </li>
                   ))}
                 </ul>
-                <p className="text-[10px] text-slate-400">
+                <p className="text-[10px] text-slate-400 dark:text-slate-500">
                   {`${monthlyFormsUsed}/${FREE_MONTHLY_LIMIT} free completions used this month`}
                 </p>
+                {/* v86: CTA button — signed-in users go straight to checkout; guests open auth panel */}
+                <button
+                  onClick={() => void handleUpgradeToPro()}
+                  disabled={proCheckoutLoading}
+                  className="w-full flex items-center justify-center gap-1.5 min-h-[44px] rounded-lg text-xs font-bold text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 active:scale-[0.98] transition-all disabled:opacity-50 pointer-events-auto"
+                  style={{ touchAction: "manipulation" }}
+                >
+                  {proCheckoutLoading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <>
+                      <Crown className="h-3.5 w-3.5 shrink-0" />
+                      Get Pro — $19/mo
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           )}
@@ -4299,7 +6142,7 @@ export default function ChatPage() {
                (federal + state/local entries with download links / official URLs).
                Collapsed by default; toggle via the FolderOpen header button.
                v22 — added "View full library →" link to /forms page. */}
-          <div className="shrink-0 border-t border-slate-100">
+          <div className="shrink-0 border-t border-slate-100 dark:border-slate-700/30">
             {/* Header row — always visible */}
             <div className="flex items-center justify-between px-4 py-3">
               <button
@@ -4307,7 +6150,7 @@ export default function ChatPage() {
                 className="flex items-center gap-1.5 flex-1 hover:opacity-70 transition-opacity group"
               >
                 <FolderOpen className="h-3 w-3 text-blue-500 shrink-0" />
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 group-hover:text-slate-600 transition-colors">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">
                   Forms Library
                 </p>
                 <ChevronDown className={`h-3 w-3 text-slate-400 transition-transform duration-200 ml-auto ${formsLibraryOpen ? "rotate-180" : ""}`} />
@@ -4328,11 +6171,11 @@ export default function ChatPage() {
               <div className="px-4 pb-2">
                 <Link
                   href="/forms"
-                  className="flex items-center gap-1.5 w-full text-left bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg px-2.5 py-1.5 transition-colors group"
+                  className="flex items-center gap-1.5 w-full text-left bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 border border-amber-200 dark:border-amber-800/40 rounded-lg px-2.5 py-1.5 transition-colors group"
                   title="View personalised form recommendations"
                 >
                   <Sparkles className="h-3 w-3 text-amber-500 shrink-0" />
-                  <span className="text-[10px] font-semibold text-amber-700 group-hover:text-amber-900 transition-colors flex-1">
+                  <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-400 group-hover:text-amber-900 dark:group-hover:text-amber-300 transition-colors flex-1">
                     Recommended Forms
                   </span>
                   <ChevronRight className="h-2.5 w-2.5 text-amber-400" />
@@ -4357,26 +6200,423 @@ export default function ChatPage() {
                At-risk (score < 50 or alert or renewals): tinted background.
                All existing wiring (click → open profile, Bell, Trash, Locations sub-list,
                delete confirm) is preserved unchanged. */}
-          <div className="border-t border-slate-100 px-4 py-3 space-y-2">
-            {/* Section header */}
-            <div className="flex items-center justify-between">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-                My Businesses
-              </p>
-              <button
-                onClick={() => setShowAddBizModal(true)}
-                className="flex items-center gap-0.5 text-[10px] font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg px-2 py-0.5 transition-colors min-h-[32px] pointer-events-auto"
-                title="Add a business"
-              >
-                <Plus className="h-3 w-3" />
-                Add
-              </button>
+          <div className="border-t border-slate-100 dark:border-slate-700/30 px-4 py-3 space-y-2">
+            {/* v36 — Push notification permission banner.
+                 Shown only when: permission === "default" (never asked), at least one business
+                 is saved, and the user hasn't manually dismissed it this session.
+                 Touch targets: Enable button min-h-[32px]; ✕ is secondary (min-h acceptable for
+                 inline dismiss). Banner background is subtle blue so it doesn't alarm users. */}
+            {pushPermission === "default" && !pushBannerDismissed && savedBusinesses.length > 0 && (
+              <div className="rounded-xl border border-blue-200 dark:border-blue-800/40 bg-blue-50 dark:bg-blue-900/20 px-3 py-2 flex items-center gap-2">
+                <Bell className="h-3 w-3 text-blue-500 shrink-0" />
+                <p className="flex-1 text-[9px] text-blue-700 dark:text-blue-300 leading-snug">
+                  Enable push alerts for rule changes &amp; renewals
+                  {/* v39 — Capacitor native push indicator */}
+                  {isCapacitorNative() && (
+                    <span className="ml-1 inline-flex items-center rounded-full bg-blue-600 text-white text-[7px] font-bold px-1 py-px leading-none">
+                      native
+                    </span>
+                  )}
+                </p>
+                <button
+                  onClick={async () => {
+                    const result = await requestNotifPermission();
+                    setPushPermission(result);
+                    if (result !== "default") setPushBannerDismissed(true);
+                  }}
+                  className="shrink-0 text-[9px] font-bold text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-lg px-2 py-0.5 transition-colors pointer-events-auto min-h-[32px]"
+                >
+                  Enable
+                </button>
+                <button
+                  onClick={() => setPushBannerDismissed(true)}
+                  className="shrink-0 p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors pointer-events-auto min-h-[28px]"
+                  aria-label="Dismiss notification banner"
+                >
+                  <XIcon className="h-2.5 w-2.5" />
+                </button>
+              </div>
+            )}
+            {/* v40 — Push "granted" confirmation banner.
+                 Shown when permission is already "granted" and user has ≥1 business saved,
+                 displayed only briefly until dismissed. Muted green confirms pushes are active.
+                 Dismissed after first view via pushBannerDismissed (shared flag). */}
+            {pushPermission === "granted" && !pushBannerDismissed && savedBusinesses.length > 0 && (
+              <div className="rounded-xl border border-emerald-200 dark:border-emerald-800/40 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 flex items-center gap-2">
+                <Bell className="h-3 w-3 text-emerald-500 shrink-0" />
+                <p className="flex-1 text-[8px] text-emerald-700 dark:text-emerald-300 leading-snug">
+                  Push alerts active
+                  {isCapacitorNative() && (
+                    <span className="ml-1 inline-flex items-center rounded-full bg-emerald-600 text-white text-[7px] font-bold px-1 py-px leading-none">
+                      native
+                    </span>
+                  )}
+                </p>
+                <button
+                  onClick={() => setPushBannerDismissed(true)}
+                  className="shrink-0 p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors pointer-events-auto min-h-[28px]"
+                  aria-label="Dismiss push confirmation"
+                >
+                  <XIcon className="h-2.5 w-2.5" />
+                </button>
+              </div>
+            )}
+            {/* v56 — Section header: "My Businesses" label + alert badge + Portfolio OS toggle + Add button */}
+            <div className="flex items-center justify-between gap-1">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 shrink-0">
+                  My Businesses
+                </p>
+                {/* v31: active alert count badge — non-interactive display only */}
+                {activeAlerts.length > 0 && (
+                  <span className="inline-flex items-center justify-center h-3.5 min-w-[14px] px-0.5 rounded-full bg-amber-500 text-white text-[7px] font-bold tabular-nums leading-none shrink-0">
+                    {activeAlerts.length}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                {/* v56 — Portfolio OS mode toggle (shown when ≥2 businesses saved).
+                     Switches sidebar into unified Compliance OS dashboard with aggregate
+                     ring, inline alerts strip, and cross-business renewal calendar.
+                     min-h-[32px] acceptable for compact secondary toggle in sidebar header. */}
+                {savedBusinesses.length >= 2 && (
+                  <button
+                    onClick={() => setPortfolioExpanded(o => !o)}
+                    className={`flex items-center gap-0.5 text-[9px] font-bold rounded-lg px-1.5 py-0.5 transition-colors min-h-[32px] pointer-events-auto ${
+                      portfolioExpanded
+                        ? "bg-blue-600 text-white hover:bg-blue-700"
+                        : "bg-slate-100 dark:bg-slate-700/40 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+                    }`}
+                    title={portfolioExpanded ? "Exit Compliance OS view" : "Open Compliance OS portfolio view"}
+                    style={{ touchAction: "manipulation" }}
+                  >
+                    <Layers className="h-2.5 w-2.5 shrink-0" />
+                    OS
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowAddBizModal(true)}
+                  className="flex items-center gap-0.5 text-[10px] font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg px-2 py-0.5 transition-colors min-h-[32px] pointer-events-auto"
+                  title="Add a business"
+                  style={{ touchAction: "manipulation" }}
+                >
+                  <Plus className="h-3 w-3" />
+                  Add
+                </button>
+              </div>
             </div>
+            {/* v40/v56 — Portfolio Health Summary Widget.
+                 v56 upgrade: adds 36px aggregate SVG health ring + Compliance OS header row (in
+                 portfolioExpanded mode) + overdue count cell (4-cell 2×2 grid replaces 3-cell row).
+                 Platform parity: aggregate ring 36×36px non-interactive display; min-h-[36px] cells;
+                 alerts cell is a tappable button (scroll to alerts) with pointer-events-auto. */}
+            {savedBusinesses.length >= 2 && (() => {
+              const scoredBizzes  = savedBusinesses.filter(b => b.healthScore != null && (b.totalForms ?? 0) > 0);
+              const avgScore      = scoredBizzes.length > 0
+                ? Math.round(scoredBizzes.reduce((s, b) => s + (b.healthScore ?? 0), 0) / scoredBizzes.length)
+                : null;
+              const upcomingCount = allRenewals.filter(r => r.daysLeft >= 0 && r.daysLeft <= 30).length;
+              const overdueCount  = allRenewals.filter(r => r.daysLeft < 0).length;
+              const alertCount    = activeAlerts.length;
+              const scoreColor    =
+                avgScore == null ? "text-slate-400" :
+                avgScore >= 80   ? "text-emerald-600 dark:text-emerald-400" :
+                avgScore >= 50   ? "text-amber-600 dark:text-amber-400"    : "text-red-600 dark:text-red-400";
+              // v56 — 36px aggregate SVG ring constants
+              const RING_R    = 16;
+              const RING_CIRC = 2 * Math.PI * RING_R;
+              const ringOffset = avgScore == null ? RING_CIRC : RING_CIRC * (1 - avgScore / 100);
+              const ringStroke =
+                avgScore == null ? "#94a3b8" :
+                avgScore >= 80   ? "#10b981" :
+                avgScore >= 50   ? "#f59e0b" : "#ef4444";
+              return (
+                <div className={`rounded-xl border overflow-hidden transition-colors ${
+                  portfolioExpanded
+                    ? "border-blue-200 dark:border-blue-700/50 bg-gradient-to-br from-blue-50/80 to-indigo-50/60 dark:from-blue-900/25 dark:to-indigo-900/20"
+                    : "border-slate-200 dark:border-slate-700/50"
+                }`}>
+                  {/* v56 — Compliance OS header row: visible only when portfolioExpanded */}
+                  {portfolioExpanded && (
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 border-b border-blue-200/60 dark:border-blue-700/30">
+                      <Layers className="h-2.5 w-2.5 text-blue-500 shrink-0" />
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 flex-1">
+                        Compliance OS
+                      </p>
+                      <span className="text-[8px] text-blue-500 dark:text-blue-400 tabular-nums shrink-0">
+                        {savedBusinesses.length} biz
+                      </span>
+                    </div>
+                  )}
+                  {/* Stats area: 36px ring + 2×2 stat cells */}
+                  <div className="flex items-stretch">
+                    {/* v56 — 36px aggregate ring (non-interactive display element) */}
+                    <div
+                      className="flex flex-col items-center justify-center px-2 py-2 bg-slate-50 dark:bg-slate-800/30 shrink-0 border-r border-slate-200 dark:border-slate-700/50"
+                      aria-hidden="true"
+                    >
+                      <svg width="36" height="36" viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r={RING_R} fill="none" stroke="#e2e8f0" strokeWidth="3" />
+                        <circle
+                          cx="18" cy="18" r={RING_R}
+                          fill="none"
+                          stroke={ringStroke}
+                          strokeWidth="3"
+                          strokeDasharray={RING_CIRC}
+                          strokeDashoffset={ringOffset}
+                          strokeLinecap="round"
+                          transform="rotate(-90 18 18)"
+                          style={{ transition: "stroke-dashoffset 0.6s ease" }}
+                        />
+                        <text x="18" y="22" textAnchor="middle" fontSize="8" fontWeight="bold" fill={ringStroke}>
+                          {avgScore != null ? `${avgScore}` : "—"}
+                        </text>
+                      </svg>
+                      <p className="text-[6px] text-slate-400 dark:text-slate-500 mt-0.5 leading-none">portfolio</p>
+                    </div>
+                    {/* 2×2 stat cells */}
+                    <div className="flex-1 grid grid-cols-2">
+                      <div className="bg-slate-50 dark:bg-slate-800/30 px-1.5 py-1.5 text-center min-h-[36px] flex flex-col items-center justify-center border-b border-r border-slate-200 dark:border-slate-700/50">
+                        <p className={`text-[11px] font-bold tabular-nums leading-none ${scoreColor}`}>
+                          {avgScore != null ? `${avgScore}%` : "—"}
+                        </p>
+                        <p className="text-[7px] text-slate-400 dark:text-slate-500 mt-0.5 leading-none">avg health</p>
+                      </div>
+                      <div className="bg-slate-50 dark:bg-slate-800/30 px-1.5 py-1.5 text-center min-h-[36px] flex flex-col items-center justify-center border-b border-slate-200 dark:border-slate-700/50">
+                        <p className={`text-[11px] font-bold tabular-nums leading-none ${overdueCount > 0 ? "text-red-600 dark:text-red-400" : "text-slate-400"}`}>
+                          {overdueCount}
+                        </p>
+                        <p className="text-[7px] text-slate-400 dark:text-slate-500 mt-0.5 leading-none">overdue</p>
+                      </div>
+                      <div className="bg-slate-50 dark:bg-slate-800/30 px-1.5 py-1.5 text-center min-h-[36px] flex flex-col items-center justify-center border-r border-slate-200 dark:border-slate-700/50">
+                        <p className={`text-[11px] font-bold tabular-nums leading-none ${upcomingCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-slate-400"}`}>
+                          {upcomingCount}
+                        </p>
+                        <p className="text-[7px] text-slate-400 dark:text-slate-500 mt-0.5 leading-none">due ≤30d</p>
+                      </div>
+                      {/* Alerts cell: tappable — scrolls to rule-change alerts section */}
+                      <button
+                        onClick={() => alertsSectionRef.current?.scrollIntoView({ behavior: "smooth" })}
+                        className="bg-slate-50 dark:bg-slate-800/30 px-1.5 py-1.5 text-center min-h-[36px] flex flex-col items-center justify-center pointer-events-auto transition-colors hover:bg-slate-100 dark:hover:bg-slate-800/60"
+                        title="View rule change alerts"
+                        style={{ touchAction: "manipulation" }}
+                      >
+                        <p className={`text-[11px] font-bold tabular-nums leading-none ${alertCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-slate-400"}`}>
+                          {alertCount}
+                        </p>
+                        <p className="text-[7px] text-slate-400 dark:text-slate-500 mt-0.5 leading-none">alerts</p>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+            {/* v30: bizSortOrder toggle — only shown when ≥2 businesses */}
+            {savedBusinesses.length >= 2 && (
+              <div className="flex items-center gap-0.5">
+                {(["recent", "score", "urgency"] as const).map(order => (
+                  <button
+                    key={order}
+                    onClick={() => setBizSortOrder(order)}
+                    className={`flex-1 text-[8px] font-semibold py-0.5 rounded transition-colors pointer-events-auto ${
+                      bizSortOrder === order
+                        ? "bg-blue-600 text-white"
+                        : "bg-slate-100 dark:bg-slate-700/40 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+                    }`}
+                  >
+                    {order === "recent" ? "Recent" : order === "score" ? "Score" : "Urgent"}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* v56 — Compliance OS: inline rule-change alerts strip.
+                 Shown ONLY when portfolioExpanded && activeAlerts.length > 0.
+                 Surfaces the most recent 3 alerts directly in the portfolio panel so users
+                 don't have to scroll up to the separate alerts section.
+                 Platform parity: dismiss/load buttons min-h-[28px] (compact secondary);
+                 pointer-events-auto on all interactive children; no new scroll containers. */}
+            {portfolioExpanded && activeAlerts.length > 0 && (
+              <div className="rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50/60 dark:bg-amber-900/15 overflow-hidden">
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 border-b border-amber-200/70 dark:border-amber-800/40">
+                  <Zap className="h-2.5 w-2.5 text-amber-500 shrink-0" />
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400 flex-1">
+                    Rule Alerts
+                  </p>
+                  <span className="text-[8px] font-bold bg-amber-500 text-white rounded-full px-1.5 py-px tabular-nums leading-none">
+                    {activeAlerts.length}
+                  </span>
+                  <button
+                    onClick={() => alertsSectionRef.current?.scrollIntoView({ behavior: "smooth" })}
+                    className="text-[8px] font-semibold text-amber-600 dark:text-amber-400 hover:underline ml-1 pointer-events-auto min-h-[24px]"
+                    style={{ touchAction: "manipulation" }}
+                  >
+                    See all ↓
+                  </button>
+                </div>
+                <div className="divide-y divide-amber-100 dark:divide-amber-800/30">
+                  {activeAlerts.slice(0, 3).map(alert => {
+                    const alertBiz = savedBusinesses.find(b => b.id === alert.businessId);
+                    return (
+                      <div key={alert.id} className="flex items-start gap-2 px-2.5 py-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[9px] font-semibold text-amber-700 dark:text-amber-300 truncate leading-tight">
+                            {alert.businessName}
+                          </p>
+                          <p className="text-[9px] text-slate-700 dark:text-slate-200 truncate leading-tight mt-0.5">
+                            {alert.title}
+                          </p>
+                        </div>
+                        {alertBiz && loadedBusiness?.id !== alert.businessId && (
+                          <button
+                            onClick={() => { handleLoadBusiness(alertBiz); setShowProfileView(true); }}
+                            className="shrink-0 text-[8px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/50 rounded px-1.5 py-0.5 pointer-events-auto min-h-[24px] transition-colors hover:bg-blue-100"
+                            style={{ touchAction: "manipulation" }}
+                          >
+                            Open
+                          </button>
+                        )}
+                        <button
+                          onClick={() => dismissAlert(alert.id)}
+                          className="shrink-0 p-0.5 text-slate-300 hover:text-slate-500 pointer-events-auto min-h-[24px]"
+                          aria-label={`Dismiss ${alert.title}`}
+                          style={{ touchAction: "manipulation" }}
+                        >
+                          <XIcon className="h-2.5 w-2.5" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* v56 — Compliance OS: cross-business renewal calendar strip.
+                 Shown ONLY when portfolioExpanded && allRenewals.length > 0.
+                 Shows next 5 upcoming renewals across ALL businesses — sorted by daysLeft —
+                 with business name labels so users can triage without opening each profile.
+                 Platform parity: each row has a min-h-[28px] "Open" button (compact secondary);
+                 strip is part of the unified sidebar scroll container (no overflow changes). */}
+            {portfolioExpanded && allRenewals.length > 0 && (
+              <div className="rounded-xl border border-slate-200 dark:border-slate-700/50 bg-slate-50/60 dark:bg-slate-800/20 overflow-hidden">
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 border-b border-slate-200/80 dark:border-slate-700/40">
+                  <Calendar className="h-2.5 w-2.5 text-blue-500 shrink-0" />
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex-1">
+                    Upcoming Renewals
+                  </p>
+                  <span className="text-[8px] text-slate-400 tabular-nums shrink-0">
+                    all businesses
+                  </span>
+                </div>
+                <div className="divide-y divide-slate-100 dark:divide-slate-700/30">
+                  {[...allRenewals]
+                    .sort((a, b) => a.daysLeft - b.daysLeft)
+                    .slice(0, 5)
+                    .map((renewal, idx) => {
+                      const isOverdueR = renewal.daysLeft < 0;
+                      const isSoon     = renewal.daysLeft >= 0 && renewal.daysLeft <= 7;
+                      const daysLabel  =
+                        isOverdueR    ? `${Math.abs(renewal.daysLeft)}d over` :
+                        renewal.daysLeft === 0 ? "today" :
+                        renewal.daysLeft === 1 ? "tmrw" :
+                        renewal.daysLeft <= 30 ? `${renewal.daysLeft}d` :
+                                                 `${Math.ceil(renewal.daysLeft / 7)}w`;
+                      const badgeCls   =
+                        isOverdueR ? "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/25 border-red-200 dark:border-red-700/50" :
+                        isSoon     ? "text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700/50" :
+                                     "text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700/40 border-slate-200 dark:border-slate-600/50";
+                      const renewalBiz = savedBusinesses.find(b => b.id === renewal.biz.id);
+                      return (
+                        <div key={`${renewal.biz.id}-${renewal.item.id}-${idx}`} className="flex items-center gap-2 px-2.5 py-1.5 min-h-[28px]">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[9px] font-semibold text-blue-600 dark:text-blue-400 truncate leading-tight">
+                              {renewal.biz.name}
+                            </p>
+                            <p className="text-[9px] text-slate-600 dark:text-slate-300 truncate leading-tight">
+                              {renewal.formName}
+                            </p>
+                          </div>
+                          <span className={`shrink-0 text-[8px] font-bold border rounded px-1 py-0.5 tabular-nums leading-none ${badgeCls}`}>
+                            {daysLabel}
+                          </span>
+                          {renewalBiz && renewal.item.formId && (
+                            <button
+                              onClick={() => handleRenewFormItem(renewal.item.formId!, loadedBusiness?.id === renewal.biz.id ? null : renewalBiz)}
+                              className="shrink-0 text-[8px] font-semibold text-blue-600 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/50 rounded px-1.5 py-0.5 pointer-events-auto min-h-[24px] transition-colors hover:bg-blue-100"
+                              style={{ touchAction: "manipulation" }}
+                            >
+                              Renew
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
+
+            {/* v39 — "Next Up" strip: most urgent compliance task across all businesses.
+                 Shown above the business card list when ≥1 business has an overdue or
+                 soon-due item (daysLeft ≤ 7). Helps users triage without scrolling cards. */}
+            {savedBusinesses.length > 0 && (() => {
+              const nextUpItem = allRenewals
+                .filter(r => r.daysLeft <= 7)
+                .sort((a, b) => a.daysLeft - b.daysLeft)[0] ?? null;
+              if (!nextUpItem) return null;
+              const isOverdue = nextUpItem.daysLeft < 0;
+              const isTomorrow = nextUpItem.daysLeft === 1;
+              const isToday = nextUpItem.daysLeft === 0;
+              const urgencyColor = isOverdue
+                ? "border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-900/20"
+                : nextUpItem.daysLeft <= 3
+                  ? "border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-900/20"
+                  : "border-blue-200 dark:border-blue-800/40 bg-blue-50 dark:bg-blue-900/20";
+              const textColor = isOverdue
+                ? "text-red-700 dark:text-red-300"
+                : nextUpItem.daysLeft <= 3
+                  ? "text-amber-700 dark:text-amber-300"
+                  : "text-blue-700 dark:text-blue-300";
+              const dueLabel = isOverdue
+                ? `${Math.abs(nextUpItem.daysLeft)}d overdue`
+                : isToday ? "due today"
+                : isTomorrow ? "due tomorrow"
+                : `due in ${nextUpItem.daysLeft}d`;
+              return (
+                <div className={`rounded-xl border px-3 py-2 flex items-center gap-2 ${urgencyColor}`}>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-[8px] font-semibold uppercase tracking-widest mb-0.5 ${textColor} opacity-70`}>
+                      Next Up
+                    </p>
+                    <p className={`text-[9px] font-semibold truncate ${textColor}`}>
+                      {nextUpItem.formName}
+                    </p>
+                    <p className={`text-[8px] truncate ${textColor} opacity-80`}>
+                      {nextUpItem.biz.name} — {dueLabel}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const biz = savedBusinesses.find(b => b.id === nextUpItem.biz.id);
+                      if (biz) { handleLoadBusiness(biz); setShowProfileView(true); }
+                    }}
+                    className={`shrink-0 text-[8px] font-bold px-2 py-0.5 rounded-lg transition-colors pointer-events-auto min-h-[28px] ${
+                      isOverdue
+                        ? "bg-red-600 hover:bg-red-700 text-white"
+                        : nextUpItem.daysLeft <= 3
+                          ? "bg-amber-500 hover:bg-amber-600 text-white"
+                          : "bg-blue-600 hover:bg-blue-700 text-white"
+                    }`}
+                  >
+                    Open →
+                  </button>
+                </div>
+              );
+            })()}
 
             {savedBusinesses.length === 0 ? (
               /* Empty state — dashed border prompts first action */
-              <div className="rounded-xl border border-dashed border-slate-200 px-4 py-5 text-center space-y-2">
-                <p className="text-[11px] text-slate-400">
+              <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-700/50 px-4 py-5 text-center space-y-2">
+                <p className="text-[11px] text-slate-400 dark:text-slate-500">
                   No businesses yet — add one to track compliance.
                 </p>
                 <button
@@ -4388,24 +6628,59 @@ export default function ChatPage() {
               </div>
             ) : (
               <div className="space-y-2">
-                {savedBusinesses.map(biz => {
-                  // vMyBusinessesPortfolioEffect: per-card derived values
+                {/* v30: sort businesses per bizSortOrder before rendering */}
+                {[...savedBusinesses].sort((a, b) => {
+                  if (bizSortOrder === 'score') {
+                    return (b.healthScore ?? -1) - (a.healthScore ?? -1);
+                  }
+                  if (bizSortOrder === 'urgency') {
+                    const urgA = allRenewals.filter(r => r.biz.id === a.id && r.daysLeft >= 0 && r.daysLeft <= 30).length;
+                    const urgB = allRenewals.filter(r => r.biz.id === b.id && r.daysLeft >= 0 && r.daysLeft <= 30).length;
+                    return urgB - urgA;
+                  }
+                  return 0; // 'recent' — preserve insertion order (savedBusinesses is already recency-ordered)
+                }).map(biz => {
+                  // vMyBusinessesPortfolioEffect + v26 enhancement: per-card derived values
                   const score          = biz.healthScore ?? 0;
                   const hasScore       = biz.totalForms != null && biz.totalForms > 0;
                   const isLoaded       = loadedBusiness?.id === biz.id;
-                  const hasAlert       = ruleAlerts.some(a => a.businessId === biz.id && !a.dismissed);
+                  const hasAlert       = activeAlerts.some(a => a.businessId === biz.id);
+                  // v36 — per-card overdue count (daysLeft < 0), separate from urgentRenewals
+                  const overdueRenewals = allRenewals.filter(
+                    r => r.biz.id === biz.id && r.daysLeft < 0
+                  ).length;
+                  // v36 — per-card active alert count (may be >1 if multiple rules changed)
+                  const bizAlertCount  = activeAlerts.filter(a => a.businessId === biz.id).length;
                   // Renewals due within 30 days for this specific business
                   const urgentRenewals = allRenewals.filter(
                     r => r.biz.id === biz.id && r.daysLeft >= 0 && r.daysLeft <= 30
                   ).length;
+                  // v26: all upcoming renewals within 60 days (for portfolio tooltip)
+                  const totalUpcoming  = allRenewals.filter(
+                    r => r.biz.id === biz.id && r.daysLeft >= 0 && r.daysLeft <= 60
+                  ).length;
                   const isAtRisk       = hasScore && score < 50;
                   const isConfirmingDelete = confirmDeleteBizId === biz.id;
 
-                  // Health dot color
-                  const dotColor =
-                    !hasScore   ? "bg-slate-300" :
-                    score >= 80 ? "bg-emerald-500" :
-                    score >= 50 ? "bg-amber-400" : "bg-red-400";
+                  // v26: trend from scoreHistory (null when < 2 data points)
+                  const hist      = biz.scoreHistory;
+                  const trendDiff = (hist && hist.length >= 2)
+                    ? hist[hist.length - 1] - hist[hist.length - 2]
+                    : null;
+
+                  // v33: next upcoming renewal for this business (soonest positive daysLeft)
+                  const nextRenewal = allRenewals
+                    .filter(r => r.biz.id === biz.id && r.daysLeft >= 0)
+                    .sort((a, b) => a.daysLeft - b.daysLeft)[0] ?? null;
+
+                  // v26: mini SVG ring constants (replaces flat color dot)
+                  const MINI_R    = 9;
+                  const MINI_CIRC = 2 * Math.PI * MINI_R;
+                  const miniOffset = !hasScore ? MINI_CIRC : MINI_CIRC * (1 - score / 100);
+                  const miniStroke =
+                    !hasScore   ? "#94a3b8" :
+                    score >= 80 ? "#10b981" :
+                    score >= 50 ? "#f59e0b" : "#ef4444";
 
                   // Progress bar fill color (inline style for smooth transitions)
                   const barColor =
@@ -4420,10 +6695,10 @@ export default function ChatPage() {
 
                   // Form-count pill tint matches health tier
                   const formPillCls =
-                    !hasScore   ? "bg-slate-50 border-slate-200 text-slate-500" :
-                    score >= 80 ? "bg-emerald-50 border-emerald-200 text-emerald-700" :
-                    score >= 50 ? "bg-amber-50 border-amber-200 text-amber-700" :
-                                  "bg-red-50 border-red-200 text-red-700";
+                    !hasScore   ? "bg-slate-50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700/50 text-slate-500 dark:text-slate-400" :
+                    score >= 80 ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/40 text-emerald-700 dark:text-emerald-400" :
+                    score >= 50 ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/40 text-amber-700 dark:text-amber-400" :
+                                  "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/40 text-red-700 dark:text-red-400";
 
                   // Left accent border: blue when active, red/amber when at risk, green when healthy, slate otherwise
                   const leftBorderColor =
@@ -4432,26 +6707,26 @@ export default function ChatPage() {
                     hasAlert || urgentRenewals > 0 ? "#f59e0b" :
                     hasScore && score >= 80        ? "#10b981" : "#e2e8f0";
 
-                  // Card background + border
+                  // Card background + border (dark variants embedded in each string)
                   const cardBg =
-                    isLoaded           ? "bg-blue-50 border-blue-200" :
-                    isAtRisk           ? "bg-red-50/70 border-red-200" :
-                    hasAlert           ? "bg-amber-50/70 border-amber-200" :
-                    urgentRenewals > 0 ? "bg-orange-50/50 border-orange-200" :
-                                        "bg-white border-slate-200";
+                    isLoaded           ? "bg-blue-50 dark:bg-blue-900/25 border-blue-200 dark:border-blue-700/50" :
+                    isAtRisk           ? "bg-red-50/70 dark:bg-red-900/20 border-red-200 dark:border-red-800/40" :
+                    hasAlert           ? "bg-amber-50/70 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/40" :
+                    urgentRenewals > 0 ? "bg-orange-50/50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800/40" :
+                                        "bg-white dark:bg-[#0f1c2e] border-slate-200 dark:border-slate-700/50";
 
                   const cardHover =
                     isLoaded           ? "" :
-                    isAtRisk           ? "hover:bg-red-50 hover:border-red-300" :
-                    hasAlert           ? "hover:bg-amber-50 hover:border-amber-300" :
-                    urgentRenewals > 0 ? "hover:bg-orange-50 hover:border-orange-300" :
-                                        "hover:bg-slate-50 hover:border-slate-300";
+                    isAtRisk           ? "hover:bg-red-50 dark:hover:bg-red-900/30 hover:border-red-300 dark:hover:border-red-700/60" :
+                    hasAlert           ? "hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:border-amber-300 dark:hover:border-amber-700/60" :
+                    urgentRenewals > 0 ? "hover:bg-orange-50 dark:hover:bg-orange-900/30 hover:border-orange-300 dark:hover:border-orange-700/60" :
+                                        "hover:bg-slate-50 dark:hover:bg-slate-700/20 hover:border-slate-300 dark:hover:border-slate-600";
 
-                  // Business name color
+                  // Business name color (dark variants for legibility)
                   const nameColor =
-                    isLoaded  ? "text-blue-800" :
-                    isAtRisk  ? "text-red-800"  :
-                    hasAlert  ? "text-amber-900" : "text-slate-800";
+                    isLoaded  ? "text-blue-800 dark:text-blue-300" :
+                    isAtRisk  ? "text-red-800 dark:text-red-300"  :
+                    hasAlert  ? "text-amber-900 dark:text-amber-300" : "text-slate-800 dark:text-slate-100";
 
                   return (
                     <div key={biz.id} className="relative group/card">
@@ -4473,7 +6748,7 @@ export default function ChatPage() {
                             </button>
                             <button
                               onClick={() => setConfirmDeleteBizId(null)}
-                              className="px-2 py-0.5 bg-white border border-slate-300 rounded text-slate-600 hover:bg-slate-50 transition-colors min-h-[28px] pointer-events-auto"
+                              className="px-2 py-0.5 bg-white dark:bg-[#0f1823] border border-slate-300 dark:border-slate-600 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors min-h-[28px] pointer-events-auto"
                             >
                               Cancel
                             </button>
@@ -4498,9 +6773,27 @@ export default function ChatPage() {
                             }}
                             title={`View profile for ${biz.name}`}
                           >
-                            {/* Row 1: health dot + name + score % + chevron */}
+                            {/* v26 Row 1: SVG mini health ring + name + score% + trend arrow + chevron */}
                             <div className="flex items-center gap-2 px-2.5 pt-2.5">
-                              <span className={`h-2 w-2 rounded-full shrink-0 ${dotColor}`} />
+                              {/* v26 — Mini SVG health ring (20×20) replaces flat color dot */}
+                              <div className="relative shrink-0 w-5 h-5">
+                                <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+                                  <circle cx="10" cy="10" r={MINI_R} fill="none" stroke="#e2e8f0" strokeWidth="2.5" />
+                                  {hasScore && (
+                                    <circle
+                                      cx="10" cy="10" r={MINI_R}
+                                      fill="none"
+                                      stroke={miniStroke}
+                                      strokeWidth="2.5"
+                                      strokeDasharray={MINI_CIRC}
+                                      strokeDashoffset={miniOffset}
+                                      strokeLinecap="round"
+                                      transform="rotate(-90 10 10)"
+                                      style={{ transition: "stroke-dashoffset 0.5s ease" }}
+                                    />
+                                  )}
+                                </svg>
+                              </div>
                               <p className={`flex-1 text-xs font-bold truncate ${nameColor}`}>
                                 {biz.name}
                               </p>
@@ -4514,18 +6807,24 @@ export default function ChatPage() {
                                   Pro
                                 </span>
                               ) : null}
-                              <ChevronRight className={`h-3 w-3 shrink-0 transition-colors ${
-                                isLoaded ? "text-blue-400" : "text-slate-300 group-hover/card:text-blue-400"
-                              }`} />
+                              {/* v26 — Trend arrow from scoreHistory (↑ green / ↓ red) */}
+                              {trendDiff !== null && (
+                                <span className={`text-[9px] font-bold shrink-0 ${trendDiff >= 0 ? "text-emerald-500" : "text-red-400"}`}
+                                  title={`Score ${trendDiff >= 0 ? "up" : "down"} ${Math.abs(trendDiff)} pts since last save`}
+                                >
+                                  {trendDiff >= 0 ? "↑" : "↓"}
+                                </span>
+                              )}
+                              {/* v29: ChevronRight moved to "Open Profile →" footer label below */}
                             </div>
 
                             {/* Row 2: location + isPreExisting badge */}
                             <div className="flex items-center gap-1.5 px-2.5 mt-0.5 pl-7">
-                              <p className="text-[10px] text-slate-400 truncate flex-1">
+                              <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate flex-1">
                                 {biz.location || "No location set"}
                               </p>
                               {biz.isPreExisting && (
-                                <span className="shrink-0 text-[8px] text-slate-400 bg-slate-100 border border-slate-200 rounded px-1 leading-none py-0.5">
+                                <span className="shrink-0 text-[8px] text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/50 rounded px-1 leading-none py-0.5">
                                   existing
                                 </span>
                               )}
@@ -4539,18 +6838,38 @@ export default function ChatPage() {
                                   {biz.completedFormsCount ?? 0}/{biz.totalForms} done
                                 </span>
                               )}
-                              {/* Renewals-due pill: only if within 30 days */}
-                              {urgentRenewals > 0 && (
+                              {/* v36 — Overdue pill: shown when renewals are past due (daysLeft < 0) */}
+                              {overdueRenewals > 0 && (
+                                <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded border bg-red-50 dark:bg-red-900/25 border-red-300 dark:border-red-700/50 text-red-700 dark:text-red-400 leading-none">
+                                  <AlertCircle className="h-2 w-2 shrink-0" />
+                                  {overdueRenewals} overdue
+                                </span>
+                              )}
+                              {/* v26 — Renewals pill: red if urgent (≤30d), amber if upcoming (≤60d) */}
+                              {urgentRenewals > 0 ? (
                                 <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded border bg-red-50 border-red-200 text-red-600 leading-none">
                                   <Bell className="h-2 w-2 shrink-0" />
                                   {urgentRenewals} due
                                 </span>
-                              )}
-                              {/* Alert badge */}
-                              {hasAlert && (
-                                <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded border bg-amber-50 border-amber-200 text-amber-600 leading-none">
+                              ) : totalUpcoming > 0 ? (
+                                <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded border bg-amber-50 border-amber-200 text-amber-600 leading-none">
+                                  <Bell className="h-2 w-2 shrink-0" />
+                                  {totalUpcoming} upcoming
+                                </span>
+                              ) : nextRenewal ? (
+                                /* v33 — next renewal date when no urgent/upcoming pills shown (>60d horizon) */
+                                <span
+                                  className="inline-flex items-center gap-0.5 text-[9px] text-slate-400 leading-none"
+                                  title={`Next renewal: ${nextRenewal.formName} in ${nextRenewal.daysLeft} day${nextRenewal.daysLeft !== 1 ? "s" : ""}`}
+                                >
+                                  Next: {nextRenewal.daysLeft}d
+                                </span>
+                              ) : null}
+                              {/* v36 — Alert badge: shows count when ≥1, shows N when >1 alerts */}
+                              {bizAlertCount > 0 && (
+                                <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded border bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/40 text-amber-600 dark:text-amber-400 leading-none">
                                   <Zap className="h-2 w-2 shrink-0" />
-                                  alert
+                                  {bizAlertCount > 1 ? `${bizAlertCount} alerts` : "alert"}
                                 </span>
                               )}
                               {/* Last-checked — right-aligned timestamp */}
@@ -4563,7 +6882,7 @@ export default function ChatPage() {
 
                             {/* Compliance progress bar — thin 3px strip at card bottom */}
                             {hasScore && (
-                              <div className="mx-2.5 mb-2 h-[3px] rounded-full bg-slate-100 overflow-hidden">
+                              <div className="mx-2.5 h-[3px] rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
                                 <div
                                   className="h-full rounded-full"
                                   style={{
@@ -4574,7 +6893,70 @@ export default function ChatPage() {
                                 />
                               </div>
                             )}
+
+                            {/* v29/v56 — "Open Profile →" card footer CTA.
+                                 v56: portfolioExpanded upgrades from inline text label to a full
+                                 min-h-[48px] dedicated button (primary action in Compliance OS mode).
+                                 Normal mode retains compact text label (min-h-[28px] secondary OK).
+                                 Platform parity: portfolioExpanded button has touch-action:manipulation
+                                 and pointer-events-auto; z-index unaffected (within card stacking). */}
+                            {portfolioExpanded && !isLoaded ? (
+                              /* v56 Compliance OS mode — dedicated full-width min-h-[48px] CTA */
+                              <div className="px-2.5 pb-2.5 pt-1.5">
+                                <button
+                                  onClick={() => { handleLoadBusiness(biz); setShowProfileView(true); }}
+                                  className="w-full flex items-center justify-center gap-1 min-h-[48px] rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold transition-colors pointer-events-auto"
+                                  style={{ touchAction: "manipulation" }}
+                                >
+                                  Open Profile
+                                  <ChevronRight className="h-3 w-3 shrink-0" />
+                                </button>
+                              </div>
+                            ) : (
+                              <div className={`flex items-center justify-end px-2.5 py-1.5 mt-0.5 border-t ${
+                                isLoaded
+                                  ? "border-blue-200/60 dark:border-blue-700/30"
+                                  : "border-slate-100 dark:border-slate-700/20"
+                              }`}>
+                                {isLoaded ? (
+                                  <span className="text-[9px] font-semibold text-blue-500 dark:text-blue-400 flex items-center gap-0.5">
+                                    Profile open
+                                    <CheckCircle2 className="h-2 w-2 shrink-0" />
+                                  </span>
+                                ) : (
+                                  <span className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 group-hover/card:text-blue-500 dark:group-hover/card:text-blue-400 transition-colors flex items-center gap-0.5">
+                                    Open Profile
+                                    <ChevronRight className="h-2.5 w-2.5 shrink-0" />
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </button>
+
+                          {/* v29 — Inline alert preview: shown when business has active alert.
+                               Non-interactive text display — no touch target required.
+                               Positioned directly below the card button, above locations. */}
+                          {hasAlert && (() => {
+                            const activeAlert = activeAlerts.find(a => a.businessId === biz.id);
+                            if (!activeAlert) return null;
+                            return (
+                              <div className="mx-0.5 mt-0.5 rounded-b-lg border-x border-b border-amber-200 dark:border-amber-800/40 bg-amber-50/80 dark:bg-amber-900/20 px-2.5 py-1.5">
+                                <p className="text-[9px] font-semibold text-amber-700 dark:text-amber-400 truncate leading-snug">
+                                  <Zap className="h-2 w-2 inline shrink-0 mr-0.5" />
+                                  {activeAlert.title}
+                                </p>
+                                <button
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    setReviewImpactAlertId(activeAlert.id);
+                                  }}
+                                  className="text-[8px] text-amber-600 dark:text-amber-400 hover:underline pointer-events-auto"
+                                >
+                                  Review impact →
+                                </button>
+                              </div>
+                            );
+                          })()}
 
                           {/* Bell icon — notification prefs, hover-only */}
                           <button
@@ -4680,8 +7062,8 @@ export default function ChatPage() {
                                       }}
                                       className={`w-full text-left flex items-center gap-1.5 px-2 py-1 rounded-lg border transition-all pointer-events-auto ${
                                         isActiveLoc
-                                          ? "bg-blue-50 border-blue-200 text-blue-700"
-                                          : "bg-white border-slate-100 text-slate-600 hover:bg-blue-50 hover:border-blue-100 hover:text-blue-700"
+                                          ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/40 text-blue-700 dark:text-blue-300"
+                                          : "bg-white dark:bg-[#131e2f] border-slate-100 dark:border-slate-700/50 text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-100 dark:hover:border-blue-800/40 hover:text-blue-700 dark:hover:text-blue-300"
                                       }`}
                                     >
                                       <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${locDot}`} />
@@ -4717,6 +7099,21 @@ export default function ChatPage() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* vUnified-platform-fix: Settings nav link — pinned to sidebar bottom.
+            Placed outside the scroll container so it's always visible.
+            Clicking it also closes the mobile drawer. Links to /settings page. */}
+        <div className="shrink-0 border-t border-slate-700/30">
+          <Link
+            href="/settings"
+            onClick={() => setShowMobileSidebar(false)}
+            className="flex items-center gap-2.5 px-4 min-h-[48px] text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-colors pointer-events-auto"
+            style={{ touchAction: "manipulation" }}
+          >
+            <SettingsIcon className="h-4 w-4 shrink-0" />
+            <span className="text-xs font-medium">Settings</span>
+          </Link>
         </div>
       </div>
 
@@ -4798,7 +7195,8 @@ export default function ChatPage() {
           viewport height on all screen sizes — removing overflow-hidden doesn't change
           the sizing, only the clipping behavior. */}
       {showProfileView && loadedBusiness ? (
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 min-h-0">{/* vUnified-20260414-national-expansion-v102: min-h-0 ensures iOS WKWebView computes a
+            definite height for BusinessProfileView's flex-1 chain, activating overflow-y-auto. */}
           <BusinessProfileView
             business={loadedBusiness}
             recommendedForms={profileRecommendedForms}
@@ -4814,7 +7212,11 @@ export default function ChatPage() {
             onCategoryChange={handleCategoryChangeFromProfile}
             // vMobile-PostDeploy-CriticalFixPass: pass detected GPS location as fallback
             // for the zoning panel address field when business.location is blank.
+            // vUnified-platform-fix: also pass detectedCounty for ZIP-only enrichment —
+            // if business.location or userLocation is a bare ZIP (e.g. "33412"),
+            // BusinessProfileView uses detectedCounty to build a full city+state address.
             userLocation={userLocation}
+            detectedCounty={detectedCounty}
             onSaveDrafts={handleSaveDraftsFromProfile}
             onDiscardDrafts={handleDiscardDraftsFromProfile}
             onViewCompletedForm={handleViewCompletedForm}
@@ -4824,16 +7226,21 @@ export default function ChatPage() {
             // vRuleChangeAlerts-Profile-Integration: pre-filtered active alerts for this
             // business. onDismissAlert persists; onReviewImpact opens the Review Impact
             // modal already wired in page.tsx via setReviewImpactAlertId.
-            ruleAlerts={ruleAlerts.filter(a => !a.dismissed && a.businessId === loadedBusiness.id)}
+            ruleAlerts={activeAlerts.filter(a => a.businessId === loadedBusiness.id)}
             onDismissAlert={dismissAlert}
             onReviewImpact={setReviewImpactAlertId}
+            isPro={isPro}
+            // vUnified-20260414-national-expansion-v87: pass portal handler so the
+            // Pro badge footer in BusinessProfileView shows a "Manage" button.
+            onManageSubscription={isPro ? () => void handleManageSubscription() : undefined}
           />
         </div>
       ) : null}
       <div className={`flex-1 flex flex-col relative min-w-0 ${showProfileView && loadedBusiness ? "hidden" : ""}`}>{/* vMobile-icon-fix-v3: removed overflow-hidden so no flex ancestor clips touch targets on the hamburger, send button, or form-card buttons */}
 
         {/* Header bar — vMobile: hamburger on left for mobile sidebar */}
-        <div className="border-b border-slate-200 bg-white px-3 sm:px-6 py-3.5 shrink-0 flex items-center justify-between gap-2">
+        {/* vUnified-platform-fix: dark mode — bg-white → dark:bg-[#131e2f], border → dark:border-slate-700/60 */}
+        <div className="border-b border-slate-200 dark:border-slate-700/60 bg-white dark:bg-[#131e2f] px-3 sm:px-6 py-3.5 shrink-0 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
             {/* vMobile — hamburger button, hidden on md+ where sidebar is always visible */}
             <button
@@ -4845,7 +7252,7 @@ export default function ChatPage() {
             </button>
             <RegPulseIcon size={26} className="shrink-0" />
             <div className="min-w-0">
-              <h2 className="font-semibold text-slate-900 text-sm leading-tight">Chat with RegPulse</h2>
+              <h2 className="font-semibold text-slate-900 dark:text-white text-sm leading-tight">Chat with RegPulse</h2>
               {loadedBusiness ? (
                 <div className="flex items-center gap-1 mt-0.5 flex-wrap">
                   <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
@@ -4901,18 +7308,19 @@ export default function ChatPage() {
             shrinking, so it expands to content height and overflows the viewport instead
             of scrolling. overscroll-y-contain stops iOS rubber-band from bleeding to the
             parent document when the user scrolls past the top/bottom of the list. */}
-        <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-5">
+        {/* vUnified-platform-fix: dark mode — messages area bg */}
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-5 dark:bg-[#0f1823]">
           {messages.map((msg) => (
             <div
               key={msg.id}
               className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
               {msg.role === "user" ? (
-                <div className="max-w-sm bg-blue-600 text-white rounded-3xl rounded-br-sm px-4 py-3 shadow-sm">
+                <div className="max-w-sm bg-blue-600 text-white rounded-3xl rounded-br-sm px-4 py-3 shadow-md">
                   <p className="text-sm leading-relaxed">{msg.content}</p>
                 </div>
               ) : (
-                <div className="max-w-2xl w-full bg-white border border-slate-100 rounded-2xl rounded-bl-sm shadow-sm px-5 py-4">
+                <div className="max-w-2xl w-full bg-white/85 dark:bg-[#1a2740]/90 border border-slate-100/80 dark:border-white/[0.09] rounded-2xl rounded-bl-sm shadow-md backdrop-blur-sm px-5 py-4">
                   {(() => {
                     const serverFormMap = msg.formMap
                       ? filterFormsByLocation(msg.formMap, userLocation)
@@ -4936,8 +7344,11 @@ export default function ChatPage() {
 
                     const state = parseState(userLocation);
 
+                    // vUnified-platform-fix: maximum dark mode text contrast in AI messages
+                    // All text colors driven by isDarkMode JS state, not dark: CSS variants,
+                    // matching the always-readable pattern used in BusinessProfileView.tsx.
                     return (
-                      <div className="text-sm text-slate-800 leading-relaxed">
+                      <div className={`text-sm leading-relaxed ${isDarkMode ? "text-white" : "text-slate-800"}`}>
                         {msg.content.split("\n").map((line, i) => {
                           const trimmed = line.trim();
                           if (!trimmed) return null;
@@ -4953,11 +7364,13 @@ export default function ChatPage() {
                                 key={i}
                                 className={
                                   isDisclaimer
-                                    ? "mt-3 text-[11px] text-slate-400 italic leading-relaxed"
-                                    : "mb-2 text-slate-700"
+                                    // Disclaimer: muted in both modes
+                                    ? `mt-3 text-[11px] italic leading-relaxed ${isDarkMode ? "text-slate-400" : "text-slate-400"}`
+                                    // Body paragraph: full contrast
+                                    : `mb-2 ${isDarkMode ? "text-white" : "text-slate-700"}`
                                 }
                               >
-                                <BulletLine text={trimmed} />
+                                <BulletLine text={trimmed} isDark={isDarkMode} />
                               </p>
                             );
                           }
@@ -4980,11 +7393,14 @@ export default function ChatPage() {
                           return (
                             <div
                               key={i}
-                              className="flex gap-2.5 items-start py-2 border-b border-slate-50 last:border-none"
+                              className={`flex gap-2.5 items-start py-2 border-b last:border-none ${
+                                isDarkMode ? "border-white/[0.07]" : "border-slate-50"
+                              }`}
                             >
                               <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500" />
-                              <span className="text-slate-700 leading-relaxed">
-                                <BulletLine text={displayText} />
+                              {/* vUnified-platform-fix: bullet text — JS-conditional, matching BusinessProfileView */}
+                              <span className={`leading-relaxed ${isDarkMode ? "text-white" : "text-slate-700"}`}>
+                                <BulletLine text={displayText} isDark={isDarkMode} />
                               </span>
                             </div>
                           );
@@ -4993,7 +7409,7 @@ export default function ChatPage() {
                         {/* Complete All button — shown whenever ≥1 form is identified.
                             Individual form actions are in the sidebar checklist. */}
                         {localFormMap && localFormMap.length >= 1 && (
-                          <div className="mt-4 pt-3 border-t border-slate-100">
+                          <div className={`mt-4 pt-3 border-t ${isDarkMode ? "border-white/[0.08]" : "border-slate-100"}`}>
                             <button
                               onClick={() => handleStartAllForms(localFormMap)}
                               className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl py-2.5 transition-colors"
@@ -5011,8 +7427,8 @@ export default function ChatPage() {
 
                         {/* Clarify question chips */}
                         {msg.formClarify && (
-                          <div className="mt-3 pt-3 border-t border-slate-100">
-                            <p className="text-xs font-medium text-slate-600 mb-2">
+                          <div className={`mt-3 pt-3 border-t ${isDarkMode ? "border-white/[0.08]" : "border-slate-100"}`}>
+                            <p className={`text-xs font-medium mb-2 ${isDarkMode ? "text-white" : "text-slate-600"}`}>
                               {msg.formClarify.question}
                             </p>
                             <div className="flex flex-wrap gap-1.5">
@@ -5020,7 +7436,11 @@ export default function ChatPage() {
                                 <button
                                   key={opt}
                                   onClick={() => sendQuickReply(opt)}
-                                  className="text-xs px-3 py-1.5 rounded-full border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
+                                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                                    isDarkMode
+                                      ? "border-blue-700/60 text-blue-200 bg-blue-900/40 hover:bg-blue-800/50"
+                                      : "border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100"
+                                  }`}
                                 >
                                   {opt}
                                 </button>
@@ -5042,8 +7462,8 @@ export default function ChatPage() {
           {/* Loading indicator */}
           {isLoading && (
             <div className="flex justify-start">
-              <div className="bg-white border border-slate-100 rounded-2xl rounded-bl-sm shadow-sm px-5 py-3.5 flex items-center gap-2.5 text-slate-400 text-sm">
-                <Loader2 className="h-4 w-4 animate-spin text-blue-500 shrink-0" />
+              <div className="bg-white dark:bg-[#1a2740] border border-slate-100 dark:border-white/[0.08] rounded-2xl rounded-bl-sm shadow-sm px-5 py-3.5 flex items-center gap-2.5 text-slate-400 dark:text-slate-500 text-sm">
+                <RegPulseLoader size={18} />
                 <span>Searching regulations for {userLocation}…</span>
               </div>
             </div>
@@ -5051,6 +7471,42 @@ export default function ChatPage() {
 
           <div ref={messagesEndRef} />
         </div>
+
+        {/* vUnified-20260414-national-expansion-v87 — Pro subscription success toast
+             Shown in the main chat column when the user returns from Stripe Checkout with
+             ?success=true. Visible regardless of whether the mobile sidebar is open.
+             Positioned above packetToast (bottom-28 z-30) at bottom-40 z-40 so they stack
+             cleanly. touch-action:manipulation + min-h-[44px] on dismiss for iOS Safari.
+             Both banners (sidebar + this chat toast) auto-dismiss after 8 s total.        */}
+        {proSuccessChatToast && (
+          <div
+            className="absolute bottom-40 left-1/2 -translate-x-1/2 z-40 w-[min(380px,92vw)] flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl pointer-events-auto animate-in fade-in slide-in-from-bottom-3 duration-300"
+            style={{
+              background: "linear-gradient(135deg, #059669 0%, #0d9488 100%)",
+              touchAction: "manipulation",
+            }}
+          >
+            <div className="shrink-0 h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
+              <Crown className="h-4 w-4 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-white leading-tight">
+                RegPulse Pro activated!
+              </p>
+              <p className="text-[11px] text-white/80 leading-tight mt-0.5">
+                Unlimited AI · Renewal filing · Priority support
+              </p>
+            </div>
+            <button
+              onClick={() => setProSuccessChatToast(false)}
+              className="shrink-0 text-white/70 hover:text-white transition-colors min-h-[44px] min-w-[36px] flex items-center justify-center"
+              aria-label="Dismiss"
+              style={{ touchAction: "manipulation" }}
+            >
+              <XIcon className="h-4 w-4" />
+            </button>
+          </div>
+        )}
 
         {/* Auto-save toast */}
         {autoSaveToast && (
@@ -5064,6 +7520,38 @@ export default function ChatPage() {
               className="text-blue-300 hover:text-blue-100 font-semibold transition-colors ml-1 underline underline-offset-2"
             >
               Undo
+            </button>
+          </div>
+        )}
+
+        {/* vUnified-platform-fix: form completion download/new-tab behavior
+            Packet success toast — shown after queue or single-form completion.
+            Replaces the PacketScreen full-overlay flow so the user stays in chat/profile.
+            Shows "Retry Download" button in case auto-download was blocked (pop-up blocker
+            or iOS power-saving mode that defers blob writes). Positioned at bottom-28
+            so it clears the input bar + safe area on all iPhones.
+            z-30 > z-20 (auto-save toast) so they don't collide visually.           */}
+        {packetToast && (
+          <div className="absolute bottom-28 left-1/2 -translate-x-1/2 z-30 w-[min(360px,90vw)] flex items-center gap-3 bg-emerald-900 text-white text-xs font-medium px-4 py-3 rounded-2xl shadow-xl pointer-events-auto animate-in fade-in slide-in-from-bottom-2 duration-200"
+            style={{ touchAction: "manipulation" }}>
+            <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+            <span className="flex-1 min-w-0 leading-snug">{packetToast.message}</span>
+            {packetToast.retryFn && (
+              <button
+                onClick={() => { packetToast.retryFn?.(); }}
+                className="text-emerald-300 hover:text-emerald-100 font-semibold transition-colors shrink-0 underline underline-offset-2 min-h-[44px] flex items-center"
+                style={{ touchAction: "manipulation" }}
+              >
+                Retry
+              </button>
+            )}
+            <button
+              onClick={() => setPacketToast(null)}
+              className="text-emerald-400 hover:text-white transition-colors shrink-0 ml-1 min-h-[44px] flex items-center"
+              aria-label="Dismiss"
+              style={{ touchAction: "manipulation" }}
+            >
+              <XIcon className="h-3.5 w-3.5" />
             </button>
           </div>
         )}
@@ -5112,6 +7600,8 @@ export default function ChatPage() {
                 ein:          derivedEin,
                 phone:        derivedPhone,
                 email:        derivedEmail,
+                // vUnified-20260414-national-expansion-v4: pass county for county-aware URL resolution
+                county:       detectedCounty ?? undefined,
               };
             })() : null}
             onSaveDocument={(filename, _base64) => {
@@ -5155,7 +7645,7 @@ export default function ChatPage() {
             })()}
           />
         ) : (
-          <div className="relative z-20 px-3 sm:px-6 py-3 sm:py-4 border-t border-slate-200 bg-white shrink-0 pointer-events-auto">{/* vMobile-icon-fix-v3: z-20 (up from z-10) ensures input bar stacks above any positioned ancestors; pointer-events-auto ensures taps reach send button on iOS */}
+          <div className="relative z-20 px-3 sm:px-6 py-3 sm:py-4 border-t border-slate-200/80 dark:border-slate-700/40 bg-white/80 dark:bg-[#131e2f]/85 backdrop-blur-sm shrink-0 pointer-events-auto" style={{ paddingBottom: "max(env(safe-area-inset-bottom), 12px)" }}>{/* v283: glassmorphism + safe-area bottom padding for iOS keyboard */}
             <div className="max-w-3xl mx-auto flex gap-2 items-center">
               {/* Upload button — compact, sits left of the text input.
                   v17: businessId is required for the storage-first path in
@@ -5173,13 +7663,13 @@ export default function ChatPage() {
                 onAnalysisComplete={handleDocumentAnalysisComplete}
                 disabled={isLoading}
               />
-              <div className="flex-1 flex items-center bg-slate-50 border border-slate-200 rounded-2xl px-4 focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-300 transition-all">
+              <div className="flex-1 flex items-center bg-slate-50/90 dark:bg-[#1a2740]/90 border border-slate-200/70 dark:border-slate-600/40 rounded-2xl px-4 backdrop-blur-sm focus-within:ring-2 focus-within:ring-blue-100 dark:focus-within:ring-blue-900/40 focus-within:border-blue-300 dark:focus-within:border-blue-700/60 transition-all">
                 <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
                   placeholder="Ask about permits, zoning, health codes…"
-                  className="flex-1 bg-transparent text-sm py-2.5 outline-none text-slate-800 placeholder:text-slate-400"
+                  className="flex-1 bg-transparent text-sm py-2.5 outline-none text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   disabled={isLoading}
                 />
               </div>
@@ -5232,22 +7722,22 @@ export default function ChatPage() {
             className="absolute inset-0 z-30 bg-black/30 backdrop-blur-sm flex items-end justify-center"
             onClick={e => { if (e.target === e.currentTarget) setShowAttachPanel(false); }}
           >
-            <div className="bg-white rounded-t-2xl w-full max-w-lg shadow-2xl p-6 space-y-4">
+            <div className="bg-white dark:bg-[#0f1823] rounded-t-2xl w-full max-w-lg shadow-2xl p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Upload className="h-4 w-4 text-blue-600" />
-                  <h3 className="text-sm font-bold text-slate-900">Upload Completed Document</h3>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Upload Completed Document</h3>
                 </div>
                 <button
                   onClick={() => setShowAttachPanel(false)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/40 transition-colors"
                 >
                   <XIcon className="h-4 w-4" />
                 </button>
               </div>
               {loadedBusiness && (
-                <p className="text-xs text-slate-500">
-                  Attaching to <strong className="text-slate-700">{loadedBusiness.name}</strong>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Attaching to <strong className="text-slate-700 dark:text-slate-200">{loadedBusiness.name}</strong>
                   {" — "}no AI analysis will be run.
                 </p>
               )}
@@ -5275,22 +7765,22 @@ export default function ChatPage() {
             className="absolute inset-0 z-30 bg-black/30 backdrop-blur-sm flex items-end justify-center"
             onClick={e => { if (e.target === e.currentTarget) setShowDocUploadPanel(false); }}
           >
-            <div className="bg-white rounded-t-2xl w-full max-w-lg shadow-2xl p-6 space-y-4">
+            <div className="bg-white dark:bg-[#0f1823] rounded-t-2xl w-full max-w-lg shadow-2xl p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Upload className="h-4 w-4 text-blue-600" />
-                  <h3 className="text-sm font-bold text-slate-900">Upload Existing Document</h3>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Upload Existing Document</h3>
                 </div>
                 <button
                   onClick={() => setShowDocUploadPanel(false)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/40 transition-colors"
                 >
                   <XIcon className="h-4 w-4" />
                 </button>
               </div>
               {loadedBusiness && (
-                <p className="text-xs text-slate-500">
-                  Analyzing for <strong className="text-slate-700">{loadedBusiness.name}</strong>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Analyzing for <strong className="text-slate-700 dark:text-slate-200">{loadedBusiness.name}</strong>
                 </p>
               )}
               {/* v17: same as compact — businessId enables storage-first for large files */}

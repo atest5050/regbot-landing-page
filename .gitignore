@@ -6,3 +6,14 @@ out/
 .env.local
 .env*.local
 *.log
+.vercel
+
+# vUnified-20260414-national-expansion-v17: Capacitor native project build artifacts
+# ios/ and android/ root folders are checked in when first native project is initialized.
+# Only build artifacts and dependency caches are excluded here.
+ios/App/Pods/
+ios/App/build/
+ios/.build/
+android/.gradle/
+android/app/build/
+android/build/

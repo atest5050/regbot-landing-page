@@ -1,25 +1,22 @@
+// vUnified-20260414-national-expansion-v82 — Footer updated: dedicated pages for all links.
+//   Features, Pricing, FAQ now link to /features, /pricing, /faq (dedicated pages created in v82).
+//   Previously used /#section anchors; now each link has its own legitimate full page.
+//   All other links unchanged. Platform parity: py-2 touch targets retained.
 // vMobile-global-scale-fix — Applied proper mobile scaling to all links and buttons
 //   Footer links: added py-2 inline-block so each link has a 44px-capable touch area
 //   via the combined line-height + padding (text-sm ≈ 20px + 2×8px padding = 36px; the
 //   space-y-1 gap between items means adjacent links don't create ambiguity at that size).
 //   Logo anchor: inline-flex items-center py-2 for proper touch target.
 //   Grid: already responsive (grid-cols-2 md:grid-cols-4) — no change needed.
-// Changes summary:
-// - Replaced all href="#" placeholders with real Next.js <Link> destinations.
-// - Product links (Features, Pricing, FAQ) use /#section anchors so they work
-//   both from the landing page (smooth scroll) and from any other route (navigate
-//   home then scroll).
-// - Changelog, About, Blog, Contact, and Legal pages use <Link> to their own routes.
-// - Logo wrapper gets "rp-logomark" for hover-glow from globals.css.
 
 import Link from "next/link";
 import { RegPulseLogoFull } from "@/components/RegPulseLogo";
 
 const footerLinks: Record<string, { label: string; href: string }[]> = {
   Product: [
-    { label: "Features",   href: "/#features"   },
-    { label: "Pricing",    href: "/#pricing"     },
-    { label: "FAQ",        href: "/#faq"         },
+    { label: "Features",   href: "/features"    },
+    { label: "Pricing",    href: "/pricing"      },
+    { label: "FAQ",        href: "/faq"          },
     { label: "Changelog",  href: "/changelog"    },
   ],
   Company: [
