@@ -1,4 +1,4 @@
-// vUnified-20260414-national-expansion-v55 — Privacy compliance layer complete.
+// vUnified-20260428-v286-production-polish — overflow-x-hidden; break-words on description; 44px checkbox rows.
 //        3,259+ LOCAL_FORMS (PART1–PART37). buildLocalFormsContext top-N 190.
 //        PLATFORM PARITY AUDIT v55 — no layout changes in v55. All touch targets ≥48px (deliverPdf share
 //        button ≥56px), pointer-events-auto on sheet overlays, PDF share sheet confirmed iOS + Android. EXIT:0.
@@ -2239,8 +2239,8 @@ export default function FormFiller({
     const requiredCount = requiredFields.length;
 
     return (
-      <div className="border-t bg-white dark:bg-[#0f1823] dark:border-slate-700/50 max-h-[60dvh] sm:max-h-none overflow-y-auto">
-        <div className="max-w-2xl mx-auto p-3 sm:p-5">
+      <div className="border-t bg-white dark:bg-[#0f1823] dark:border-slate-700/50 max-h-[60dvh] sm:max-h-none overflow-y-auto overflow-x-hidden">
+        <div className="max-w-2xl mx-auto p-3 sm:p-5 w-full min-w-0">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-xl bg-[#0B1E3F]/10 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
@@ -2339,9 +2339,9 @@ export default function FormFiller({
             </div>
           )}
 
-          <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">{template.description}</p>
+          <p className="text-sm text-slate-600 dark:text-slate-300 mb-4 break-words">{template.description}</p>
 
-          <div className={`grid gap-2 mb-4 ${skipPayment ? "grid-cols-2" : "grid-cols-3"}`}>
+          <div className={`grid gap-2 mb-4 ${skipPayment ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3"}`}>
             <div className="bg-slate-50 dark:bg-[#131e2f] rounded-lg p-3">
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Gov. Filing Fee</p>
               <p className="font-semibold text-slate-800 dark:text-slate-100 text-sm">{template.fee}</p>
@@ -2660,7 +2660,7 @@ export default function FormFiller({
   // ── PDF LOADING ───────────────────────────────────────────────────────────
   if (phase === "pdf-loading") {
     return (
-      <div className="border-t bg-white dark:bg-[#0f1823] dark:border-slate-700/50 max-h-[60dvh] sm:max-h-none overflow-y-auto">
+      <div className="border-t bg-white dark:bg-[#0f1823] dark:border-slate-700/50 max-h-[60dvh] sm:max-h-none overflow-y-auto overflow-x-hidden">
         <div className="max-w-2xl mx-auto p-3 sm:p-5 text-center">
           <Loader2 className="h-8 w-8 text-[#0B1E3F] dark:text-blue-400 animate-spin mx-auto mb-3" />
           <p className="font-semibold text-slate-800 dark:text-slate-100 mb-1">Fetching the official form…</p>
@@ -2682,8 +2682,8 @@ export default function FormFiller({
       : isSbaFallback(rawPortalUrl) ? null : rawPortalUrl;
 
     return (
-      <div className="border-t bg-white dark:bg-[#0f1823] dark:border-slate-700/50 max-h-[60dvh] sm:max-h-none overflow-y-auto">
-        <div className="max-w-2xl mx-auto p-3 sm:p-5">
+      <div className="border-t bg-white dark:bg-[#0f1823] dark:border-slate-700/50 max-h-[60dvh] sm:max-h-none overflow-y-auto overflow-x-hidden">
+        <div className="max-w-2xl mx-auto p-3 sm:p-5 w-full min-w-0">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-2.5">
               <div className="h-9 w-9 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center shrink-0">
@@ -2789,8 +2789,8 @@ export default function FormFiller({
       : `Question ${currentIndex + 1} of ${activeFields.length}`;
 
     return (
-      <div className="border-t bg-white dark:bg-[#0f1823] dark:border-slate-700/50 max-h-[60dvh] sm:max-h-none overflow-y-auto">
-        <div className="max-w-2xl mx-auto p-3 sm:p-5">
+      <div className="border-t bg-white dark:bg-[#0f1823] dark:border-slate-700/50 max-h-[60dvh] sm:max-h-none overflow-y-auto overflow-x-hidden">
+        <div className="max-w-2xl mx-auto p-3 sm:p-5 w-full min-w-0">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs text-slate-500 dark:text-slate-400">{stepLabel}</span>
@@ -2974,8 +2974,8 @@ export default function FormFiller({
       : 0;
 
     return (
-      <div className="border-t bg-white dark:bg-[#0f1823] dark:border-slate-700/50 max-h-[60dvh] sm:max-h-[480px] overflow-y-auto">
-        <div className="max-w-2xl mx-auto p-3 sm:p-5">
+      <div className="border-t bg-white dark:bg-[#0f1823] dark:border-slate-700/50 max-h-[60dvh] sm:max-h-[480px] overflow-y-auto overflow-x-hidden">
+        <div className="max-w-2xl mx-auto p-3 sm:p-5 w-full min-w-0">
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="font-semibold text-slate-900 dark:text-slate-100">Review &amp; Generate PDF</p>
@@ -3099,8 +3099,8 @@ export default function FormFiller({
   // ── PAYMENT CONFIRMATION ─────────────────────────────────────────────────
   if (phase === "payment") {
     return (
-      <div className="border-t bg-white dark:bg-[#0f1823] dark:border-slate-700/50 max-h-[60dvh] sm:max-h-none overflow-y-auto">
-        <div className="max-w-2xl mx-auto p-3 sm:p-5">
+      <div className="border-t bg-white dark:bg-[#0f1823] dark:border-slate-700/50 max-h-[60dvh] sm:max-h-none overflow-y-auto overflow-x-hidden">
+        <div className="max-w-2xl mx-auto p-3 sm:p-5 w-full min-w-0">
           <div className="flex items-center justify-between mb-5">
             <p className="font-semibold text-slate-900 dark:text-slate-100">Confirm & Download</p>
             <button onClick={onDismiss} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1">
@@ -3165,7 +3165,7 @@ export default function FormFiller({
   // ── REDIRECTING ──────────────────────────────────────────────────────────
   if (phase === "redirecting") {
     return (
-      <div className="border-t bg-white dark:bg-[#0f1823] dark:border-slate-700/50 max-h-[60dvh] sm:max-h-none overflow-y-auto">
+      <div className="border-t bg-white dark:bg-[#0f1823] dark:border-slate-700/50 max-h-[60dvh] sm:max-h-none overflow-y-auto overflow-x-hidden">
         <div className="max-w-2xl mx-auto p-3 sm:p-5 text-center">
           <Loader2 className="h-8 w-8 text-[#0B1E3F] dark:text-blue-400 animate-spin mx-auto mb-3" />
           <p className="font-semibold text-slate-800 dark:text-slate-100 mb-1">Redirecting to secure checkout...</p>

@@ -222,7 +222,7 @@ export default function AddBusinessModal({ onAdd, onClose, onStartChat }: AddBus
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden" style={{ maxWidth: "min(512px, calc(100vw - 32px))" }}>
 
         {/* Modal header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
@@ -299,7 +299,7 @@ export default function AddBusinessModal({ onAdd, onClose, onStartChat }: AddBus
 
         {/* ── "Existing Business" tab ───────────────────────────────────────── */}
         {tab === "existing" && (
-          <div className="px-4 sm:px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
+          <div className="px-4 sm:px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto overflow-x-hidden">
 
             {/* Business Name */}
             <div>
@@ -339,7 +339,7 @@ export default function AddBusinessModal({ onAdd, onClose, onStartChat }: AddBus
               <select
                 value={industry}
                 onChange={e => handleIndustryChange(e.target.value)}
-                className="w-full text-sm h-9 border border-slate-200 rounded-lg px-3 bg-white outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all text-slate-700"
+                className="w-full text-sm h-11 border border-slate-200 rounded-lg px-3 bg-white outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all text-slate-700"
               >
                 <option value="">Select your industry…</option>
                 {INDUSTRIES.map(ind => (
@@ -355,11 +355,11 @@ export default function AddBusinessModal({ onAdd, onClose, onStartChat }: AddBus
 
             {/* Existing Permits */}
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-semibold text-slate-700">
+              <div className="flex items-center gap-2 mb-1.5">
+                <label className="flex-1 min-w-0 text-xs font-semibold text-slate-700">
                   Permits / Registrations You Already Have
                 </label>
-                <span className="text-[10px] text-slate-400">
+                <span className="shrink-0 text-[10px] text-slate-400 tabular-nums">
                   {selectedPermits.size} selected
                 </span>
               </div>
@@ -374,7 +374,7 @@ export default function AddBusinessModal({ onAdd, onClose, onStartChat }: AddBus
                   return (
                     <label
                       key={id}
-                      className={`flex items-center gap-3 px-3.5 py-2.5 cursor-pointer transition-colors border-b border-slate-50 last:border-none ${
+                      className={`flex items-center gap-3 px-3.5 min-h-[44px] cursor-pointer transition-colors border-b border-slate-50 last:border-none ${
                         isChecked ? "bg-blue-50" : "bg-white hover:bg-slate-50"
                       }`}
                     >
@@ -382,9 +382,9 @@ export default function AddBusinessModal({ onAdd, onClose, onStartChat }: AddBus
                         type="checkbox"
                         checked={isChecked}
                         onChange={() => togglePermit(id)}
-                        className="accent-blue-600 h-3.5 w-3.5 shrink-0"
+                        className="accent-blue-600 h-4 w-4 shrink-0"
                       />
-                      <span className="flex-1 text-xs text-slate-700 leading-snug">
+                      <span className="flex-1 min-w-0 text-xs text-slate-700 leading-snug">
                         {PERMIT_LABELS[id] ?? id}
                       </span>
                       {isSuggested && (
