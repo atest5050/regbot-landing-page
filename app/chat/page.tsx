@@ -2272,8 +2272,10 @@ export default function ChatPage() {
   const [uploadedDocs, setUploadedDocs]             = useState<UploadedDocument[]>([]);
 
   // ── Pro subscription state ────────────────────────────────────────────────
-  // Loaded from profiles.is_pro for authenticated users; defaults true for guests.
-  const [isPro, setIsPro]                       = useState(true);
+  // Loaded from profiles.is_pro for authenticated users; defaults false (Free tier).
+  const [isPro, setIsPro]                       = useState(false);
+  /** True when an unauthenticated user has exceeded the 3-chats/30-day limit. */
+  const [showSignInWall, setShowSignInWall]     = useState(false);
   const [monthlyFormsUsed, setMonthlyFormsUsed] = useState(0);
 
   // vUnified-20260414-national-expansion-v86 — Pro subscription UI state
@@ -3454,6 +3456,12 @@ export default function ChatPage() {
         }),
       });
       const data = await res.json();
+      // Unauthenticated visitor has hit the 3-chat / 30-day limit → sign-in wall
+      if (res.status === 429 && data.error === "ANON_LIMIT_EXCEEDED") {
+        setIsLoading(false);
+        setShowSignInWall(true);
+        return;
+      }
       if (!res.ok) throw new Error(data.error ?? "Failed");
       setMessages(prev => [...prev, {
         id:          (Date.now() + 1).toString(),
@@ -5677,8 +5685,26 @@ export default function ChatPage() {
             );
           })()}
 
-          {/* ── Compliance Health Score card ──────────────────────────────── */}
-          {healthScore && (() => {
+          {/* ── Compliance Health Score card — Pro only ───────────────────── */}
+          {!isPro && (
+            <div
+              className="mx-4 mb-2 rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-900/20 p-3 flex items-center gap-3 cursor-pointer shrink-0"
+              onClick={() => void handleUpgradeToPro()}
+              title="Upgrade to Pro to unlock"
+            >
+              <div className="shrink-0 relative">
+                <svg width="56" height="56" viewBox="0 0 56 56">
+                  <circle cx="28" cy="28" r="20" fill="none" stroke="#e2e8f0" strokeWidth="6" />
+                </svg>
+                <Crown className="absolute inset-0 m-auto h-5 w-5 text-amber-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-bold text-amber-700 dark:text-amber-400">Compliance Health Score</p>
+                <p className="text-xs text-amber-600 dark:text-amber-500">Pro feature — upgrade to unlock</p>
+              </div>
+            </div>
+          )}
+          {isPro && healthScore && (() => {
             const { score, pending, expiringCount, noData } = healthScore;
             const RING_R    = 20;
             const RING_CIRC = 2 * Math.PI * RING_R;
@@ -5926,8 +5952,23 @@ export default function ChatPage() {
             );
           })()}
 
-          {/* ── v27: Rule Change Alerts — improved dismiss (XIcon), cap 3→5, Load Business CTA ── */}
-          {(() => {
+          {/* ── Rule Change Alerts — Pro only ────────────────────────────── */}
+          {!isPro && (
+            <div className="shrink-0 border-t border-slate-100 dark:border-slate-700/30 px-4 py-3">
+              <div
+                className="flex items-center gap-2.5 rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2.5 cursor-pointer"
+                onClick={() => void handleUpgradeToPro()}
+              >
+                <Zap className="h-4 w-4 text-amber-500 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-bold text-amber-700 dark:text-amber-400">Rule Change Alerts</p>
+                  <p className="text-[10px] text-amber-600 dark:text-amber-500">Pro feature — get notified when regulations change</p>
+                </div>
+                <Crown className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+              </div>
+            </div>
+          )}
+          {isPro && (() => {
             // v27: show up to 5 alerts (was 3), XIcon dismiss, Dismiss-all, Load Business CTA
             // v37: apply alertBizFilter — null = all, string = filtered to one business
             const allActive = alertBizFilter
@@ -6094,7 +6135,7 @@ export default function ChatPage() {
                 </div>
               </div>
             );
-          })()}
+          })()} {/* end isPro && alerts IIFE */}
 
           {/* Pro upsell banner — shown only for Free tier users */}
           {/* vUnified-20260414-national-expansion-v86: added CTA button wired to handleUpgradeToPro */}
@@ -6298,15 +6339,27 @@ export default function ChatPage() {
                     OS
                   </button>
                 )}
-                <button
-                  onClick={() => setShowAddBizModal(true)}
-                  className="flex items-center gap-0.5 text-[10px] font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg px-2 py-0.5 transition-colors min-h-[32px] pointer-events-auto"
-                  title="Add a business"
-                  style={{ touchAction: "manipulation" }}
-                >
-                  <Plus className="h-3 w-3" />
-                  Add
-                </button>
+                {isPro ? (
+                  <button
+                    onClick={() => setShowAddBizModal(true)}
+                    className="flex items-center gap-0.5 text-[10px] font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg px-2 py-0.5 transition-colors min-h-[32px] pointer-events-auto"
+                    title="Add a business"
+                    style={{ touchAction: "manipulation" }}
+                  >
+                    <Plus className="h-3 w-3" />
+                    Add
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => void handleUpgradeToPro()}
+                    className="flex items-center gap-0.5 text-[10px] font-semibold text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg px-2 py-0.5 transition-colors min-h-[32px] pointer-events-auto"
+                    title="Pro feature — upgrade to add businesses"
+                    style={{ touchAction: "manipulation" }}
+                  >
+                    <Crown className="h-3 w-3" />
+                    Pro
+                  </button>
+                )}
               </div>
             </div>
             {/* v40/v56 — Portfolio Health Summary Widget.
@@ -6620,15 +6673,32 @@ export default function ChatPage() {
             {savedBusinesses.length === 0 ? (
               /* Empty state — dashed border prompts first action */
               <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-700/50 px-4 py-5 text-center space-y-2">
-                <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                  No businesses yet — add one to track compliance.
-                </p>
-                <button
-                  onClick={() => setShowAddBizModal(true)}
-                  className="text-[11px] font-semibold text-blue-600 hover:underline pointer-events-auto"
-                >
-                  + Add your first business
-                </button>
+                {isPro ? (
+                  <>
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                      No businesses yet — add one to track compliance.
+                    </p>
+                    <button
+                      onClick={() => setShowAddBizModal(true)}
+                      className="text-[11px] font-semibold text-blue-600 hover:underline pointer-events-auto"
+                    >
+                      + Add your first business
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Crown className="h-5 w-5 text-amber-500 mx-auto" />
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                      <strong className="text-amber-600 dark:text-amber-400">Pro feature</strong> — saved business profiles, compliance dashboard &amp; health score.
+                    </p>
+                    <button
+                      onClick={() => void handleUpgradeToPro()}
+                      className="text-[11px] font-semibold text-amber-600 hover:underline pointer-events-auto"
+                    >
+                      Upgrade to Pro →
+                    </button>
+                  </>
+                )}
               </div>
             ) : (
               <div className="space-y-2">
@@ -7158,6 +7228,47 @@ export default function ChatPage() {
           />
         );
       })()}
+
+      {/* ── Sign-in wall — shown when unauthenticated user exhausts free chats ── */}
+      {showSignInWall && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+          onClick={e => { if (e.target === e.currentTarget) setShowSignInWall(false); }}
+        >
+          <div className="bg-white dark:bg-[#0f1823] rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div className="px-6 pt-6 pb-4 text-center">
+              <div className="h-12 w-12 rounded-2xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center mx-auto mb-4">
+                <Crown className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-1">
+                You&rsquo;ve used your 3 free chats
+              </h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-5">
+                Create a free account to keep chatting. Upgrade to Pro for unlimited AI form completions, health score, rule alerts, and saved business profiles.
+              </p>
+              <button
+                onClick={() => { setShowSignInWall(false); setAuthExpanded(true); }}
+                className="w-full min-h-[48px] flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-colors mb-2"
+              >
+                Sign up free — keep chatting
+              </button>
+              <button
+                onClick={() => void handleUpgradeToPro()}
+                className="w-full min-h-[48px] flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold rounded-xl transition-colors mb-3"
+              >
+                <Crown className="h-4 w-4" />
+                Upgrade to Pro — $19/mo
+              </button>
+              <button
+                onClick={() => setShowSignInWall(false)}
+                className="text-xs text-slate-400 hover:text-slate-500 transition-colors"
+              >
+                Maybe later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Add Business Modal ──────────────────────────────────────────── */}
       {showAddBizModal && (

@@ -411,7 +411,8 @@ export async function dbSaveMonthlyUsage(
 
 /**
  * Load the Pro subscription status for the current user.
- * Returns true by default (MVP: everyone is Pro) until billing is wired.
+ * Returns false for guests and on DB errors — Free tier by default.
+ * Returns true only when profiles.is_pro is explicitly true (set by Stripe webhook).
  */
 export async function dbLoadIsPro(
   db: SupabaseClient | null,
@@ -423,10 +424,10 @@ export async function dbLoadIsPro(
       .select("is_pro")
       .eq("id", userId)
       .single();
-    if (error || !data) return true; // fail-open during MVP
-    return (data as Pick<ProfileRow, "is_pro">).is_pro;
+    if (error || !data) return false; // fail-closed: DB error → Free tier
+    return !!(data as Pick<ProfileRow, "is_pro">).is_pro;
   }
-  return true; // guests get full access for MVP
+  return false; // unauthenticated guests → Free tier
 }
 
 // ── Guest → Supabase migration ────────────────────────────────────────────────

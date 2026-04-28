@@ -38,7 +38,64 @@
 // v50 — Migrated to Anthropic (Claude) — full functionality preserved
 import Anthropic, { APIError } from "@anthropic-ai/sdk";
 import { NextRequest } from "next/server";
+import { createHash } from "crypto";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { LOCAL_FORMS, STATE_FORMS_ALL_50 } from "@/lib/formTemplates";
+
+// ── Anonymous chat rate limit ─────────────────────────────────────────────────
+// Unauthenticated visitors: max 3 AI chats per rolling 30-day window.
+// Tracked by SHA-256(IP) → anon_chat_usage table (no PII stored).
+const ANON_CHAT_LIMIT    = 3;
+const ANON_WINDOW_MS     = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+function getAnonDb() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  return createSupabaseClient(url, key);
+}
+
+function hashIp(ip: string): string {
+  return createHash("sha256").update(ip).digest("hex");
+}
+
+async function checkAnonLimit(request: NextRequest): Promise<"ok" | "exceeded" | "skip"> {
+  // Detect authenticated session via Supabase cookie presence
+  const cookie = request.headers.get("cookie") ?? "";
+  const hasSession = /sb-[a-z]+-auth-token/.test(cookie);
+  if (hasSession) return "skip"; // authenticated — no limit
+
+  const rawIp =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    "unknown";
+
+  if (rawIp === "unknown") return "skip"; // can't identify — degrade gracefully
+
+  const db = getAnonDb();
+  if (!db) return "skip"; // Supabase not configured
+
+  const ipHash = hashIp(rawIp);
+  const since  = new Date(Date.now() - ANON_WINDOW_MS).toISOString();
+
+  try {
+    const { count, error: countErr } = await db
+      .from("anon_chat_usage")
+      .select("id", { count: "exact", head: true })
+      .eq("ip_hash", ipHash)
+      .gte("created_at", since);
+
+    if (countErr) return "skip"; // table might not exist yet — degrade gracefully
+
+    if ((count ?? 0) >= ANON_CHAT_LIMIT) return "exceeded";
+
+    // Record this chat (fire-and-forget — don't block the response)
+    void db.from("anon_chat_usage").insert({ ip_hash: ipHash });
+    return "ok";
+  } catch {
+    return "skip"; // never block on rate-limit errors
+  }
+}
 
 const MODEL = "claude-haiku-4-5-20251001";
 
@@ -1120,6 +1177,16 @@ export async function POST(request: NextRequest) {
     return Response.json(
       { content: "Anthropic API key is not configured. Please set ANTHROPIC_API_KEY in your environment.", formMap: null, formClarify: null },
       { status: 500, headers: CORS },
+    );
+  }
+
+  // ── Anonymous rate limit — 3 chats per 30-day rolling window ─────────────
+  const limitResult = await checkAnonLimit(request);
+  if (limitResult === "exceeded") {
+    console.log(`[chat] [${requestId}] ANON_LIMIT_EXCEEDED`);
+    return Response.json(
+      { content: "", formMap: null, formClarify: null, error: "ANON_LIMIT_EXCEEDED" },
+      { status: 429, headers: CORS },
     );
   }
 

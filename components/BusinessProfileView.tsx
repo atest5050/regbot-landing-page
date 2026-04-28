@@ -2573,22 +2573,39 @@ export default function BusinessProfileView({
           Back to Chat
         </button>
 
-        {/* vMobile-final-deploy-fix — Zoning button: min-h-[48px] touch target + pointer-events-auto for iOS Safari */}
+        {/* Zoning check — Pro only */}
         {onCheckZoning && !attachedZoningDoc && (
-          <button
-            onClick={handleOpenZoningPanel}
-            className="mt-2 w-full flex items-center justify-center gap-2 text-xs font-semibold transition-colors rounded-xl min-h-[48px] pointer-events-auto"
-            style={{
-              background: "rgba(34,211,238,0.08)",
-              border:     "1px solid rgba(34,211,238,0.30)",
-              color:      "rgb(103,232,249)",
-            }}
-            onMouseEnter={e => (e.currentTarget.style.background = "rgba(34,211,238,0.14)")}
-            onMouseLeave={e => (e.currentTarget.style.background = "rgba(34,211,238,0.08)")}
-          >
-            <Search className="h-3.5 w-3.5" />
-            Check Zoning for this Address
-          </button>
+          isPro ? (
+            <button
+              onClick={handleOpenZoningPanel}
+              className="mt-2 w-full flex items-center justify-center gap-2 text-xs font-semibold transition-colors rounded-xl min-h-[48px] pointer-events-auto"
+              style={{
+                background: "rgba(34,211,238,0.08)",
+                border:     "1px solid rgba(34,211,238,0.30)",
+                color:      "rgb(103,232,249)",
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = "rgba(34,211,238,0.14)")}
+              onMouseLeave={e => (e.currentTarget.style.background = "rgba(34,211,238,0.08)")}
+            >
+              <Search className="h-3.5 w-3.5" />
+              Check Zoning for this Address
+            </button>
+          ) : (
+            <button
+              onClick={() => onManageSubscription?.()}
+              className="mt-2 w-full flex items-center justify-center gap-2 text-xs font-semibold transition-colors rounded-xl min-h-[48px] pointer-events-auto"
+              style={{
+                background: "rgba(251,191,36,0.08)",
+                border:     "1px solid rgba(251,191,36,0.30)",
+                color:      "rgb(251,191,36)",
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = "rgba(251,191,36,0.14)")}
+              onMouseLeave={e => (e.currentTarget.style.background = "rgba(251,191,36,0.08)")}
+            >
+              <Crown className="h-3.5 w-3.5" />
+              Upgrade to Pro — Unlock Zoning Check
+            </button>
+          )
         )}
 
         {/* v67 — Compact zoning status strip when result is already attached */}
