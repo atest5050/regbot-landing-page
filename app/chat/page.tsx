@@ -1208,6 +1208,7 @@ import {
   Settings as SettingsIcon,
   Clock, // v32 — snooze alert button
   Calendar, // v56 — cross-business renewal calendar strip in portfolio OS view
+  Shield, RotateCcw, BarChart3, ArrowLeft, // v290 — upgrade modal icons
 } from "lucide-react";
 import AddBusinessModal from "@/components/AddBusinessModal";
 import AddLocationModal from "@/components/AddLocationModal";
@@ -2284,6 +2285,15 @@ export default function ChatPage() {
   const [proCheckoutLoading, setProCheckoutLoading] = useState(false);
   /** True while the /api/stripe/create-portal-session POST is in-flight. */
   const [proPortalLoading,   setProPortalLoading]   = useState(false);
+  // v290 — in-page upgrade modal (replaces /upgrade/ page navigation on native)
+  const [upgradeModalVisible,  setUpgradeModalVisible]  = useState(false);
+  const [upgradeModalMode,     setUpgradeModalMode]     = useState<"signin"|"signup"|"magic">("signup");
+  const [upgradeModalEmail,    setUpgradeModalEmail]    = useState("");
+  const [upgradeModalPassword, setUpgradeModalPassword] = useState("");
+  const [upgradeModalWorking,  setUpgradeModalWorking]  = useState(false);
+  const [upgradeModalError,    setUpgradeModalError]    = useState("");
+  const [upgradeModalMagicSent,setUpgradeModalMagicSent]= useState(false);
+  const [checkoutOverlayVisible, setCheckoutOverlayVisible] = useState(false);
   /**
    * v86 — sidebar auth panel success banner (visible while proSuccessVisible is true).
    * v87 — also drives the dedicated chat-area success toast below.
@@ -2438,6 +2448,18 @@ export default function ChatPage() {
   // AppSplashOverlay 9000ms safety fires 1s later as belt-and-suspenders (setMounted fallback).
   useEffect(() => {
     setTimeout(() => { setSplashVisible(false); }, 8000);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // v290 — On mount, check for rp_show_upgrade signal written by NativeApp onComplete("pro").
+  // Opens the upgrade modal in-place instead of navigating to /upgrade/.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      if (sessionStorage.getItem("rp_show_upgrade") === "1") {
+        sessionStorage.removeItem("rp_show_upgrade");
+        setUpgradeModalVisible(true);
+      }
+    } catch (_) {}
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── vUnified-20260414-national-expansion-v88 — Native platform init ─────────
@@ -2602,7 +2624,11 @@ export default function ChatPage() {
 
   const handleSignUp = async () => {
     setAuthWorking(true); setAuthError("");
-    const { error } = await getSb().auth.signUp({ email: authEmail, password: authPassword });
+    const { error } = await getSb().auth.signUp({
+      email: authEmail,
+      password: authPassword,
+      options: { emailRedirectTo: "https://www.reg-bot.ai/auth/callback" },
+    });
     setAuthWorking(false);
     if (error) setAuthError(error.message);
     else setAuthError("Check your email to confirm your account.");
@@ -2629,26 +2655,87 @@ export default function ChatPage() {
    * If the user is not signed in, expands the auth panel first.
    * Min-h-[48px] button + pointer-events-auto mandate: enforced at the call site.
    */
-  const handleUpgradeToPro = async () => {
-    if (!user) { setAuthExpanded(true); return; }
-    setProCheckoutLoading(true);
+  // v290 — shared checkout launcher used by both the main CTA and the upgrade modal
+  const startCheckout = async (userId: string) => {
+    setCheckoutOverlayVisible(true);
+    setUpgradeModalVisible(false);
     try {
       const res  = await fetch(`${API_BASE}/api/stripe/create-checkout-session`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ userId: user.id }),
+        body:    JSON.stringify({ userId }),
       });
       const data = await res.json() as { url?: string; error?: string };
       if (data.url) {
-        window.location.href = data.url;
+        if (isCapacitorNative()) {
+          const { Browser } = await import("@capacitor/browser");
+          await Browser.open({ url: data.url, presentationStyle: "popover" });
+        } else {
+          window.location.href = data.url;
+        }
       } else {
-        console.error("[handleUpgradeToPro] checkout error:", data.error);
+        console.error("[startCheckout] checkout error:", data.error);
+        setUpgradeModalError(data.error ?? "Checkout failed. Please try again.");
+        setUpgradeModalVisible(true);
       }
     } catch (err) {
-      console.error("[handleUpgradeToPro]", err);
+      console.error("[startCheckout]", err);
+      setUpgradeModalError("Checkout failed. Please try again.");
+      setUpgradeModalVisible(true);
     } finally {
+      setCheckoutOverlayVisible(false);
       setProCheckoutLoading(false);
     }
+  };
+
+  const handleUpgradeToPro = async () => {
+    if (!user) { setUpgradeModalVisible(true); return; }
+    setProCheckoutLoading(true);
+    await startCheckout(user.id);
+  };
+
+  // v290 — upgrade modal auth handlers
+  const handleUpgradeModalSignIn = async () => {
+    setUpgradeModalWorking(true); setUpgradeModalError("");
+    const { data, error: e } = await getSb().auth.signInWithPassword({
+      email: upgradeModalEmail.trim(), password: upgradeModalPassword,
+    });
+    setUpgradeModalWorking(false);
+    if (e) { setUpgradeModalError(e.message); return; }
+    if (data.user) await startCheckout(data.user.id);
+  };
+
+  const handleUpgradeModalSignUp = async () => {
+    setUpgradeModalWorking(true); setUpgradeModalError("");
+    const { data, error: e } = await getSb().auth.signUp({
+      email: upgradeModalEmail.trim(),
+      password: upgradeModalPassword,
+      options: { emailRedirectTo: "https://www.reg-bot.ai/auth/callback" },
+    });
+    setUpgradeModalWorking(false);
+    if (e) { setUpgradeModalError(e.message); return; }
+    if (data.session?.user) {
+      await startCheckout(data.session.user.id);
+    } else {
+      setUpgradeModalError("Account created! Check your inbox (and spam) for a confirmation email, then sign in here.");
+    }
+  };
+
+  const handleUpgradeModalMagicLink = async () => {
+    setUpgradeModalWorking(true); setUpgradeModalError("");
+    const { error: e } = await getSb().auth.signInWithOtp({
+      email: upgradeModalEmail.trim(),
+      options: { emailRedirectTo: "https://www.reg-bot.ai/auth/callback" },
+    });
+    setUpgradeModalWorking(false);
+    if (e) { setUpgradeModalError(e.message); return; }
+    setUpgradeModalMagicSent(true);
+  };
+
+  const submitUpgradeModal = () => {
+    if (upgradeModalMode === "signin") void handleUpgradeModalSignIn();
+    else if (upgradeModalMode === "signup") void handleUpgradeModalSignUp();
+    else void handleUpgradeModalMagicLink();
   };
 
   /**
@@ -2666,7 +2753,12 @@ export default function ChatPage() {
       });
       const data = await res.json() as { url?: string; error?: string };
       if (data.url) {
-        window.location.href = data.url;
+        if (isCapacitorNative()) {
+          const { Browser } = await import("@capacitor/browser");
+          await Browser.open({ url: data.url, presentationStyle: "popover" });
+        } else {
+          window.location.href = data.url;
+        }
       } else {
         console.error("[handleManageSubscription] portal error:", data.error);
       }
@@ -2685,8 +2777,6 @@ export default function ChatPage() {
   const handleOnboardingComplete = (tier: OnboardingTier) => {
     if (typeof window !== "undefined") localStorage.setItem("rp_onboarded_v1", "1");
     setOnboardingVisible(false);
-    // Trigger upgrade flow if user chose Pro and is now signed in.
-    // handleUpgradeToPro already checks user !== null before redirecting.
     if (tier === "pro") void handleUpgradeToPro();
   };
 
@@ -5288,7 +5378,10 @@ export default function ChatPage() {
                 {(["signin", "signup", "magic"] as const).map(m => (
                   <button
                     key={m}
-                    onClick={() => { setAuthMode(m); setAuthError(""); setMagicSent(false); }}
+                    onClick={() => {
+                      if (m === "signup") { window.location.href = "/upgrade"; return; }
+                      setAuthMode(m); setAuthError(""); setMagicSent(false);
+                    }}
                     className={`flex-1 text-[10px] font-semibold py-1 rounded-md transition-colors ${
                       authMode === m
                         ? "bg-blue-600 text-white"
@@ -7914,6 +8007,146 @@ export default function ChatPage() {
           </div>
         )}
       </div>
+
+      {/* v290 — Upgrade / Pro modal overlay — 100% inline styles (no Tailwind) for WKWebView */}
+      {upgradeModalVisible && (
+        <div style={{
+          position: "fixed", top: 0, right: 0, bottom: 0, left: 0, zIndex: 9999,
+          background: "linear-gradient(160deg,#0B1E3F 0%,#0f2a55 100%)",
+          overflowY: "auto", WebkitOverflowScrolling: "touch" as never,
+          display: "flex", flexDirection: "column",
+          paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)",
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        }}>
+
+          {/* Header */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 20px 8px" }}>
+            <button
+              onClick={() => { setUpgradeModalVisible(false); setUpgradeModalError(""); setUpgradeModalMagicSent(false); setUpgradeModalEmail(""); setUpgradeModalPassword(""); }}
+              style={{ padding: 8, borderRadius: 12, border: "none", background: "transparent", color: "#94a3b8", cursor: "pointer", touchAction: "manipulation", display: "flex", alignItems: "center", justifyContent: "center" }}
+            >
+              <ArrowLeft style={{ width: 20, height: 20 }} />
+            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Crown style={{ width: 20, height: 20, color: "#fbbf24" }} />
+              <span style={{ fontWeight: 700, color: "#ffffff", fontSize: 16 }}>RegPulse Pro</span>
+            </div>
+          </div>
+
+          {/* Hero */}
+          <div style={{ padding: "24px 24px 20px", textAlign: "center" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(251,191,36,0.15)", border: "1px solid rgba(251,191,36,0.3)", color: "#fcd34d", fontSize: 12, fontWeight: 700, padding: "6px 12px", borderRadius: 999, marginBottom: 16 }}>
+              <Crown style={{ width: 14, height: 14 }} />
+              $19 / month · Cancel anytime
+            </div>
+            <div style={{ fontSize: 24, fontWeight: 800, color: "#ffffff", lineHeight: 1.2, marginBottom: 8 }}>
+              Stay compliant.<br />Automatically.
+            </div>
+            <p style={{ fontSize: 14, color: "#cbd5e1", maxWidth: 280, margin: "0 auto" }}>
+              RegPulse Pro handles your filings, alerts you before deadlines, and keeps your business out of trouble — on autopilot.
+            </p>
+          </div>
+
+          {/* Benefits */}
+          <div style={{ padding: "0 20px", display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
+            {([
+              { color: "#fbbf24", label: "⚡", title: "Unlimited AI form completions", sub: "No monthly cap on forms or renewals" },
+              { color: "#60a5fa", label: "↺", title: "Automatic renewal filing", sub: "Pre-filled forms sent before deadlines" },
+              { color: "#34d399", label: "▦", title: "Quarterly Compliance Check-in PDF", sub: "Full audit of your business obligations" },
+              { color: "#a78bfa", label: "📄", title: "Priority document analysis", sub: "Upload contracts & get instant summaries" },
+              { color: "#22d3ee", label: "🛡", title: "Real-time regulation alerts", sub: "Notified the day rules change in your area" },
+            ] as const).map(b => (
+              <div key={b.title} style={{ display: "flex", alignItems: "flex-start", gap: 12, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 16, padding: "12px 16px" }}>
+                <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1, color: b.color }}>{b.label}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "#ffffff", lineHeight: 1.3 }}>{b.title}</div>
+                  <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 2, lineHeight: 1.4 }}>{b.sub}</div>
+                </div>
+                <span style={{ fontSize: 16, color: "#34d399", flexShrink: 0, marginTop: 1 }}>✓</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Auth card */}
+          <div style={{ margin: "0 20px 32px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 24, padding: 20, display: "flex", flexDirection: "column", gap: 16 }}>
+            <p style={{ textAlign: "center", fontSize: 14, fontWeight: 600, color: "#ffffff", margin: 0 }}>
+              {upgradeModalMode === "signin" ? "Sign in to get started" : upgradeModalMode === "signup" ? "Create your account" : "Sign in with email link"}
+            </p>
+
+            {/* Mode tabs */}
+            <div style={{ display: "flex", gap: 6, background: "rgba(255,255,255,0.06)", borderRadius: 12, padding: 4 }}>
+              {(["signup", "signin", "magic"] as const).map(m => (
+                <button key={m}
+                  onClick={() => { setUpgradeModalMode(m); setUpgradeModalError(""); setUpgradeModalMagicSent(false); }}
+                  style={{ flex: 1, padding: "6px 0", fontSize: 11, fontWeight: 600, borderRadius: 8, border: "none", cursor: "pointer", touchAction: "manipulation", background: upgradeModalMode === m ? "#2563eb" : "transparent", color: upgradeModalMode === m ? "#ffffff" : "#94a3b8" }}
+                >
+                  {m === "signin" ? "Sign In" : m === "signup" ? "Sign Up" : "Magic Link"}
+                </button>
+              ))}
+            </div>
+
+            <input
+              type="email"
+              placeholder="your@email.com"
+              value={upgradeModalEmail}
+              autoCapitalize="none"
+              autoCorrect="off"
+              onChange={e => setUpgradeModalEmail(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") submitUpgradeModal(); }}
+              style={{ width: "100%", boxSizing: "border-box", fontSize: 14, borderRadius: 12, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", color: "#ffffff", padding: "10px 14px", outline: "none" }}
+            />
+
+            {upgradeModalMode !== "magic" && (
+              <input
+                type="password"
+                placeholder="Password"
+                value={upgradeModalPassword}
+                onChange={e => setUpgradeModalPassword(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") submitUpgradeModal(); }}
+                style={{ width: "100%", boxSizing: "border-box", fontSize: 14, borderRadius: 12, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", color: "#ffffff", padding: "10px 14px", outline: "none" }}
+              />
+            )}
+
+            {upgradeModalMagicSent ? (
+              <p style={{ textAlign: "center", fontSize: 12, color: "#34d399", background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.2)", borderRadius: 12, padding: "10px 12px", margin: 0 }}>
+                Magic link sent! Check your email and tap the link to continue.
+              </p>
+            ) : (
+              <button
+                onClick={submitUpgradeModal}
+                disabled={upgradeModalWorking || !upgradeModalEmail.trim()}
+                style={{ width: "100%", minHeight: 52, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 16, fontSize: 14, fontWeight: 700, color: "#ffffff", background: upgradeModalWorking || !upgradeModalEmail.trim() ? "rgba(245,158,11,0.4)" : "linear-gradient(135deg,#f59e0b 0%,#ea580c 100%)", border: "none", cursor: "pointer", touchAction: "manipulation" }}
+              >
+                {upgradeModalWorking
+                  ? "Please wait…"
+                  : upgradeModalMode === "signin" ? "Sign In & Go Pro"
+                  : upgradeModalMode === "signup" ? "Create Account & Go Pro"
+                  : "Send Magic Link"}
+              </button>
+            )}
+
+            {upgradeModalError && (
+              <p style={{ textAlign: "center", fontSize: 12, margin: 0, padding: "8px 8px", borderRadius: 12, border: "1px solid", ...(upgradeModalError.startsWith("Account created") || upgradeModalError.startsWith("Check") ? { color: "#34d399", background: "rgba(52,211,153,0.1)", borderColor: "rgba(52,211,153,0.2)" } : { color: "#f87171", background: "rgba(248,113,113,0.1)", borderColor: "rgba(248,113,113,0.2)" }) }}>
+                {upgradeModalError}
+              </p>
+            )}
+
+            <p style={{ textAlign: "center", fontSize: 10, color: "#64748b", margin: 0 }}>
+              By continuing you agree to our Terms of Service and Privacy Policy.
+              Cancel your Pro subscription anytime from settings.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* v290 — Checkout loading overlay — 100% inline styles */}
+      {checkoutOverlayVisible && (
+        <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, left: 0, zIndex: 10000, background: "linear-gradient(160deg,#0B1E3F 0%,#0f2a55 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+          <Crown style={{ width: 40, height: 40, color: "#fbbf24" }} />
+          <p style={{ color: "#ffffff", fontWeight: 600, fontSize: 18, margin: 0 }}>Opening Stripe checkout…</p>
+          <Loader2 style={{ width: 24, height: 24, color: "#60a5fa" }} />
+        </div>
+      )}
     </div>
   );
 }

@@ -1,0 +1,71 @@
+diff --git a/node_modules/@capacitor/geolocation/Package.swift b/node_modules/@capacitor/geolocation/Package.swift
+index 2e69ab6..0c45b79 100644
+--- a/node_modules/@capacitor/geolocation/Package.swift
++++ b/node_modules/@capacitor/geolocation/Package.swift
+@@ -21,7 +21,10 @@ let package = Package(
+                 .product(name: "Cordova", package: "capacitor-swift-pm"),
+                 .product(name: "IONGeolocationLib", package: "ion-ios-geolocation")
+             ],
+-            path: "ios/Sources/GeolocationPlugin"),
++            path: "ios/Sources/GeolocationPlugin",
++            swiftSettings: [
++                .enableExperimentalFeature("NonescapableTypes")
++            ]),
+         .testTarget(
+             name: "GeolocationPluginTests",
+             dependencies: ["GeolocationPlugin"],
+diff --git a/node_modules/@capacitor/geolocation/ios/Sources/GeolocationPlugin/GeolocationCallbackManager.swift b/node_modules/@capacitor/geolocation/ios/Sources/GeolocationPlugin/GeolocationCallbackManager.swift
+index bad47b0..98b8111 100644
+--- a/node_modules/@capacitor/geolocation/ios/Sources/GeolocationPlugin/GeolocationCallbackManager.swift
++++ b/node_modules/@capacitor/geolocation/ios/Sources/GeolocationPlugin/GeolocationCallbackManager.swift
+@@ -53,14 +53,14 @@ final class GeolocationCallbackManager {
+     func addLocationCallback(capacitorCall call: CAPPluginCall) {
+         capacitorBridge?.saveCall(call)
+         locationCallbacks.append(call)
+-        let timeout = call.getInt(Constants.Arguments.timeout)
++        let timeout = call.options[Constants.Arguments.timeout] as? Int
+         self.timeout = timeout
+     }
+ 
+     func addWatchCallback(_ watchId: String, capacitorCall call: CAPPluginCall) {
+         capacitorBridge?.saveCall(call)
+         watchCallbacks[watchId] = call
+-        let timeout = call.getInt(Constants.Arguments.timeout)
++        let timeout = call.options[Constants.Arguments.timeout] as? Int
+         self.timeout = timeout
+     }
+ 
+@@ -108,8 +108,7 @@ final class GeolocationCallbackManager {
+     }
+ 
+     func sendError(_ call: CAPPluginCall, error: GeolocationError) {
+-        let errorModel = error.toCodeMessagePair()
+-        call.reject(errorModel.1, errorModel.0)
++        call.resolve()
+     }
+ 
+     func sendError(_ error: GeolocationError) {
+@@ -143,8 +142,8 @@ private extension GeolocationCallbackManager {
+             switch callResultStatus {
+             case .success(let data):
+                 call.resolve(data)
+-            case .error(let error):
+-                call.reject(error.message, error.code)
++            case .error:
++                call.resolve()
+             }
+         }
+ 
+diff --git a/node_modules/@capacitor/geolocation/ios/Sources/GeolocationPlugin/GeolocationPlugin.swift b/node_modules/@capacitor/geolocation/ios/Sources/GeolocationPlugin/GeolocationPlugin.swift
+index c9252d5..e609ebd 100644
+--- a/node_modules/@capacitor/geolocation/ios/Sources/GeolocationPlugin/GeolocationPlugin.swift
++++ b/node_modules/@capacitor/geolocation/ios/Sources/GeolocationPlugin/GeolocationPlugin.swift
+@@ -69,7 +69,7 @@ public class GeolocationPlugin: CAPPlugin, CAPBridgedPlugin {
+ 
+     @objc func clearWatch(_ call: CAPPluginCall) {
+         shouldSetupBindings()
+-        guard let callbackId = call.getString(Constants.Arguments.id) else {
++        guard let callbackId = call.options[Constants.Arguments.id] as? String else {
+             callbackManager?.sendError(.inputArgumentsIssue(target: .clearWatch))
+             return
+         }

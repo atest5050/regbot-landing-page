@@ -61,8 +61,8 @@ const inter = Inter({
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 5,
-  userScalable: true,
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: "cover",
 };
 
@@ -214,7 +214,8 @@ export default function RootLayout({
                   }
                   // Edge case: redirect from unexpected deep-link paths.
                   // Root ('/', 'index.html') and /chat/ are handled by NativeApp (app/page.tsx).
-                  if(p!=='/'&&p!=='index.html'&&p!=='/index.html'&&p!=='/chat'&&p!=='/chat/'){
+                  var allowed=['/','index.html','/index.html','/chat','/chat/','/upgrade','/upgrade/','/auth/callback','/auth/callback/'];
+                  if(allowed.indexOf(p)===-1){
                     window.location.replace('/chat/');
                   }
                 }

@@ -535,7 +535,11 @@ function AuthScreen({
     setSuccessMsg("");
 
     if (authMode === "signup") {
-      const { error } = await sb.auth.signUp({ email: email.trim(), password });
+      const { error } = await sb.auth.signUp({
+        email: email.trim(),
+        password,
+        options: { emailRedirectTo: "https://www.reg-bot.ai/auth/callback" },
+      });
       setAuthWorking(false);
       if (error) {
         setAuthError(error.message);

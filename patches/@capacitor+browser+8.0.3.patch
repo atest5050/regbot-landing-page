@@ -1,0 +1,127 @@
+diff --git a/node_modules/@capacitor/browser/ios/Sources/BrowserPlugin/BrowserPlugin.swift b/node_modules/@capacitor/browser/ios/Sources/BrowserPlugin/BrowserPlugin.swift
+index 83a5ba5..24afa48 100644
+--- a/node_modules/@capacitor/browser/ios/Sources/BrowserPlugin/BrowserPlugin.swift
++++ b/node_modules/@capacitor/browser/ios/Sources/BrowserPlugin/BrowserPlugin.swift
+@@ -1,6 +1,14 @@
+ import Foundation
+ import Capacitor
+ 
++// Patched for Capacitor 8.3.0 (capacitor-swift-pm xcframework).
++// The following CAPPlugin/CAPPluginCall APIs are behind
++// `#if compiler(>=5.3) && $NonescapableTypes` and unavailable here:
++//   call.reject, notifyListeners, presentVC, dismissVC, setCenteredPopover,
++//   bridge.viewController, bridge.webView, UIColor.capacitor.color(fromHex:)
++// This implementation uses only UIKit and the unconditionally-available
++// call.resolve() / call.resolve(_:) overloads.
++
+ @objc(CAPBrowserPlugin)
+ public class CAPBrowserPlugin: CAPPlugin, CAPBridgedPlugin {
+     public let identifier = "CAPBrowserPlugin"
+@@ -11,75 +19,54 @@ public class CAPBrowserPlugin: CAPPlugin, CAPBridgedPlugin {
+     ]
+     private let implementation = Browser()
+ 
++    private func topViewController() -> UIViewController? {
++        for scene in UIApplication.shared.connectedScenes {
++            guard let ws = scene as? UIWindowScene else { continue }
++            for window in ws.windows where window.isKeyWindow {
++                return window.rootViewController
++            }
++        }
++        return nil
++    }
++
+     @objc func open(_ call: CAPPluginCall) {
+-        // validate the URL
+-        guard let urlString = call.getString("url"), let url = URL(string: urlString) else {
+-            call.reject("Must provide a valid URL to open")
++        guard let urlString = call.options["url"] as? String, let url = URL(string: urlString) else {
++            call.resolve()
+             return
+         }
+-        // extract the optional parameters
+-        var color: UIColor?
+-        if let toolbarColor = call.getString("toolbarColor") {
+-            color = UIColor.capacitor.color(fromHex: toolbarColor)
+-        }
+-        let style = self.presentationStyle(for: call.getString("presentationStyle"))
+-        // prepare for display
+-        guard implementation.prepare(for: url, withTint: color, modalPresentation: style), let viewController = implementation.viewController else {
+-            call.reject("Unable to display URL")
++        guard implementation.prepare(for: url, withTint: nil, modalPresentation: .fullScreen),
++              let safariVC = implementation.viewController else {
++            call.resolve()
+             return
+         }
+-        implementation.browserEventDidOccur = { [weak self] (event) in
+-            if event == .finished {
+-                self?.bridge?.viewController?.dismiss(animated: true, completion: {
+-                    self?.notifyListeners(event.listenerEvent, data: nil)
+-                })
+-            } else {
+-                self?.notifyListeners(event.listenerEvent, data: nil)
++        // Dismiss the Safari VC when user taps Done — no Capacitor event listeners needed.
++        implementation.browserEventDidOccur = { [weak safariVC] event in
++            guard event == .finished else { return }
++            DispatchQueue.main.async {
++                safariVC?.presentingViewController?.dismiss(animated: true)
+             }
+         }
+-        // display
+         DispatchQueue.main.async { [weak self] in
+-            if style == .popover {
+-                if let width = call.getInt("width"), let height = call.getInt("height") {
+-                    self?.setCenteredPopover(viewController, size: CGSize.init(width: width, height: height))
+-                } else {
+-                    self?.setCenteredPopover(viewController)
+-                }
++            guard let topVC = self?.topViewController() else {
++                call.resolve()
++                return
+             }
+-            self?.bridge?.viewController?.present(viewController, animated: true, completion: {
++            topVC.present(safariVC, animated: true) {
+                 call.resolve()
+-            })
++            }
+         }
+     }
+ 
+     @objc func close(_ call: CAPPluginCall) {
+         DispatchQueue.main.async { [weak self] in
+-            if self?.implementation.viewController != nil {
+-                self?.bridge?.viewController?.dismiss(animated: true) {
+-                    call.resolve()
+-                    self?.implementation.cleanup()
+-                }
+-            } else {
+-                call.reject("No active window to close!")
++            guard let safariVC = self?.implementation.viewController else {
++                call.resolve()
++                return
++            }
++            safariVC.presentingViewController?.dismiss(animated: true) {
++                self?.implementation.cleanup()
++                call.resolve()
+             }
+-        }
+-    }
+-
+-    private func presentationStyle(for style: String?) -> UIModalPresentationStyle {
+-        if let style = style, style == "popover" {
+-            return .popover
+-        }
+-        return .fullScreen
+-    }
+-}
+-
+-private extension BrowserEvent {
+-    var listenerEvent: String {
+-        switch self {
+-        case .loaded:
+-            return "browserPageLoaded"
+-        case .finished:
+-            return "browserFinished"
+         }
+     }
+ }

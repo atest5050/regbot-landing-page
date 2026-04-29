@@ -173,7 +173,10 @@ function NativeApp() {
   }
 
   // First-time user: render OnboardingFlow directly.
-  // onComplete: Pro/Business only — free tier handled by __rpStartFreeTriggered watcher above.
+  // onComplete: Pro/Business — free tier handled by __rpStartFreeTriggered watcher above.
+  // v290 FIX: no window.location.replace for Pro either. Write sessionStorage signal,
+  // then setShowChat(true) so ChatPage mounts in-place and opens the upgrade modal.
+  // Eliminates the WKWebView navigation that produced the blank navy screen.
   return (
     <OnboardingFlow
       key="onboarding-v285"
@@ -184,7 +187,10 @@ function NativeApp() {
         try { localStorage.setItem("rp_skip_splash", "1"); } catch (_) {}
         try { sessionStorage.setItem("rp_skip_splash", "1"); } catch (_) {}
         try { sessionStorage.setItem("rp_onboarded_v1", "1"); } catch (_) {}
-        window.location.replace(tier === "pro" ? "/chat/?tier=pro" : "/chat/");
+        if (tier === "pro") {
+          try { sessionStorage.setItem("rp_show_upgrade", "1"); } catch (_) {}
+        }
+        setShowChat(true);
       }}
     />
   );
