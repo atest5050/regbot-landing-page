@@ -47,6 +47,17 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>ai.reg-bot.regpulse</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>regpulse</string>
+			</array>
+		</dict>
+	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>RegPulse would like to use your current location to provide hyper-local compliance guidance.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>

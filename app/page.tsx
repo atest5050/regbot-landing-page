@@ -137,6 +137,21 @@ function NativeApp() {
     if (locked) setIsLocked(true);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Deep link handler — regpulse://chat opens the app to chat directly.
+  useEffect(() => {
+    let handle: { remove: () => void } | null = null;
+    import("@capacitor/app").then(({ App }) => {
+      App.addListener("appUrlOpen", ({ url }) => {
+        if (url.startsWith("regpulse://")) {
+          try { localStorage.setItem("rp_onboarded_v1", "1"); } catch (_) {}
+          try { sessionStorage.setItem("rp_skip_splash", "1"); } catch (_) {}
+          setShowChat(true);
+        }
+      }).then(h => { handle = h; });
+    }).catch(() => {});
+    return () => { handle?.remove(); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // vUnified-20260414-national-expansion-v276 — free tier flag watcher (React state swap).
   // Button in OnboardingFlow ONLY sets window.__rpStartFreeTriggered = true and exits.
   // This setInterval fires from a clean macrotask — zero lineage to the touch gesture.

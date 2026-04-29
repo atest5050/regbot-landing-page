@@ -105,17 +105,21 @@ export default function AuthCallbackPage() {
 
       {status === "success" && (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, textAlign: "center" }}>
-          <div style={{
-            background: "rgba(34,211,238,0.10)", border: "1px solid rgba(34,211,238,0.25)",
-            borderRadius: 16, padding: "14px 20px", maxWidth: 300,
-          }}>
-            <p style={{ fontSize: 14, color: "#22d3ee", fontWeight: 600, margin: "0 0 6px" }}>
-              Next step
-            </p>
-            <p style={{ fontSize: 13, color: "#94a3b8", margin: 0, lineHeight: 1.5 }}>
-              Open the <strong style={{ color: "#ffffff" }}>RegPulse app</strong> on your device and sign in with the same email to continue.
-            </p>
-          </div>
+          <a
+            href="regpulse://chat"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 8,
+              padding: "12px 24px", borderRadius: 12,
+              background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+              color: "#ffffff", fontSize: 14, fontWeight: 600,
+              textDecoration: "none",
+            }}
+          >
+            Open RegPulse App
+          </a>
+          <p style={{ fontSize: 12, color: "#64748b", margin: 0, maxWidth: 260 }}>
+            If the app doesn't open, launch RegPulse from your home screen and sign in.
+          </p>
         </div>
       )}
 
