@@ -9,64 +9,69 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     const sb = createClient();
+    let settled = false;
 
-    // Listen for the auth state change that fires when Supabase detects the
-    // token in the URL hash or exchanges the PKCE code. This fires before
-    // getSession() resolves in some flows.
-    const { data: { subscription } } = sb.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session) {
-        subscription.unsubscribe();
-        setStatus("success");
-        setMessage("You're signed in! You can now return to the RegPulse app.");
-      } else if (event === "PASSWORD_RECOVERY") {
-        subscription.unsubscribe();
-        setStatus("success");
-        setMessage("Password reset confirmed. Return to the app to continue.");
-      }
-    });
-
-    // Also try getSession + exchangeCodeForSession as fallback
-    sb.auth.getSession().then(({ data, error }) => {
-      if (data.session) {
-        subscription.unsubscribe();
-        setStatus("success");
-        setMessage("You're signed in! You can now return to the RegPulse app.");
-        return;
-      }
-      if (error) {
-        // Ignore — may still be resolved by onAuthStateChange above
-      }
-      // PKCE code flow
-      const params = new URLSearchParams(window.location.search);
-      const code = params.get("code");
-      if (code) {
-        sb.auth.exchangeCodeForSession(code).then(({ error: e }) => {
-          subscription.unsubscribe();
-          if (e) {
-            setStatus("error");
-            setMessage("Confirmation failed. The link may have expired — please try again.");
-          } else {
-            setStatus("success");
-            setMessage("You're signed in! You can now return to the RegPulse app.");
-          }
-        });
-      }
-    });
-
-    // Safety: if nothing resolves within 8 s, show generic message
-    const t = setTimeout(() => {
+    const settle = (ok: boolean, msg: string) => {
+      if (settled) return;
+      settled = true;
       subscription.unsubscribe();
-      if (status === "loading") {
-        setStatus("success");
-        setMessage("If your link was valid, you're now signed in. Return to the RegPulse app.");
+      clearTimeout(safetyTimer);
+      setStatus(ok ? "success" : "error");
+      setMessage(msg);
+    };
+
+    // Primary: listen for auth state change (covers implicit + PKCE flows)
+    const { data: { subscription } } = sb.auth.onAuthStateChange((event, session) => {
+      if ((event === "SIGNED_IN" || event === "PASSWORD_RECOVERY") && session) {
+        settle(true, "You're signed in! You can now return to the RegPulse app.");
       }
+    });
+
+    const params = new URLSearchParams(window.location.search);
+
+    // OTP / token_hash flow — Supabase email confirmation and magic links
+    const tokenHash = params.get("token_hash");
+    const type = params.get("type") as "signup" | "magiclink" | "recovery" | "email" | "invite" | null;
+    if (tokenHash && type) {
+      sb.auth.verifyOtp({ token_hash: tokenHash, type }).then(({ error: e }) => {
+        if (e) {
+          settle(false, "Confirmation failed. The link may have expired — please try again.");
+        } else {
+          settle(true, "You're confirmed! Open the RegPulse app and sign in to continue.");
+        }
+      });
+    }
+
+    // PKCE code flow fallback
+    const code = params.get("code");
+    if (code && !tokenHash) {
+      sb.auth.exchangeCodeForSession(code).then(({ error: e }) => {
+        if (e) {
+          settle(false, "Confirmation failed. The link may have expired — please try again.");
+        } else {
+          settle(true, "You're signed in! You can now return to the RegPulse app.");
+        }
+      });
+    }
+
+    // Existing session fallback
+    sb.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        settle(true, "You're signed in! You can now return to the RegPulse app.");
+      }
+    });
+
+    // 8-second safety net
+    const safetyTimer = setTimeout(() => {
+      settle(true, "If your link was valid, you're now confirmed. Open the RegPulse app to sign in.");
     }, 8000);
 
     return () => {
       subscription.unsubscribe();
-      clearTimeout(t);
+      clearTimeout(safetyTimer);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
 
   return (
     <div style={{
@@ -99,18 +104,19 @@ export default function AuthCallbackPage() {
       </div>
 
       {status === "success" && (
-        <a
-          href="capacitor://app/chat/"
-          style={{
-            display: "inline-flex", alignItems: "center", gap: 8,
-            padding: "12px 24px", borderRadius: 12,
-            background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
-            color: "#ffffff", fontSize: 14, fontWeight: 600,
-            textDecoration: "none",
-          }}
-        >
-          Open RegPulse App
-        </a>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, textAlign: "center" }}>
+          <div style={{
+            background: "rgba(34,211,238,0.10)", border: "1px solid rgba(34,211,238,0.25)",
+            borderRadius: 16, padding: "14px 20px", maxWidth: 300,
+          }}>
+            <p style={{ fontSize: 14, color: "#22d3ee", fontWeight: 600, margin: "0 0 6px" }}>
+              Next step
+            </p>
+            <p style={{ fontSize: 13, color: "#94a3b8", margin: 0, lineHeight: 1.5 }}>
+              Open the <strong style={{ color: "#ffffff" }}>RegPulse app</strong> on your device and sign in with the same email to continue.
+            </p>
+          </div>
+        </div>
       )}
 
       {status === "loading" && (
@@ -125,9 +131,7 @@ export default function AuthCallbackPage() {
       {status === "error" && (
         <a
           href="https://www.reg-bot.ai"
-          style={{
-            fontSize: 13, color: "#60a5fa", textDecoration: "underline",
-          }}
+          style={{ fontSize: 13, color: "#60a5fa", textDecoration: "underline" }}
         >
           Go to RegPulse
         </a>

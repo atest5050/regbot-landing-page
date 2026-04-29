@@ -2286,7 +2286,11 @@ export default function ChatPage() {
   /** True while the /api/stripe/create-portal-session POST is in-flight. */
   const [proPortalLoading,   setProPortalLoading]   = useState(false);
   // v290 — in-page upgrade modal (replaces /upgrade/ page navigation on native)
-  const [upgradeModalVisible,  setUpgradeModalVisible]  = useState(false);
+  // Lazy initializer reads rp_show_upgrade synchronously so GPS never fires while modal is open.
+  const [upgradeModalVisible,  setUpgradeModalVisible]  = useState(() => {
+    if (typeof window === "undefined") return false;
+    try { return sessionStorage.getItem("rp_show_upgrade") === "1"; } catch { return false; }
+  });
   const [upgradeModalMode,     setUpgradeModalMode]     = useState<"signin"|"signup"|"magic">("signup");
   const [upgradeModalEmail,    setUpgradeModalEmail]    = useState("");
   const [upgradeModalPassword, setUpgradeModalPassword] = useState("");
@@ -2450,16 +2454,10 @@ export default function ChatPage() {
     setTimeout(() => { setSplashVisible(false); }, 8000);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // v290 — On mount, check for rp_show_upgrade signal written by NativeApp onComplete("pro").
-  // Opens the upgrade modal in-place instead of navigating to /upgrade/.
+  // v290 — On mount, clear the rp_show_upgrade signal (already read by useState lazy initializer).
   useEffect(() => {
     if (typeof window === "undefined") return;
-    try {
-      if (sessionStorage.getItem("rp_show_upgrade") === "1") {
-        sessionStorage.removeItem("rp_show_upgrade");
-        setUpgradeModalVisible(true);
-      }
-    } catch (_) {}
+    try { sessionStorage.removeItem("rp_show_upgrade"); } catch (_) {}
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── vUnified-20260414-national-expansion-v88 — Native platform init ─────────
@@ -2717,7 +2715,9 @@ export default function ChatPage() {
     if (data.session?.user) {
       await startCheckout(data.session.user.id);
     } else {
-      setUpgradeModalError("Account created! Check your inbox (and spam) for a confirmation email, then sign in here.");
+      // Email confirmation required — switch to Sign In tab so the user can sign in right after confirming.
+      setUpgradeModalMode("signin");
+      setUpgradeModalError("Account created! Check your inbox (and spam) for a confirmation link, then sign in here to continue to checkout.");
     }
   };
 
@@ -3335,6 +3335,8 @@ export default function ChatPage() {
   // needed; iOS Safari requires a user gesture for the first prompt.
   useEffect(() => {
     if (!useExactLocation) return;
+    // Don't request location while the upgrade modal is open — user hasn't entered chat yet.
+    if (upgradeModalVisible) return;
 
     // v281: native shortcut — bypass unreliable WKWebView Permissions API.
     if (isCapacitorNative()) {
@@ -3361,7 +3363,7 @@ export default function ChatPage() {
       void triggerGps();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [useExactLocation]);
+  }, [useExactLocation, upgradeModalVisible]);
 
   const handleToggleGps = () => {
     gpsActiveRef.current = false;
