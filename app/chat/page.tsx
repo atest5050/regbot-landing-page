@@ -2675,6 +2675,8 @@ export default function ChatPage() {
       if (data.url) {
         if (isCapacitorNative()) {
           const { Browser } = await import("@capacitor/browser");
+          // 300ms delay clears any gesture stack before WKWebView presents the browser.
+          await new Promise(r => setTimeout(r, 300));
           await Browser.open({ url: data.url, presentationStyle: "popover" });
         } else {
           window.location.href = data.url;
