@@ -2521,6 +2521,14 @@ export default function ChatPage() {
               .finally(() => setProCheckoutLoading(false));
           }
 
+          // rp_oauth_checkout: set by appUrlOpen after native social OAuth code exchange.
+          try {
+            if (sessionStorage.getItem("rp_oauth_checkout") === "1") {
+              sessionStorage.removeItem("rp_oauth_checkout");
+              void startCheckout(u.id);
+            }
+          } catch (_) {}
+
           if (params.get("success") === "true") {
             setProSuccessVisible(true);
             setProSuccessChatToast(true);    // v87 — chat-area toast
@@ -2690,6 +2698,36 @@ export default function ChatPage() {
     if (!user) { setUpgradeModalVisible(true); return; }
     setProCheckoutLoading(true);
     await startCheckout(user.id);
+  };
+
+  // Social OAuth sign-in — works on web, iOS, and Android.
+  // Native: opens OAuth URL in Capacitor Browser; appUrlOpen in app/page.tsx exchanges the code
+  //         and sets rp_oauth_checkout → auth bootstrap detects it and calls startCheckout.
+  // Web:    redirects to /chat/?tier=pro which auto-triggers checkout after auth resolves.
+  const handleSocialSignIn = async (provider: "google" | "apple" | "facebook") => {
+    setUpgradeModalWorking(true); setUpgradeModalError("");
+    try {
+      const native = isCapacitorNative();
+      const redirectTo = native
+        ? "regpulse://callback"
+        : `${window.location.origin}/chat/?tier=pro`;
+      const { data, error: e } = await getSb().auth.signInWithOAuth({
+        provider,
+        options: { redirectTo, skipBrowserRedirect: native },
+      });
+      if (e) throw e;
+      if (native && data.url) {
+        const { Browser } = await import("@capacitor/browser");
+        await Browser.open({ url: data.url, presentationStyle: "popover" });
+        // Session + checkout triggered by appUrlOpen → rp_oauth_checkout signal
+        setUpgradeModalWorking(false);
+      } else if (!native && data.url) {
+        window.location.href = data.url;
+      }
+    } catch {
+      setUpgradeModalError("Sign in failed. Please try again.");
+      setUpgradeModalWorking(false);
+    }
   };
 
   // v290 — upgrade modal auth handlers
@@ -8070,10 +8108,41 @@ export default function ChatPage() {
           </div>
 
           {/* Auth card */}
-          <div style={{ margin: "0 20px 32px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 24, padding: 20, display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ margin: "0 20px 32px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 24, padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
             <p style={{ textAlign: "center", fontSize: 14, fontWeight: 600, color: "#ffffff", margin: 0 }}>
-              {upgradeModalMode === "signin" ? "Sign in to get started" : upgradeModalMode === "signup" ? "Create your account" : "Sign in with email link"}
+              Sign in to continue
             </p>
+
+            {/* Social auth buttons */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {/* Apple */}
+              <button onClick={() => void handleSocialSignIn("apple")} disabled={upgradeModalWorking}
+                style={{ width: "100%", minHeight: 48, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, borderRadius: 14, fontSize: 15, fontWeight: 600, color: "#000000", background: "#ffffff", border: "none", cursor: "pointer", touchAction: "manipulation", opacity: upgradeModalWorking ? 0.5 : 1 }}>
+                <svg width="18" height="18" viewBox="0 0 814 1000" fill="currentColor"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-57.8-155.5-127.4C46 490.8 17.1 403.5 16.8 316.5c0-42.8 8.3-84.7 25.1-124.2 25.6-59.1 73.2-108.2 132.6-134.5C210.1 32.3 258 21.9 305.9 21.9c45.1 0 93.3 16.2 134.5 42.8 25.5 16.8 50.9 40.4 70.7 71.1 17.1-25.5 42.8-52.1 73.2-70.7 42.8-26.5 93.1-42.8 142.7-42.8z"/></svg>
+                Continue with Apple
+              </button>
+
+              {/* Google */}
+              <button onClick={() => void handleSocialSignIn("google")} disabled={upgradeModalWorking}
+                style={{ width: "100%", minHeight: 48, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, borderRadius: 14, fontSize: 15, fontWeight: 600, color: "#1f1f1f", background: "#ffffff", border: "none", cursor: "pointer", touchAction: "manipulation", opacity: upgradeModalWorking ? 0.5 : 1 }}>
+                <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.2l6.7-6.7C35.8 2.5 30.3 0 24 0 14.7 0 6.7 5.4 2.8 13.3l7.9 6.1C12.5 13.1 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.1z"/><path fill="#FBBC05" d="M10.7 28.6A14.8 14.8 0 0 1 9.5 24c0-1.6.3-3.1.7-4.6L2.3 13.3A24 24 0 0 0 0 24c0 3.8.9 7.4 2.5 10.6l8.2-6z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.8 2.2-8.3 2.2-6.2 0-11.5-4.2-13.3-9.9l-8.2 6C6.7 42.6 14.7 48 24 48z"/></svg>
+                Continue with Google
+              </button>
+
+              {/* Facebook */}
+              <button onClick={() => void handleSocialSignIn("facebook")} disabled={upgradeModalWorking}
+                style={{ width: "100%", minHeight: 48, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, borderRadius: 14, fontSize: 15, fontWeight: 600, color: "#ffffff", background: "#1877f2", border: "none", cursor: "pointer", touchAction: "manipulation", opacity: upgradeModalWorking ? 0.5 : 1 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.413c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+                Continue with Facebook
+              </button>
+            </div>
+
+            {/* Divider */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.12)" }} />
+              <span style={{ fontSize: 11, color: "#64748b", fontWeight: 500 }}>or continue with email</span>
+              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.12)" }} />
+            </div>
 
             {/* Mode tabs */}
             <div style={{ display: "flex", gap: 6, background: "rgba(255,255,255,0.06)", borderRadius: 12, padding: 4 }}>

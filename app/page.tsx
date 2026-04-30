@@ -137,16 +137,31 @@ function NativeApp() {
     if (locked) setIsLocked(true);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Deep link handler — regpulse://chat opens the app to chat directly.
+  // Deep link handler — handles regpulse:// URLs from deep links and OAuth redirects.
+  // regpulse://chat        — simple open-to-chat (e.g. from auth callback page button)
+  // regpulse://callback?code=xxx — OAuth PKCE code from social sign-in; exchanges for session
+  //                                 then sets rp_oauth_checkout so ChatPage starts Stripe checkout.
   useEffect(() => {
     let handle: { remove: () => void } | null = null;
     import("@capacitor/app").then(({ App }) => {
-      App.addListener("appUrlOpen", ({ url }) => {
-        if (url.startsWith("regpulse://")) {
-          try { localStorage.setItem("rp_onboarded_v1", "1"); } catch (_) {}
-          try { sessionStorage.setItem("rp_skip_splash", "1"); } catch (_) {}
-          setShowChat(true);
-        }
+      App.addListener("appUrlOpen", async ({ url }) => {
+        if (!url.startsWith("regpulse://")) return;
+        // Extract PKCE code if present (from social OAuth redirect)
+        try {
+          const parsed = new URL(url.replace(/^regpulse:\/\//, "https://x/"));
+          const code = parsed.searchParams.get("code");
+          if (code) {
+            const { createClient } = await import("@/lib/supabase/client");
+            const sb = createClient();
+            const { data } = await sb.auth.exchangeCodeForSession(code);
+            if (data.session) {
+              try { sessionStorage.setItem("rp_oauth_checkout", "1"); } catch (_) {}
+            }
+          }
+        } catch (_) {}
+        try { localStorage.setItem("rp_onboarded_v1", "1"); } catch (_) {}
+        try { sessionStorage.setItem("rp_skip_splash", "1"); } catch (_) {}
+        setShowChat(true);
       }).then(h => { handle = h; });
     }).catch(() => {});
     return () => { handle?.remove(); };
