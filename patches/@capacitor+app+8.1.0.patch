@@ -1,0 +1,35 @@
+diff --git a/node_modules/@capacitor/app/ios/Sources/AppPlugin/AppPlugin.swift b/node_modules/@capacitor/app/ios/Sources/AppPlugin/AppPlugin.swift
+index c93b84a..f90fdb6 100644
+--- a/node_modules/@capacitor/app/ios/Sources/AppPlugin/AppPlugin.swift
++++ b/node_modules/@capacitor/app/ios/Sources/AppPlugin/AppPlugin.swift
+@@ -1,5 +1,6 @@
+ import Foundation
+ import Capacitor
++import ObjectiveC
+ 
+ @objc(AppPlugin)
+ public class AppPlugin: CAPPlugin, CAPBridgedPlugin {
+@@ -16,6 +17,14 @@ public class AppPlugin: CAPPlugin, CAPBridgedPlugin {
+     ]
+     private var observers: [NSObjectProtocol] = []
+ 
++    private func rejectCall(_ call: CAPPluginCall, _ message: String, _ error: Error? = nil) {
++        let sel = NSSelectorFromString("reject::::")
++        guard let method = class_getInstanceMethod(type(of: call), sel) else { return }
++        typealias Fn = @convention(c) (AnyObject, Selector, NSString, NSString?, NSError?, NSDictionary?) -> Void
++        let fn = unsafeBitCast(method_getImplementation(method), to: Fn.self)
++        fn(call, sel, message as NSString, nil, error as NSError?, nil)
++    }
++
+     override public func load() {
+         NotificationCenter.default.addObserver(self, selector: #selector(self.handleUrlOpened(notification:)), name: Notification.Name.capacitorOpenURL, object: nil)
+         NotificationCenter.default.addObserver(self, selector: #selector(self.handleUniversalLink(notification:)), name: Notification.Name.capacitorOpenUniversalLink, object: nil)
+@@ -89,7 +98,7 @@ public class AppPlugin: CAPPlugin, CAPBridgedPlugin {
+                 "version": info["CFBundleShortVersionString"] as? String ?? ""
+             ])
+         } else {
+-            call.reject("Unable to get App Info")
++            rejectCall(call, "Unable to get App Info")
+         }
+ 
+     }

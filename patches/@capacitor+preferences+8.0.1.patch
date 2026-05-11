@@ -1,0 +1,66 @@
+diff --git a/node_modules/@capacitor/preferences/ios/Sources/PreferencesPlugin/PreferencesPlugin.swift b/node_modules/@capacitor/preferences/ios/Sources/PreferencesPlugin/PreferencesPlugin.swift
+index d7ea0ae..ba8b6a7 100644
+--- a/node_modules/@capacitor/preferences/ios/Sources/PreferencesPlugin/PreferencesPlugin.swift
++++ b/node_modules/@capacitor/preferences/ios/Sources/PreferencesPlugin/PreferencesPlugin.swift
+@@ -1,5 +1,6 @@
+ import Foundation
+ import Capacitor
++import ObjectiveC
+ 
+ @objc(PreferencesPlugin)
+ public class PreferencesPlugin: CAPPlugin, CAPBridgedPlugin {
+@@ -17,8 +18,17 @@ public class PreferencesPlugin: CAPPlugin, CAPBridgedPlugin {
+     ]
+     private var preferences = Preferences(with: PreferencesConfiguration())
+ 
++    // Calls CAPPluginCall's ObjC reject:::: selector without importing Capacitor.h in Swift 5.
++    private func rejectCall(_ call: CAPPluginCall, _ message: String) {
++        let sel = NSSelectorFromString("reject::::")
++        guard let method = class_getInstanceMethod(type(of: call), sel) else { return }
++        typealias Fn = @convention(c) (AnyObject, Selector, NSString, NSString?, NSError?, NSDictionary?) -> Void
++        let fn = unsafeBitCast(method_getImplementation(method), to: Fn.self)
++        fn(call, sel, message as NSString, nil, nil, nil)
++    }
++
+     @objc func configure(_ call: CAPPluginCall) {
+-        let group = call.getString("group")
++        let group = call.options["group"] as? String
+         let configuration: PreferencesConfiguration
+ 
+         if let group = group {
+@@ -36,8 +46,8 @@ public class PreferencesPlugin: CAPPlugin, CAPBridgedPlugin {
+     }
+ 
+     @objc func get(_ call: CAPPluginCall) {
+-        guard let key = call.getString("key") else {
+-            call.reject("Must provide a key")
++        guard let key = call.options["key"] as? String else {
++            rejectCall(call, "Must provide a key")
+             return
+         }
+ 
+@@ -49,19 +59,19 @@ public class PreferencesPlugin: CAPPlugin, CAPBridgedPlugin {
+     }
+ 
+     @objc func set(_ call: CAPPluginCall) {
+-        guard let key = call.getString("key") else {
+-            call.reject("Must provide a key")
++        guard let key = call.options["key"] as? String else {
++            rejectCall(call, "Must provide a key")
+             return
+         }
+-        let value = call.getString("value", "")
++        let value = call.options["value"] as? String ?? ""
+ 
+         preferences.set(value, for: key)
+         call.resolve()
+     }
+ 
+     @objc func remove(_ call: CAPPluginCall) {
+-        guard let key = call.getString("key") else {
+-            call.reject("Must provide a key")
++        guard let key = call.options["key"] as? String else {
++            rejectCall(call, "Must provide a key")
+             return
+         }
+ 

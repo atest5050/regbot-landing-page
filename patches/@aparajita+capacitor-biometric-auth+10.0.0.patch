@@ -1,0 +1,96 @@
+diff --git a/node_modules/@aparajita/capacitor-biometric-auth/ios/Sources/BiometricAuthNative/BiometricAuthNative.swift b/node_modules/@aparajita/capacitor-biometric-auth/ios/Sources/BiometricAuthNative/BiometricAuthNative.swift
+index 5145668..88cd3c5 100644
+--- a/node_modules/@aparajita/capacitor-biometric-auth/ios/Sources/BiometricAuthNative/BiometricAuthNative.swift
++++ b/node_modules/@aparajita/capacitor-biometric-auth/ios/Sources/BiometricAuthNative/BiometricAuthNative.swift
+@@ -1,6 +1,7 @@
+ import Capacitor
+ import Foundation
+ import LocalAuthentication
++import ObjectiveC
+ 
+ private let kReason = "reason"
+ private let kMissingFaceIDUsageEntry = "The device supports Face ID, but NSFaceIDUsageDescription is not in Info.plist."
+@@ -29,6 +30,14 @@ public class BiometricAuthNative: CAPPlugin, CAPBridgedPlugin {
+     LAError.biometryNotEnrolled.rawValue: "biometryNotEnrolled"
+   ]
+ 
++  private func rejectCall(_ call: CAPPluginCall, _ message: String, _ code: String? = nil, _ error: Error? = nil) {
++    let sel = NSSelectorFromString("reject::::")
++    guard let method = class_getInstanceMethod(type(of: call), sel) else { return }
++    typealias Fn = @convention(c) (AnyObject, Selector, NSString, NSString?, NSError?, NSDictionary?) -> Void
++    let fn = unsafeBitCast(method_getImplementation(method), to: Fn.self)
++    fn(call, sel, message as NSString, code as NSString?, error as NSError?, nil)
++  }
++
+   /**
+    * Plugin call checkBiometry()
+    */
+@@ -41,9 +50,6 @@ public class BiometricAuthNative: CAPPlugin, CAPBridgedPlugin {
+     var errorCode = ""
+ 
+     if available, context.biometryType == .faceID {
+-      // The system may report that biometry is available, but if the type is Face ID
+-      // and the developer forgot to add NSFaceIDUsageDescription to Info.plist,
+-      // calls to evaluatePolicy() will crash.
+       let entry = Bundle.main.infoDictionary?["NSFaceIDUsageDescription"] as? String
+ 
+       if entry == nil {
+@@ -53,7 +59,6 @@ public class BiometricAuthNative: CAPPlugin, CAPBridgedPlugin {
+       }
+     } else if !available,
+               let error = availableError {
+-      // If we get a reason from the system, return it
+       reason = error.localizedDescription
+ 
+       if let failureReason = error.localizedFailureReason {
+@@ -84,34 +89,24 @@ public class BiometricAuthNative: CAPPlugin, CAPBridgedPlugin {
+ 
+   /**
+    * Prompt the user for authentication.
+-   *
+-   * @param {BiometricOptions} options
+-   * @returns {Promise<void>}
+-   * @rejects {BiometricResultError}
+    */
+   @objc func internalAuthenticate(_ call: CAPPluginCall) {
+     var reason: String
+ 
+-    // The reason must be non-nil and non-empty, otherwise evaluatePolicy() crashes.
+-    if let option = call.getString(kReason),
+-       !option.isEmpty {
++    if let option = call.options[kReason] as? String, !option.isEmpty {
+       reason = option
+     } else {
+       reason = "Access requires authentication"
+     }
+ 
+     let context = LAContext()
+-    context.localizedFallbackTitle = call.getString("iosFallbackTitle")
+-    context.localizedCancelTitle = call.getString("cancelTitle")
++    context.localizedFallbackTitle = call.options["iosFallbackTitle"] as? String
++    context.localizedCancelTitle = call.options["cancelTitle"] as? String
+     context.touchIDAuthenticationAllowableReuseDuration = 0
+ 
+-    let allowDeviceCredential = call.getBool("allowDeviceCredential") ?? false
++    let allowDeviceCredential = call.options["allowDeviceCredential"] as? Bool ?? false
+     let policy: LAPolicy = allowDeviceCredential ? .deviceOwnerAuthentication : .deviceOwnerAuthenticationWithBiometrics
+ 
+-    // If device credentials are allowed, change an empty fallback title
+-    // to nil to force the system default. An empty string will suppress
+-    // the fallback button, and that contradicts the purpose of the allowDeviceCredential flag.
+-
+     if allowDeviceCredential,
+        let fallbackTitle = context.localizedFallbackTitle,
+        fallbackTitle.isEmpty {
+@@ -125,9 +120,9 @@ public class BiometricAuthNative: CAPPlugin, CAPBridgedPlugin {
+         } else {
+           if let policyError = error as? LAError {
+             let code = self.biometryErrorCodeMap[policyError.code.rawValue]
+-            call.reject(policyError.localizedDescription, code)
++            self.rejectCall(call, policyError.localizedDescription, code)
+           } else {
+-            call.reject("An unknown error occurred.", self.biometryErrorCodeMap[LAError.authenticationFailed.rawValue])
++            self.rejectCall(call, "An unknown error occurred.", self.biometryErrorCodeMap[LAError.authenticationFailed.rawValue])
+           }
+         }
+       }

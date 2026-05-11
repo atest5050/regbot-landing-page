@@ -1,0 +1,190 @@
+diff --git a/node_modules/@capacitor/local-notifications/ios/Sources/LocalNotificationsPlugin/LocalNotificationsHandler.swift b/node_modules/@capacitor/local-notifications/ios/Sources/LocalNotificationsPlugin/LocalNotificationsHandler.swift
+index e0bf257..95a6af2 100644
+--- a/node_modules/@capacitor/local-notifications/ios/Sources/LocalNotificationsPlugin/LocalNotificationsHandler.swift
++++ b/node_modules/@capacitor/local-notifications/ios/Sources/LocalNotificationsPlugin/LocalNotificationsHandler.swift
+@@ -1,6 +1,26 @@
+ import Capacitor
+ import UserNotifications
+ 
++// JSTypes.coerceDictionaryToJSObject is behind $NonescapableTypes in Capacitor 8's swiftinterface,
++// so we provide a local equivalent that works under Swift 5 language mode.
++func coerceDictionaryToJSObject(_ dict: [AnyHashable: Any]?) -> JSObject? {
++    guard let dict = dict else { return nil }
++    var result: JSObject = [:]
++    for (key, value) in dict {
++        guard let strKey = key as? String else { continue }
++        if let v = value as? String            { result[strKey] = v }
++        else if let v = value as? Bool         { result[strKey] = v }
++        else if let v = value as? Int          { result[strKey] = v }
++        else if let v = value as? Double       { result[strKey] = v }
++        else if let v = value as? NSNumber     { result[strKey] = v }
++        else if let v = value as? NSNull       { result[strKey] = v }
++        else if let v = value as? Date         { result[strKey] = v }
++        else if let v = value as? [AnyHashable: Any],
++                let nested = coerceDictionaryToJSObject(v) { result[strKey] = nested }
++    }
++    return result
++}
++
+ public class LocalNotificationsHandler: NSObject, NotificationHandlerProtocol {
+ 
+     public weak var plugin: CAPPlugin?
+@@ -89,7 +109,7 @@ public class LocalNotificationsHandler: NSObject, NotificationHandlerProtocol {
+             "body": request.content.body
+         ]
+ 
+-        if let userInfo = JSTypes.coerceDictionaryToJSObject(request.content.userInfo) {
++        if let userInfo = coerceDictionaryToJSObject(request.content.userInfo) {
+             var extra = userInfo["cap_extra"] as? JSObject ?? userInfo
+ 
+             // check for any dates and convert them to strings
+diff --git a/node_modules/@capacitor/local-notifications/ios/Sources/LocalNotificationsPlugin/LocalNotificationsPlugin.swift b/node_modules/@capacitor/local-notifications/ios/Sources/LocalNotificationsPlugin/LocalNotificationsPlugin.swift
+index 463be9a..d0cdace 100644
+--- a/node_modules/@capacitor/local-notifications/ios/Sources/LocalNotificationsPlugin/LocalNotificationsPlugin.swift
++++ b/node_modules/@capacitor/local-notifications/ios/Sources/LocalNotificationsPlugin/LocalNotificationsPlugin.swift
+@@ -1,6 +1,7 @@
+ import Foundation
+ import Capacitor
+ import UserNotifications
++import ObjectiveC
+ 
+ enum LocalNotificationError: LocalizedError {
+     case contentNoId
+@@ -47,6 +48,25 @@ public class LocalNotificationsPlugin: CAPPlugin, CAPBridgedPlugin {
+     ]
+     private let notificationDelegationHandler = LocalNotificationsHandler()
+ 
++    private func rejectCall(_ call: CAPPluginCall, _ message: String, _ error: Error? = nil) {
++        let sel = NSSelectorFromString("reject::::")
++        guard let method = class_getInstanceMethod(type(of: call), sel) else { return }
++        typealias Fn = @convention(c) (AnyObject, Selector, NSString, NSString?, NSError?, NSDictionary?) -> Void
++        let fn = unsafeBitCast(method_getImplementation(method), to: Fn.self)
++        fn(call, sel, message as NSString, nil, error as NSError?, nil)
++    }
++
++    // getArray<T> is behind $NonescapableTypes; read raw options and coerce each element.
++    private func getJSObjectArray(_ call: CAPPluginCall, _ key: String) -> [JSObject]? {
++        guard let arr = call.options[key] as? [Any] else { return nil }
++        let result = arr.compactMap { element -> JSObject? in
++            if let jsObj = element as? JSObject { return jsObj }
++            if let dict = element as? [AnyHashable: Any] { return coerceDictionaryToJSObject(dict) }
++            return nil
++        }
++        return result
++    }
++
+     override public func load() {
+         self.bridge?.notificationRouter.localNotificationHandler = self.notificationDelegationHandler
+         self.notificationDelegationHandler.plugin = self
+@@ -57,15 +77,15 @@ public class LocalNotificationsPlugin: CAPPlugin, CAPBridgedPlugin {
+      * Schedule a notification.
+      */
+     @objc func schedule(_ call: CAPPluginCall) {
+-        guard let notifications = call.getArray("notifications", JSObject.self) else {
+-            call.reject("Must provide notifications array as notifications option")
++        guard let notifications = getJSObjectArray(call, "notifications") else {
++            rejectCall(call, "Must provide notifications array as notifications option")
+             return
+         }
+         var ids = [String]()
+ 
+         for notification in notifications {
+             guard let identifier = notification["id"] as? Int else {
+-                call.reject("Notification missing identifier")
++                rejectCall(call, "Notification missing identifier")
+                 return
+             }
+ 
+@@ -76,7 +96,7 @@ public class LocalNotificationsPlugin: CAPPlugin, CAPBridgedPlugin {
+                 content = try makeNotificationContent(notification)
+             } catch {
+                 CAPLog.print(error.localizedDescription)
+-                call.reject("Unable to make notification", nil, error)
++                rejectCall(call, "Unable to make notification", error)
+                 return
+             }
+ 
+@@ -87,7 +107,7 @@ public class LocalNotificationsPlugin: CAPPlugin, CAPBridgedPlugin {
+                     try trigger = handleScheduledNotification(call, schedule)
+                 }
+             } catch {
+-                call.reject("Unable to create notification, trigger failed", nil, error)
++                rejectCall(call, "Unable to create notification, trigger failed", error)
+                 return
+             }
+ 
+@@ -100,7 +120,7 @@ public class LocalNotificationsPlugin: CAPPlugin, CAPBridgedPlugin {
+             center.add(request) { (error: Error?) in
+                 if let theError = error {
+                     CAPLog.print(theError.localizedDescription)
+-                    call.reject(theError.localizedDescription)
++                    self.rejectCall(call, theError.localizedDescription)
+                 }
+             }
+ 
+@@ -123,7 +143,7 @@ public class LocalNotificationsPlugin: CAPPlugin, CAPBridgedPlugin {
+     @objc override public func requestPermissions(_ call: CAPPluginCall) {
+         self.notificationDelegationHandler.requestPermissions { granted, error in
+             guard error == nil else {
+-                call.reject(error!.localizedDescription)
++                self.rejectCall(call, error!.localizedDescription)
+                 return
+             }
+             call.resolve(["display": granted ? "granted" : "denied"])
+@@ -161,8 +181,8 @@ public class LocalNotificationsPlugin: CAPPlugin, CAPBridgedPlugin {
+      * Cancel notifications by id
+      */
+     @objc func cancel(_ call: CAPPluginCall) {
+-        guard let notifications = call.getArray("notifications", JSObject.self), notifications.count > 0 else {
+-            call.reject("Must supply notifications to cancel")
++        guard let notifications = getJSObjectArray(call, "notifications"), notifications.count > 0 else {
++            rejectCall(call, "Must supply notifications to cancel")
+             return
+         }
+ 
+@@ -201,7 +221,7 @@ public class LocalNotificationsPlugin: CAPPlugin, CAPBridgedPlugin {
+      * Register allowed action types that a notification may present.
+      */
+     @objc func registerActionTypes(_ call: CAPPluginCall) {
+-        guard let types = call.getArray("types", JSObject.self) else {
++        guard let types = getJSObjectArray(call, "types") else {
+             return
+         }
+ 
+@@ -289,7 +309,7 @@ public class LocalNotificationsPlugin: CAPPlugin, CAPBridgedPlugin {
+             let dateInfo = Calendar.current.dateComponents(in: TimeZone.current, from: at)
+ 
+             if dateInfo.date! < Date() {
+-                call.reject("Scheduled time must be *after* current time")
++                rejectCall(call, "Scheduled time must be *after* current time")
+                 return nil
+             }
+ 
+@@ -548,11 +568,12 @@ public class LocalNotificationsPlugin: CAPPlugin, CAPBridgedPlugin {
+      * Get the internal URL for the attachment URL
+      */
+     func makeAttachmentUrl(_ path: String) -> URL? {
+-        guard let webURL = URL(string: path) else {
+-            return nil
++        guard let webURL = URL(string: path) else { return nil }
++        // localURL(fromWebURL:) is behind $NonescapableTypes; convert _capacitor_file_ → file://
++        if webURL.scheme == "_capacitor_file_" {
++            return URL(fileURLWithPath: webURL.path)
+         }
+-
+-        return bridge?.localURL(fromWebURL: webURL)
++        return webURL.isFileURL ? webURL : nil
+     }
+ 
+     /**
+@@ -595,8 +616,8 @@ public class LocalNotificationsPlugin: CAPPlugin, CAPBridgedPlugin {
+      * Remove specified notifications from Notification Center
+      */
+     @objc func removeDeliveredNotifications(_ call: CAPPluginCall) {
+-        guard let notifications = call.getArray("notifications", JSObject.self) else {
+-            call.reject("Must supply notifications to remove")
++        guard let notifications = getJSObjectArray(call, "notifications") else {
++            rejectCall(call, "Must supply notifications to remove")
+             return
+         }
+ 
