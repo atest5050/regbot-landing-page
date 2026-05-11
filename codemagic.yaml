@@ -1,0 +1,48 @@
+workflows:
+  ios-app-store:
+    name: iOS App Store
+    max_build_duration: 90
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: codemagic_api_key
+
+    environment:
+      xcode: latest
+      node: 20
+      vars:
+        BUNDLE_ID: com.regpulse.app
+        XCODE_WORKSPACE: ios/App/App.xcworkspace
+        XCODE_SCHEME: App
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.regpulse.app
+
+    scripts:
+      - name: Install dependencies
+        script: npm ci
+
+      - name: Build web assets
+        script: npm run build
+
+      - name: Sync Capacitor
+        script: npx cap sync ios
+
+      - name: Install CocoaPods
+        script: |
+          cd ios/App
+          pod install || echo "No Podfile or pods needed"
+
+      - name: Set build number
+        script: |
+          BUILD_NUMBER=$(date +%Y%m%d%H%M)
+          cd ios/App
+          agvtool new-version -all $BUILD_NUMBER
+
+    artifacts:
+      - ios/App/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
