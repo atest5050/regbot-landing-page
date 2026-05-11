@@ -8,7 +8,7 @@ workflows:
 
     environment:
       xcode: latest
-      node: 20
+      node: 22
       vars:
         BUNDLE_ID: com.regpulse.app
         XCODE_WORKSPACE: ios/App/App.xcworkspace
@@ -16,7 +16,9 @@ workflows:
 
     scripts:
       - name: Install dependencies
-        script: npm ci
+        script: |
+          npm ci --ignore-scripts
+          npx patch-package
 
       - name: Build web assets
         script: npm run build
