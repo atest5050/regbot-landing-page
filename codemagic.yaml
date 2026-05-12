@@ -26,11 +26,8 @@ workflows:
             --ignore-scripts --no-save --legacy-peer-deps
           npx patch-package
 
-      - name: Build web assets
-        script: npm run build
-
-      - name: Sync Capacitor
-        script: npx cap sync ios
+      - name: Build web assets and sync Capacitor
+        script: npm run build:cap
 
       - name: Set up keychain
         script: keychain initialize
