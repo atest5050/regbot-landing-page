@@ -17,7 +17,11 @@ workflows:
     scripts:
       - name: Install dependencies
         script: |
-          npm ci --ignore-scripts
+          npm install --ignore-scripts
+          echo "=== Checking packages ==="
+          ls node_modules/@capacitor/ | grep -E "preferences|local-notifications" || echo "MISSING capacitor packages"
+          ls node_modules/@aparajita/ || echo "MISSING aparajita packages"
+          echo "=== Applying patches ==="
           npx patch-package
 
       - name: Build web assets
