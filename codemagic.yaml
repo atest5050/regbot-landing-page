@@ -13,7 +13,7 @@ workflows:
         - regpulse
       vars:
         BUNDLE_ID: com.regpulse.app
-        XCODE_WORKSPACE: ios/App/App.xcworkspace
+        XCODE_PROJECT: ios/App/App.xcodeproj
         XCODE_SCHEME: App
 
     scripts:
@@ -46,7 +46,7 @@ workflows:
           echo $CM_PROVISIONING_PROFILE | base64 -D > "$PROFILES_HOME/profile.mobileprovision"
 
       - name: Apply signing to Xcode project
-        script: xcode-project use-profiles
+        script: xcode-project use-profiles --project "$CM_BUILD_DIR/$XCODE_PROJECT"
 
       - name: Set build number
         script: |
@@ -57,7 +57,7 @@ workflows:
       - name: Build IPA
         script: |
           xcode-project build-ipa \
-            --workspace "$CM_BUILD_DIR/$XCODE_WORKSPACE" \
+            --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
             --scheme "$XCODE_SCHEME"
 
     artifacts:
