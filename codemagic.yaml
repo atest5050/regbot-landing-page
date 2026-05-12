@@ -39,12 +39,11 @@ workflows:
           echo $CM_CERTIFICATE | base64 -D > /tmp/certificate.p12
           keychain add-certificates --certificate /tmp/certificate.p12 --certificate-password $CM_CERTIFICATE_PASSWORD
 
-      - name: Fetch or create provisioning profile
+      - name: Install provisioning profile
         script: |
-          app-store-connect fetch-signing-files \
-            $BUNDLE_ID \
-            --type IOS_APP_STORE \
-            --create
+          PROFILES_HOME="$HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$PROFILES_HOME"
+          echo $CM_PROVISIONING_PROFILE | base64 -D > "$PROFILES_HOME/profile.mobileprovision"
 
       - name: Apply signing to Xcode project
         script: xcode-project use-profiles
