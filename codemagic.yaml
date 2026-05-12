@@ -9,6 +9,8 @@ workflows:
     environment:
       xcode: latest
       node: 22
+      groups:
+        - regpulse
       vars:
         BUNDLE_ID: com.regpulse.app
         XCODE_WORKSPACE: ios/App/App.xcworkspace
