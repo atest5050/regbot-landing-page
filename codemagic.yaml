@@ -35,7 +35,9 @@ workflows:
         script: keychain initialize
 
       - name: Add certificate to keychain
-        script: keychain add-certificates
+        script: |
+          echo $CM_CERTIFICATE | base64 --decode > /tmp/certificate.p12
+          keychain add-certificates --certificate /tmp/certificate.p12 --certificate-password $CM_CERTIFICATE_PASSWORD
 
       - name: Fetch or create provisioning profile
         script: |
