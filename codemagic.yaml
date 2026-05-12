@@ -18,10 +18,12 @@ workflows:
       - name: Install dependencies
         script: |
           npm install --ignore-scripts
-          echo "=== Checking packages ==="
-          ls node_modules/@capacitor/ | grep -E "preferences|local-notifications" || echo "MISSING capacitor packages"
-          ls node_modules/@aparajita/ || echo "MISSING aparajita packages"
-          echo "=== Applying patches ==="
+          # Force install packages that npm sometimes skips in CI
+          npm install \
+            @capacitor/preferences@8.0.1 \
+            @capacitor/local-notifications@8.0.2 \
+            @aparajita/capacitor-biometric-auth@10.0.0 \
+            --ignore-scripts --no-save --legacy-peer-deps
           npx patch-package
 
       - name: Build web assets
