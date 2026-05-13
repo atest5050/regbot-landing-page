@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>CAPACITOR_DEBUG</key>
 	<string>$(CAPACITOR_DEBUG)</string>
 	<key>CFBundleDevelopmentRegion</key>
@@ -30,7 +32,7 @@
 	<string>Main</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
-		<string>armv7</string>
+		<string>arm64</string>
 	</array>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
@@ -59,8 +61,10 @@
 		</dict>
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>RegPulse would like to use your current location to provide hyper-local compliance guidance.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>RegPulse would like to use your current location to provide hyper-local compliance guidance.</string>
+	<string>RegPulse uses your location to identify the compliance requirements for your city and state. GPS coordinates are never stored.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>RegPulse uses your camera to scan your business premises for compliance issues.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>RegPulse accesses your photo library so you can upload images of permits and your business for compliance analysis.</string>
 </dict>
 </plist>
