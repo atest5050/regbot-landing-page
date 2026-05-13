@@ -146,19 +146,19 @@ const TIERS: Array<{
     name:     "Free",
     price:    "$0",
     tag:      "Forever free",
-    tagline:  "Start with essential compliance guidance.",
+    tagline:  "Chat for Free — no account required.",
     features: [
       "3 AI compliance chats / month",
+      "Forms Library access",
       "Basic regulatory overview",
-      "Permit checklist preview",
     ],
-    cta:       "Start Free",
+    cta:       "Chat for Free",
     highlight: false,
   },
   {
     id:       "pro",
     name:     "Pro",
-    price:    "$19",
+    price:    "$17.99",
     tag:      "/ month",
     tagline:  "Everything you need to stay fully compliant.",
     badge:    "Most Popular",
@@ -208,7 +208,9 @@ declare global {
 
 export default function OnboardingFlow({ visible, onComplete }: OnboardingFlowProps) {
   // vUnified-20260414-national-expansion-v270 — hooks declared first (rules of hooks compliant).
-  // No isStartingFree state — button ONLY sets flag; NativeApp watcher handles everything else.
+  // Business waitlist state — must be declared before any conditional returns.
+  const [waitlistEmail, setWaitlistEmail] = useState("");
+  const [waitlistPhase, setWaitlistPhase] = useState<"cta" | "input" | "sent">("cta");
 
   // Guard layers retained — __rpNativeLocked is never set in v270 but kept for safety.
   if (typeof window !== "undefined" && window.__rpNativeLocked) return <></>;
@@ -217,6 +219,17 @@ export default function OnboardingFlow({ visible, onComplete }: OnboardingFlowPr
   }
   if (typeof window !== "undefined") {
     try { if (window.__rpNativeLocked) return null; } catch (_) {}
+  }
+
+  function handleWaitlistSubmit() {
+    if (!waitlistEmail.trim()) return;
+    // Open mailto as primary action (works in Capacitor via system mail client)
+    try {
+      const subject = encodeURIComponent("RegPulse Business Plan — Waitlist");
+      const body = encodeURIComponent(`I'm interested in the RegPulse Business plan.\n\nEmail: ${waitlistEmail.trim()}`);
+      window.open(`mailto:hello@regpulse.com?subject=${subject}&body=${body}`, "_blank");
+    } catch { /* non-fatal */ }
+    setWaitlistPhase("sent");
   }
 
   // Handler for Start Free tap — ONLY sets the global flag.
@@ -273,7 +286,8 @@ export default function OnboardingFlow({ visible, onComplete }: OnboardingFlowPr
       <div style={{ flexShrink: 0, display: "flex", flexDirection: "column",
         alignItems: "center", gap: 12,
         paddingTop: 32, paddingBottom: 20, paddingLeft: 20, paddingRight: 20 }}>
-        <MiniShield size={40} />
+        {/* App icon — matches the iOS home screen icon */}
+        <img src="/app-icon.png" alt="RegPulse" width={56} height={56} style={{ borderRadius: 14, display: "block" }} />
         <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, letterSpacing: "-0.02em",
           color: "#ffffff", lineHeight: 1.1,
           fontFamily: "system-ui, sans-serif" }}>
@@ -331,7 +345,7 @@ export default function OnboardingFlow({ visible, onComplete }: OnboardingFlowPr
               </div>
               <ul style={{ margin: 0, padding: 0, listStyle: "none",
                 display: "flex", flexDirection: "column", gap: 6 }}>
-                {["3 AI compliance chats / month", "Basic regulatory overview",
+                {["5 AI compliance chats / month", "Basic regulatory overview",
                   "Permit checklist preview"].map(f => (
                   <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
                     <span style={{ flexShrink: 0, fontSize: 12, color: "#64748b", marginTop: 1 }}>✓</span>
@@ -390,7 +404,7 @@ export default function OnboardingFlow({ visible, onComplete }: OnboardingFlowPr
                 <div style={{ textAlign: "right", flexShrink: 0 }}>
                   <span style={{ fontSize: 24, fontWeight: 800, color: "#ffffff", lineHeight: 1,
                     fontFamily: "system-ui, sans-serif" }}>
-                    $19
+                    $17.99
                   </span>
                   <span style={{ fontSize: 11, color: "rgba(148,163,184,0.7)", marginLeft: 2 }}>
                     / month
@@ -401,7 +415,8 @@ export default function OnboardingFlow({ visible, onComplete }: OnboardingFlowPr
                 display: "flex", flexDirection: "column", gap: 6 }}>
                 {["Unlimited AI compliance chats", "Full Form Filler + PDF generation",
                   "Business Profile + zoning checker", "Document analysis + change alerts",
-                  "Compliance calendar + renewal reminders"].map(f => (
+                  "Compliance calendar + renewal reminders",
+                  "Photo Compliance Scan (AI camera)", "AI Pre-Inspection Coach"].map(f => (
                   <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
                     <span style={{ flexShrink: 0, fontSize: 12, color: "#22d3ee", marginTop: 1 }}>✓</span>
                     <span style={{ fontSize: 12, color: "rgba(203,213,225,0.85)", lineHeight: 1.4 }}>{f}</span>
@@ -463,19 +478,62 @@ export default function OnboardingFlow({ visible, onComplete }: OnboardingFlowPr
                   </li>
                 ))}
               </ul>
-              <button
-                onClick={() => onComplete("business")}
-                style={{
-                  width: "100%", display: "flex", alignItems: "center", justifyContent: "center",
-                  borderRadius: 12, fontWeight: 600, minHeight: 48, fontSize: 14,
-                  touchAction: "manipulation", pointerEvents: "auto", cursor: "pointer",
-                  background: "rgba(251,191,36,0.12)", color: "#fbbf24",
-                  border: "1px solid rgba(251,191,36,0.35)",
-                  fontFamily: "system-ui, sans-serif",
-                }}
-              >
-                Get Business
-              </button>
+              {waitlistPhase === "sent" ? (
+                <div style={{ textAlign: "center", padding: "10px 0" }}>
+                  <p style={{ margin: 0, fontSize: 13, color: "#fbbf24", fontWeight: 700 }}>
+                    ✓ You're on the list!
+                  </p>
+                  <p style={{ margin: "4px 0 0", fontSize: 11, color: "rgba(148,163,184,0.7)" }}>
+                    We'll reach out at {waitlistEmail.trim()}
+                  </p>
+                </div>
+              ) : waitlistPhase === "input" ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <input
+                    type="email"
+                    value={waitlistEmail}
+                    onChange={e => setWaitlistEmail(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && handleWaitlistSubmit()}
+                    placeholder="your@email.com"
+                    style={{
+                      width: "100%", padding: "10px 14px", borderRadius: 10, fontSize: 14,
+                      background: "rgba(251,191,36,0.08)", color: "#ffffff",
+                      border: "1px solid rgba(251,191,36,0.35)",
+                      fontFamily: "system-ui, sans-serif", outline: "none",
+                      boxSizing: "border-box" as React.CSSProperties["boxSizing"],
+                    }}
+                  />
+                  <button
+                    onClick={handleWaitlistSubmit}
+                    style={{
+                      width: "100%", display: "flex", alignItems: "center", justifyContent: "center",
+                      borderRadius: 12, fontWeight: 700, minHeight: 48, fontSize: 14,
+                      touchAction: "manipulation", pointerEvents: "auto", cursor: "pointer",
+                      background: "linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)",
+                      color: "#0b1628", border: "none",
+                      fontFamily: "system-ui, sans-serif",
+                    }}
+                  >
+                    Notify Me
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setWaitlistPhase("input")}
+                  style={{
+                    width: "100%", display: "flex", alignItems: "center", justifyContent: "center",
+                    borderRadius: 12, fontWeight: 600, minHeight: 48, fontSize: 14,
+                    touchAction: "manipulation", pointerEvents: "auto", cursor: "pointer",
+                    background: "rgba(251,191,36,0.12)", color: "#fbbf24",
+                    border: "1px solid rgba(251,191,36,0.4)",
+                    fontFamily: "system-ui, sans-serif",
+                    gap: 8,
+                  }}
+                >
+                  <Mail style={{ width: 15, height: 15, flexShrink: 0 }} />
+                  Join Waitlist
+                </button>
+              )}
             </div>
           </div>
 
@@ -915,10 +973,11 @@ function MiniShield({ size }: { size: number }) {
           <stop offset="0%"   stopColor="#496ba0" />
           <stop offset="100%" stopColor="#101e40" />
         </linearGradient>
-        <filter id="rpob-ekg" x="0" y="0" width="100" height="110" filterUnits="userSpaceOnUse">
-          <feGaussianBlur in="SourceGraphic" stdDeviation={+(sw * 0.6).toFixed(1)} result="blur" />
+        {/* Glow filter — applied only to the glow layer path, not the crisp line */}
+        <filter id="rpob-ekg" x="-8" y="-20" width="116" height="140" filterUnits="userSpaceOnUse">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="2.8" result="blur" />
           <feColorMatrix in="blur" type="matrix"
-            values="0 0 0 0 0.04  0 0 0 0 0.82  0 0 0 0 0.88  0 0 0 0.55 0" result="glow" />
+            values="0 0 0 0 0.04  0 0 0 0 0.82  0 0 0 0 0.88  0 0 0 0.72 0" result="glow" />
           <feMerge>
             <feMergeNode in="glow" />
             <feMergeNode in="SourceGraphic" />
@@ -928,14 +987,25 @@ function MiniShield({ size }: { size: number }) {
       <path d="M50 4 L88 18 L88 64 Q88 91 50 107 Q12 91 12 64 L12 18 Z" fill="url(#rpob-r1)" />
       <path d="M50 9 L83 21 L83 64 Q83 88 50 103 Q17 88 17 64 L17 21 Z" fill="url(#rpob-r2)" />
       <path d="M50 17 L75 27 L75 64 Q75 84 50 97 Q25 84 25 64 L25 27 Z" fill="#0b1628" />
+      {/* Glow layer */}
       <path
         d="M30 57 L38 57 L41 63 L45 40 L51 74 L55 57 L70 57"
         fill="none"
         stroke="#22d3ee"
-        strokeWidth={sw}
+        strokeWidth={+(sw * 0.85).toFixed(1)}
         strokeLinecap="round"
         strokeLinejoin="round"
         filter="url(#rpob-ekg)"
+        opacity={0.9}
+      />
+      {/* Crisp line — no filter for sharp edges */}
+      <path
+        d="M30 57 L38 57 L41 63 L45 40 L51 74 L55 57 L70 57"
+        fill="none"
+        stroke="#7dd3fc"
+        strokeWidth={+(sw * 0.32).toFixed(1)}
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   );

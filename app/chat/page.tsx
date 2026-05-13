@@ -1104,7 +1104,7 @@
 //   handleStartForm + handleStartAllForms check the gate; handleFormComplete increments.
 //   Non-Pro users see the limit counter and upgrade CTA in the checklist. Pro users see
 //   a Crown badge in the brand header, "Pro" label on business pills, and no upsell banners.
-// - PacketScreen Pro upsell updated: full 6-benefit list with correct $19/mo pricing.
+// - PacketScreen Pro upsell updated: full 6-benefit list with correct $17.99/mo pricing.
 // - Pro upsell banner in sidebar: shown only for non-Pro users above My Businesses.
 //   Lists top three differentiating benefits and links to upgrade.
 // - Button cleanup: per-bullet "Complete Form with AI" buttons removed from chat responses.
@@ -1138,7 +1138,7 @@
 // health scores to the dashboard, keeping profiles accurate even when users are away.
 // ─────────────────────────────────────────────────────────────────────────────────────────
 //
-// ── PRO TIER VALUE PROPOSITION ($19/mo) ──────────────────────────────────────────────────
+// ── PRO TIER VALUE PROPOSITION ($17.99/mo) ──────────────────────────────────────────────────
 // Six concrete differentiators that justify the monthly price for a small business owner:
 //
 // 1. UNLIMITED AI FORM COMPLETIONS — Free tier is capped at 3/month. Most small businesses
@@ -1209,6 +1209,8 @@ import {
   Clock, // v32 — snooze alert button
   Calendar, // v56 — cross-business renewal calendar strip in portfolio OS view
   Shield, RotateCcw, BarChart3, ArrowLeft, // v290 — upgrade modal icons
+  Camera, // photo compliance scan
+  ClipboardList, // inspection coach
 } from "lucide-react";
 import AddBusinessModal from "@/components/AddBusinessModal";
 import AddLocationModal from "@/components/AddLocationModal";
@@ -1217,6 +1219,7 @@ import DocumentUploadButton, { type AnalysisResult, type AttachResult } from "@/
 import DocumentAnalysisCard, { type MatchedItem } from "@/components/DocumentAnalysisCard";
 import FormsLibrary, { saveBusinessContext } from "@/components/FormsLibrary"; // v20 — Forms Library Section
 import BusinessProfileView, { type DraftDoc, type ZoningResult } from "@/components/BusinessProfileView"; // v31 — Business Profile View
+import InspectionCoach from "@/components/InspectionCoach";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import FormFiller from "@/components/FormFiller";
@@ -1228,7 +1231,10 @@ import OnboardingFlow, { type OnboardingTier } from "@/components/OnboardingFlow
 import EnhancedChecklist from "@/components/EnhancedChecklist";
 import type { ChecklistItem } from "@/components/EnhancedChecklist";
 import ComplianceCalendar from "@/components/ComplianceCalendar"; // v25 — Compliance Calendar + renewal grouping
-import { fireRuleAlertNotification, schedulePortfolioDigestNotification, getNotifPermission, requestNotifPermission, isCapacitorNative } from "@/lib/notifications"; // v26/v31/v36/v39
+import ComplianceMatrix from "@/components/ComplianceMatrix";
+import { fireRuleAlertNotification, schedulePortfolioDigestNotification, getNotifPermission, checkNativeNotifPermission, requestNotifPermission, isCapacitorNative, scheduleUpcomingRenewalNotifications } from "@/lib/notifications"; // v26/v31/v36/v39
+import { isIAPAvailable, purchaseProSubscription, restoreProPurchases } from "@/lib/iap";
+import { isBiometricAvailable, promptBiometric, storeSession, retrieveStoredSession, getStoredEmail, clearBiometricSession } from "@/lib/biometric";
 import { getLocaleFormTemplate, localFormEntryToFormTemplate, getSuggestedRenewalDate, getRuleChangeTopics, parseStateFromLocation, getRecommendedForms, getLocalFormsForLocation, ALL_FORMS, isFederalForm, isStateForm } from "@/lib/formTemplates"; // vUnified-20260414-national-expansion-v4: getLocalFormsForLocation added; v9: localFormEntryToFormTemplate
 import type { FormTemplate, FederalFormEntry, StateFormEntry } from "@/lib/formTemplates";
 import type { CompletedFormEntry } from "@/lib/generateCompliancePacket";
@@ -1253,6 +1259,12 @@ import {
 // NEXT_PUBLIC_API_BASE_URL is baked in at build:cap time from .env.local.
 // Falls back to '' on web (Vercel), where same-origin requests need no prefix.
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
+
+/**
+ * Public URL where users subscribe to RegPulse Pro.
+ * Opened in system Safari on native iOS (App Store compliant — no in-app payment).
+ */
+const SUBSCRIBE_URL = "https://buy.stripe.com/5kQ28re3bcHGfe71iEdnW00";
 
 /** Calculates the living-profile stats from the current checklist + completed forms. */
 function calcBizProfile(
@@ -1593,7 +1605,7 @@ function generateMockAlertForBusiness(biz: SavedBusiness): RuleAlert | null {
 // In production: set is_pro = true in the profiles table after Stripe confirms payment.
 
 /** Maximum AI form completions per calendar month for Free tier users. */
-const FREE_MONTHLY_LIMIT = 3;
+const FREE_MONTHLY_LIMIT = 5;
 
 // getCurrentMonthKey, localLoadMonthlyUsage, localSaveMonthlyUsage,
 // dbLoadMonthlyUsage, dbSaveMonthlyUsage are all imported from lib/regbot-db.ts.
@@ -2081,7 +2093,7 @@ function PacketScreen({
           <div className="mt-3 rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 px-4 py-3 space-y-2">
             <div className="flex items-center gap-1.5">
               <Crown className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-              <p className="text-xs font-bold text-slate-800">Unlock RegPulse Pro — $19/mo</p>
+              <p className="text-xs font-bold text-slate-800">Unlock RegPulse Pro — $17.99/mo</p>
             </div>
             <ul className="grid grid-cols-2 gap-x-3 gap-y-1">
               {[
@@ -2163,6 +2175,7 @@ export default function ChatPage() {
 
   /** Debounce timer for auto-saving the active business profile. */
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
 
   const [input, setInput]         = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -2177,6 +2190,9 @@ export default function ChatPage() {
   const [detectedCounty, setDetectedCounty]     = useState<string | null>(null);
   const gpsActiveRef  = useRef(true);
   const zipLookupRef  = useRef<string>("");
+  // Holds the last GPS/ZIP-resolved 2-letter state so handleLoadBusiness can derive
+  // state-specific form recommendations even after loadLocationData() overwrites userLocation.
+  const gpsStateRef   = useRef<string>("");
   // vMobile-gps-fix: explicit loading + error state for GPS so the UI can show
   // a loading spinner, distinguish error types, and offer a retry button.
   const [gpsLoading, setGpsLoading] = useState(false);
@@ -2223,10 +2239,17 @@ export default function ChatPage() {
   // the profile instead of leaving the user at the empty chat screen.
   const [formLaunchedFromProfile, setFormLaunchedFromProfile] = useState(false);
 
+  // Compliance gap analysis
+  interface GapItem { formId: string; name: string; reason: string; urgency: "required" | "recommended" | "conditional"; }
+  const [gapAnalysis, setGapAnalysis]             = useState<{ loading: boolean; gaps: GapItem[]; bizId: string } | null>(null);
+  const [gapPanelOpen, setGapPanelOpen]           = useState(true);
+
   // ── Saved businesses ──────────────────────────────────────────────────────
   const [savedBusinesses, setSavedBusinesses] = useState<SavedBusiness[]>([]);
   /** The currently active business profile (set on load; cleared on reset). */
   const [loadedBusiness, setLoadedBusiness]   = useState<SavedBusiness | null>(null);
+  /** 2-letter state derived when a business is loaded — stable after loadLocationData overwrites userLocation. */
+  const [loadedBusinessState, setLoadedBusinessState] = useState<string | undefined>(undefined);
   /** Controls the Add Business modal visibility. */
   const [showAddBizModal, setShowAddBizModal]       = useState(false);
   const [confirmDeleteBizId, setConfirmDeleteBizId] = useState<string | null>(null);
@@ -2239,6 +2262,8 @@ export default function ChatPage() {
   // Banner is shown only when "default" (never asked). Dismissed manually or on grant/deny.
   const [pushPermission, setPushPermission]         = useState<NotificationPermission | "unsupported" | null>(null);
   const [pushBannerDismissed, setPushBannerDismissed] = useState(false);
+  // Pre-permission modal: shown once after first sign-in on native when permission is "default"
+  const [notifPromptVisible, setNotifPromptVisible] = useState(false);
   // v37 — alert filter: null = show all active alerts, string = show only alerts for that biz ID
   const [alertBizFilter, setAlertBizFilter]         = useState<string | null>(null);
   const [notifPrefsBizId, setNotifPrefsBizId]       = useState<string | null>(null);
@@ -2248,10 +2273,15 @@ export default function ChatPage() {
   /** ID of the business whose "Add Location" modal is open. */
   const [addLocationBizId, setAddLocationBizId]     = useState<string | null>(null);
   /** Set of business IDs whose location list is expanded in the sidebar. */
-  const [expandedBizIds, setExpandedBizIds]         = useState<Set<string>>(new Set());
   // Document upload + analysis
   const [docAnalysisResult, setDocAnalysisResult]   = useState<AnalysisResult | null>(null);
   const [showDocUploadPanel, setShowDocUploadPanel] = useState(false);
+  // Photo compliance scan
+  const [photoComplianceResult, setPhotoComplianceResult] = useState<import("@/app/api/photo-compliance/route").PhotoComplianceResult | null>(null);
+  const [photoComplianceLoading, setPhotoComplianceLoading] = useState(false);
+  const photoCameraInputRef = useRef<HTMLInputElement | null>(null);
+  // AI Pre-Inspection Coach
+  const [showInspectionCoach, setShowInspectionCoach] = useState(false);
   // v25 — Preexisting Document Upload: attach-mode panel (no AI analysis)
   const [showAttachPanel, setShowAttachPanel]       = useState(false);
   // v30 — Completed Document → Business Profile Flow
@@ -2271,10 +2301,16 @@ export default function ChatPage() {
   const [showProfileView, setShowProfileView]       = useState(false);
   const [showMobileSidebar, setShowMobileSidebar]   = useState(false); // vMobile
   const [uploadedDocs, setUploadedDocs]             = useState<UploadedDocument[]>([]);
+  const [uploadProgress, setUploadProgress]         = useState<Record<string, number>>({});
 
   // ── Pro subscription state ────────────────────────────────────────────────
   // Loaded from profiles.is_pro for authenticated users; defaults false (Free tier).
-  const [isPro, setIsPro]                       = useState(false);
+  // localStorage cache ('rp_is_pro_cache'='1') survives navigation remounts so Pro
+  // users don't see the upgrade UI flash while the async DB check runs.
+  const [isPro, setIsPro] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try { return localStorage.getItem('rp_is_pro_cache') === '1'; } catch { return false; }
+  });
   /** True when an unauthenticated user has exceeded the 3-chats/30-day limit. */
   const [showSignInWall, setShowSignInWall]     = useState(false);
   const [monthlyFormsUsed, setMonthlyFormsUsed] = useState(0);
@@ -2285,12 +2321,15 @@ export default function ChatPage() {
   const [proCheckoutLoading, setProCheckoutLoading] = useState(false);
   /** True while the /api/stripe/create-portal-session POST is in-flight. */
   const [proPortalLoading,   setProPortalLoading]   = useState(false);
+  const [proPortalError,     setProPortalError]     = useState<string | null>(null);
   // v290 — in-page upgrade modal (replaces /upgrade/ page navigation on native)
   // Lazy initializer reads rp_show_upgrade synchronously so GPS never fires while modal is open.
   const [upgradeModalVisible,  setUpgradeModalVisible]  = useState(() => {
     if (typeof window === "undefined") return false;
     try { return sessionStorage.getItem("rp_show_upgrade") === "1"; } catch { return false; }
   });
+  // "limit" = shown because free-tier cap was hit; "cta" = user tapped upgrade button
+  const [upgradeModalTrigger,  setUpgradeModalTrigger]  = useState<"limit" | "cta">("cta");
   const [upgradeModalMode,     setUpgradeModalMode]     = useState<"signin"|"signup"|"magic">("signup");
   const [upgradeModalEmail,    setUpgradeModalEmail]    = useState("");
   const [upgradeModalPassword, setUpgradeModalPassword] = useState("");
@@ -2311,20 +2350,220 @@ export default function ChatPage() {
   const [proSuccessChatToast,    setProSuccessChatToast]   = useState(false);
   const proSuccessTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (proSuccessTimerRef.current) clearTimeout(proSuccessTimerRef.current); }, []);
+  // Chat session persistence
+  const [sessionRestored, setSessionRestored] = useState(false);
+  const sessionRestoredTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const chatSaveTimerRef        = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (sessionRestoredTimerRef.current) clearTimeout(sessionRestoredTimerRef.current);
+    if (chatSaveTimerRef.current)        clearTimeout(chatSaveTimerRef.current);
+  }, []);
+  // Listen for regpulse://chat/?success=true deep link fired after Stripe mobile-return redirect.
+  useEffect(() => {
+    if (!isCapacitorNative()) return;
+    let handle: { remove: () => void } | null = null;
+    import("@capacitor/app").then(({ App }) => {
+      App.addListener("appUrlOpen", ({ url }: { url: string }) => {
+        if (url.includes("success=true")) {
+          setProSuccessVisible(true);
+          setProSuccessChatToast(true);
+          setTimeout(async () => {
+            const supabase = createClient();
+            const { data: { user: u } } = await supabase.auth.getUser();
+            if (u) void loadFromSupabase(u.id);
+          }, 3000);
+        }
+      }).then((h: { remove: () => void }) => { handle = h; });
+    });
+    return () => { handle?.remove(); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Guard: prevents concurrent / duplicate startCheckout calls (e.g. getSession + onAuthStateChange racing).
+  const checkoutInFlightRef = useRef(false);
+  const lastOAuthProviderRef = useRef<"google" | "apple" | "facebook" | null>(null);
+  const handleSocialSignInRef = useRef<((provider: "google" | "apple" | "facebook", isAutoRetry?: boolean) => Promise<void>) | null>(null);
+  const oauthAutoRetriedRef = useRef(false);
+
+  // Register a window callback so page.tsx can trigger checkout directly after OAuth
+  // code exchange (cross-Supabase-instance: onAuthStateChange on a different client
+  // instance does not fire on this component's subscriber).
+  const startCheckoutRef = useRef<((userId: string) => Promise<void>) | null>(null);
+  const processedCodesRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    (window as any).__rpTriggerCheckout = (userId: string) => {
+      if (startCheckoutRef.current) void startCheckoutRef.current(userId);
+    };
+    // __rpOAuthCallback: registered here so it works when OAuth is triggered from the
+    // chat page (upgrade modal). page.tsx is unmounted at that point, so the callback
+    // registered there is gone. This handler exchanges the code and triggers checkout.
+    (window as any).__rpOAuthCallback = (url: string | null, _err?: string) => {
+      // Defer ALL work out of the evaluateJavaScript context to prevent WKWebView SIGKILL.
+      // NEVER call console.log, webkit.postMessage, or any Capacitor bridge API synchronously
+      // in this function body — it causes SIGKILL 9 in WKWebView's web content process.
+      setTimeout(async () => {
+        // User explicitly cancelled — clear all state, no retry.
+        if (_err === 'cancelled') {
+          oauthAutoRetriedRef.current = false;
+          lastOAuthProviderRef.current = null;
+          setUpgradeModalWorking(false);
+          return;
+        }
+        const hasError = !url || url.includes("error=server_error") || url.includes("error_code=");
+        if (hasError) {
+          oauthAutoRetriedRef.current = false;
+          lastOAuthProviderRef.current = null;
+          setUpgradeModalWorking(false);
+          setUpgradeModalError("Sign in failed. Please try again.");
+          setUpgradeModalVisible(true);
+          return;
+        }
+
+        try {
+          const parsed = new URL(url!.replace(/^regpulse:\/\//, "https://x/"));
+          const code = parsed.searchParams.get("code");
+          if (!code || processedCodesRef.current.has(code)) {
+            setUpgradeModalWorking(false);
+            return;
+          }
+          processedCodesRef.current.add(code);
+          setUpgradeModalVisible(false);
+          const wantCheckout = (() => { try { return sessionStorage.getItem("rp_oauth_intent_checkout") === "1"; } catch (_) { return false; } })();
+          if (wantCheckout) { try { sessionStorage.removeItem("rp_oauth_intent_checkout"); } catch (_) {} }
+
+          // The singleton GoTrueClient's _recoverAndRefresh() runs concurrently and calls
+          // _saveSession/_removeSession — both delete sb-cap-code-verifier from localStorage.
+          // We saved a backup at rp-pkce-bak in handleSocialSignIn; use it as fallback.
+          // The stored verifier format is "${verifier}/${redirectType}"; only the first
+          // segment is the actual PKCE code verifier sent to Supabase.
+          // Storage uses JSON.stringify on write; must JSON.parse on read to strip quotes.
+          const parseVerifier = (raw: string | null): string | null => {
+            if (!raw) return null;
+            try { const p = JSON.parse(raw); return typeof p === 'string' ? p.split('/')[0] : null; } catch(_) { return raw.split('/')[0]; }
+          };
+          const rawV = (() => { try { return window.localStorage.getItem('sb-cap-code-verifier') || window.localStorage.getItem('rp-pkce-bak'); } catch(_) { return null; } })();
+          try { window.localStorage.removeItem('rp-pkce-bak'); } catch(_) {}
+          const codeVerifier = parseVerifier(rawV);
+          console.log("[rpOAuth] verifier=" + (codeVerifier ? "found" : "null") + " code=" + code.slice(0, 8));
+
+          // Raw fetch exchange — bypasses the SDK entirely to avoid:
+          //   1. GoTrueClient.initializePromise hanging (stale session refresh)
+          //   2. navigator lock deadlock (same storageKey)
+          //   3. _saveSession deleting the code verifier before we read it
+          // Strips trailing slash from URL to avoid double-slash 404.
+          const sbUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/\/$/, '');
+          const sbKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+          let fetchStatus = 0;
+          let tokenJson: Record<string, unknown> = {};
+          try {
+            const ctrl = new AbortController();
+            const tmo = setTimeout(() => ctrl.abort(), 20000);
+            const res = await fetch(`${sbUrl}/auth/v1/token?grant_type=pkce`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'apikey': sbKey },
+              body: JSON.stringify({ auth_code: code, code_verifier: codeVerifier }),
+              signal: ctrl.signal,
+            });
+            clearTimeout(tmo);
+            fetchStatus = res.status;
+            tokenJson = await res.json() as Record<string, unknown>;
+          } catch (fe) {
+            console.log("[rpOAuth] fetchErr: " + String(fe));
+          }
+          const accessToken = tokenJson.access_token as string | undefined;
+          console.log("[rpOAuth] fetch status=" + fetchStatus + " ok=" + !!accessToken + " supaErr=" + (tokenJson.error ?? tokenJson.error_code ?? "none"));
+
+          if (accessToken) {
+            let userId: string | null = null;
+            try {
+              const payload = JSON.parse(atob(accessToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+              userId = payload.sub ?? null;
+            } catch (_) {}
+            console.log("[rpOAuth] userId=" + userId);
+            // Update GoTrueClient session so onAuthStateChange fires → React state (user, isPro) updates.
+            const refreshToken = tokenJson.refresh_token as string | undefined;
+            if (refreshToken) {
+              // Fire-and-forget — setSession emits SIGNED_IN synchronously but the promise
+              // itself hangs due to GoTrueClient navigator lock contention. We don't need
+              // to await it; the SIGNED_IN event fires and onAuthStateChange handles the rest.
+              void createClient().auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+            }
+            // Always check is_pro via raw REST — GoTrueClient may deadlock after setSession
+            // (SIGNED_IN fires while navigator lock is held, so db.from().select() hangs).
+            let alreadyPro = false;
+            if (userId) {
+              try {
+                const _sbUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/\/$/, '');
+                const _sbKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+                const r = await fetch(`${_sbUrl}/rest/v1/profiles?select=is_pro&id=eq.${userId}`, {
+                  headers: { 'apikey': _sbKey, 'Authorization': `Bearer ${accessToken}`, 'Accept': 'application/json' },
+                });
+                const rows = await r.json() as Array<{ is_pro: boolean }>;
+                alreadyPro = rows[0]?.is_pro === true;
+                console.log("[rpOAuth] is_pro=" + alreadyPro);
+              } catch (_) {}
+            }
+            // Apply isPro immediately — don't wait for GoTrueClient which may be locked.
+            if (alreadyPro) {
+              setIsPro(true);
+              try { localStorage.setItem('rp_is_pro_cache', '1'); } catch (_) {}
+            }
+            setUpgradeModalWorking(false);
+            // Force-close all auth surfaces — SIGNED_IN may not re-fire if the
+            // GoTrueClient navigator lock is held or the session is already set.
+            setShowAuthScreen(false);
+            setAuthExpanded(false);
+            setAuthWorking(false);
+            setOnboardingVisible(false);
+            if (userId && wantCheckout && !alreadyPro) {
+              if (isCapacitorNative()) {
+                // iOS App Store compliance: never open in-app Stripe checkout.
+                // Open the Payment Link in SFSafariViewController instead.
+                let url = SUBSCRIBE_URL;
+                const p = new URLSearchParams({ client_reference_id: userId });
+                url = `${SUBSCRIBE_URL}?${p.toString()}`;
+                import("@capacitor/browser")
+                  .then(({ Browser }) => Browser.open({ url, presentationStyle: "fullscreen" }))
+                  .catch(() => window.open(url, "_blank"));
+                void loadFromSupabase(userId);
+              } else if (startCheckoutRef.current) {
+                setCheckoutOverlayVisible(true);
+                console.log("[rpOAuth] calling startCheckout uid=" + userId);
+                void startCheckoutRef.current(userId);
+              }
+            } else {
+              setCheckoutOverlayVisible(false);
+              setUpgradeModalVisible(false);
+              if (userId) void loadFromSupabase(userId);
+            }
+          } else {
+            setUpgradeModalWorking(false);
+            setCheckoutOverlayVisible(false);
+            setUpgradeModalVisible(true);
+          }
+        } catch (_) {
+          setUpgradeModalWorking(false);
+          setCheckoutOverlayVisible(false);
+          setUpgradeModalVisible(true);
+        }
+      }, 0);
+    };
+    return () => {
+      delete (window as any).__rpTriggerCheckout;
+      delete (window as any).__rpOAuthCallback;
+    };
+  }, []);
 
   // ── vUnified-20260414-national-expansion-v89 — Splash + onboarding overlay state ──
   // splashVisible: true from mount → false once auth bootstrap + 2 s min-timer both done.
   // onboardingVisible: true only for unauthenticated first-time users (localStorage gate).
   // Both overlays are layered ABOVE the main app (z-[400] / z-[300]) so the full chat UI
   // renders behind them from frame 0 — no layout jank on dismiss.
-  // vUnified-20260414-national-expansion-v125 — initial state from module-level IIFE + global.
-  // _skipSplashAtLoad checked all 4 signals at module load time.
-  // window.__SKIP_SPLASH was set by layout Layer 0 script before this chunk loaded.
-  // splashVisible=false from byte 0 when skip detected → AppSplashOverlay never painted.
-  const _skip = _skipSplashAtLoad || !!(typeof window !== "undefined" && window.__SKIP_SPLASH);
-  const [splashVisible,      setSplashVisible]      = useState<boolean>(!_skip);
+  // Always initialize true to match the server-pre-rendered HTML (window is undefined during SSG).
+  // useLayoutEffect below sets false before first paint when skip signals are detected.
+  // Mismatching this initial value causes React 19 hydration reconciliation to fail with
+  // NotFoundError (removeChild/insertBefore) in WKWebView and crash the process.
+  const [splashVisible,      setSplashVisible]      = useState<boolean>(true);
   const [onboardingVisible,  setOnboardingVisible]  = useState(false);
-  const [skipSplashDetected, setSkipSplashDetected] = useState<boolean>(_skip);
+  const [skipSplashDetected, setSkipSplashDetected] = useState<boolean>(false);
   // Shared ready-flags written by the min-timer and the auth bootstrap independently.
   const splashReadyRef = useRef<{ authDone: boolean; minTimerDone: boolean }>({
     authDone: false, minTimerDone: false,
@@ -2336,14 +2575,48 @@ export default function ChatPage() {
   // ── Supabase auth state ───────────────────────────────────────────────────
   const [user, setUser]           = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  // Full-screen auth screen shown after sign-out
+  const [showAuthScreen, setShowAuthScreen] = useState(false);
+  // Smart auth: "email" = email-only step, "password" = show password after email submitted
+  const [authSmartStep, setAuthSmartStep] = useState<"email" | "password">("email");
+  const [authSmartMode, setAuthSmartMode] = useState<"signin" | "signup">("signin");
+  // Biometric auth state
+  const [bioPhase, setBioPhase] = useState<"checking" | "prompt" | "none">("checking");
+  const [bioEmail, setBioEmail] = useState<string | null>(null);
+  const [bioWorking, setBioWorking] = useState(false);
+  // Checklist backup nudge — shown once per session for guests who have built up items
+  const [checklistNudgeDismissed, setChecklistNudgeDismissed] = useState(false);
+  // Brief loading state between form-launch tap and FormFiller mount (covers mobile sidebar close transition)
+  const [formLaunching, setFormLaunching] = useState(false);
+  // "Add to Business Profile" picker (shown when user has a checklist but wants to pin it to a business)
+  const [showBizPicker, setShowBizPicker] = useState(false);
+  // When set, the picker saves only this single item instead of the whole checklist
+  const pendingSaveItemRef = useRef<ChecklistItem | null>(null);
   // Auth sidebar panel
   const [authExpanded, setAuthExpanded] = useState(false);
-  const [authMode, setAuthMode]   = useState<"signin" | "signup" | "magic">("signin");
-  const [authEmail, setAuthEmail] = useState("");
+  const [authMode, setAuthMode]   = useState<"signin" | "signup" | "magic">(() => {
+    if (typeof window === "undefined") return "signin";
+    const saved = localStorage.getItem("rp_auth_mode_draft");
+    return (saved === "signup" || saved === "magic") ? saved : "signin";
+  });
+  const [authEmail, setAuthEmail] = useState(() =>
+    typeof window !== "undefined" ? (localStorage.getItem("rp_auth_email_draft") ?? "") : ""
+  );
   const [authPassword, setAuthPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [authWorking, setAuthWorking] = useState(false);
   const [magicSent, setMagicSent] = useState(false);
+
+  // Persist auth draft so users resume where they left off after closing the app mid-sign-in.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (authEmail) localStorage.setItem("rp_auth_email_draft", authEmail);
+    else localStorage.removeItem("rp_auth_email_draft");
+  }, [authEmail]);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem("rp_auth_mode_draft", authMode);
+  }, [authMode]);
 
   // Singleton Supabase browser client — stable across renders via ref.
   const sbRef = useRef<ReturnType<typeof createClient> | null>(null);
@@ -2361,7 +2634,14 @@ export default function ChatPage() {
       dbLoadMonthlyUsage(sb, uid),
       dbLoadIsPro(sb, uid),
     ]);
-    setSavedBusinesses(businesses);
+    // Merge with locally-saved businesses by ID (Supabase wins on conflict).
+    // Prevents an empty Supabase response (e.g. XPC/network failure) from wiping
+    // businesses that were saved to localStorage during the same session.
+    setSavedBusinesses(prev => {
+      const byId = new Map(prev.map(b => [b.id, b]));
+      for (const b of businesses) byId.set(b.id, b);
+      return [...byId.values()];
+    });
     setRuleAlerts(alerts);
     setMonthlyFormsUsed(usage);
     setIsPro(pro);
@@ -2384,14 +2664,18 @@ export default function ChatPage() {
       typeof window !== "undefined" && !!localStorage.getItem("rp_onboarded_v1");
     setSplashVisible(false);
     const u = userForOnboardingRef.current;
-    if (!onboarded && !u) {
-      // First-time unauthenticated user — show tier selection.
-      setOnboardingVisible(true);
-    } else if (!onboarded && u) {
-      // Already signed in on first visit — mark as onboarded, skip tier screen.
-      if (typeof window !== "undefined") localStorage.setItem("rp_onboarded_v1", "1");
+    if (u) {
+      // Signed-in user — mark as onboarded if needed, go straight to app.
+      if (!onboarded && typeof window !== "undefined") {
+        localStorage.setItem("rp_onboarded_v1", "1");
+      }
+    } else {
+      // Unauthenticated — always show auth screen first.
+      // "Continue without account →" inside the screen dismisses it.
+      setShowAuthScreen(true);
+      setAuthSmartStep("email");
+      setAuthSmartMode("signup");
     }
-    // onboarded === true: nothing to do, main app is already visible behind the splash.
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── vUnified-20260414-national-expansion-v120 — Skip-splash on arrival from free-tier nav ──
@@ -2483,16 +2767,58 @@ export default function ChatPage() {
     const sb = getSb();
 
     // 1. Check for an existing session (e.g. from a previous page visit).
-    sb.auth.getSession().then(({ data: { session } }) => {
-      const u = session?.user ?? null;
+    sb.auth.getSession().then(async ({ data: { session } }) => {
+      let u = session?.user ?? null;
+      let activeSession = session;
+
+      // Native fallback: localStorage may be cleared between app launches (iOS memory pressure,
+      // app update, etc.). If getSession() returns null, try to restore tokens from
+      // @capacitor/preferences (Keychain-backed) before deciding the user is logged out.
+      if (!u && isCapacitorNative()) {
+        try {
+          const stored = await retrieveStoredSession();
+          if (stored?.refreshToken) {
+            const { data: restored } = await sb.auth.setSession({
+              access_token:  stored.accessToken  || "",
+              refresh_token: stored.refreshToken,
+            });
+            u = restored.session?.user ?? null;
+            activeSession = restored.session ?? null;
+            if (u) setUser(u); // optimistic update before checkSplashReady
+          }
+        } catch { /* stored tokens invalid — show auth screen */ }
+      }
+
       // vUnified-20260414-national-expansion-v89 — capture user for onboarding check
       // before React batches the setUser setState, so checkSplashReady reads the right value.
       userForOnboardingRef.current = u;
-      setUser(u);
+      // RACE GUARD: if onAuthStateChange already set a real user (e.g. OAuth completed
+      // while Keychain restore was awaiting a network token-refresh), don't overwrite with null.
+      // Use a functional updater so we read the latest state atomically.
+      setUser(prev => {
+        if (u !== null) return u;       // bootstrap found a user — always use it
+        if (prev !== null) return prev; // OAuth already signed in — keep that user
+        return null;                    // genuinely not signed in
+      });
       setAuthLoading(false);
       splashReadyRef.current.authDone = true; // v89 — signal auth bootstrap complete
       checkSplashReady(); // v89 — dismiss splash when min-timer also done
       if (u) {
+        // Fast path: restore from localStorage immediately so state is never blank on remount.
+        setSavedBusinesses(localLoadBusinesses());
+        // Raw REST is_pro check using session token — avoids GoTrueClient deadlock on remount.
+        const rawToken = activeSession?.access_token;
+        if (rawToken) {
+          const _sbUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/\/$/, '');
+          const _sbKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+          fetch(`${_sbUrl}/rest/v1/profiles?select=is_pro&id=eq.${u.id}`, {
+            headers: { apikey: _sbKey, Authorization: `Bearer ${rawToken}`, Accept: 'application/json' },
+          }).then(r => r.json()).then((rows: Array<{ is_pro: boolean }>) => {
+            const pro = rows[0]?.is_pro === true;
+            setIsPro(pro);
+            try { if (pro) localStorage.setItem('rp_is_pro_cache', '1'); else localStorage.removeItem('rp_is_pro_cache'); } catch (_) {}
+          }).catch(() => {});
+        }
         void loadFromSupabase(u.id);
         // vUnified-20260414-national-expansion-v86/v87 — detect ?success=true return from Stripe.
         // Show both the sidebar banner and the main-chat toast so the confirmation is visible
@@ -2510,9 +2836,11 @@ export default function ChatPage() {
             tierUrl.searchParams.delete("tier");
             window.history.replaceState({}, "", tierUrl.toString());
             setProCheckoutLoading(true);
+            const tierHeaders: Record<string, string> = { "Content-Type": "application/json" };
+            if (rawToken) tierHeaders["Authorization"] = `Bearer ${rawToken}`;
             fetch(`${API_BASE}/api/stripe/create-checkout-session`, {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: tierHeaders,
               body: JSON.stringify({ userId: u.id }),
             })
               .then(r => r.json())
@@ -2559,26 +2887,117 @@ export default function ChatPage() {
     // 2. Listen for sign-in / sign-out events.
     const { data: { subscription } } = sb.auth.onAuthStateChange(async (event, session) => {
       const u = session?.user ?? null;
+      console.log("[authState] event=" + event + " uid=" + (u?.id ?? "null"));
       setUser(u);
-      if (event === "SIGNED_IN" && u) {
+      if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && u) {
+        // Persist session for biometric re-auth on next app open
+        if (session && event === "SIGNED_IN") {
+          void storeSession(session, u.email ?? undefined);
+          setBioPhase("none");
+        }
         // Migrate any guest data to Supabase, then reload from the DB.
-        await syncGuestDataToSupabase(sb, u.id);
+        if (event === "SIGNED_IN") await syncGuestDataToSupabase(sb, u.id);
         await loadFromSupabase(u.id);
         setAuthExpanded(false);
+        setShowAuthScreen(false);
         // vUnified-20260414-national-expansion-v89 — dismiss onboarding overlay on any sign-in
         // (covers both OnboardingFlow auth + the existing sidebar auth panel).
-        if (typeof window !== "undefined") localStorage.setItem("rp_onboarded_v1", "1");
+        if (typeof window !== "undefined") {
+          localStorage.setItem("rp_onboarded_v1", "1");
+          localStorage.removeItem("rp_auth_email_draft");
+          localStorage.removeItem("rp_auth_mode_draft");
+        }
         setOnboardingVisible(false);
+        // rp_oauth_checkout: set by appUrlOpen after native social OAuth code exchange.
+        // Checked here (in addition to getSession) so it fires even when ChatPage is already mounted.
+        try {
+          if (typeof window !== "undefined" && sessionStorage.getItem("rp_oauth_checkout") === "1") {
+            sessionStorage.removeItem("rp_oauth_checkout");
+            void startCheckout(u.id);
+          }
+        } catch (_) {}
       } else if (event === "SIGNED_OUT") {
         setSavedBusinesses(localLoadBusinesses());
         setRuleAlerts(localLoadAlerts());
         setMonthlyFormsUsed(localLoadMonthlyUsage());
         setIsPro(true); // guests default to full access
+        void clearBiometricSession();
+        try { localStorage.removeItem("rp_chat_active_v1"); } catch {}
       }
     });
 
     return () => subscription.unsubscribe();
   }, [loadFromSupabase]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Chat session auto-save ────────────────────────────────────────────────
+  // Writes to localStorage after every assistant message (debounced 1 s).
+  // Also patches the Supabase businesses.chat_history column directly when a
+  // business is loaded, so closing without an explicit save no longer loses the thread.
+  useEffect(() => {
+    if (messages.length <= 1) return;
+    const last = messages[messages.length - 1];
+    if (last.role !== "assistant") return;
+    if (chatSaveTimerRef.current) clearTimeout(chatSaveTimerRef.current);
+    chatSaveTimerRef.current = setTimeout(() => {
+      const snap = { msgs: toSavedMessages(messages), bizId: loadedBusiness?.id ?? null, ts: Date.now() };
+      try { localStorage.setItem("rp_chat_active_v1", JSON.stringify(snap)); } catch {}
+      if (loadedBusiness && user) {
+        void getSb()
+          .from("businesses")
+          .update({ chat_history: toSavedMessages(messages) })
+          .eq("id", loadedBusiness.id)
+          .eq("user_id", user.id);
+      }
+    }, 1000);
+  }, [messages]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Chat session restore ──────────────────────────────────────────────────
+  // Runs once after auth resolves. If messages are still at the welcome state and
+  // a recent (<24 h) snapshot exists in localStorage, silently restores it.
+  useEffect(() => {
+    if (authLoading) return;
+    if (messages.length > 1) return;
+    try {
+      const raw = localStorage.getItem("rp_chat_active_v1");
+      if (!raw) return;
+      const snap = JSON.parse(raw) as { msgs: SavedMessage[]; bizId: string | null; ts: number };
+      if (!snap.msgs?.length) return;
+      if (Date.now() - snap.ts > 24 * 60 * 60 * 1000) return;
+      setMessages(toMessages(snap.msgs));
+      setSessionRestored(true);
+      sessionRestoredTimerRef.current = setTimeout(() => setSessionRestored(false), 5000);
+    } catch {}
+  }, [authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Biometric startup check ───────────────────────────────────────────────
+  // On mount: if the device has biometric enrolled, skip the email screen and
+  // show the biometric prompt instead. Resolves before the splash lifts.
+  useEffect(() => {
+    isBiometricAvailable().then(async (available) => {
+      if (available) {
+        const email = await getStoredEmail();
+        setBioEmail(email);
+        setBioPhase("prompt");
+      } else {
+        setBioPhase("none");
+      }
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleBiometricUnlock = async () => {
+    setBioWorking(true);
+    const ok = await promptBiometric("Sign in to RegPulse");
+    if (!ok) { setBioWorking(false); return; }
+    const stored = await retrieveStoredSession();
+    if (!stored) { setBioWorking(false); setBioPhase("none"); return; }
+    const { error } = await getSb().auth.setSession({
+      access_token: stored.accessToken,
+      refresh_token: stored.refreshToken,
+    });
+    setBioWorking(false);
+    if (error) setBioPhase("none");
+    // On success: onAuthStateChange SIGNED_IN fires → sets user + closes auth screen
+  };
 
   // ── vUnified-20260414-national-expansion-v87 — Real-time profiles sync ───
   // Supabase Postgres Changes subscription on the `profiles` table.
@@ -2612,6 +3031,16 @@ export default function ChatPage() {
           const row = payload.new as { is_pro?: boolean; subscription_status?: string };
           if (typeof row.is_pro === "boolean") {
             setIsPro(row.is_pro);
+            // Keep localStorage cache in sync so next page load reflects the
+            // current subscription state (e.g. when a subscription is canceled
+            // and the webhook sets is_pro=false, the cache must be cleared too).
+            try {
+              if (row.is_pro) {
+                localStorage.setItem('rp_is_pro_cache', '1');
+              } else {
+                localStorage.removeItem('rp_is_pro_cache');
+              }
+            } catch (_) {}
           }
         },
       )
@@ -2619,6 +3048,26 @@ export default function ChatPage() {
 
     return () => { void sb.removeChannel(channel); };
   }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Smart auth: advance from email step to password step ────────────────
+  // Supabase doesn't expose an "email exists" check without leaking info,
+  // so we attempt signIn; a "invalid credentials" error means the account
+  // exists but wrong password, while "user not found" means new user.
+  const handleSmartEmailContinue = async () => {
+    if (!authEmail.trim()) return;
+    setAuthWorking(true); setAuthError("");
+    // Try a sign-in with a dummy password to probe if the account exists.
+    const { error } = await getSb().auth.signInWithPassword({ email: authEmail, password: "\x00probe" });
+    setAuthWorking(false);
+    if (!error || error.message.toLowerCase().includes("invalid")) {
+      // "Invalid login credentials" = account exists, wrong password → Sign In mode
+      setAuthSmartMode("signin");
+    } else {
+      // "Email not confirmed" or "user not found" → new user → Sign Up mode
+      setAuthSmartMode("signup");
+    }
+    setAuthSmartStep("password");
+  };
 
   // ── Auth action helpers ───────────────────────────────────────────────────
   const handleSignIn = async () => {
@@ -2648,10 +3097,137 @@ export default function ChatPage() {
     else setMagicSent(true);
   };
 
-  const handleSignOut = async () => {
-    await getSb().auth.signOut();
+  // Auth screen sign-up: create account then immediately launch Stripe checkout.
+  const handleAuthScreenSignUp = async () => {
+    setAuthWorking(true); setAuthError("");
+    const { data, error: e } = await getSb().auth.signUp({
+      email: authEmail.trim(),
+      password: authPassword,
+      options: { emailRedirectTo: "https://www.reg-bot.ai/auth/callback" },
+    });
+    setAuthWorking(false);
+    if (e) { setAuthError(e.message); return; }
+    if (data.session?.user) {
+      setShowAuthScreen(false);
+      await startCheckout(data.session.user.id);
+    } else {
+      setAuthError("Check your email to confirm your account, then sign in.");
+      setAuthSmartStep("email");
+    }
+  };
+
+  const handlePanelSocialSignIn = async (provider: "google" | "apple" | "facebook") => {
+    setAuthWorking(true); setAuthError("");
+    try {
+      const native = isCapacitorNative();
+      const redirectTo = native ? "regpulse://callback" : `${window.location.origin}/chat/`;
+      const { data, error: e } = await getSb().auth.signInWithOAuth({
+        provider,
+        options: { redirectTo, skipBrowserRedirect: native },
+      });
+      if (e) throw e;
+      if (native && data.url) {
+        // Use ASWebAuthenticationSession on iOS (reliable custom scheme callback).
+        // Falls back to Browser.open on Android.
+        const wk = (window as any)?.webkit?.messageHandlers?.regpulse;
+        if (wk) {
+          wk.postMessage({ action: "oauthOpen", url: data.url });
+        } else {
+          const { Browser } = await import("@capacitor/browser");
+          await Browser.open({ url: data.url, presentationStyle: "popover" });
+        }
+        setAuthWorking(false);
+      } else if (!native && data.url) {
+        window.location.href = data.url;
+      }
+    } catch {
+      setAuthError("Sign in failed. Please try again.");
+      setAuthWorking(false);
+    }
+  };
+
+  /** Merges the current checklist (or a single item) into an existing saved business. */
+  const handleAddChecklistToBiz = (bizId: string) => {
+    setShowBizPicker(false);
+    const target = savedBusinesses.find(b => b.id === bizId);
+    if (!target) return;
+    const singleItem = pendingSaveItemRef.current;
+    pendingSaveItemRef.current = null;
+    if (singleItem) {
+      const alreadySaved = (target.checklist ?? []).some(
+        i => (i.formId && i.formId === singleItem.formId) || i.text === singleItem.text
+      );
+      if (alreadySaved) return;
+      const updated: SavedBusiness = { ...target, checklist: [...(target.checklist ?? []), singleItem] };
+      localSaveBusiness(updated);
+      setSavedBusinesses(localLoadBusinesses());
+      if (user) void dbSaveBusiness(getSb(), user.id, updated);
+      if (loadedBusiness?.id === target.id) setLoadedBusiness(updated);
+      return;
+    }
+    if (checklist.length === 0) return;
+    const existing = new Set((target.checklist ?? []).map(i => i.formId ?? i.text));
+    const toAdd = checklist.filter(i => !existing.has(i.formId ?? i.text));
+    if (toAdd.length === 0) return;
+    const updated: SavedBusiness = {
+      ...target,
+      checklist: [...(target.checklist ?? []), ...toAdd],
+    };
+    localSaveBusiness(updated);
+    setSavedBusinesses(localLoadBusinesses());
+    if (user) void dbSaveBusiness(getSb(), user.id, updated);
+    handleLoadBusiness(updated);
+  };
+
+  /** Saves a single checklist item to a business profile. */
+  const handleSaveItemToBusiness = (item: ChecklistItem) => {
+    if (savedBusinesses.length === 0) {
+      // No businesses — prompt via chat
+      setMessages(prev => [...prev, {
+        id:      `save-prompt-${Date.now()}`,
+        role:    "assistant" as const,
+        content: "You don't have any saved businesses yet. Tell me your business name, type, and location and I'll build your compliance profile — then I can save this item there.",
+      }]);
+      return;
+    }
+    // One business or one loaded → save directly
+    const target = loadedBusiness ?? (savedBusinesses.length === 1 ? savedBusinesses[0] : null);
+    if (target) {
+      const alreadySaved = (target.checklist ?? []).some(
+        i => (i.formId && i.formId === item.formId) || i.text === item.text
+      );
+      if (!alreadySaved) {
+        const updated: SavedBusiness = { ...target, checklist: [...(target.checklist ?? []), item] };
+        localSaveBusiness(updated);
+        setSavedBusinesses(localLoadBusinesses());
+        if (user) void dbSaveBusiness(getSb(), user.id, updated);
+        if (loadedBusiness?.id === target.id) setLoadedBusiness(updated);
+      }
+      return;
+    }
+    // Multiple businesses, none loaded — open picker
+    pendingSaveItemRef.current = item;
+    setShowBizPicker(true);
+  };
+
+  const handleSignOut = () => {
+    // Fire-and-forget — signOut can deadlock on iOS Capacitor (GoTrueClient lock).
+    void getSb().auth.signOut().catch(() => {});
+    try { localStorage.removeItem("rp_onboarded_v1"); } catch (_) {}
+    try { sessionStorage.removeItem("rp_onboarded_v1"); } catch (_) {}
+    try { localStorage.removeItem("rp_is_pro_cache"); } catch (_) {}
     setUser(null);
+    setIsPro(false);
     setAuthExpanded(false);
+    setSavedBusinesses(localLoadBusinesses());
+    setLoadedBusiness(null);
+    setShowProfileView(false);
+    setAuthEmail("");
+    setAuthPassword("");
+    setAuthError("");
+    setAuthSmartStep("email");
+    setAuthSmartMode("signup");
+    setShowAuthScreen(true);
   };
 
   // vUnified-20260414-national-expansion-v86 — Pro subscription handlers ──────
@@ -2662,27 +3238,66 @@ export default function ChatPage() {
    * Min-h-[48px] button + pointer-events-auto mandate: enforced at the call site.
    */
   // v290 — shared checkout launcher used by both the main CTA and the upgrade modal
+  // On native iOS: uses StoreKit 2 IAP (Apple policy compliant).
+  // On web:        uses Stripe hosted checkout (unchanged).
   const startCheckout = async (userId: string) => {
+    if (checkoutInFlightRef.current) { setProCheckoutLoading(false); return; }
+    if (isPro) {
+      setCheckoutOverlayVisible(false);
+      setUpgradeModalVisible(false);
+      setProCheckoutLoading(false);
+      return;
+    }
+    checkoutInFlightRef.current = true;
     setCheckoutOverlayVisible(true);
     setUpgradeModalVisible(false);
     try {
+      // ── Native iOS: StoreKit 2 IAP ────────────────────────────────────────
+      if (isIAPAvailable()) {
+        // WKWebView XPC recovery delay after ASWebAuthenticationSession closes.
+        await new Promise(r => setTimeout(r, 2000));
+        const { data: { session: iapSession } } = await getSb().auth.getSession();
+        const token = iapSession?.access_token ?? "";
+        const result = await purchaseProSubscription(userId, token);
+        if (result.cancelled) {
+          // User tapped Cancel in the App Store sheet — silent dismiss.
+          return;
+        }
+        if (result.pending) {
+          setUpgradeModalError("Purchase is pending approval. You'll be notified when it completes.");
+          setUpgradeModalVisible(true);
+          return;
+        }
+        if (result.ok && result.isPro) {
+          setIsPro(true);
+          try { localStorage.setItem("rp_is_pro_cache", "1"); } catch (_) {}
+          setProSuccessVisible(true);
+          return;
+        }
+        if (!result.ok) {
+          setUpgradeModalError(result.error ?? "Purchase failed. Please try again.");
+          setUpgradeModalVisible(true);
+        }
+        return;
+      }
+
+      // ── Web: Stripe hosted checkout ───────────────────────────────────────
+      const { data: { session: checkoutSession } } = await getSb().auth.getSession();
+      const checkoutHeaders: Record<string, string> = { "Content-Type": "application/json" };
+      if (checkoutSession?.access_token) checkoutHeaders["Authorization"] = `Bearer ${checkoutSession.access_token}`;
+      const controller = new AbortController();
+      const timeoutId  = setTimeout(() => controller.abort(), 15000);
       const res  = await fetch(`${API_BASE}/api/stripe/create-checkout-session`, {
         method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ userId }),
+        headers: checkoutHeaders,
+        body:    JSON.stringify({ userId, native: false }),
+        signal:  controller.signal,
       });
+      clearTimeout(timeoutId);
       const data = await res.json() as { url?: string; error?: string };
       if (data.url) {
-        if (isCapacitorNative()) {
-          const { Browser } = await import("@capacitor/browser");
-          // 300ms delay clears any gesture stack before WKWebView presents the browser.
-          await new Promise(r => setTimeout(r, 300));
-          await Browser.open({ url: data.url, presentationStyle: "popover" });
-        } else {
-          window.location.href = data.url;
-        }
+        window.location.href = data.url;
       } else {
-        console.error("[startCheckout] checkout error:", data.error);
         setUpgradeModalError(data.error ?? "Checkout failed. Please try again.");
         setUpgradeModalVisible(true);
       }
@@ -2693,11 +3308,69 @@ export default function ChatPage() {
     } finally {
       setCheckoutOverlayVisible(false);
       setProCheckoutLoading(false);
+      checkoutInFlightRef.current = false;
+    }
+  };
+  startCheckoutRef.current = startCheckout;
+
+  const handleRestorePurchases = async () => {
+    if (!isIAPAvailable() || !user) return;
+    setProCheckoutLoading(true);
+    try {
+      const { data: { session: s } } = await getSb().auth.getSession();
+      const token = s?.access_token ?? "";
+      const result = await restoreProPurchases(token);
+      if (result.ok && result.isPro) {
+        setIsPro(true);
+        try { localStorage.setItem("rp_is_pro_cache", "1"); } catch (_) {}
+        setProSuccessVisible(true);
+      } else {
+        setUpgradeModalError("No active subscription found for this Apple ID.");
+        setUpgradeModalVisible(true);
+      }
+    } catch (err) {
+      console.error("[restorePurchases]", err);
+    } finally {
+      setProCheckoutLoading(false);
+    }
+  };
+
+  /**
+   * Opens the Pro subscription page in system Safari (iOS App Store compliant).
+   * Uses App.openUrl() so the OS default browser handles payment — no in-app purchase required.
+   */
+  /**
+   * Opens the Pro subscription page via Capacitor Browser (SFSafariViewController on iOS).
+   * Payment is processed on the website — no in-app payment code, App Store compliant.
+   *
+   * When the user is signed in we append ?client_reference_id={userId} so Stripe passes
+   * the Supabase user ID through the checkout.session.completed webhook event, enabling
+   * automatic profile upgrade without requiring the user to enter their email again.
+   */
+  const openSubscribePage = async () => {
+    let url = SUBSCRIBE_URL;
+    if (user?.id) {
+      const params = new URLSearchParams({ client_reference_id: user.id });
+      if (user.email) params.set("prefilled_email", user.email);
+      url = `${SUBSCRIBE_URL}?${params.toString()}`;
+    }
+    try {
+      const { Browser } = await import("@capacitor/browser");
+      await Browser.open({ url, presentationStyle: "fullscreen" });
+    } catch {
+      window.open(url, "_blank");
     }
   };
 
   const handleUpgradeToPro = async () => {
-    if (!user) { setUpgradeModalVisible(true); return; }
+    // On native iOS: show the App Store-safe upgrade sheet (no in-app payment).
+    // On web: proceed with Stripe checkout as normal.
+    if (isCapacitorNative()) {
+      setUpgradeModalTrigger("cta");
+      setUpgradeModalVisible(true);
+      return;
+    }
+    if (!user) { setUpgradeModalTrigger("cta"); setUpgradeModalVisible(true); return; }
     setProCheckoutLoading(true);
     await startCheckout(user.id);
   };
@@ -2706,7 +3379,9 @@ export default function ChatPage() {
   // Native: opens OAuth URL in Capacitor Browser; appUrlOpen in app/page.tsx exchanges the code
   //         and sets rp_oauth_checkout → auth bootstrap detects it and calls startCheckout.
   // Web:    redirects to /chat/?tier=pro which auto-triggers checkout after auth resolves.
-  const handleSocialSignIn = async (provider: "google" | "apple" | "facebook") => {
+  const handleSocialSignIn = async (provider: "google" | "apple" | "facebook", isAutoRetry = false) => {
+    lastOAuthProviderRef.current = provider;
+    if (!isAutoRetry) oauthAutoRetriedRef.current = false; // only reset on genuine user tap
     setUpgradeModalWorking(true); setUpgradeModalError("");
     try {
       const native = isCapacitorNative();
@@ -2719,10 +3394,26 @@ export default function ChatPage() {
       });
       if (e) throw e;
       if (native && data.url) {
-        const { Browser } = await import("@capacitor/browser");
-        await Browser.open({ url: data.url, presentationStyle: "popover" });
-        // Session + checkout triggered by appUrlOpen → rp_oauth_checkout signal
-        setUpgradeModalWorking(false);
+        try { sessionStorage.setItem("rp_oauth_intent_checkout", "1"); } catch (_) {}
+        // Back up the PKCE verifier immediately — the singleton GoTrueClient's
+        // _recoverAndRefresh/_callRefreshToken runs concurrently and will call
+        // _saveSession/_removeSession, both of which delete sb-cap-code-verifier.
+        // The backup at rp-pkce-bak persists until the exchange callback reads it.
+        try {
+          const v = window.localStorage.getItem('sb-cap-code-verifier');
+          if (v) window.localStorage.setItem('rp-pkce-bak', v);
+        } catch (_) {}
+        // Use ASWebAuthenticationSession on iOS (reliable custom scheme callback).
+        const wk = (window as any)?.webkit?.messageHandlers?.regpulse;
+        if (wk) {
+          wk.postMessage({ action: "oauthOpen", url: data.url });
+          // Keep working=true so user can't re-tap while ASWebAuthenticationSession is open.
+          // __rpOAuthCallback resets it on completion or error.
+        } else {
+          const { Browser } = await import("@capacitor/browser");
+          await Browser.open({ url: data.url, presentationStyle: "popover" });
+          setUpgradeModalWorking(false);
+        }
       } else if (!native && data.url) {
         window.location.href = data.url;
       }
@@ -2731,6 +3422,7 @@ export default function ChatPage() {
       setUpgradeModalWorking(false);
     }
   };
+  handleSocialSignInRef.current = handleSocialSignIn;
 
   // v290 — upgrade modal auth handlers
   const handleUpgradeModalSignIn = async () => {
@@ -2785,10 +3477,14 @@ export default function ChatPage() {
   const handleManageSubscription = async () => {
     if (!user) return;
     setProPortalLoading(true);
+    setProPortalError(null);
     try {
+      const { data: { session: portalSession } } = await getSb().auth.getSession();
+      const portalHeaders: Record<string, string> = { "Content-Type": "application/json" };
+      if (portalSession?.access_token) portalHeaders["Authorization"] = `Bearer ${portalSession.access_token}`;
       const res  = await fetch(`${API_BASE}/api/stripe/create-portal-session`, {
         method:  "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: portalHeaders,
         body:    JSON.stringify({ userId: user.id }),
       });
       const data = await res.json() as { url?: string; error?: string };
@@ -2800,10 +3496,13 @@ export default function ChatPage() {
           window.location.href = data.url;
         }
       } else {
-        console.error("[handleManageSubscription] portal error:", data.error);
+        const msg = data.error ?? "Could not open billing portal";
+        console.error("[handleManageSubscription] portal error:", msg);
+        setProPortalError(msg.includes("customer") ? "No billing account found. Contact support." : msg);
       }
     } catch (err) {
       console.error("[handleManageSubscription]", err);
+      setProPortalError("Network error — try again.");
     } finally {
       setProPortalLoading(false);
     }
@@ -2857,6 +3556,47 @@ export default function ChatPage() {
     });
   }, [savedBusinesses]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Auto-run gap analysis when a business with type+state loads (debounced 1.5s)
+  useEffect(() => {
+    if (!loadedBusiness?.businessType && !loadedBusinessState) return;
+    const bizId = loadedBusiness?.id ?? "unknown";
+    // Skip if already ran for this exact business
+    if (gapAnalysis?.bizId === bizId && !gapAnalysis.loading) return;
+    setGapAnalysis({ loading: true, gaps: [], bizId });
+    const timer = setTimeout(() => {
+      const existingIds = (loadedBusiness?.checklist ?? checklist).map(i => i.formId).filter(Boolean) as string[];
+      fetch(`${API_BASE}/api/compliance/gap-analysis`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({
+          businessType: loadedBusiness?.businessType,
+          state:        loadedBusinessState,
+          // If business.location is a bare ZIP (no comma) fall back to GPS-resolved
+          // city from userLocation so the gap-analysis gets a real city name.
+          city: (() => {
+            const loc = loadedBusiness?.location ?? "";
+            if (/^\d{5}$/.test(loc.trim())) {
+              // Bare ZIP — extract city from GPS location or detectedCounty
+              return userLocation && !userLocation.startsWith("Detecting")
+                ? userLocation.split(",")[0].trim()
+                : undefined;
+            }
+            return loc.split(",")[0].trim() || undefined;
+          })(),
+          county:       detectedCounty ?? undefined,
+          isNewBusiness: loadedBusiness?.isPreExisting === false,
+          existingFormIds: existingIds,
+          businessName: loadedBusiness?.name,
+        }),
+      })
+        .then(r => r.json() as Promise<{ ok: boolean; gaps?: GapItem[] }>)
+        .then(d => setGapAnalysis({ loading: false, gaps: d.ok ? (d.gaps ?? []) : [], bizId }))
+        .catch(() => setGapAnalysis({ loading: false, gaps: [], bizId }));
+    }, 1500);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadedBusiness?.id, loadedBusinessState]);
+
   // ── Auto-save toast ───────────────────────────────────────────────────────
   interface AutoSaveToast { count: number; itemIds: string[] }
   const [autoSaveToast, setAutoSaveToast] = useState<AutoSaveToast | null>(null);
@@ -2894,12 +3634,27 @@ export default function ChatPage() {
     setIsDarkMode(localStorage.getItem(DARK_KEY) === "1");
   }, []);
 
-  // v36 — Read push notification permission on mount (safe: getNotifPermission never throws).
-  // Re-read whenever savedBusinesses changes so the banner disappears once permission is granted
-  // outside our app (e.g. OS settings). Also dismissed locally via pushBannerDismissed.
+  // Seed push permission state on mount using the authoritative native check on iOS/Android,
+  // falling back to the Web Notification API on desktop. Re-runs when user signs in so the
+  // banner/modal reflects any OS-level change made outside the app.
   useEffect(() => {
-    setPushPermission(getNotifPermission());
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    checkNativeNotifPermission().then(p => setPushPermission(p));
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Show the pre-permission modal once, after sign-in, when native push hasn't been asked yet.
+  // Gates on: native shell + permission "default" + not previously shown (rp_notif_prompted).
+  useEffect(() => {
+    if (!user) return;
+    if (!isCapacitorNative()) return;
+    try { if (localStorage.getItem("rp_notif_prompted") === "1") return; } catch { return; }
+    // Small delay so sign-in animation completes before the modal appears
+    const t = setTimeout(async () => {
+      const p = await checkNativeNotifPermission();
+      setPushPermission(p);
+      if (p === "default") setNotifPromptVisible(true);
+    }, 1800);
+    return () => clearTimeout(t);
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
   const isQueueMode = formQueue.length > 0;
@@ -2968,16 +3723,33 @@ export default function ChatPage() {
   // BusinessProfileView (e.g. "Broward County Business Tax Receipt" for a Ft. Lauderdale biz).
   const profileRecommendedForms = useMemo<(FederalFormEntry | StateFormEntry)[]>(() => {
     if (!loadedBusiness) return [];
-    const state = parseStateFromLocation(loadedBusiness.location) ?? undefined;
+    // Use the state captured at load time (loadedBusinessState) as it's stable after
+    // loadLocationData() overwrites userLocation with a bare ZIP like "33412".
+    const state = parseStateFromLocation(loadedBusiness.location) ?? loadedBusinessState ?? undefined;
     const ids   = getRecommendedForms(loadedBusiness.businessType, state, detectedCounty ?? undefined, loadedBusiness.isPreExisting === false);
     const base  = ids
       .map(id => ALL_FORMS[id])
       .filter((f): f is FederalFormEntry | StateFormEntry => !!f && (isFederalForm(f) || isStateForm(f)));
 
-    // Append county-/city-specific LOCAL_FORMS entries not already in base
+    // Append county-/city-specific LOCAL_FORMS entries not already in base.
+    // Only trust detectedCounty when the location string contains an explicit state
+    // abbreviation — a bare ZIP (e.g. "33411") has no embedded state, so a stale
+    // county from a previous session would pull in wrong-state local forms.
+    const locationExplicitState = parseStateFromLocation(loadedBusiness.location);
+    // Derive county directly from the business city name (e.g., "Royal Palm Beach" → "Palm Beach County").
+    // This is more reliable than detectedCounty (GPS-based) when the user's physical location
+    // differs from the business location (e.g., user in Orange County FL, business in Palm Beach County FL).
+    const bizCityRaw = loadedBusiness.location.match(/^([^,]+)/)?.[1]?.trim()?.toLowerCase() ?? "";
+    const bizDerivedCounty = bizCityRaw.length > 3 ? (CITY_TO_COUNTY[bizCityRaw] ?? null) : null;
+    const safeCounty = locationExplicitState ? (bizDerivedCounty ?? detectedCounty ?? null) : null;
+    // If state is known but not embedded in location, enrich it so getLocalFormsForLocation
+    // can apply the cross-state penalty correctly (prevents e.g. CA forms for FL zip).
+    const locationForLocal = (!locationExplicitState && state)
+      ? `${loadedBusiness.location}, ${state}`
+      : loadedBusiness.location;
     const localForms = getLocalFormsForLocation(
-      loadedBusiness.location,
-      detectedCounty,
+      locationForLocal,
+      safeCounty,
       loadedBusiness.businessType,
       4,
     );
@@ -2985,7 +3757,7 @@ export default function ChatPage() {
     const newLocals = localForms.filter(f => !baseIds.has(f.id));
 
     return [...base, ...newLocals].slice(0, 12);
-  }, [loadedBusiness, detectedCounty]);
+  }, [loadedBusiness, detectedCounty, loadedBusinessState]);
 
   // ── Active location (derived) ─────────────────────────────────────────────
   // When the loaded business has multiple locations and one is active, this gives
@@ -3096,6 +3868,43 @@ export default function ChatPage() {
   useEffect(() => { userLocationRef.current   = userLocation;   }, [userLocation]);
   useEffect(() => { detectedCountyRef.current = detectedCounty; }, [detectedCounty]);
   useEffect(() => { gpsLoadingRef.current     = gpsLoading;     }, [gpsLoading]);
+
+  // Schedule renewal reminder notifications whenever the renewals list changes.
+  // Fires immediately for overdue/due-soon items; deferred via setTimeout for future ones.
+  // No-ops when permission is not granted — user must opt in via browser/OS prompt.
+  useEffect(() => {
+    if (!allRenewals.length) return;
+    scheduleUpcomingRenewalNotifications(
+      allRenewals.map(r => ({
+        formName: r.formName,
+        bizName:  r.biz.name,
+        daysLeft: r.daysLeft,
+      })),
+      30, // notify for items due within 30 days
+    );
+  }, [allRenewals]);
+
+  // ── Proactive renewal nudge — fires when a business profile is opened ───
+  // If the loaded business has renewals due within 30 days, inject a brief
+  // assistant message into the chat so it's visible when the user returns.
+  const lastNudgedBizId = useRef<string | null>(null);
+  useEffect(() => {
+    if (!showProfileView || !loadedBusiness) return;
+    if (lastNudgedBizId.current === loadedBusiness.id) return;
+    const urgent = allRenewals.filter(r => r.biz.id === loadedBusiness.id && r.daysLeft >= 0 && r.daysLeft <= 30);
+    const overdue = allRenewals.filter(r => r.biz.id === loadedBusiness.id && r.daysLeft < 0);
+    if (urgent.length === 0 && overdue.length === 0) return;
+    lastNudgedBizId.current = loadedBusiness.id;
+    const parts: string[] = [];
+    if (overdue.length > 0) parts.push(`**${overdue.length} renewal${overdue.length !== 1 ? "s" : ""} overdue** for ${loadedBusiness.name}`);
+    if (urgent.length > 0) parts.push(`**${urgent.length} renewal${urgent.length !== 1 ? "s" : ""} due within 30 days**`);
+    const names = [...overdue, ...urgent].slice(0, 3).map(r => r.formName).join(", ");
+    const nudge = `${parts.join(" and ")} — ${names}${[...overdue, ...urgent].length > 3 ? " and more" : ""}. Open the profile to renew now.`;
+    setMessages(prev => [
+      ...prev,
+      { role: "assistant" as const, content: nudge, id: crypto.randomUUID(), timestamp: new Date().toISOString() },
+    ]);
+  }, [showProfileView, loadedBusiness?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── vChatZoningContextInjection ──────────────────────────────────────────
   // Derive the attached zoning result for the currently loaded business.
@@ -3208,11 +4017,82 @@ export default function ChatPage() {
       setLoadedBusiness(updated);
       void dbSaveBusiness(user ? getSb() : null, user?.id ?? null, updated).then(() => {
         setSavedBusinesses(localLoadBusinesses());
+        setLastSyncedAt(new Date().toISOString());
       });
     }, 2000);
     return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checklist, completedFormsByFormId, messages, loadedBusiness?.id, activeLocationId]);
+
+  // ── Auto-resolve bare ZIP on load ────────────────────────────────────────
+  // When a saved business is loaded with a bare 5-digit ZIP as location (e.g. "33411"),
+  // resolve it immediately to "City, ST ZIP" so the sidebar and form recommendations
+  // always have a parseable state. The ZIP input path only fires when the user manually
+  // edits the field — this effect covers the load-from-localStorage path.
+  useEffect(() => {
+    const trimmed = userLocation.trim();
+    if (!/^\d{5}$/.test(trimmed) || zipLookingUp || zipResolved) return;
+    const zip = trimmed;
+    if (ZIP_LOOKUP[zip]) {
+      const display = ZIP_LOOKUP[zip];
+      setUserLocation(display);
+      setZipResolved(true);
+      const zipState = parseStateFromLocation(display);
+      if (zipState) gpsStateRef.current = zipState;
+      const cityMatch = display.match(/^([^,]+)/);
+      if (cityMatch) setDetectedCounty(CITY_TO_COUNTY[cityMatch[1].toLowerCase()] ?? null);
+      return;
+    }
+    setZipLookingUp(true);
+    void (async () => {
+      try {
+        const res  = await fetch(`${API_BASE}/api/geocode?zip=${zip}`);
+        if (!res.ok) return;
+        const data = await res.json() as { city?: string; stateAbbr?: string; county?: string | null; formatted?: string };
+        const city  = data.city ?? "Unknown City";
+        const state = data.stateAbbr ?? "XX";
+        const display = data.formatted ?? `${city}, ${state} ${zip}`;
+        setUserLocation(display);
+        setZipResolved(true);
+        if (state !== "XX") gpsStateRef.current = state;
+        setDetectedCounty(data.county ?? CITY_TO_COUNTY[city.toLowerCase()] ?? null);
+      } catch { /* keep bare ZIP — parseStateFromLocation handles it via prefix map */ }
+      finally { setZipLookingUp(false); }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userLocation]);
+
+  // When loadedBusiness has a bare ZIP location, resolve it directly via zippopotam.us
+  // (not GPS — the business may be in a different city than the user's current location).
+  useEffect(() => {
+    if (!loadedBusiness) return;
+    const bizLoc = (loadedBusiness.location ?? "").trim();
+    if (!/^\d{5}$/.test(bizLoc)) return; // only for bare ZIPs
+    const zip = bizLoc;
+    // Instant path: pre-cached ZIPs
+    if (ZIP_LOOKUP[zip]) {
+      const display = ZIP_LOOKUP[zip];
+      setLoadedBusiness(prev => prev?.location === zip ? { ...prev, location: display } : prev);
+      const bizCityMatch = display.match(/^([^,]+)/);
+      if (bizCityMatch) setDetectedCounty(prev => prev ?? (CITY_TO_COUNTY[bizCityMatch[1].toLowerCase()] ?? null));
+      return;
+    }
+    // Async path: resolve via /api/geocode proxy (works on iOS WKWebView)
+    void (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/geocode?zip=${zip}`);
+        if (!res.ok) return;
+        const data = await res.json() as { city?: string; stateAbbr?: string; county?: string | null; formatted?: string };
+        const city  = data.city ?? "Unknown City";
+        const state = data.stateAbbr ?? "XX";
+        if (state === "XX") return;
+        const resolved = data.formatted ?? `${city}, ${state} ${zip}`;
+        setLoadedBusiness(prev => prev?.location === zip ? { ...prev, location: resolved } : prev);
+        setDetectedCounty(prev => prev ?? (data.county ?? CITY_TO_COUNTY[city.toLowerCase()] ?? null));
+      } catch {}
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadedBusiness?.id, loadedBusiness?.location]);
 
   // ── GPS ───────────────────────────────────────────────────────────────────
   // vUnified-20260428-final-ship-lock: Capacitor-native GPS path added.
@@ -3292,6 +4172,7 @@ export default function ChatPage() {
         setGpsLoading(false);
         setUserLocation(zip ? `${city}, ${state} ${zip}` : `${city}, ${state}`);
         setDetectedCounty(countyRaw);
+        if (state) gpsStateRef.current = state;
       } catch {
         if (gpsActiveRef.current) {
           clearTimeout(gpsSafetyTimer);
@@ -3452,20 +4333,22 @@ export default function ChatPage() {
         setUserLocation(display);
         setDetectedCounty(county);
         setZipResolved(true);
+        const zipState = parseStateFromLocation(display);
+        if (zipState) gpsStateRef.current = zipState;
         return;
       }
       setZipLookingUp(true);
       setUserLocation("Resolving ZIP…");
       zipLookupRef.current = zip;
       try {
-        const res = await fetch(`https://api.zippopotam.us/us/${zip}`);
+        const res = await fetch(`${API_BASE}/api/geocode?zip=${zip}`);
         if (zipLookupRef.current !== zip) return;
         if (!res.ok) throw new Error("not found");
-        const data  = await res.json();
-        const city  = (data.places?.[0]?.["place name"] as string) ?? "Unknown City";
-        const state = (data.places?.[0]?.["state abbreviation"] as string) ?? "XX";
-        setUserLocation(`${city}, ${state} ${zip}`);
-        setDetectedCounty(CITY_TO_COUNTY[city.toLowerCase()] ?? null);
+        const data  = await res.json() as { city?: string; stateAbbr?: string; county?: string | null; formatted?: string };
+        const city  = data.city ?? "Unknown City";
+        const state = data.stateAbbr ?? "XX";
+        setUserLocation(data.formatted ?? `${city}, ${state} ${zip}`);
+        setDetectedCounty(data.county ?? CITY_TO_COUNTY[city.toLowerCase()] ?? null);
         setZipResolved(true);
       } catch {
         if (zipLookupRef.current === zip) {
@@ -3545,7 +4428,10 @@ export default function ChatPage() {
       //     rather than interrupting with a city/state prompt.
       // Safe to unshift because apiMessages starts with a user turn (welcome stripped above).
       if (hasRealLoc) {
-        const locationCtx = `${loc}${cty ? ` (${cty})` : ""}`;
+        // Resolve raw ZIP to "City, ST ZIP" before sending to the AI —
+        // prevents the LLM from hallucinating the wrong city for a given ZIP code.
+        const resolvedLoc = ZIP_LOOKUP[loc.trim()] ?? loc;
+        const locationCtx = `${resolvedLoc}${cty ? ` (${cty})` : ""}`;
         apiMessages.unshift(
           { role: "user",      content: `My location is ${locationCtx}.` },
           { role: "assistant", content: `Got it — I'll provide compliance guidance specific to ${locationCtx}. What type of business are you starting or operating?` },
@@ -3583,7 +4469,7 @@ export default function ChatPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: apiMessages,
-          location: hasRealLoc ? loc : (userLocation || "Unknown location"),
+          location: hasRealLoc ? (ZIP_LOOKUP[loc.trim()] ?? loc) : (ZIP_LOOKUP[userLocation.trim()] ?? (userLocation || "Unknown location")),
           county:   hasRealLoc ? (cty ?? undefined) : (detectedCounty ?? undefined),
         }),
       });
@@ -3671,15 +4557,11 @@ export default function ChatPage() {
     //   3. After the async save resolves, reconcile from localStorage to pick up
     //      any server-side mutations (e.g. Supabase-generated fields).
     setLoadedBusiness(newBiz);
-    setSavedBusinesses(prev => {
-      // Replace if somehow already present (idempotent); otherwise prepend.
-      const without = prev.filter(b => b.id !== newBiz.id);
-      return [newBiz, ...without];
-    });
-    void dbSaveBusiness(user ? getSb() : null, user?.id ?? null, newBiz).then(() => {
-      // Reconcile: localStorage is authoritative after the save completes.
-      setSavedBusinesses(localLoadBusinesses());
-    });
+    // Write to localStorage immediately, then update state from it.
+    localSaveBusiness(newBiz);
+    setSavedBusinesses(localLoadBusinesses());
+    // Background Supabase save — fire and forget; localStorage is authoritative.
+    if (user) void dbSaveBusiness(getSb(), user.id, newBiz);
 
     // Save document context for /forms recommendations
     saveBusinessContext({
@@ -3865,9 +4747,14 @@ export default function ChatPage() {
 
   // ── Form launch ───────────────────────────────────────────────────────────
 
+  const showFormLimitWall = () => {
+    setUpgradeModalTrigger("limit");
+    setUpgradeModalVisible(true);
+  };
+
   const handleStartForm = (formId: string) => {
-    // Pro gate: Free tier capped at FREE_MONTHLY_LIMIT AI completions per calendar month.
-    if (!isPro && monthlyFormsUsed >= FREE_MONTHLY_LIMIT) return;
+    // Pro gate: FormFiller is a Pro-only feature.
+    if (!isPro) { showFormLimitWall(); return; }
     // Pass detectedCounty so getLocaleFormTemplate can try county-level URLs first
     // (e.g. pbcgov.org for Palm Beach County business-license) before falling back
     // to state-level and then the generic SBA base template.
@@ -3877,7 +4764,9 @@ export default function ChatPage() {
     // quick-fill button or the officialUrl portal link without a guided wizard.
     const template = getLocaleFormTemplate(formId, userLocation, detectedCounty)
       ?? localFormEntryToFormTemplate(formId);
-    if (!template) return;
+    if (!template) { setFormLaunching(false); return; }
+    setShowMobileSidebar(false);
+    setFormLaunching(true);
     setFormQueue([]);
     setQueueIndex(0);
     setCompletedFormsData([]);
@@ -3885,6 +4774,7 @@ export default function ChatPage() {
     setActiveFormInitialData(undefined);
     setActiveFormIsRenewal(false);
     setActiveTemplate(template);
+    requestAnimationFrame(() => setFormLaunching(false));
   };
 
   /**
@@ -3895,14 +4785,16 @@ export default function ChatPage() {
    * completedFormsByFormId) automatically pre-fills all matching fields.
    */
   const handleStartFormFromProfile = (formId: string) => {
-    if (!isPro && monthlyFormsUsed >= FREE_MONTHLY_LIMIT) return;
+    if (!isPro) { showFormLimitWall(); return; }
+    setShowMobileSidebar(false);
+    setFormLaunching(true);
     // Use the loaded business's location so locale overrides fire correctly
     // (userLocation is already set to biz.location when a business is loaded).
     // v9: fall back to localFormEntryToFormTemplate for LOCAL_FORMS entries so
     // "Complete with AI" from BusinessProfileView works for county/city forms.
     const template = getLocaleFormTemplate(formId, userLocation, detectedCounty)
       ?? localFormEntryToFormTemplate(formId);
-    if (!template) return; // unknown form — silently ignore
+    if (!template) { setFormLaunching(false); return; } // unknown form — silently ignore
     setFormQueue([]);
     setQueueIndex(0);
     setCompletedFormsData([]);
@@ -3910,6 +4802,7 @@ export default function ChatPage() {
     setActiveFormInitialData(undefined);
     setActiveFormIsRenewal(false);
     setActiveTemplate(template);
+    requestAnimationFrame(() => setFormLaunching(false));
     // Close profile view so the Form Filler is visible
     setShowProfileView(false);
     // vSeamlessProfileFormFillerBridge: mark that we came from the profile so
@@ -3931,7 +4824,7 @@ export default function ChatPage() {
     /** Business that owns this checklist item — null = active business. */
     ownerBiz: SavedBusiness | null,
   ) => {
-    if (!isPro && monthlyFormsUsed >= FREE_MONTHLY_LIMIT) return;
+    if (!isPro) { showFormLimitWall(); return; }
 
     // Look up pre-filled data from the most recent completed form for this formId.
     // First check the in-memory map (active session); fall back to the owner biz's
@@ -3949,6 +4842,8 @@ export default function ChatPage() {
       const template = getLocaleFormTemplate(formId, loc, county)
         ?? localFormEntryToFormTemplate(formId);
       if (!template) return;
+      setShowMobileSidebar(false);
+      setFormLaunching(true);
       setFormQueue([]);
       setQueueIndex(0);
       setCompletedFormsData([]);
@@ -3956,6 +4851,7 @@ export default function ChatPage() {
       setActiveFormInitialData(prefill);
       setActiveFormIsRenewal(true);
       setActiveTemplate(template);
+      requestAnimationFrame(() => setFormLaunching(false));
     };
 
     if (ownerBiz && ownerBiz.id !== loadedBusiness?.id) {
@@ -3970,10 +4866,10 @@ export default function ChatPage() {
       launchForm(userLocation, detectedCounty);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPro, monthlyFormsUsed, loadedBusiness, completedFormsByFormId, userLocation, detectedCounty]);
+  }, [isPro, loadedBusiness, completedFormsByFormId, userLocation, detectedCounty]);
 
   const handleStartAllForms = (formIds: string[]) => {
-    if (!isPro && monthlyFormsUsed >= FREE_MONTHLY_LIMIT) return;
+    if (!isPro) { showFormLimitWall(); return; }
     const filtered  = filterFormsByLocation(formIds, userLocation);
     const templates = filtered
       .map(id => getLocaleFormTemplate(id, userLocation, detectedCounty))
@@ -4033,6 +4929,17 @@ export default function ChatPage() {
         syntheticDoc,
         ...prev.filter(d => !(d.formId === template.id && d.id.startsWith("form-complete-"))),
       ]);
+    }
+
+    // Update loaded business's live counter so the profile header reflects this completion.
+    if (loadedBusiness && !checklist.some(c => c.text === doneText)) {
+      setLoadedBusiness(prev => {
+        if (!prev) return prev;
+        const newDone  = (prev.completedFormsCount ?? 0) + 1;
+        const newTotal = Math.max(prev.totalForms ?? 0, newDone);
+        const score    = newTotal > 0 ? Math.round((newDone / newTotal) * 100) : 0;
+        return { ...prev, completedFormsCount: newDone, totalForms: newTotal, healthScore: score };
+      });
     }
 
     // Track monthly usage for Free-tier gating (Supabase profile or localStorage).
@@ -4357,11 +5264,17 @@ export default function ChatPage() {
     setActiveLocationId(chosenLocId);
 
     // v26 — Persist business context for /forms page "Recommended for You"
+    // gpsStateRef.current holds the last GPS-resolved state and is never overwritten
+    // by loadLocationData(), so it's reliable even after multiple business loads.
     {
       const loc = chosenLoc?.location ?? biz.location;
+      const state = (loc ? parseStateFromLocation(loc) : null)
+        ?? (gpsStateRef.current || null)
+        ?? undefined;
+      setLoadedBusinessState(state);
       saveBusinessContext({
         businessType:  biz.businessType ?? undefined,
-        state:         loc ? (parseStateFromLocation(loc) ?? undefined) : undefined,
+        state,
         isNewBusiness: biz.isPreExisting === false,
       });
     }
@@ -4448,7 +5361,6 @@ export default function ChatPage() {
     setActiveLocationId(newLoc.id);
     loadLocationData(newLoc);
     // Auto-expand this business's location list in the sidebar
-    setExpandedBizIds(prev => new Set([...prev, loadedBusiness.id]));
     checklistTopRef.current?.scrollIntoView({ behavior: "smooth" });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadedBusiness, activeLocationId, checklist, completedFormsByFormId, messages, user]);
@@ -4466,15 +5378,17 @@ export default function ChatPage() {
     void dbSaveBusiness(user ? getSb() : null, user?.id ?? null, updatedBiz).then(() => {
       setSavedBusinesses(localLoadBusinesses());
     });
-    setExpandedBizIds(prev => new Set([...prev, biz.id]));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   /** Called by AddBusinessModal when an existing business is submitted. */
   const handleAddPreExistingBusiness = useCallback((biz: SavedBusiness) => {
-    void dbSaveBusiness(user ? getSb() : null, user?.id ?? null, biz).then(() => {
-      setSavedBusinesses(localLoadBusinesses());
-    });
+    // Write to localStorage and update state immediately — don't wait for Supabase
+    // (GoTrueClient may deadlock on iOS Capacitor after fire-and-forget setSession).
+    localSaveBusiness(biz);
+    setSavedBusinesses(localLoadBusinesses());
+    // Background Supabase save — fire and forget; localStorage is authoritative.
+    if (user) void dbSaveBusiness(getSb(), user.id, biz);
     setShowAddBizModal(false);
     // Immediately activate the new business
     handleLoadBusiness(biz);
@@ -4577,6 +5491,36 @@ export default function ChatPage() {
       });
     }
 
+    // Auto-populate renewalDate on matching checklist items from OCR extraction
+    if (loadedBusiness && result.analysis.expirationDate && result.analysis.matchedFormIds.length > 0) {
+      const expDate = result.analysis.expirationDate;
+      const matchedIds = new Set(result.analysis.matchedFormIds);
+      const updatedChecklist = (loadedBusiness.checklist ?? []).map(item =>
+        matchedIds.has(item.formId ?? "") && !item.renewalDate
+          ? { ...item, renewalDate: expDate }
+          : item
+      );
+      const hasChange = updatedChecklist.some((item, i) => item !== (loadedBusiness.checklist ?? [])[i]);
+      if (hasChange) {
+        const updated: SavedBusiness = { ...loadedBusiness, checklist: updatedChecklist };
+        localSaveBusiness(updated);
+        setSavedBusinesses(localLoadBusinesses());
+        setLoadedBusiness(updated);
+        if (user) void dbSaveBusiness(getSb(), user.id, updated);
+        const names = updatedChecklist
+          .filter((item, i) => item !== (loadedBusiness.checklist ?? [])[i])
+          .map(item => item.text)
+          .slice(0, 3)
+          .join(", ");
+        const renewalMsg: Message = {
+          id: `doc-renewal-${Date.now()}`,
+          role: "assistant",
+          content: `Renewal date **${new Date(expDate + "T00:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}** automatically added to: ${names}.`,
+        };
+        setMessages(prev => [...prev, renewalMsg]);
+      }
+    }
+
     // v30 — Completed Document → Business Profile Flow
     // A document is considered "completed" when the AI found real permit/license data
     // (status ≠ Unknown, or a businessName/permitNumber was extracted, or at least one
@@ -4612,6 +5556,39 @@ export default function ChatPage() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, loadedBusiness]);
+
+  /**
+   * Handles a photo captured via the camera button for AI compliance scanning.
+   * Uploads the image to /api/photo-compliance and stores the result for display.
+   */
+  const handlePhotoComplianceScan = useCallback(async (file: File) => {
+    if (!isPro) {
+      setUpgradeModalVisible(true);
+      return;
+    }
+    setPhotoComplianceLoading(true);
+    setPhotoComplianceResult(null);
+    try {
+      const fd = new FormData();
+      fd.append("photo", file);
+      fd.append("businessName", loadedBusiness?.name ?? "My Business");
+      fd.append("location", loadedBusiness?.location ?? userLocation ?? "");
+      fd.append("businessType", loadedBusiness?.businessType ?? "small business");
+      // Send access token for server-side Pro validation (required on Capacitor — no cookie jar).
+      const { data: { session: photoSession } } = await getSb().auth.getSession();
+      const photoHeaders: Record<string, string> = {};
+      if (photoSession?.access_token) photoHeaders["Authorization"] = `Bearer ${photoSession.access_token}`;
+      const res = await fetch(`${API_BASE}/api/photo-compliance`, { method: "POST", body: fd, headers: photoHeaders });
+      const data = await res.json() as import("@/app/api/photo-compliance/route").PhotoComplianceResult;
+      if (data.ok) setPhotoComplianceResult(data);
+      else console.error("[photo-compliance]", data.error);
+    } catch (err) {
+      console.error("[photo-compliance] fetch error:", err);
+    } finally {
+      setPhotoComplianceLoading(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPro, loadedBusiness, userLocation]);
 
   /**
    * v25 — Called when DocumentUploadButton (mode="attach") finishes uploading.
@@ -4670,6 +5647,8 @@ export default function ChatPage() {
   const handleLocationChangeFromProfile = useCallback((location: string) => {
     if (!loadedBusiness) return;
     handleUpdateBusinessFromProfile({ ...loadedBusiness, location });
+    // Sync userLocation so gap-analysis city extraction uses the updated business location.
+    setUserLocation(location);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadedBusiness, handleUpdateBusinessFromProfile]);
 
@@ -4803,9 +5782,58 @@ export default function ChatPage() {
         };
         setUploadedDocs(prev => [optimisticDoc, ...prev]);
 
-        const { error: storageErr } = await sb.storage
-          .from("business-documents")
-          .upload(storagePath, draft.file, { contentType: draft.file.type, upsert: false });
+        // Seed progress at 0 before upload starts so the bar appears immediately.
+        setUploadProgress(prev => ({ ...prev, [draft.localId]: 0 }));
+
+        // iOS native: CapacitorHttp patches window.fetch but cannot serialize a File/Blob
+        // binary body through the Capacitor bridge — the upload falls back to the WKWebView
+        // network stack, which loses XPC connections after the file picker closes and times out.
+        // Fix: read file as base64, POST JSON to the server-side proxy route, which decodes
+        // and uploads to Supabase Storage with the service role key (no sandbox restrictions).
+        let storageErr: { message: string } | null = null;
+        if (isCapacitorNative()) {
+          try {
+            const base64 = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve((reader.result as string).split(",")[1]);
+              reader.onerror = () => reject(new Error("FileReader failed"));
+              reader.readAsDataURL(draft.file);
+            });
+            const { data: sessionData } = await sb.auth.getSession();
+            const accessToken = sessionData.session?.access_token;
+            const res = await fetch(`${API_BASE}/api/document/upload`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+              },
+              body: JSON.stringify({
+                base64,
+                mimeType: draft.file.type || "application/octet-stream",
+                storagePath,
+              }),
+            });
+            if (!res.ok) {
+              const msg = await res.text().catch(() => "Upload failed");
+              storageErr = { message: msg };
+            }
+          } catch (e) {
+            storageErr = { message: String(e) };
+          }
+        } else {
+          const uploadResult = await Promise.race([
+            sb.storage.from("business-documents").upload(storagePath, draft.file, {
+              contentType: draft.file.type,
+              upsert: false,
+            }),
+            new Promise<{ data: null; error: { message: string } }>(resolve =>
+              setTimeout(() => resolve({ data: null, error: { message: "Upload timed out. Check your connection and try again." } }), 30000)
+            ),
+          ]);
+          storageErr = uploadResult.error;
+        }
+        // Clear progress entry regardless of outcome.
+        setUploadProgress(prev => { const n = { ...prev }; delete n[draft.localId]; return n; });
 
         if (storageErr) {
           console.error("[handleSaveDraftsFromProfile] storage upload failed:", storageErr.message);
@@ -4818,6 +5846,16 @@ export default function ChatPage() {
         // can show the green badge immediately via localSavedDocs.
         result.push(optimisticDoc);
 
+        // Mark the corresponding checklist item as "done" so the completion
+        // percentage updates immediately without waiting for AI document analysis.
+        if (draft.formId) {
+          setChecklist(prev => prev.map(item =>
+            item.formId === draft.formId && item.status !== "done"
+              ? { ...item, status: "done" as const, completedVia: "Document Upload" }
+              : item,
+          ));
+        }
+
         void dbSaveDocument(sb, user.id, {
           businessId:   loadedBusiness.id,
           originalName: draft.file.name,
@@ -4826,10 +5864,11 @@ export default function ChatPage() {
           storagePath,
           analysis:     undefined,
           analyzed:     false,
+          formId:       draft.formId || undefined,
         }).then(saved => {
           setUploadedDocs(prev =>
             saved
-              ? prev.map(d => d.id === optimisticId ? { ...saved, formId: draft.formId || undefined } : d)
+              ? prev.map(d => d.id === optimisticId ? saved : d)
               : prev.filter(d => d.id !== optimisticId),
           );
         });
@@ -5078,6 +6117,303 @@ export default function ChatPage() {
         onComplete={handleOnboardingComplete}
       />
 
+      {/* ── Biometric Auth Prompt ────────────────────────────────────────────
+          Shown on native (iOS/Android) when the user has biometric enrolled.
+          Sits above the email auth screen so returning users skip typing.   */}
+      {bioPhase === "prompt" && !user && !authLoading && (
+        <div
+          style={{
+            position: "fixed", inset: 0, zIndex: 510,
+            background: isDarkMode ? "#0a121c" : "#f0f4f8",
+            display: "flex", flexDirection: "column", alignItems: "center",
+            justifyContent: "center",
+            paddingTop: "env(safe-area-inset-top)",
+            paddingBottom: "env(safe-area-inset-bottom)",
+          }}
+        >
+          <div style={{ textAlign: "center", marginBottom: 32 }}>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
+              <RegPulseIcon size={56} />
+            </div>
+            <div style={{ fontSize: 26, fontWeight: 800, color: isDarkMode ? "#f1f5f9" : "#0f172a", letterSpacing: -0.5 }}>
+              Welcome back
+            </div>
+            {bioEmail && (
+              <div style={{ fontSize: 14, color: isDarkMode ? "#94a3b8" : "#64748b", marginTop: 6 }}>
+                {bioEmail}
+              </div>
+            )}
+          </div>
+
+          {/* Face ID / Touch ID button */}
+          <button
+            onClick={() => void handleBiometricUnlock()}
+            disabled={bioWorking}
+            style={{
+              width: 72, height: 72, borderRadius: 24,
+              background: isDarkMode ? "#0e7490" : "#0891b2",
+              border: "none", cursor: bioWorking ? "default" : "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              marginBottom: 20, opacity: bioWorking ? 0.6 : 1,
+              boxShadow: "0 4px 24px rgba(8,145,178,0.35)",
+            }}
+          >
+            {bioWorking ? (
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round">
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+              </svg>
+            ) : (
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2C9.5 2 7.3 3.2 6 5" /><path d="M12 2c2.5 0 4.7 1.2 6 3" />
+                <path d="M2 12c0-3.3 1.6-6.2 4-8" /><path d="M22 12c0-3.3-1.6-6.2-4-8" />
+                <circle cx="12" cy="12" r="3" />
+                <path d="M12 9v-.5" /><path d="M12 15.5V16" />
+                <path d="M9 12H8.5" /><path d="M15.5 12H16" />
+                <path d="M6 18c1.3 1.8 3.5 3 6 3s4.7-1.2 6-3" />
+              </svg>
+            )}
+          </button>
+
+          <div style={{ fontSize: 13, color: isDarkMode ? "#94a3b8" : "#64748b", marginBottom: 24 }}>
+            {bioWorking ? "Verifying…" : "Use Face ID / Touch ID"}
+          </div>
+
+          <button
+            onClick={() => { setBioPhase("none"); setShowAuthScreen(true); }}
+            style={{
+              background: "none", border: "none", cursor: "pointer",
+              fontSize: 13, color: isDarkMode ? "#38bdf8" : "#0284c7",
+              textDecoration: "underline", padding: 4,
+            }}
+          >
+            Use email instead
+          </button>
+        </div>
+      )}
+
+      {/* ── Push Notification Pre-Permission Modal ───────────────────────────
+          Shown once after first sign-in on native. Explains the value before
+          the OS dialog fires, dramatically improving acceptance rate.
+          z-[520] sits above the biometric prompt (510) and auth screen (500). */}
+      {notifPromptVisible && user && (
+        <div
+          style={{
+            position: "fixed", inset: 0, zIndex: 520,
+            background: "rgba(0,0,0,0.72)",
+            display: "flex", alignItems: "flex-end", justifyContent: "center",
+            paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)",
+          }}
+          onClick={() => {
+            // Tap outside = "maybe later"
+            try { localStorage.setItem("rp_notif_prompted", "1"); } catch {}
+            setNotifPromptVisible(false);
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: "min(380px, calc(100vw - 32px))",
+              background: isDarkMode ? "#0f1823" : "#ffffff",
+              borderRadius: 24,
+              padding: "28px 24px 24px",
+              boxShadow: "0 -4px 40px rgba(0,0,0,0.3)",
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 16,
+            }}
+          >
+            {/* Icon */}
+            <div style={{
+              width: 64, height: 64, borderRadius: 20,
+              background: "linear-gradient(135deg, #0e7490, #0369a1)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 4px 20px rgba(8,145,178,0.4)",
+            }}>
+              <Bell style={{ width: 30, height: 30, color: "#fff" }} />
+            </div>
+
+            {/* Headline */}
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 20, fontWeight: 800, color: isDarkMode ? "#f1f5f9" : "#0f172a", marginBottom: 8, lineHeight: 1.2 }}>
+                Never miss a deadline
+              </div>
+              <p style={{ fontSize: 14, color: isDarkMode ? "#94a3b8" : "#64748b", lineHeight: 1.5, maxWidth: 280, margin: "0 auto" }}>
+                RegPulse will alert you when licenses are expiring, regulations change in your area, or renewals are due — so nothing slips through the cracks.
+              </p>
+            </div>
+
+            {/* Value bullets */}
+            <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 8 }}>
+              {[
+                { icon: "⏰", text: "30-day and 7-day renewal reminders" },
+                { icon: "⚡", text: "Same-day alerts when local laws change" },
+                { icon: "✅", text: "Confirmation when filings are accepted" },
+              ].map(b => (
+                <div key={b.icon} style={{ display: "flex", alignItems: "center", gap: 10,
+                  background: isDarkMode ? "rgba(255,255,255,0.05)" : "#f8fafc",
+                  borderRadius: 12, padding: "8px 12px" }}>
+                  <span style={{ fontSize: 16 }}>{b.icon}</span>
+                  <span style={{ fontSize: 13, color: isDarkMode ? "#cbd5e1" : "#334155", fontWeight: 500 }}>{b.text}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* CTA */}
+            <button
+              onClick={async () => {
+                try { localStorage.setItem("rp_notif_prompted", "1"); } catch {}
+                setNotifPromptVisible(false);
+                const result = await requestNotifPermission();
+                setPushPermission(result);
+              }}
+              style={{
+                width: "100%", minHeight: 52, borderRadius: 16, border: "none",
+                background: "linear-gradient(135deg, #0e7490, #0369a1)",
+                color: "#fff", fontSize: 16, fontWeight: 700, cursor: "pointer",
+                boxShadow: "0 4px 16px rgba(8,145,178,0.35)",
+              }}
+            >
+              Enable Notifications
+            </button>
+
+            <button
+              onClick={() => {
+                try { localStorage.setItem("rp_notif_prompted", "1"); } catch {}
+                setNotifPromptVisible(false);
+              }}
+              style={{
+                background: "none", border: "none", cursor: "pointer",
+                fontSize: 13, color: isDarkMode ? "#64748b" : "#94a3b8",
+                padding: 4,
+              }}
+            >
+              Maybe later
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Sign-out Auth Screen ─────────────────────────────────────────────
+          Full-screen overlay shown after sign-out. User chooses:
+            1. Sign In   — social + email/password
+            2. Sign Up   — social + email/password → Stripe checkout
+            3. Free Chat — 3 chats/month, no account needed               */}
+      {showAuthScreen && !user && (
+        <div
+          style={{
+            position: "fixed", inset: 0, zIndex: 500,
+            background: isDarkMode ? "#0a121c" : "#f0f4f8",
+            display: "flex", flexDirection: "column", alignItems: "center",
+            justifyContent: "flex-start",
+            paddingTop: "calc(env(safe-area-inset-top) + 32px)",
+            paddingBottom: "calc(env(safe-area-inset-bottom) + 24px)",
+            overflowY: "auto",
+          }}
+        >
+          {/* Logo + headline */}
+          <div style={{ textAlign: "center", marginBottom: 28 }}>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+              <RegPulseIcon size={52} />
+            </div>
+            <div style={{ fontSize: 26, fontWeight: 800, color: isDarkMode ? "#f1f5f9" : "#0f172a", letterSpacing: -0.5 }}>
+              RegPulse
+            </div>
+            <div style={{ fontSize: 14, color: isDarkMode ? "#94a3b8" : "#64748b", marginTop: 4 }}>
+              Your AI compliance co-pilot
+            </div>
+          </div>
+
+          {/* Smart auth card — single screen, email-first */}
+          <div style={{
+            width: "min(340px, calc(100vw - 40px))",
+            background: isDarkMode ? "#0f1823" : "#fff",
+            borderRadius: 20,
+            border: `1px solid ${isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.07)"}`,
+            padding: "24px 22px",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+          }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {/* Social auth — always shown */}
+              <button onClick={() => void handlePanelSocialSignIn("apple")} disabled={authWorking}
+                style={{ width: "100%", height: 46, borderRadius: 12, border: "none", background: "#000", color: "#fff", fontWeight: 700, fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: "pointer", opacity: authWorking ? 0.5 : 1 }}>
+                <svg width="16" height="16" viewBox="0 0 814 1000" fill="currentColor"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-57.8-155.5-127.4C46 490.8 17.1 403.5 16.8 316.5c0-42.8 8.3-84.7 25.1-124.2 25.6-59.1 73.2-108.2 132.6-134.5C210.1 32.3 258 21.9 305.9 21.9c45.1 0 93.3 16.2 134.5 42.8 25.5 16.8 50.9 40.4 70.7 71.1 17.1-25.5 42.8-52.1 73.2-70.7 42.8-26.5 93.1-42.8 142.7-42.8z"/></svg>
+                Continue with Apple
+              </button>
+              <button onClick={() => void handlePanelSocialSignIn("google")} disabled={authWorking}
+                style={{ width: "100%", height: 46, borderRadius: 12, border: `1px solid ${isDarkMode ? "rgba(255,255,255,0.12)" : "#e2e8f0"}`, background: isDarkMode ? "#1e293b" : "#fff", color: isDarkMode ? "#f1f5f9" : "#1e293b", fontWeight: 700, fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: "pointer", opacity: authWorking ? 0.5 : 1 }}>
+                <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.2l6.7-6.7C35.8 2.5 30.3 0 24 0 14.7 0 6.7 5.4 2.8 13.3l7.9 6.1C12.5 13.1 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.1z"/><path fill="#FBBC05" d="M10.7 28.6A14.8 14.8 0 0 1 9.5 24c0-1.6.3-3.1.7-4.6L2.3 13.3A24 24 0 0 0 0 24c0 3.8.9 7.4 2.5 10.6l8.2-6z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.8 2.2-8.3 2.2-6.2 0-11.5-4.2-13.3-9.9l-8.2 6C6.7 42.6 14.7 48 24 48z"/></svg>
+                Continue with Google
+              </button>
+
+              <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "2px 0" }}>
+                <div style={{ flex: 1, height: 1, background: isDarkMode ? "rgba(255,255,255,0.1)" : "#e2e8f0" }} />
+                <span style={{ fontSize: 11, color: isDarkMode ? "#475569" : "#94a3b8" }}>or</span>
+                <div style={{ flex: 1, height: 1, background: isDarkMode ? "rgba(255,255,255,0.1)" : "#e2e8f0" }} />
+              </div>
+
+              {/* Step 1 — email */}
+              {authSmartStep === "email" && (
+                <>
+                  <input type="email" placeholder="your@email.com" value={authEmail}
+                    onChange={e => setAuthEmail(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter") void handleSmartEmailContinue(); }}
+                    autoFocus
+                    style={{ width: "100%", height: 44, borderRadius: 10, border: `1px solid ${isDarkMode ? "rgba(255,255,255,0.12)" : "#e2e8f0"}`, background: isDarkMode ? "#131e2f" : "#f8fafc", color: isDarkMode ? "#f1f5f9" : "#0f172a", fontSize: 14, padding: "0 14px", outline: "none", boxSizing: "border-box" }}
+                  />
+                  <button onClick={() => void handleSmartEmailContinue()} disabled={authWorking || !authEmail.trim()}
+                    style={{ width: "100%", height: 46, borderRadius: 12, border: "none", background: "linear-gradient(135deg,#06b6d4,#3b82f6)", color: "#fff", fontWeight: 700, fontSize: 15, cursor: "pointer", opacity: (authWorking || !authEmail.trim()) ? 0.5 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                    {authWorking ? <><Loader2 className="h-4 w-4 animate-spin" />Checking…</> : "Continue →"}
+                  </button>
+                </>
+              )}
+
+              {/* Step 2 — password (sign-in or sign-up, detected automatically) */}
+              {authSmartStep === "password" && (
+                <>
+                  {/* Email chip — tap to go back */}
+                  <button onClick={() => { setAuthSmartStep("email"); setAuthError(""); setAuthPassword(""); }}
+                    style={{ display: "flex", alignItems: "center", gap: 6, background: isDarkMode ? "rgba(255,255,255,0.06)" : "#f1f5f9", borderRadius: 8, border: "none", padding: "6px 10px", cursor: "pointer", width: "fit-content" }}>
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6l4 4" stroke={isDarkMode?"#94a3b8":"#64748b"} strokeWidth="2" strokeLinecap="round"/></svg>
+                    <span style={{ fontSize: 12, color: isDarkMode ? "#94a3b8" : "#64748b" }}>{authEmail}</span>
+                  </button>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: isDarkMode ? "#f1f5f9" : "#0f172a" }}>
+                    {authSmartMode === "signin" ? "Welcome back — enter your password" : "Create your account"}
+                  </div>
+                  {authSmartMode === "signup" && (
+                    <div style={{ fontSize: 11, color: isDarkMode ? "#64748b" : "#94a3b8" }}>RegPulse Pro — $17.99/month, cancel anytime</div>
+                  )}
+                  <input type="password" placeholder={authSmartMode === "signin" ? "Password" : "Create a password"}
+                    value={authPassword} onChange={e => setAuthPassword(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter") authSmartMode === "signin" ? void handleSignIn() : void handleAuthScreenSignUp(); }}
+                    autoFocus
+                    style={{ width: "100%", height: 44, borderRadius: 10, border: `1px solid ${isDarkMode ? "rgba(255,255,255,0.12)" : "#e2e8f0"}`, background: isDarkMode ? "#131e2f" : "#f8fafc", color: isDarkMode ? "#f1f5f9" : "#0f172a", fontSize: 14, padding: "0 14px", outline: "none", boxSizing: "border-box" }}
+                  />
+                  <button
+                    onClick={() => authSmartMode === "signin" ? void handleSignIn() : void handleAuthScreenSignUp()}
+                    disabled={authWorking || !authPassword}
+                    style={{ width: "100%", height: 46, borderRadius: 12, border: "none", background: authSmartMode === "signin" ? "#3b82f6" : "linear-gradient(135deg,#06b6d4,#3b82f6)", color: "#fff", fontWeight: 700, fontSize: 15, cursor: "pointer", opacity: (authWorking || !authPassword) ? 0.5 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                    {authWorking
+                      ? <><Loader2 className="h-4 w-4 animate-spin" />{authSmartMode === "signin" ? "Signing in…" : "Creating account…"}</>
+                      : authSmartMode === "signin" ? "Sign In" : "Create Account & Subscribe"
+                    }
+                  </button>
+                </>
+              )}
+
+              {authError && <p style={{ fontSize: 12, color: authError.startsWith("Check") ? "#10b981" : "#ef4444", textAlign: "center", margin: 0 }}>{authError}</p>}
+
+              {/* Continue Free — always available as an escape hatch */}
+              <button onClick={() => setShowAuthScreen(false)}
+                style={{ background: "none", border: "none", fontSize: 12, color: isDarkMode ? "#475569" : "#94a3b8", cursor: "pointer", padding: "4px 0" }}>
+                Continue without account →
+              </button>
+            </div>
+          </div>
+
+          <p style={{ marginTop: 16, fontSize: 11, color: isDarkMode ? "#334155" : "#cbd5e1", textAlign: "center" }}>
+            Cancel anytime · No credit card required for free access
+          </p>
+        </div>
+      )}
+
       {/* v61 — Review Impact modal ─────────────────────────────────────── */}
       {reviewImpactAlert && (
         <div
@@ -5294,18 +6630,6 @@ export default function ChatPage() {
           </div>
           {/* vUnified-platform-fix: moved dark mode toggle to /settings page */}
 
-          {/* Dev toggle — click to simulate Free / Pro tier */}
-          <button
-            onClick={() => setIsPro(v => !v)}
-            className={`shrink-0 text-[9px] font-semibold px-1.5 py-0.5 rounded border transition-colors ${
-              isPro
-                ? "text-amber-700 bg-amber-50 border-amber-200 hover:bg-amber-100"
-                : "text-slate-400 bg-slate-50 border-slate-200 hover:bg-slate-100"
-            }`}
-            title={isPro ? "Switch to Free tier (dev)" : "Switch to Pro tier (dev)"}
-          >
-            {isPro ? "Pro ✓" : "Free"}
-          </button>
           {/* vMobile — close button visible only on mobile */}
           <button
             onClick={() => setShowMobileSidebar(false)}
@@ -5372,7 +6696,36 @@ export default function ChatPage() {
               {/* Platform Parity: min-h-[48px] mobile touch target, pointer-events-auto,
                   active:scale-[0.98] for tactile feedback, hover states for desktop. */}
               {!isPro ? (
-                <div className="px-4 pb-3">
+                <div className="px-4 pb-3 space-y-2">
+                  {/* Usage counter — visible before the wall hits */}
+                  {(() => {
+                    const used = Math.min(monthlyFormsUsed, FREE_MONTHLY_LIMIT);
+                    const pct  = Math.round((used / FREE_MONTHLY_LIMIT) * 100);
+                    const atLimit = used >= FREE_MONTHLY_LIMIT;
+                    return (
+                      <div className={`rounded-xl border px-3 py-2 ${atLimit ? "border-red-400/40 bg-red-500/10" : "border-slate-200/50 dark:border-slate-700/40 bg-slate-50/50 dark:bg-slate-800/30"}`}>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className={`text-[10px] font-semibold ${atLimit ? "text-red-400" : "text-slate-500 dark:text-slate-400"}`}>
+                            AI form completions
+                          </span>
+                          <span className={`text-[10px] font-bold ${atLimit ? "text-red-400" : "text-slate-600 dark:text-slate-300"}`}>
+                            {used}/{FREE_MONTHLY_LIMIT} used
+                          </span>
+                        </div>
+                        <div className="h-1 rounded-full bg-slate-200 dark:bg-slate-700/60 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${atLimit ? "bg-red-500" : pct >= 67 ? "bg-amber-400" : "bg-cyan-400"}`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                        {atLimit && (
+                          <p className="mt-1.5 text-[9px] text-red-400 font-medium">
+                            Limit reached — resets next month
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })()}
                   <button
                     onClick={() => void handleUpgradeToPro()}
                     disabled={proCheckoutLoading}
@@ -5384,18 +6737,18 @@ export default function ChatPage() {
                     ) : (
                       <>
                         <Crown className="h-4 w-4 shrink-0" />
-                        Upgrade to Pro · $19/mo
+                        Upgrade to Pro · $17.99/mo
                       </>
                     )}
                   </button>
-                  <p className="mt-1.5 text-[9px] text-slate-400 dark:text-slate-500 text-center">
+                  <p className="mt-0.5 text-[9px] text-slate-400 dark:text-slate-500 text-center">
                     Unlimited AI · Renewal filing · Cancel anytime
                   </p>
                 </div>
               ) : (
-                <div className="px-4 pb-3">
+                <div className="px-4 pb-3 space-y-2">
                   <button
-                    onClick={() => void handleManageSubscription()}
+                    onClick={() => { setProPortalError(null); void handleManageSubscription(); }}
                     disabled={proPortalLoading}
                     className="w-full flex items-center justify-center gap-1.5 min-h-[44px] rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-700/40 hover:bg-slate-100 dark:hover:bg-slate-700/70 border border-slate-200 dark:border-slate-700/50 transition-colors disabled:opacity-50 pointer-events-auto"
                     style={{ touchAction: "manipulation" }}
@@ -5408,6 +6761,17 @@ export default function ChatPage() {
                         Manage Subscription
                       </>
                     )}
+                  </button>
+                  {proPortalError && (
+                    <p className="text-[10px] text-amber-500 dark:text-amber-400 text-center px-1">{proPortalError}</p>
+                  )}
+                  <button
+                    onClick={handleSignOut}
+                    className="w-full flex items-center justify-center gap-1.5 min-h-[40px] rounded-xl text-xs font-semibold text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-200/60 dark:border-red-800/40 transition-colors pointer-events-auto"
+                    style={{ touchAction: "manipulation" }}
+                  >
+                    <LogOut className="h-3.5 w-3.5 shrink-0" />
+                    Sign Out
                   </button>
                 </div>
               )}
@@ -5439,6 +6803,33 @@ export default function ChatPage() {
                 >
                   <XIcon className="h-3.5 w-3.5" />
                 </button>
+              </div>
+
+              {/* Social sign-in buttons */}
+              <div className="flex flex-col gap-1.5">
+                <button onClick={() => void handlePanelSocialSignIn("apple")} disabled={authWorking}
+                  className="w-full h-8 flex items-center justify-center gap-2 rounded-lg text-[11px] font-semibold bg-black text-white disabled:opacity-50"
+                  style={{ touchAction: "manipulation" }}>
+                  <svg width="14" height="14" viewBox="0 0 814 1000" fill="currentColor"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-57.8-155.5-127.4C46 490.8 17.1 403.5 16.8 316.5c0-42.8 8.3-84.7 25.1-124.2 25.6-59.1 73.2-108.2 132.6-134.5C210.1 32.3 258 21.9 305.9 21.9c45.1 0 93.3 16.2 134.5 42.8 25.5 16.8 50.9 40.4 70.7 71.1 17.1-25.5 42.8-52.1 73.2-70.7 42.8-26.5 93.1-42.8 142.7-42.8z"/></svg>
+                  Continue with Apple
+                </button>
+                <button onClick={() => void handlePanelSocialSignIn("google")} disabled={authWorking}
+                  className="w-full h-8 flex items-center justify-center gap-2 rounded-lg text-[11px] font-semibold bg-white text-slate-800 border border-slate-200 disabled:opacity-50"
+                  style={{ touchAction: "manipulation" }}>
+                  <svg width="14" height="14" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.2l6.7-6.7C35.8 2.5 30.3 0 24 0 14.7 0 6.7 5.4 2.8 13.3l7.9 6.1C12.5 13.1 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.1z"/><path fill="#FBBC05" d="M10.7 28.6A14.8 14.8 0 0 1 9.5 24c0-1.6.3-3.1.7-4.6L2.3 13.3A24 24 0 0 0 0 24c0 3.8.9 7.4 2.5 10.6l8.2-6z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.8 2.2-8.3 2.2-6.2 0-11.5-4.2-13.3-9.9l-8.2 6C6.7 42.6 14.7 48 24 48z"/></svg>
+                  Continue with Google
+                </button>
+                <button onClick={() => void handlePanelSocialSignIn("facebook")} disabled={authWorking}
+                  className="w-full h-8 flex items-center justify-center gap-2 rounded-lg text-[11px] font-semibold bg-[#1877f2] text-white disabled:opacity-50"
+                  style={{ touchAction: "manipulation" }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.413c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+                  Continue with Facebook
+                </button>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700/50" />
+                  <span className="text-[9px] text-slate-400">or</span>
+                  <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700/50" />
+                </div>
               </div>
 
               {/* Email field (all modes) */}
@@ -5967,9 +7358,92 @@ export default function ChatPage() {
             }
           />
 
+          {/* ── Add to Business Profile CTA ─────────────────────────────────────
+               Shown when the current session has checklist items and no loaded business
+               (or user wants to save to a different business). */}
+          {checklist.length > 0 && (
+            <div className="px-4 pb-3 relative">
+              <button
+                onClick={() => {
+                  if (savedBusinesses.length === 0) { setShowAddBizModal(true); return; }
+                  setShowBizPicker(prev => !prev);
+                }}
+                className="w-full flex items-center justify-center gap-2 min-h-[44px] rounded-xl text-xs font-semibold text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/50 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors pointer-events-auto"
+                style={{ touchAction: "manipulation" }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                {savedBusinesses.length === 0 ? "Create Business Profile" : "Add to Business Profile"}
+              </button>
+
+              {/* Business picker dropdown */}
+              {showBizPicker && savedBusinesses.length > 0 && (
+                <div
+                  className="absolute left-4 right-4 top-full z-50 mt-1 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-[#131e2f] overflow-hidden"
+                  style={{ maxHeight: 220, overflowY: "auto" }}
+                >
+                  <div className="px-3 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700/50">
+                    Choose business
+                  </div>
+                  {savedBusinesses.map(biz => (
+                    <button
+                      key={biz.id}
+                      onClick={() => handleAddChecklistToBiz(biz.id)}
+                      className="w-full text-left px-3 py-2.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/40 flex items-center gap-2 min-h-[44px] pointer-events-auto"
+                      style={{ touchAction: "manipulation" }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-slate-400"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/></svg>
+                      <div>
+                        <div className="font-semibold">{biz.name}</div>
+                        {biz.location && <div className="text-[10px] text-slate-400 dark:text-slate-500">{biz.location}</div>}
+                      </div>
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => { setShowBizPicker(false); setShowAddBizModal(true); }}
+                    className="w-full text-left px-3 py-2.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center gap-2 min-h-[44px] border-t border-slate-100 dark:border-slate-700/50 pointer-events-auto"
+                    style={{ touchAction: "manipulation" }}
+                  >
+                    + Create New Business
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* vMobile-RegressionFixPass: checklist wrapper is now a plain block — the outer
                unified scroll container owns the scroll; no inner nested scroller needed. */}
           <div ref={checklistTopRef} className="px-4 pb-2">
+
+            {/* Guest checklist persistence nudge — shown when a guest has items worth saving */}
+            {!user && checklist.length > 0 && !checklistNudgeDismissed && (
+              <div className="mb-3 rounded-xl border border-amber-200 dark:border-amber-700/40 bg-amber-50 dark:bg-amber-900/15 px-3 py-2.5 flex items-start gap-2.5">
+                <svg className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-semibold text-amber-800 dark:text-amber-300 leading-snug">
+                    Your checklist is only on this device
+                  </p>
+                  <p className="text-[9px] text-amber-700 dark:text-amber-400 mt-0.5 leading-snug">
+                    Sign in to back it up and access it anywhere.
+                  </p>
+                  <button
+                    onClick={() => { setChecklistNudgeDismissed(true); setShowAuthScreen(true); }}
+                    className="mt-1.5 text-[9px] font-bold text-white bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-500 rounded-lg px-2 py-1 transition-colors pointer-events-auto"
+                  >
+                    Back up with account →
+                  </button>
+                </div>
+                <button
+                  onClick={() => setChecklistNudgeDismissed(true)}
+                  className="shrink-0 p-0.5 text-amber-400 hover:text-amber-600 dark:hover:text-amber-300 transition-colors pointer-events-auto"
+                  aria-label="Dismiss"
+                >
+                  <XIcon className="h-3 w-3" />
+                </button>
+              </div>
+            )}
+
             <EnhancedChecklist
               items={checklist}
               onUpdate={(id, changes) =>
@@ -5990,7 +7464,7 @@ export default function ChatPage() {
               onClearCompleted={() =>
                 setChecklist(prev => prev.filter(i => i.status !== "done"))
               }
-              onResetAll={() => { setChecklist([]); setLoadedBusiness(null); }}
+              onResetAll={() => { setChecklist([]); setLoadedBusiness(null); setMessages([WELCOME_MESSAGE]); try { localStorage.removeItem("rp_chat_active_v1"); } catch {} }}
               onClearAll={loadedBusiness ? handleClearActiveBusiness : undefined}
               onUploadDocument={loadedBusiness ? () => setShowDocUploadPanel(true) : undefined}
               uploadedDocuments={loadedBusiness ? uploadedDocs : undefined}
@@ -6000,92 +7474,68 @@ export default function ChatPage() {
               isPro={isPro}
               monthlyFormsUsed={monthlyFormsUsed}
               freeMonthlyLimit={FREE_MONTHLY_LIMIT}
+              businessType={loadedBusiness?.businessType ?? undefined}
+              locationState={loadedBusinessState}
+              onSaveToBusiness={handleSaveItemToBusiness}
+              onAddItem={text => {
+                const item: ChecklistItem = {
+                  id: crypto.randomUUID(),
+                  text,
+                  status: "todo",
+                  createdAt: new Date().toISOString(),
+                };
+                setChecklist(prev => [...prev, item]);
+              }}
             />
           </div>
 
-          {/* Upcoming Renewals — aggregated across ALL saved businesses.
-               Urgency: red ≤30d, amber ≤60d, green ≤90d, slate >90d. */}
+          {/* Upcoming Renewals — compact banner. Detail lives in BusinessProfileView. */}
           {allRenewals.length > 0 && (() => {
-            // Show first 5 soonest; rest hidden behind a "show more" concept
-            // (keeping the sidebar compact — the most urgent items are what matter).
-            const visible = allRenewals.slice(0, 5);
             const overdueCount = allRenewals.filter(r => r.daysLeft < 0).length;
             const soonCount    = allRenewals.filter(r => r.daysLeft >= 0 && r.daysLeft <= 30).length;
             return (
-              <div ref={renewalsSectionRef} className="shrink-0 border-t border-slate-100 dark:border-slate-700/30 px-4 py-3 space-y-2">
-                <div className="flex items-center gap-1.5">
-                  <Bell className="h-3 w-3 text-amber-500" />
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                    Upcoming Renewals
+              <div ref={renewalsSectionRef} className="shrink-0 border-t border-slate-100 dark:border-slate-700/30 px-4 py-2.5">
+                <button
+                  onClick={() => { if (loadedBusiness) setShowProfileView(true); }}
+                  className="w-full flex items-center gap-2 group pointer-events-auto"
+                  title="View renewal details in business profile"
+                >
+                  <Bell className="h-3 w-3 text-amber-500 shrink-0" />
+                  <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 flex-1 text-left">
+                    {allRenewals.length} renewal{allRenewals.length !== 1 ? "s" : ""} tracked
                   </p>
                   {(overdueCount > 0 || soonCount > 0) && (
-                    <span className={`ml-auto text-[10px] font-bold border rounded-full px-1.5 py-0.5 tabular-nums ${
+                    <span className={`text-[10px] font-bold border rounded-full px-1.5 py-0.5 tabular-nums ${
                       overdueCount > 0
-                        ? "text-red-700 bg-red-50 border-red-200"
-                        : "text-amber-700 bg-amber-50 border-amber-200"
+                        ? "text-red-700 bg-red-50 border-red-200 dark:text-red-300 dark:bg-red-900/20 dark:border-red-700/50"
+                        : "text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-300 dark:bg-amber-900/20 dark:border-amber-700/50"
                     }`}>
                       {overdueCount > 0 ? `${overdueCount} overdue` : `${soonCount} soon`}
                     </span>
                   )}
-                </div>
-                <div className="space-y-1.5">
-                  {visible.map(({ biz, item, daysLeft, formName }) => {
-                    const isActiveBiz = loadedBusiness?.id === biz.id;
-                    const badgeColor =
-                      daysLeft < 0   ? "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/40" :
-                      daysLeft <= 30 ? "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/40" :
-                      daysLeft <= 60 ? "text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/40" :
-                      daysLeft <= 90 ? "text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/30" :
-                                       "text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700/50";
-                    const countLabel =
-                      daysLeft < 0   ? `${Math.abs(daysLeft)}d overdue` :
-                      daysLeft === 0 ? "Today" :
-                      daysLeft === 1 ? "Tomorrow" :
-                      daysLeft <= 13 ? `${daysLeft}d` :
-                      daysLeft <= 90 ? `${Math.round(daysLeft / 7)}w` :
-                                       `${Math.round(daysLeft / 30)}mo`;
-                    return (
-                      <div key={`${biz.id}-${item.id}`} className="rounded-lg border border-slate-100 dark:border-slate-700/30 bg-slate-50 dark:bg-[#131e2f] px-2.5 py-2 space-y-1">
-                        {/* Business name — only shown for cross-business items */}
-                        {!isActiveBiz && (
-                          <p className="text-[9px] font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide truncate">
-                            {biz.name}
-                          </p>
-                        )}
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[11px] font-medium text-slate-700 dark:text-slate-200 truncate" title={formName}>
-                              {formName}
-                            </p>
-                            <p className="text-[10px] text-slate-400 dark:text-slate-500">
-                              {new Date(item.renewalDate! + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                            </p>
-                          </div>
-                          <span className={`shrink-0 text-[10px] font-semibold border rounded px-1.5 py-0.5 ${badgeColor}`}>
-                            {countLabel}
-                          </span>
-                          {item.formId && (
-                            <button
-                              onClick={() => handleRenewFormItem(item.formId!, isActiveBiz ? null : biz)}
-                              className="shrink-0 text-[10px] font-semibold text-blue-600 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/40 rounded px-1.5 py-0.5 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
-                              title={isActiveBiz ? "Renew this permit" : `Switch to ${biz.name} and renew`}
-                            >
-                              Renew
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {allRenewals.length > 5 && (
-                    <p className="text-[10px] text-slate-400 text-center pt-0.5">
-                      +{allRenewals.length - 5} more renewal{allRenewals.length - 5 !== 1 ? "s" : ""}
-                    </p>
-                  )}
-                </div>
+                  <ChevronRight className="h-3 w-3 text-slate-400 dark:text-slate-600 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors shrink-0" />
+                </button>
               </div>
             );
           })()}
+
+          {/* ── AI Pre-Inspection Coach — Pro only, shown when a business is loaded ── */}
+          {isPro && loadedBusiness && (
+            <div className="shrink-0 border-t border-slate-100 dark:border-slate-700/30 px-4 py-2.5">
+              <button
+                onClick={() => setShowInspectionCoach(true)}
+                className="w-full flex items-center gap-2.5 min-h-[44px] rounded-xl border border-blue-200/60 dark:border-blue-800/40 bg-blue-50/50 dark:bg-blue-900/15 hover:bg-blue-100/60 dark:hover:bg-blue-900/25 px-3 py-2 transition-colors pointer-events-auto"
+                style={{ touchAction: "manipulation" }}
+              >
+                <ClipboardList className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                <div className="flex-1 text-left min-w-0">
+                  <p className="text-[11px] font-bold text-blue-700 dark:text-blue-300">Simulate Inspection</p>
+                  <p className="text-[10px] text-blue-600/70 dark:text-blue-400/70">AI pre-inspection risk report</p>
+                </div>
+                <ChevronRight className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+              </button>
+            </div>
+          )}
 
           {/* ── Rule Change Alerts — Pro only ────────────────────────────── */}
           {!isPro && (
@@ -6272,6 +7722,100 @@ export default function ChatPage() {
             );
           })()} {/* end isPro && alerts IIFE */}
 
+          {/* ── Compliance Gap Analysis panel ──────────────────────────────── */}
+          {loadedBusiness && (gapAnalysis?.loading || (gapAnalysis?.gaps ?? []).length > 0) && (
+            <div className="shrink-0 border-t border-slate-100 dark:border-slate-700/30">
+              <button
+                onClick={() => setGapPanelOpen(o => !o)}
+                className="w-full flex items-center gap-1.5 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
+                style={{ touchAction: "manipulation" }}
+              >
+                <AlertCircle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 flex-1 text-left">
+                  Compliance Gaps
+                </span>
+                {gapAnalysis?.loading ? (
+                  <svg className="h-3 w-3 animate-spin text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                  </svg>
+                ) : (gapAnalysis?.gaps ?? []).length > 0 ? (
+                  <span className="text-[9px] font-bold bg-amber-500 text-white rounded-full px-1.5 py-px leading-none shrink-0">
+                    {gapAnalysis!.gaps.length}
+                  </span>
+                ) : null}
+                <ChevronDown className={`h-3 w-3 text-slate-400 transition-transform duration-150 shrink-0 ${gapPanelOpen ? "rotate-180" : ""}`} />
+              </button>
+
+              {gapPanelOpen && !gapAnalysis?.loading && (gapAnalysis?.gaps ?? []).length > 0 && (
+                <div className="px-3 pb-3 space-y-1.5">
+                  {gapAnalysis!.gaps.map(gap => {
+                    const urgencyStyle =
+                      gap.urgency === "required"
+                        ? { dot: "bg-red-500", badge: "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/40" }
+                        : gap.urgency === "recommended"
+                        ? { dot: "bg-amber-500", badge: "text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700/50" }
+                        : { dot: "bg-slate-400", badge: "text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700/50" };
+                    const alreadyAdded = checklist.some(i => (i.formId ?? i.text) === gap.formId);
+                    return (
+                      <div
+                        key={gap.formId}
+                        className="rounded-xl border border-slate-200 dark:border-slate-700/50 bg-white dark:bg-[#0a121c] p-2.5 space-y-1"
+                      >
+                        <div className="flex items-start gap-1.5">
+                          <span className={`mt-1 h-1.5 w-1.5 rounded-full shrink-0 ${urgencyStyle.dot}`} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[11px] font-semibold text-slate-800 dark:text-slate-100 leading-tight">{gap.name}</p>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-snug mt-0.5">{gap.reason}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 pl-3">
+                          <span className={`text-[8px] font-bold border rounded px-1.5 py-px uppercase tracking-wide ${urgencyStyle.badge}`}>
+                            {gap.urgency}
+                          </span>
+                          {!alreadyAdded && (
+                            <button
+                              onClick={() => {
+                                const newItem: ChecklistItem = {
+                                  id:        `gap-${gap.formId}-${Date.now()}`,
+                                  text:      gap.name,
+                                  status:    "todo",
+                                  formId:    gap.formId,
+                                  createdAt: new Date().toISOString(),
+                                };
+                                setChecklist(prev => [...prev, newItem]);
+                                if (loadedBusiness) {
+                                  const updated = { ...loadedBusiness, checklist: [...(loadedBusiness.checklist ?? []), newItem] };
+                                  localSaveBusiness(updated);
+                                  setSavedBusinesses(localLoadBusinesses());
+                                  setLoadedBusiness(updated);
+                                  if (user) void dbSaveBusiness(getSb(), user.id, updated);
+                                }
+                              }}
+                              className="text-[9px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/50 rounded px-1.5 py-0.5 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors pointer-events-auto"
+                              style={{ touchAction: "manipulation" }}
+                            >
+                              + Add
+                            </button>
+                          )}
+                          {alreadyAdded && (
+                            <span className="text-[9px] font-semibold text-green-600 dark:text-green-400">✓ Added</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {gapPanelOpen && !gapAnalysis?.loading && (gapAnalysis?.gaps ?? []).length === 0 && (
+                <p className="px-4 pb-3 text-[10px] text-slate-400 dark:text-slate-500">
+                  No gaps detected — your checklist looks complete for this business type.
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Pro upsell banner — shown only for Free tier users */}
           {/* vUnified-20260414-national-expansion-v86: added CTA button wired to handleUpgradeToPro */}
           {!isPro && (
@@ -6280,7 +7824,7 @@ export default function ChatPage() {
                 <div className="flex items-center gap-1.5">
                   <Crown className="h-3 w-3 text-amber-500 shrink-0" />
                   <p className="text-[11px] font-bold text-slate-800 dark:text-slate-100">Upgrade to RegPulse Pro</p>
-                  <span className="ml-auto text-[10px] font-bold text-blue-700 dark:text-blue-400">$19/mo</span>
+                  <span className="ml-auto text-[10px] font-bold text-blue-700 dark:text-blue-400">$17.99/mo</span>
                 </div>
                 <ul className="space-y-1">
                   {[
@@ -6294,9 +7838,30 @@ export default function ChatPage() {
                     </li>
                   ))}
                 </ul>
-                <p className="text-[10px] text-slate-400 dark:text-slate-500">
-                  {`${monthlyFormsUsed}/${FREE_MONTHLY_LIMIT} free completions used this month`}
-                </p>
+                {(() => {
+                  const pct = FREE_MONTHLY_LIMIT > 0 ? Math.min(100, Math.round((monthlyFormsUsed / FREE_MONTHLY_LIMIT) * 100)) : 0;
+                  const isHigh = pct >= 80;
+                  return (
+                    <>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
+                        <span style={{ fontSize: 10, color: isHigh ? "#b45309" : "#94a3b8" }}>
+                          {`${monthlyFormsUsed}/${FREE_MONTHLY_LIMIT} completions used`}
+                        </span>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: isHigh ? "#b45309" : "#94a3b8" }}>
+                          {pct}%
+                        </span>
+                      </div>
+                      <div style={{ height: 5, borderRadius: 999, background: "#e2e8f0", overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${pct}%`, borderRadius: 999, background: isHigh ? "#f59e0b" : "#3b82f6", transition: "width 0.4s ease" }} />
+                      </div>
+                      {isHigh && (
+                        <p style={{ fontSize: 10, color: "#b45309", fontWeight: 600, marginTop: 3 }}>
+                          You&apos;re almost out — upgrade for unlimited access.
+                        </p>
+                      )}
+                    </>
+                  );
+                })()}
                 {/* v86: CTA button — signed-in users go straight to checkout; guests open auth panel */}
                 <button
                   onClick={() => void handleUpgradeToPro()}
@@ -6309,7 +7874,7 @@ export default function ChatPage() {
                   ) : (
                     <>
                       <Crown className="h-3.5 w-3.5 shrink-0" />
-                      Get Pro — $19/mo
+                      Get Pro — $17.99/mo
                     </>
                   )}
                 </button>
@@ -6622,6 +8187,15 @@ export default function ChatPage() {
               </div>
             )}
 
+            {/* Compliance Matrix — cross-business permit status grid */}
+            {savedBusinesses.length >= 2 && portfolioExpanded && (
+              <ComplianceMatrix
+                businesses={savedBusinesses}
+                onSelectBusiness={(biz) => { handleLoadBusiness(biz); setShowProfileView(true); }}
+                isDarkMode={isDarkMode}
+              />
+            )}
+
             {/* v56 — Compliance OS: inline rule-change alerts strip.
                  Shown ONLY when portfolioExpanded && activeAlerts.length > 0.
                  Surfaces the most recent 3 alerts directly in the portfolio panel so users
@@ -6902,12 +8476,7 @@ export default function ChatPage() {
                     score >= 80 ? "text-emerald-600" :
                     score >= 50 ? "text-amber-600" : "text-red-600";
 
-                  // Form-count pill tint matches health tier
-                  const formPillCls =
-                    !hasScore   ? "bg-slate-50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700/50 text-slate-500 dark:text-slate-400" :
-                    score >= 80 ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/40 text-emerald-700 dark:text-emerald-400" :
-                    score >= 50 ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/40 text-amber-700 dark:text-amber-400" :
-                                  "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/40 text-red-700 dark:text-red-400";
+
 
                   // Left accent border: blue when active, red/amber when at risk, green when healthy, slate otherwise
                   const leftBorderColor =
@@ -7041,12 +8610,6 @@ export default function ChatPage() {
 
                             {/* Row 3: status pills + last-checked timestamp */}
                             <div className="flex items-center gap-1 px-2.5 mt-1.5 pb-1.5 pl-7 flex-wrap">
-                              {/* Form-completion pill: "X/Y done" */}
-                              {hasScore && (
-                                <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded border leading-none ${formPillCls}`}>
-                                  {biz.completedFormsCount ?? 0}/{biz.totalForms} done
-                                </span>
-                              )}
                               {/* v36 — Overdue pill: shown when renewals are past due (daysLeft < 0) */}
                               {overdueRenewals > 0 && (
                                 <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded border bg-red-50 dark:bg-red-900/25 border-red-300 dark:border-red-700/50 text-red-700 dark:text-red-400 leading-none">
@@ -7227,78 +8790,20 @@ export default function ChatPage() {
                           );
                         }
 
-                        const isExpanded = expandedBizIds.has(biz.id);
                         return (
-                          <div className="pl-2 pr-1 pb-1 mt-0.5 space-y-0.5">
-                            {/* Expand/collapse toggle */}
+                          <div className="pl-2 pr-1 pb-1 mt-0.5">
+                            {/* Location count chip — tap opens profile for full location management */}
                             <button
                               onClick={e => {
                                 e.stopPropagation();
-                                setExpandedBizIds(prev => {
-                                  const next = new Set(prev);
-                                  if (next.has(biz.id)) next.delete(biz.id); else next.add(biz.id);
-                                  return next;
-                                });
+                                handleLoadBusiness(biz);
+                                setShowProfileView(true);
                               }}
-                              className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-slate-600 transition-colors w-full py-0.5 pointer-events-auto"
+                              className="flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500 hover:text-blue-500 transition-colors pointer-events-auto"
                             >
-                              {isExpanded
-                                ? <ChevronDown className="h-2.5 w-2.5 shrink-0" />
-                                : <ChevronRight className="h-2.5 w-2.5 shrink-0" />}
-                              <span>{locs.length} location{locs.length !== 1 ? "s" : ""}</span>
+                              <MapPin className="h-2.5 w-2.5 shrink-0" />
+                              <span>{locs.length} location{locs.length !== 1 ? "s" : ""} — view in profile</span>
                             </button>
-
-                            {isExpanded && (
-                              <div className="space-y-0.5 pl-1">
-                                {locs.map(loc => {
-                                  const isActiveLoc = isLoaded && activeLocationId === loc.id;
-                                  const locScore    = loc.healthScore ?? 0;
-                                  const locHasScore = loc.totalForms != null && loc.totalForms > 0;
-                                  const locDot      =
-                                    !locHasScore    ? "bg-slate-300" :
-                                    locScore >= 80  ? "bg-emerald-500" :
-                                    locScore >= 50  ? "bg-amber-400" : "bg-red-400";
-                                  return (
-                                    <button
-                                      key={loc.id}
-                                      onClick={e => {
-                                        e.stopPropagation();
-                                        if (isLoaded) {
-                                          handleSwitchLocation(loc);
-                                        } else {
-                                          handleLoadBusiness(biz, loc.id);
-                                        }
-                                      }}
-                                      className={`w-full text-left flex items-center gap-1.5 px-2 py-1 rounded-lg border transition-all pointer-events-auto ${
-                                        isActiveLoc
-                                          ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/40 text-blue-700 dark:text-blue-300"
-                                          : "bg-white dark:bg-[#131e2f] border-slate-100 dark:border-slate-700/50 text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-100 dark:hover:border-blue-800/40 hover:text-blue-700 dark:hover:text-blue-300"
-                                      }`}
-                                    >
-                                      <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${locDot}`} />
-                                      <span className="text-[10px] font-semibold truncate flex-1">{loc.name}</span>
-                                      <span className="text-[9px] text-slate-400 truncate max-w-[60px]">{loc.location}</span>
-                                      {isActiveLoc && <span className="h-1 w-1 rounded-full bg-blue-500 shrink-0" />}
-                                    </button>
-                                  );
-                                })}
-                                {/* Add location button */}
-                                <button
-                                  onClick={e => {
-                                    e.stopPropagation();
-                                    if (isLoaded) {
-                                      setAddLocationBizId("__active__");
-                                    } else {
-                                      setAddLocationBizId(biz.id);
-                                    }
-                                  }}
-                                  className="w-full flex items-center gap-1 text-[10px] text-blue-500 hover:text-blue-700 hover:bg-blue-50 transition-colors px-2 py-1 rounded-lg pointer-events-auto"
-                                >
-                                  <Plus className="h-2.5 w-2.5" />
-                                  Add location
-                                </button>
-                              </div>
-                            )}
                           </div>
                         );
                       })()}
@@ -7392,7 +8897,7 @@ export default function ChatPage() {
                 className="w-full min-h-[48px] flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold rounded-xl transition-colors mb-3"
               >
                 <Crown className="h-4 w-4" />
-                Upgrade to Pro — $19/mo
+                Upgrade to Pro — $17.99/mo
               </button>
               <button
                 onClick={() => setShowSignInWall(false)}
@@ -7444,6 +8949,17 @@ export default function ChatPage() {
           vMobile-scale-fix: flex-1 flex flex-col still fills exactly the remaining
           viewport height on all screen sizes — removing overflow-hidden doesn't change
           the sizing, only the clipping behavior. */}
+      {/* AI Pre-Inspection Coach modal — rendered as absolute overlay so it works in both profile and chat views */}
+      {showInspectionCoach && loadedBusiness && (
+        <InspectionCoach
+          isOpen={showInspectionCoach}
+          onClose={() => setShowInspectionCoach(false)}
+          businessName={loadedBusiness.name}
+          businessType={loadedBusiness.businessType ?? "small business"}
+          location={loadedBusiness.location ?? userLocation ?? ""}
+        />
+      )}
+
       {showProfileView && loadedBusiness ? (
         <div className="flex-1 flex flex-col min-w-0 min-h-0">{/* vUnified-20260414-national-expansion-v102: min-h-0 ensures iOS WKWebView computes a
             definite height for BusinessProfileView's flex-1 chain, activating overflow-y-auto. */}
@@ -7468,6 +8984,7 @@ export default function ChatPage() {
             userLocation={userLocation}
             detectedCounty={detectedCounty}
             onSaveDrafts={handleSaveDraftsFromProfile}
+            uploadProgress={uploadProgress}
             onDiscardDrafts={handleDiscardDraftsFromProfile}
             onViewCompletedForm={handleViewCompletedForm}
             onCheckZoning={handleCheckZoning}
@@ -7483,6 +9000,27 @@ export default function ChatPage() {
             // vUnified-20260414-national-expansion-v87: pass portal handler so the
             // Pro badge footer in BusinessProfileView shows a "Manage" button.
             onManageSubscription={isPro ? () => void handleManageSubscription() : undefined}
+            detectedState={loadedBusinessState}
+            lastSyncedAt={lastSyncedAt}
+            businessRenewals={allRenewals
+              .filter(r => r.biz.id === loadedBusiness.id)
+              .map(({ item, daysLeft, formName }) => ({ item, daysLeft, formName }))}
+            onRenewItem={(formId) => handleRenewFormItem(formId, loadedBusiness)}
+            onAddAllToChecklist={(entries) => {
+              const existingFormIds = new Set(checklist.map(i => i.formId).filter(Boolean));
+              const toAdd = entries.filter(e => !existingFormIds.has(e.id));
+              if (toAdd.length === 0) return;
+              setChecklist(prev => [
+                ...prev,
+                ...toAdd.map(e => ({
+                  id: crypto.randomUUID(),
+                  text: `Complete and submit: ${e.name}`,
+                  status: "todo" as const,
+                  formId: e.id,
+                  createdAt: new Date().toISOString(),
+                })),
+              ]);
+            }}
           />
         </div>
       ) : null}
@@ -7728,6 +9266,34 @@ export default function ChatPage() {
              Positioned above packetToast (bottom-28 z-30) at bottom-40 z-40 so they stack
              cleanly. touch-action:manipulation + min-h-[44px] on dismiss for iOS Safari.
              Both banners (sidebar + this chat toast) auto-dismiss after 8 s total.        */}
+        {/* Session restored toast */}
+        {sessionRestored && (
+          <div
+            className="absolute bottom-40 left-1/2 -translate-x-1/2 z-40 w-[min(360px,92vw)] flex items-center gap-3 px-4 py-2.5 rounded-2xl shadow-xl pointer-events-auto animate-in fade-in slide-in-from-bottom-3 duration-300"
+            style={{ background: "rgba(15,24,35,0.92)", backdropFilter: "blur(12px)", touchAction: "manipulation" }}
+          >
+            <span className="text-base shrink-0">↩</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-white leading-tight">Previous session restored</p>
+              <p className="text-[10px] text-slate-400 mt-0.5">Your last conversation is back</p>
+            </div>
+            <button
+              onClick={() => { setSessionRestored(false); setMessages([WELCOME_MESSAGE]); try { localStorage.removeItem("rp_chat_active_v1"); } catch {} }}
+              className="shrink-0 text-[10px] font-semibold text-slate-400 hover:text-white transition-colors min-h-[36px] px-2"
+              style={{ touchAction: "manipulation" }}
+            >
+              Clear
+            </button>
+            <button
+              onClick={() => setSessionRestored(false)}
+              className="shrink-0 text-slate-500 hover:text-white transition-colors min-h-[36px] min-w-[28px] flex items-center justify-center"
+              style={{ touchAction: "manipulation" }}
+            >
+              <XIcon className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
+
         {proSuccessChatToast && (
           <div
             className="absolute bottom-40 left-1/2 -translate-x-1/2 z-40 w-[min(380px,92vw)] flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl pointer-events-auto animate-in fade-in slide-in-from-bottom-3 duration-300"
@@ -7819,6 +9385,14 @@ export default function ChatPage() {
             }}
             onSave={handleSaveBusiness}
           />
+        ) : formLaunching ? (
+          /* One-frame skeleton shown while sidebar closes + FormFiller mounts */
+          <div className="flex-1 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3 opacity-60">
+              <Loader2 className="h-7 w-7 animate-spin text-cyan-500" />
+              <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">Opening form…</span>
+            </div>
+          </div>
         ) : activeTemplate ? (
           <FormFiller
             template={activeTemplate}
@@ -7842,16 +9416,40 @@ export default function ChatPage() {
                 ?? completedFormsByFormId['sales-tax-registration']?.formData?.fein;
               const derivedPhone = anyEntry?.formData?.businessPhone ?? anyEntry?.formData?.ownerPhone;
               const derivedEmail = anyEntry?.formData?.businessEmail ?? anyEntry?.formData?.ownerEmail;
+              const derivedWebsite = anyEntry?.formData?.businessWebsite ?? anyEntry?.formData?.website;
+              const derivedEntityType = anyEntry?.formData?.entityType ?? anyEntry?.formData?.businessStructure
+                ?? regEntry?.formData?.organizationType;
+              // Parse location into components: "123 Main St, Miami, FL 33101" or "Miami, FL 33101"
+              // When business location is a bare ZIP (e.g. "33412"), use the resolved userLocation
+              // which the sidebar ZIP-resolution effect has already expanded to "City, ST ZIP".
+              const rawBizLoc = loadedBusiness.location ?? "";
+              const loc = /^\d{5}$/.test(rawBizLoc.trim()) ? userLocation : rawBizLoc;
+              const zipMatch = loc.match(/\b(\d{5}(?:-\d{4})?)\b/);
+              const parsedZip = zipMatch?.[1];
+              const stateMatch = loc.match(/\b([A-Z]{2})\b/);
+              const parsedState = stateMatch?.[1] ?? loadedBusinessState;
+              // City: second-to-last comma-segment before "STATE ZIP", or first segment
+              const parts = loc.split(",").map(p => p.trim());
+              const cityPart = parts.length >= 2 ? parts[parts.length - 2].replace(/\s+[A-Z]{2}$/, "").trim() : parts[0];
+              const parsedCity = cityPart || undefined;
+              // Street: everything before the city (if 3+ parts)
+              const parsedStreet = parts.length >= 3 ? parts.slice(0, parts.length - 2).join(", ") : undefined;
               return {
-                name:         loadedBusiness.name,
-                location:     loadedBusiness.location,
-                businessType: loadedBusiness.businessType,
-                ownerName:    derivedOwner,
-                ein:          derivedEin,
-                phone:        derivedPhone,
-                email:        derivedEmail,
+                name:          loadedBusiness.name,
+                location:      loadedBusiness.location,
+                streetAddress: parsedStreet,
+                city:          parsedCity,
+                state:         parsedState,
+                zip:           parsedZip,
+                businessType:  loadedBusiness.businessType,
+                entityType:    derivedEntityType,
+                ownerName:     derivedOwner,
+                ein:           derivedEin,
+                phone:         derivedPhone,
+                email:         derivedEmail,
+                website:       derivedWebsite,
                 // vUnified-20260414-national-expansion-v4: pass county for county-aware URL resolution
-                county:       detectedCounty ?? undefined,
+                county:        detectedCounty ?? undefined,
               };
             })() : null}
             onSaveDocument={(filename, _base64) => {
@@ -7896,16 +9494,24 @@ export default function ChatPage() {
           />
         ) : (
           <div className="relative z-20 px-3 sm:px-6 py-3 sm:py-4 border-t border-slate-200/80 dark:border-slate-700/40 bg-white/80 dark:bg-[#131e2f]/85 backdrop-blur-sm shrink-0 pointer-events-auto" style={{ paddingBottom: "max(env(safe-area-inset-bottom), 12px)" }}>{/* v283: glassmorphism + safe-area bottom padding for iOS keyboard */}
+            {/* Hidden camera input for Photo Compliance Scan */}
+            <input
+              ref={photoCameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={e => {
+                const f = e.target.files?.[0];
+                if (f) void handlePhotoComplianceScan(f);
+                e.target.value = "";
+              }}
+            />
             <div className="max-w-3xl mx-auto flex gap-2 items-center">
-              {/* Upload button — compact, sits left of the text input.
-                  v17: businessId is required for the storage-first path in
-                  DocumentUploadButton (files > 5 MB bypass the API body limit
-                  by uploading directly to Supabase Storage). Without it the
-                  gate falls back to FormData and large PDFs hit Vercel's limit.
-                  Use the business's saved location as AI context so the backend
-                  prompt matches the registered jurisdiction. */}
+              {/* Upload button — compact, sits left of the text input. */}
               <DocumentUploadButton
                 variant="compact"
+                userId={user?.id}
                 businessId={loadedBusiness?.id}
                 businessName={loadedBusiness?.name ?? "My Business"}
                 location={loadedBusiness?.location ?? userLocation}
@@ -7913,6 +9519,18 @@ export default function ChatPage() {
                 onAnalysisComplete={handleDocumentAnalysisComplete}
                 disabled={isLoading}
               />
+              {/* Camera button — Photo Compliance Scan (Pro) */}
+              <button
+                onClick={() => photoCameraInputRef.current?.click()}
+                disabled={isLoading || photoComplianceLoading}
+                title={isPro ? "Photo Compliance Scan" : "Photo Compliance Scan (Pro)"}
+                className="min-h-[52px] min-w-[52px] flex items-center justify-center bg-slate-100 dark:bg-[#1a2740]/80 hover:bg-slate-200 dark:hover:bg-[#1e2f50] disabled:opacity-40 disabled:cursor-not-allowed text-slate-600 dark:text-slate-300 rounded-xl transition-colors shrink-0 border border-slate-200/70 dark:border-slate-600/40 pointer-events-auto"
+              >
+                {photoComplianceLoading
+                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                  : <Camera className="h-4 w-4" />
+                }
+              </button>
               <div className="flex-1 flex items-center min-h-[52px] bg-slate-50/90 dark:bg-[#1a2740]/90 border border-slate-200/70 dark:border-slate-600/40 rounded-2xl px-4 backdrop-blur-sm focus-within:ring-2 focus-within:ring-blue-100 dark:focus-within:ring-blue-900/40 focus-within:border-blue-300 dark:focus-within:border-blue-700/60 transition-all">
                 <input
                   value={input}
@@ -7964,6 +9582,57 @@ export default function ChatPage() {
           </div>
         )}
 
+        {/* ── Photo Compliance Scan result overlay ─────────────────────────────
+             Shown after GPT-4o vision analyzes a camera photo for compliance issues. */}
+        {photoComplianceResult && (
+          <div className="absolute inset-x-0 bottom-20 z-30 px-4 pb-2 max-w-2xl mx-auto left-1/2 -translate-x-1/2 w-full pointer-events-none">
+            <div className="pointer-events-auto bg-white dark:bg-[#0f1823] rounded-2xl border border-slate-200/70 dark:border-slate-700/50 shadow-2xl overflow-hidden">
+              {/* Header */}
+              <div className={`flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-700/40 ${photoComplianceResult.overallStatus === "compliant" ? "bg-green-50 dark:bg-green-950/30" : "bg-amber-50 dark:bg-amber-950/30"}`}>
+                <div className="flex items-center gap-2">
+                  <Camera className={`h-4 w-4 ${photoComplianceResult.overallStatus === "compliant" ? "text-green-600" : "text-amber-600"}`} />
+                  <span className="text-sm font-bold text-slate-900 dark:text-slate-100">Photo Compliance Scan</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${photoComplianceResult.overallStatus === "compliant" ? "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300" : "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300"}`}>
+                    {photoComplianceResult.overallStatus === "compliant" ? "No Issues Found" : "Issues Found"}
+                  </span>
+                </div>
+                <button onClick={() => setPhotoComplianceResult(null)} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/40 transition-colors">
+                  <XIcon className="h-4 w-4" />
+                </button>
+              </div>
+              {/* Summary */}
+              <div className="px-4 pt-3 pb-2">
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{photoComplianceResult.summary}</p>
+              </div>
+              {/* Findings */}
+              <div className="px-4 pb-4 space-y-2 max-h-64 overflow-y-auto">
+                {photoComplianceResult.findings.map((f, i) => (
+                  <div key={i} className={`rounded-xl px-3 py-2.5 border text-xs ${
+                    f.severity === "critical" ? "bg-red-50 border-red-200/60 dark:bg-red-950/30 dark:border-red-800/40" :
+                    f.severity === "warning"  ? "bg-amber-50 border-amber-200/60 dark:bg-amber-950/30 dark:border-amber-800/40" :
+                    f.severity === "pass"     ? "bg-green-50 border-green-200/60 dark:bg-green-950/30 dark:border-green-800/40" :
+                                                "bg-blue-50 border-blue-200/60 dark:bg-blue-950/30 dark:border-blue-800/40"
+                  }`}>
+                    <div className="flex items-start gap-2">
+                      <span className={`font-bold text-[10px] uppercase tracking-wide mt-0.5 shrink-0 ${
+                        f.severity === "critical" ? "text-red-600 dark:text-red-400" :
+                        f.severity === "warning"  ? "text-amber-600 dark:text-amber-400" :
+                        f.severity === "pass"     ? "text-green-600 dark:text-green-400" :
+                                                    "text-blue-600 dark:text-blue-400"
+                      }`}>{f.severity === "pass" ? "✓ Pass" : f.severity}</span>
+                      <div className="min-w-0">
+                        <span className="font-semibold text-slate-800 dark:text-slate-200">{f.category}: </span>
+                        <span className="text-slate-600 dark:text-slate-400">{f.description}</span>
+                        {f.action && <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-500 italic">{f.action}</p>}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ── v25 — Attach panel: upload completed document without AI analysis ──
              Triggered by "Attach File" in the Completed Documents section.
              Uses mode="attach" so no /api/document/analyze call is made. */}
@@ -7994,6 +9663,7 @@ export default function ChatPage() {
               <DocumentUploadButton
                 variant="full"
                 mode="attach"
+                userId={user?.id}
                 businessId={loadedBusiness?.id}
                 businessName={loadedBusiness?.name ?? "My Business"}
                 location={loadedBusiness?.location ?? userLocation}
@@ -8036,6 +9706,7 @@ export default function ChatPage() {
               {/* v17: same as compact — businessId enables storage-first for large files */}
               <DocumentUploadButton
                 variant="full"
+                userId={user?.id}
                 businessId={loadedBusiness?.id}
                 businessName={loadedBusiness?.name ?? "My Business"}
                 location={loadedBusiness?.location ?? userLocation}
@@ -8077,16 +9748,34 @@ export default function ChatPage() {
 
           {/* Hero */}
           <div style={{ padding: "24px 24px 20px", textAlign: "center" }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(251,191,36,0.15)", border: "1px solid rgba(251,191,36,0.3)", color: "#fcd34d", fontSize: 12, fontWeight: 700, padding: "6px 12px", borderRadius: 999, marginBottom: 16 }}>
-              <Crown style={{ width: 14, height: 14 }} />
-              $19 / month · Cancel anytime
-            </div>
-            <div style={{ fontSize: 24, fontWeight: 800, color: "#ffffff", lineHeight: 1.2, marginBottom: 8 }}>
-              Stay compliant.<br />Automatically.
-            </div>
-            <p style={{ fontSize: 14, color: "#cbd5e1", maxWidth: 280, margin: "0 auto" }}>
-              RegPulse Pro handles your filings, alerts you before deadlines, and keeps your business out of trouble — on autopilot.
-            </p>
+            {upgradeModalTrigger === "limit" ? (
+              <>
+                {/* Limit-hit banner */}
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.35)", color: "#fca5a5", fontSize: 12, fontWeight: 700, padding: "6px 14px", borderRadius: 999, marginBottom: 16 }}>
+                  <span>🔒</span>
+                  {FREE_MONTHLY_LIMIT}/{FREE_MONTHLY_LIMIT} free completions used this month
+                </div>
+                <div style={{ fontSize: 24, fontWeight: 800, color: "#ffffff", lineHeight: 1.2, marginBottom: 8 }}>
+                  You've hit the free limit.
+                </div>
+                <p style={{ fontSize: 14, color: "#cbd5e1", maxWidth: 300, margin: "0 auto" }}>
+                  Upgrade to Pro for unlimited AI form completions, automatic renewals, and real-time regulation alerts.
+                </p>
+              </>
+            ) : (
+              <>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(251,191,36,0.15)", border: "1px solid rgba(251,191,36,0.3)", color: "#fcd34d", fontSize: 12, fontWeight: 700, padding: "6px 12px", borderRadius: 999, marginBottom: 16 }}>
+                  <Crown style={{ width: 14, height: 14 }} />
+                  $17.99 / month · Cancel anytime
+                </div>
+                <div style={{ fontSize: 24, fontWeight: 800, color: "#ffffff", lineHeight: 1.2, marginBottom: 8 }}>
+                  Stay compliant.<br />Automatically.
+                </div>
+                <p style={{ fontSize: 14, color: "#cbd5e1", maxWidth: 280, margin: "0 auto" }}>
+                  RegPulse Pro handles your filings, alerts you before deadlines, and keeps your business out of trouble — on autopilot.
+                </p>
+              </>
+            )}
           </div>
 
           {/* Benefits */}
@@ -8109,111 +9798,165 @@ export default function ChatPage() {
             ))}
           </div>
 
-          {/* Auth card */}
-          <div style={{ margin: "0 20px 32px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 24, padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
-            <p style={{ textAlign: "center", fontSize: 14, fontWeight: 600, color: "#ffffff", margin: 0 }}>
-              Sign in to continue
-            </p>
-
-            {/* Social auth buttons */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {/* Apple */}
-              <button onClick={() => void handleSocialSignIn("apple")} disabled={upgradeModalWorking}
-                style={{ width: "100%", minHeight: 48, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, borderRadius: 14, fontSize: 15, fontWeight: 600, color: "#000000", background: "#ffffff", border: "none", cursor: "pointer", touchAction: "manipulation", opacity: upgradeModalWorking ? 0.5 : 1 }}>
-                <svg width="18" height="18" viewBox="0 0 814 1000" fill="currentColor"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-57.8-155.5-127.4C46 490.8 17.1 403.5 16.8 316.5c0-42.8 8.3-84.7 25.1-124.2 25.6-59.1 73.2-108.2 132.6-134.5C210.1 32.3 258 21.9 305.9 21.9c45.1 0 93.3 16.2 134.5 42.8 25.5 16.8 50.9 40.4 70.7 71.1 17.1-25.5 42.8-52.1 73.2-70.7 42.8-26.5 93.1-42.8 142.7-42.8z"/></svg>
-                Continue with Apple
+          {/* CTA — native iOS: open system Safari (App Store compliant, no in-app payment) */}
+          {/* Web: full auth + Stripe checkout form */}
+          {isCapacitorNative() ? (
+            <div style={{ margin: "0 20px 40px", display: "flex", flexDirection: "column", gap: 12 }}>
+              {/* Subscribe CTA */}
+              <button
+                onClick={() => void openSubscribePage()}
+                style={{ width: "100%", minHeight: 56, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, borderRadius: 18, fontSize: 16, fontWeight: 800, color: "#0b1628", background: "linear-gradient(135deg,#f59e0b 0%,#fbbf24 100%)", border: "none", cursor: "pointer", touchAction: "manipulation" }}
+              >
+                <Crown style={{ width: 18, height: 18, flexShrink: 0 }} />
+                Subscribe at regpulse.com
               </button>
 
-              {/* Google */}
-              <button onClick={() => void handleSocialSignIn("google")} disabled={upgradeModalWorking}
-                style={{ width: "100%", minHeight: 48, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, borderRadius: 14, fontSize: 15, fontWeight: 600, color: "#1f1f1f", background: "#ffffff", border: "none", cursor: "pointer", touchAction: "manipulation", opacity: upgradeModalWorking ? 0.5 : 1 }}>
-                <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.2l6.7-6.7C35.8 2.5 30.3 0 24 0 14.7 0 6.7 5.4 2.8 13.3l7.9 6.1C12.5 13.1 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.1z"/><path fill="#FBBC05" d="M10.7 28.6A14.8 14.8 0 0 1 9.5 24c0-1.6.3-3.1.7-4.6L2.3 13.3A24 24 0 0 0 0 24c0 3.8.9 7.4 2.5 10.6l8.2-6z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.8 2.2-8.3 2.2-6.2 0-11.5-4.2-13.3-9.9l-8.2 6C6.7 42.6 14.7 48 24 48z"/></svg>
-                Continue with Google
-              </button>
+              {/* Explainer */}
+              <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 16, padding: "14px 16px" }}>
+                <p style={{ margin: "0 0 8px", fontSize: 13, fontWeight: 700, color: "#e2e8f0" }}>How it works</p>
+                {[
+                  "Tap the button above to open our secure checkout page in Safari",
+                  "Complete your $17.99/mo subscription — cancel anytime",
+                  "Sign in to the app with the same email and your Pro access activates instantly",
+                ].map((step, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, marginTop: i > 0 ? 8 : 0 }}>
+                    <span style={{ flexShrink: 0, width: 20, height: 20, borderRadius: "50%", background: "rgba(251,191,36,0.2)", border: "1px solid rgba(251,191,36,0.4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 800, color: "#fbbf24" }}>{i + 1}</span>
+                    <span style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.5, paddingTop: 2 }}>{step}</span>
+                  </div>
+                ))}
+              </div>
 
-              {/* Facebook */}
-              <button onClick={() => void handleSocialSignIn("facebook")} disabled={upgradeModalWorking}
-                style={{ width: "100%", minHeight: 48, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, borderRadius: 14, fontSize: 15, fontWeight: 600, color: "#ffffff", background: "#1877f2", border: "none", cursor: "pointer", touchAction: "manipulation", opacity: upgradeModalWorking ? 0.5 : 1 }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.413c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
-                Continue with Facebook
-              </button>
-            </div>
-
-            {/* Divider */}
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.12)" }} />
-              <span style={{ fontSize: 11, color: "#64748b", fontWeight: 500 }}>or continue with email</span>
-              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.12)" }} />
-            </div>
-
-            {/* Mode tabs */}
-            <div style={{ display: "flex", gap: 6, background: "rgba(255,255,255,0.06)", borderRadius: 12, padding: 4 }}>
-              {(["signup", "signin", "magic"] as const).map(m => (
-                <button key={m}
-                  onClick={() => { setUpgradeModalMode(m); setUpgradeModalError(""); setUpgradeModalMagicSent(false); }}
-                  style={{ flex: 1, padding: "6px 0", fontSize: 11, fontWeight: 600, borderRadius: 8, border: "none", cursor: "pointer", touchAction: "manipulation", background: upgradeModalMode === m ? "#2563eb" : "transparent", color: upgradeModalMode === m ? "#ffffff" : "#94a3b8" }}
+              {/* Already subscribed */}
+              {!user && (
+                <button
+                  onClick={() => { setUpgradeModalVisible(false); setShowAuthScreen(true); }}
+                  style={{ width: "100%", minHeight: 48, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 14, fontSize: 13, fontWeight: 600, color: "#94a3b8", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)", cursor: "pointer", touchAction: "manipulation" }}
                 >
-                  {m === "signin" ? "Sign In" : m === "signup" ? "Sign Up" : "Magic Link"}
+                  Already subscribed? Sign in →
                 </button>
-              ))}
+              )}
+
+              {/* Restore Purchases — required by Apple for IAP apps */}
+              {isIAPAvailable() && user && (
+                <button
+                  onClick={() => void handleRestorePurchases()}
+                  disabled={proCheckoutLoading}
+                  style={{ width: "100%", minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 12, fontSize: 13, fontWeight: 500, color: "#94a3b8", background: "transparent", border: "none", cursor: "pointer", touchAction: "manipulation" }}
+                >
+                  Restore Purchases
+                </button>
+              )}
+
+              <p style={{ textAlign: "center", fontSize: 10, color: "#475569", margin: 0 }}>
+                Payment processed securely by Apple.
+              </p>
             </div>
+          ) : (
+            <div style={{ margin: "0 20px 32px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 24, padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
+              <p style={{ textAlign: "center", fontSize: 14, fontWeight: 600, color: "#ffffff", margin: 0 }}>
+                Sign in to continue
+              </p>
 
-            <input
-              type="email"
-              placeholder="your@email.com"
-              value={upgradeModalEmail}
-              autoCapitalize="none"
-              autoCorrect="off"
-              onChange={e => setUpgradeModalEmail(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter") submitUpgradeModal(); }}
-              style={{ width: "100%", boxSizing: "border-box", fontSize: 14, borderRadius: 12, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", color: "#ffffff", padding: "10px 14px", outline: "none" }}
-            />
+              {/* Social auth buttons */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {/* Apple */}
+                <button onClick={() => void handleSocialSignIn("apple")} disabled={upgradeModalWorking}
+                  style={{ width: "100%", minHeight: 48, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, borderRadius: 14, fontSize: 15, fontWeight: 600, color: "#000000", background: "#ffffff", border: "none", cursor: "pointer", touchAction: "manipulation", opacity: upgradeModalWorking ? 0.5 : 1 }}>
+                  <svg width="18" height="18" viewBox="0 0 814 1000" fill="currentColor"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-57.8-155.5-127.4C46 490.8 17.1 403.5 16.8 316.5c0-42.8 8.3-84.7 25.1-124.2 25.6-59.1 73.2-108.2 132.6-134.5C210.1 32.3 258 21.9 305.9 21.9c45.1 0 93.3 16.2 134.5 42.8 25.5 16.8 50.9 40.4 70.7 71.1 17.1-25.5 42.8-52.1 73.2-70.7 42.8-26.5 93.1-42.8 142.7-42.8z"/></svg>
+                  Continue with Apple
+                </button>
 
-            {upgradeModalMode !== "magic" && (
+                {/* Google */}
+                <button onClick={() => void handleSocialSignIn("google")} disabled={upgradeModalWorking}
+                  style={{ width: "100%", minHeight: 48, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, borderRadius: 14, fontSize: 15, fontWeight: 600, color: "#1f1f1f", background: "#ffffff", border: "none", cursor: "pointer", touchAction: "manipulation", opacity: upgradeModalWorking ? 0.5 : 1 }}>
+                  <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.2l6.7-6.7C35.8 2.5 30.3 0 24 0 14.7 0 6.7 5.4 2.8 13.3l7.9 6.1C12.5 13.1 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.1z"/><path fill="#FBBC05" d="M10.7 28.6A14.8 14.8 0 0 1 9.5 24c0-1.6.3-3.1.7-4.6L2.3 13.3A24 24 0 0 0 0 24c0 3.8.9 7.4 2.5 10.6l8.2-6z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.8 2.2-8.3 2.2-6.2 0-11.5-4.2-13.3-9.9l-8.2 6C6.7 42.6 14.7 48 24 48z"/></svg>
+                  Continue with Google
+                </button>
+
+                {/* Facebook */}
+                <button onClick={() => void handleSocialSignIn("facebook")} disabled={upgradeModalWorking}
+                  style={{ width: "100%", minHeight: 48, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, borderRadius: 14, fontSize: 15, fontWeight: 600, color: "#ffffff", background: "#1877f2", border: "none", cursor: "pointer", touchAction: "manipulation", opacity: upgradeModalWorking ? 0.5 : 1 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.413c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+                  Continue with Facebook
+                </button>
+              </div>
+
+              {/* Divider */}
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.12)" }} />
+                <span style={{ fontSize: 11, color: "#64748b", fontWeight: 500 }}>or continue with email</span>
+                <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.12)" }} />
+              </div>
+
+              {/* Mode tabs */}
+              <div style={{ display: "flex", gap: 6, background: "rgba(255,255,255,0.06)", borderRadius: 12, padding: 4 }}>
+                {(["signup", "signin", "magic"] as const).map(m => (
+                  <button key={m}
+                    onClick={() => { setUpgradeModalMode(m); setUpgradeModalError(""); setUpgradeModalMagicSent(false); }}
+                    style={{ flex: 1, padding: "6px 0", fontSize: 11, fontWeight: 600, borderRadius: 8, border: "none", cursor: "pointer", touchAction: "manipulation", background: upgradeModalMode === m ? "#2563eb" : "transparent", color: upgradeModalMode === m ? "#ffffff" : "#94a3b8" }}
+                  >
+                    {m === "signin" ? "Sign In" : m === "signup" ? "Sign Up" : "Magic Link"}
+                  </button>
+                ))}
+              </div>
+
               <input
-                type="password"
-                placeholder="Password"
-                value={upgradeModalPassword}
-                onChange={e => setUpgradeModalPassword(e.target.value)}
+                type="email"
+                placeholder="your@email.com"
+                value={upgradeModalEmail}
+                autoCapitalize="none"
+                autoCorrect="off"
+                onChange={e => setUpgradeModalEmail(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter") submitUpgradeModal(); }}
                 style={{ width: "100%", boxSizing: "border-box", fontSize: 14, borderRadius: 12, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", color: "#ffffff", padding: "10px 14px", outline: "none" }}
               />
-            )}
 
-            {upgradeModalMagicSent ? (
-              <p style={{ textAlign: "center", fontSize: 12, color: "#34d399", background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.2)", borderRadius: 12, padding: "10px 12px", margin: 0 }}>
-                Magic link sent! Check your email and tap the link to continue.
+              {upgradeModalMode !== "magic" && (
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={upgradeModalPassword}
+                  onChange={e => setUpgradeModalPassword(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") submitUpgradeModal(); }}
+                  style={{ width: "100%", boxSizing: "border-box", fontSize: 14, borderRadius: 12, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", color: "#ffffff", padding: "10px 14px", outline: "none" }}
+                />
+              )}
+
+              {upgradeModalMagicSent ? (
+                <p style={{ textAlign: "center", fontSize: 12, color: "#34d399", background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.2)", borderRadius: 12, padding: "10px 12px", margin: 0 }}>
+                  Magic link sent! Check your email and tap the link to continue.
+                </p>
+              ) : (
+                <button
+                  onClick={submitUpgradeModal}
+                  disabled={upgradeModalWorking || !upgradeModalEmail.trim()}
+                  style={{ width: "100%", minHeight: 52, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 16, fontSize: 14, fontWeight: 700, color: "#ffffff", background: upgradeModalWorking || !upgradeModalEmail.trim() ? "rgba(245,158,11,0.4)" : "linear-gradient(135deg,#f59e0b 0%,#ea580c 100%)", border: "none", cursor: "pointer", touchAction: "manipulation" }}
+                >
+                  {upgradeModalWorking
+                    ? "Please wait…"
+                    : upgradeModalMode === "signin" ? "Sign In & Go Pro"
+                    : upgradeModalMode === "signup" ? "Create Account & Go Pro"
+                    : "Send Magic Link"}
+                </button>
+              )}
+
+              {upgradeModalError && (
+                <p style={{ textAlign: "center", fontSize: 12, margin: 0, padding: "8px 8px", borderRadius: 12, border: "1px solid", ...(upgradeModalError.startsWith("Account created") || upgradeModalError.startsWith("Check") ? { color: "#34d399", background: "rgba(52,211,153,0.1)", borderColor: "rgba(52,211,153,0.2)" } : { color: "#f87171", background: "rgba(248,113,113,0.1)", borderColor: "rgba(248,113,113,0.2)" }) }}>
+                  {upgradeModalError}
+                </p>
+              )}
+
+              <p style={{ textAlign: "center", fontSize: 10, color: "#64748b", margin: 0 }}>
+                By continuing you agree to our Terms of Service and Privacy Policy.
+                Cancel your Pro subscription anytime from settings.
               </p>
-            ) : (
-              <button
-                onClick={submitUpgradeModal}
-                disabled={upgradeModalWorking || !upgradeModalEmail.trim()}
-                style={{ width: "100%", minHeight: 52, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 16, fontSize: 14, fontWeight: 700, color: "#ffffff", background: upgradeModalWorking || !upgradeModalEmail.trim() ? "rgba(245,158,11,0.4)" : "linear-gradient(135deg,#f59e0b 0%,#ea580c 100%)", border: "none", cursor: "pointer", touchAction: "manipulation" }}
-              >
-                {upgradeModalWorking
-                  ? "Please wait…"
-                  : upgradeModalMode === "signin" ? "Sign In & Go Pro"
-                  : upgradeModalMode === "signup" ? "Create Account & Go Pro"
-                  : "Send Magic Link"}
-              </button>
-            )}
-
-            {upgradeModalError && (
-              <p style={{ textAlign: "center", fontSize: 12, margin: 0, padding: "8px 8px", borderRadius: 12, border: "1px solid", ...(upgradeModalError.startsWith("Account created") || upgradeModalError.startsWith("Check") ? { color: "#34d399", background: "rgba(52,211,153,0.1)", borderColor: "rgba(52,211,153,0.2)" } : { color: "#f87171", background: "rgba(248,113,113,0.1)", borderColor: "rgba(248,113,113,0.2)" }) }}>
-                {upgradeModalError}
-              </p>
-            )}
-
-            <p style={{ textAlign: "center", fontSize: 10, color: "#64748b", margin: 0 }}>
-              By continuing you agree to our Terms of Service and Privacy Policy.
-              Cancel your Pro subscription anytime from settings.
-            </p>
-          </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* v290 — Checkout loading overlay — 100% inline styles */}
-      {checkoutOverlayVisible && (
+      {checkoutOverlayVisible && !isCapacitorNative() && (
         <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, left: 0, zIndex: 10000, background: "linear-gradient(160deg,#0B1E3F 0%,#0f2a55 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
           <Crown style={{ width: 40, height: 40, color: "#fbbf24" }} />
           <p style={{ color: "#ffffff", fontWeight: 600, fontSize: 18, margin: 0 }}>Opening Stripe checkout…</p>

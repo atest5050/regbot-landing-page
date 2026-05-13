@@ -145,7 +145,7 @@ export default function UpgradePage() {
       <div className="px-6 pt-6 pb-5 text-center">
         <div className="inline-flex items-center gap-2 bg-amber-400/15 border border-amber-400/30 text-amber-300 text-xs font-bold px-3 py-1.5 rounded-full mb-4">
           <Crown className="h-3.5 w-3.5" />
-          $19 / month · Cancel anytime
+          $17.99 / month · Cancel anytime
         </div>
         <h1 className="text-2xl font-extrabold text-white leading-tight mb-2">
           Stay compliant.<br />Automatically.

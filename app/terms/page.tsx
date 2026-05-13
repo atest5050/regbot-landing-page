@@ -72,7 +72,7 @@ export default function TermsPage() {
         <h2>6. Fees and payment</h2>
         <p>
           Certain features of the Service require payment, including the $5 Form Completion fee
-          and the RegPulse Pro subscription ($19/month or $179/year). All payments are processed
+          and the RegPulse Pro subscription ($17.99/month or $179/year). All payments are processed
           by Stripe. By providing payment information you authorize us to charge the applicable
           fees. Fees are non-refundable except as required by law or as explicitly stated in
           our refund policy.

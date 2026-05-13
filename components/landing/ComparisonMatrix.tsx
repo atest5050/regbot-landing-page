@@ -55,7 +55,7 @@ const rows: {
   },
   {
     feature: "Price for ongoing use",
-    regbot: { text: "$19/mo", positive: "neutral" },
+    regbot: { text: "$17.99/mo", positive: "neutral" },
     legalzoom: "$79–$299+ per service",
     mycorporation: "High per filing",
     genericAi: "Free but unreliable",

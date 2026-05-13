@@ -49,7 +49,10 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { RegPulseIcon } from "@/components/RegPulseLogo";
 import { isCapacitorNative } from "@/lib/notifications";
+import { isIAPAvailable, purchaseProSubscription, restoreProPurchases } from "@/lib/iap";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const DARK_KEY  = "rp-dark-mode";
@@ -264,13 +267,42 @@ export default function SettingsPage() {
   };
   useEffect(() => {
     const sb = getSb();
-    sb.auth.getUser().then(({ data }) => {
-      setUser(data.user ?? null);
+
+    const { data: { subscription } } = sb.auth.onAuthStateChange((_event, session) => {
+      setUser(prev => {
+        const u = session?.user ?? null;
+        if (u !== null) return u;
+        if (prev !== null) return prev;
+        return null;
+      });
+      if (!session) setAuthLoading(false);
+    });
+
+    // On iOS, localStorage is cleared between launches so getSession() returns null.
+    // Try Keychain-backed token restore before falling back to "not signed in".
+    sb.auth.getSession().then(async ({ data }) => {
+      let u = data.session?.user ?? null;
+      if (!u && isCapacitorNative()) {
+        try {
+          const { retrieveStoredSession } = await import("@/lib/biometric");
+          const stored = await retrieveStoredSession();
+          if (stored?.refreshToken) {
+            const { data: restored } = await sb.auth.setSession({
+              access_token:  stored.accessToken || "",
+              refresh_token: stored.refreshToken,
+            });
+            u = restored.session?.user ?? null;
+          }
+        } catch { /* stored tokens invalid */ }
+      }
+      setUser(prev => {
+        if (u !== null) return u;
+        if (prev !== null) return prev;
+        return null;
+      });
       setAuthLoading(false);
     });
-    const { data: { subscription } } = sb.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
+
     return () => subscription.unsubscribe();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -332,14 +364,56 @@ export default function SettingsPage() {
     setStripeLoading(true);
     setStripeError(null);
     try {
-      const res  = await fetch("/api/stripe/create-checkout-session", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ userId: user.id }),
+      // Native iOS: use StoreKit 2 IAP (Apple policy requires this).
+      if (isIAPAvailable()) {
+        const sb = sbRef.current ?? createClient();
+        const { data: { session } } = await sb.auth.getSession();
+        const token = session?.access_token ?? "";
+        const result = await purchaseProSubscription(user.id, token);
+        if (result.cancelled) return;
+        if (result.pending) {
+          setStripeError("Purchase is pending approval. You'll be notified when it completes.");
+          return;
+        }
+        if (result.ok && result.isPro) {
+          router.push("/chat/?success=true");
+          return;
+        }
+        setStripeError(result.error ?? "Purchase failed. Please try again.");
+        return;
+      }
+      // Web: Stripe hosted checkout.
+      const sb = sbRef.current ?? createClient();
+      const { data: { session } } = await sb.auth.getSession();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (session?.access_token) headers["Authorization"] = `Bearer ${session.access_token}`;
+      const res  = await fetch(`${API_BASE}/api/stripe/create-checkout-session`, {
+        method: "POST", headers,
+        body:   JSON.stringify({ userId: user.id }),
       });
       const data = await res.json();
       if (!res.ok || !data.url) throw new Error(data.error ?? "Failed to start checkout");
       await openUrl(data.url);
+    } catch (err) {
+      setStripeError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setStripeLoading(false);
+    }
+  };
+
+  const handleRestorePurchases = async () => {
+    if (!user || !isIAPAvailable()) return;
+    setStripeLoading(true);
+    setStripeError(null);
+    try {
+      const sb = sbRef.current ?? createClient();
+      const { data: { session } } = await sb.auth.getSession();
+      const result = await restoreProPurchases(session?.access_token ?? "");
+      if (result.ok && result.isPro) {
+        router.push("/chat/?success=true");
+      } else {
+        setStripeError("No active subscription found for this Apple ID.");
+      }
     } catch (err) {
       setStripeError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -352,10 +426,19 @@ export default function SettingsPage() {
     setStripeLoading(true);
     setStripeError(null);
     try {
-      const res  = await fetch("/api/stripe/create-portal-session", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ userId: user.id }),
+      // On iOS, Apple requires directing users to the system subscription management screen.
+      if (isIAPAvailable()) {
+        await openUrl("itms-apps://apps.apple.com/account/subscriptions");
+        return;
+      }
+      // Web: Stripe billing portal.
+      const sb = sbRef.current ?? createClient();
+      const { data: { session } } = await sb.auth.getSession();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (session?.access_token) headers["Authorization"] = `Bearer ${session.access_token}`;
+      const res  = await fetch(`${API_BASE}/api/stripe/create-portal-session`, {
+        method: "POST", headers,
+        body:   JSON.stringify({ userId: user.id }),
       });
       const data = await res.json();
       if (!res.ok || !data.url) throw new Error(data.error ?? "Failed to open billing portal");
@@ -624,7 +707,7 @@ export default function SettingsPage() {
                         {stripeLoading
                           ? <Loader2 className="h-4 w-4 animate-spin" />
                           : <Crown className="h-4 w-4" />}
-                        {stripeLoading ? "Loading…" : "Upgrade to Pro · $14.99/mo"}
+                        {stripeLoading ? "Loading…" : "Upgrade to Pro · $17.99/mo"}
                       </button>
                       {!user && (
                         <p className="text-xs text-center text-slate-400 dark:text-slate-500">
@@ -642,28 +725,30 @@ export default function SettingsPage() {
                 </div>
               </SectionCard>
 
-              {/* Estimated time saved */}
-              <SectionCard title="Your Impact" icon={<Zap className="h-4 w-4" />}>
-                <div className="px-5 py-4">
-                  <div className="flex gap-3">
-                    <StatCard
-                      icon={<Clock className="h-4 w-4" />}
-                      label="Time saved"
-                      value={estimatedMinutes !== null ? formatTime(estimatedMinutes) : "—"}
-                      sub="vs. manual research"
-                    />
-                    <StatCard
-                      icon={<Receipt className="h-4 w-4" />}
-                      label="AI sessions"
-                      value={msgCount !== null ? String(msgCount) : "—"}
-                      sub="total conversations"
-                    />
+              {/* Estimated time saved — Pro only */}
+              {isPro && (
+                <SectionCard title="Your Impact" icon={<Zap className="h-4 w-4" />}>
+                  <div className="px-5 py-4">
+                    <div className="flex gap-3">
+                      <StatCard
+                        icon={<Clock className="h-4 w-4" />}
+                        label="Time saved"
+                        value={estimatedMinutes !== null ? formatTime(estimatedMinutes) : "—"}
+                        sub="vs. manual research"
+                      />
+                      <StatCard
+                        icon={<Receipt className="h-4 w-4" />}
+                        label="AI sessions"
+                        value={msgCount !== null ? String(msgCount) : "—"}
+                        sub="total conversations"
+                      />
+                    </div>
+                    <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
+                      Estimated at 3 minutes saved per AI interaction vs. manual regulatory research.
+                    </p>
                   </div>
-                  <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
-                    Estimated at 3 minutes saved per AI interaction vs. manual regulatory research.
-                  </p>
-                </div>
-              </SectionCard>
+                </SectionCard>
+              )}
 
               {/* Billing portal shortcuts */}
               <SectionCard title="Billing" icon={<CreditCard className="h-4 w-4" />}>

@@ -36,7 +36,7 @@ const plans = [
   },
   {
     name: "Pro",
-    price: "$19",
+    price: "$17.99",
     period: "/mo",
     tagline: "For growing small businesses",
     cta: "Join Waitlist – Start Pro",

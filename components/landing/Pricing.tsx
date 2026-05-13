@@ -1,10 +1,10 @@
 // Mobile responsiveness overhaul — vMobile
 // - Card padding reduced on mobile: p-8 → p-5 sm:p-8.
 // Changes summary:
-// - Pro price updated from $9/mo → $19/mo to match the in-app implementation.
+// - Pro price updated from $9/mo → $17.99/mo to match the in-app implementation.
 // - Business plan price updated from $29/mo → $39/mo to maintain tier separation.
 // - Pro tagline updated: "For serious side hustlers" → "For growing small businesses"
-//   to match the $19 price point and broader audience.
+//   to match the $17.99 price point and broader audience.
 // - Pro features list expanded to include renewal filing assistance, quarterly
 //   compliance PDF, and rule change alerts — matching the in-app Pro feature set.
 // - Annual pricing note added to Free plan and footer to surface the savings option.
@@ -35,7 +35,7 @@ const plans = [
   },
   {
     name: "Pro",
-    price: "$19",
+    price: "$17.99",
     period: "/mo",
     tagline: "For growing small businesses",
     cta: "Join Waitlist – Start Pro",
