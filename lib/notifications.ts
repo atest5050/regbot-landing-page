@@ -219,9 +219,20 @@
  */
 export function isCapacitorNative(): boolean {
   if (typeof window === 'undefined') return false;
-  // window.Capacitor is injected by the Capacitor runtime on native platforms.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return !!(window as any).Capacitor?.isNativePlatform?.();
+  const cap = (window as any).Capacitor;
+  if (!cap) return false;
+  // Capacitor.isNativePlatform() calls getPlatformId() which checks
+  // webkit.messageHandlers.bridge. This app registers the WKScriptMessageHandler
+  // as "regpulse" (not "bridge"), so getPlatformId() returns 'web' and
+  // isNativePlatform() returns false even on real iOS devices.
+  // Use a multi-signal check: isNativePlatform() first, then platform string,
+  // then webkit/android bridge presence as a final fallback.
+  if (typeof cap.isNativePlatform === 'function' && cap.isNativePlatform()) return true;
+  if (typeof cap.getPlatform === 'function' && cap.getPlatform() !== 'web') return true;
+  if (typeof cap.platform === 'string' && cap.platform !== 'web') return true;
+  // If Capacitor is injected and either native bridge is present, we're native.
+  return !!(window as any).webkit?.messageHandlers || !!(window as any).AndroidBridge;
 }
 
 // ── v56: Native Capacitor LocalNotifications dispatch ─────────────────────────
@@ -329,6 +340,8 @@ export interface NotifOptions {
  * Get the current notification permission without prompting the user.
  * Returns "unsupported" when the Notification API is unavailable
  * (e.g. non-secure context, very old browser, restrictive WebView).
+ * On native (iOS/Android) this reads the web Notification API — use
+ * checkNativeNotifPermission() for the authoritative Capacitor state.
  */
 export function getNotifPermission(): NotificationPermission | "unsupported" {
   if (typeof Notification === "undefined") return "unsupported";
@@ -336,16 +349,62 @@ export function getNotifPermission(): NotificationPermission | "unsupported" {
 }
 
 /**
- * Request notification permission. Shows the browser prompt if permission is "default".
- * Returns the resulting permission state, or "unsupported" if Notification API is absent.
- * Never throws — all errors are caught and returned as "denied".
+ * Async permission check that reads the authoritative Capacitor
+ * LocalNotifications state on native and falls back to the Web
+ * Notification API on desktop/PWA. Use this on mount to seed the
+ * pushPermission state on iOS where Notification.permission is unreliable.
+ *
+ * Capacitor display values → Web NotificationPermission mapping:
+ *   "granted"               → "granted"
+ *   "denied"                → "denied"
+ *   "prompt" | "prompt-with-rationale" → "default"
+ */
+export async function checkNativeNotifPermission(): Promise<NotificationPermission | "unsupported"> {
+  if (isCapacitorNative()) {
+    try {
+      // @ts-ignore
+      const { LocalNotifications } = await import(/* webpackIgnore: true */ '@capacitor/local-notifications') as {
+        LocalNotifications: { checkPermissions: () => Promise<{ display: string }> };
+      };
+      const { display } = await LocalNotifications.checkPermissions();
+      if (display === "granted") return "granted";
+      if (display === "denied")  return "denied";
+      return "default";
+    } catch {
+      return "default";
+    }
+  }
+  if (typeof Notification === "undefined") return "unsupported";
+  return Notification.permission;
+}
+
+/**
+ * Request notification permission.
+ * On native (iOS/Android): calls LocalNotifications.requestPermissions() which
+ * triggers the real iOS/Android system dialog. Can only fire once per app install
+ * on iOS — call after showing an in-app pre-prompt explaining the value.
+ * On web: calls Notification.requestPermission() (browser prompt).
+ * Returns the resulting permission state. Never throws.
  */
 export async function requestNotifPermission(): Promise<NotificationPermission | "unsupported"> {
+  if (isCapacitorNative()) {
+    try {
+      // @ts-ignore
+      const { LocalNotifications } = await import(/* webpackIgnore: true */ '@capacitor/local-notifications') as {
+        LocalNotifications: { requestPermissions: () => Promise<{ display: string }> };
+      };
+      const { display } = await LocalNotifications.requestPermissions();
+      if (display === "granted") return "granted";
+      if (display === "denied")  return "denied";
+      return "default";
+    } catch {
+      return "denied";
+    }
+  }
   if (typeof Notification === "undefined") return "unsupported";
   try {
     return await Notification.requestPermission();
   } catch {
-    // requestPermission() can throw in restricted contexts (cross-origin iframes, etc.)
     return "denied";
   }
 }

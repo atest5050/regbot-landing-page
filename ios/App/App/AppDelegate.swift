@@ -48,7 +48,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, WKNavigationDelegate {
 
         bridgedWebView = webView
 
-        let handler = RegPulseMessageHandler()
+        let handler = RegPulseMessageHandler(appDelegate: self)
         regPulseHandler = handler
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "regpulse")
         webView.configuration.userContentController.add(handler, name: "regpulse")

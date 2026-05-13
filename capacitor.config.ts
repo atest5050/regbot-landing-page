@@ -244,7 +244,17 @@ const config: CapacitorConfig = {
   //   3. OnboardingFlow.tsx (z-[300]) — Free/Pro/Business tier selection for new users.
   //
   // PDF delivery uses triggerPdfDownload() (web browser download) on all platforms.
-  plugins: {},
+  //
+  // CapacitorHttp.enabled patches window.fetch and XMLHttpRequest on native to use
+  // native URLSession (app process). This bypasses the WKWebView XPC sandbox restriction
+  // where the WebContent process loses its XPC connection to containermanagerd, causing all
+  // fetch/XHR (Supabase uploads, auth, data reads) to fail silently after 6 retry attempts.
+  // No separate plugin install needed — CapacitorHttp is built into @capacitor/core.
+  plugins: {
+    CapacitorHttp: {
+      enabled: true,
+    },
+  },
 
   // ── iOS-specific overrides ───────────────────────────────────────────────────
   ios: {
