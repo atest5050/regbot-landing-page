@@ -2277,7 +2277,7 @@ export default function ChatPage() {
   const [docAnalysisResult, setDocAnalysisResult]   = useState<AnalysisResult | null>(null);
   const [showDocUploadPanel, setShowDocUploadPanel] = useState(false);
   // Photo compliance scan
-  const [photoComplianceResult, setPhotoComplianceResult] = useState<import("@/app/api/photo-compliance/route").PhotoComplianceResult | null>(null);
+  const [photoComplianceResult, setPhotoComplianceResult] = useState<import("@/app/api/photo-compliance/types").PhotoComplianceResult | null>(null);
   const [photoComplianceLoading, setPhotoComplianceLoading] = useState(false);
   const photoCameraInputRef = useRef<HTMLInputElement | null>(null);
   // AI Pre-Inspection Coach
@@ -5579,7 +5579,7 @@ export default function ChatPage() {
       const photoHeaders: Record<string, string> = {};
       if (photoSession?.access_token) photoHeaders["Authorization"] = `Bearer ${photoSession.access_token}`;
       const res = await fetch(`${API_BASE}/api/photo-compliance`, { method: "POST", body: fd, headers: photoHeaders });
-      const data = await res.json() as import("@/app/api/photo-compliance/route").PhotoComplianceResult;
+      const data = await res.json() as import("@/app/api/photo-compliance/types").PhotoComplianceResult;
       if (data.ok) setPhotoComplianceResult(data);
       else console.error("[photo-compliance]", data.error);
     } catch (err) {

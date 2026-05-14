@@ -16,21 +16,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { verifyPro } from "@/lib/supabase/verify-pro";
-
-export interface ComplianceFinding {
-  severity: "critical" | "warning" | "info" | "pass";
-  category: string;
-  description: string;
-  action?: string;
-}
-
-export interface PhotoComplianceResult {
-  ok: boolean;
-  overallStatus: "compliant" | "issues-found" | "error";
-  summary: string;
-  findings: ComplianceFinding[];
-  error?: string;
-}
+import type { ComplianceFinding, PhotoComplianceResult } from "./types";
+export type { ComplianceFinding, PhotoComplianceResult } from "./types";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
