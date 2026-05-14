@@ -6,7 +6,8 @@
 // Product IDs must be created in App Store Connect under the same bundle ID
 // (com.regpulse.app) before they can be purchased.
 
-import { registerPlugin, Capacitor } from '@capacitor/core';
+import { registerPlugin } from '@capacitor/core';
+import { isCapacitorNative } from '@/lib/notifications';
 
 // ── Plugin interface ──────────────────────────────────────────────────────────
 
@@ -70,7 +71,11 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
 
 /** True only on native iOS — the only platform where StoreKit is available. */
 export function isIAPAvailable(): boolean {
-  return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
+  if (!isCapacitorNative()) return false;
+  if (typeof window === 'undefined') return false;
+  const cap = (window as any).Capacitor;
+  const platform = cap?.getPlatform?.() ?? cap?.platform ?? '';
+  return platform === 'ios' || !!(window as any).webkit?.messageHandlers;
 }
 
 /**
