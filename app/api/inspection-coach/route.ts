@@ -16,29 +16,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { verifyPro } from "@/lib/supabase/verify-pro";
-
-export interface InspectionQuestion {
-  id: string;
-  text: string;
-  category: string;
-  weight: "critical" | "major" | "minor";
-}
-
-export interface InspectionRiskItem {
-  severity: "critical" | "warning" | "pass";
-  area: string;
-  issue: string;
-  recommendation: string;
-}
-
-export interface InspectionReport {
-  score: number;
-  grade: "A" | "B" | "C" | "D" | "F";
-  summary: string;
-  readyToPass: boolean;
-  risks: InspectionRiskItem[];
-  topPriorities: string[];
-}
+import type { InspectionQuestion, InspectionRiskItem, InspectionReport } from "./types";
+export type { InspectionQuestion, InspectionRiskItem, InspectionReport } from "./types";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",

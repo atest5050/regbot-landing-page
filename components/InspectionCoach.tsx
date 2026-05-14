@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { ClipboardList, ChevronRight, X, Loader2, CheckCircle2, AlertCircle, Shield } from "lucide-react";
-import type { InspectionQuestion, InspectionReport } from "@/app/api/inspection-coach/route";
+import type { InspectionQuestion, InspectionReport } from "@/app/api/inspection-coach/types";
 import { createClient } from "@/lib/supabase/client";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
