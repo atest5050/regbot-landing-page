@@ -10,6 +10,8 @@ export interface RenewalEmailData {
   renewUrl: string;
   /** User's first name or email fallback */
   recipientName: string;
+  /** AI-generated action plan: 2-3 bullet strings of what to do before renewal */
+  actionPlan?: string[];
 }
 
 /** Format YYYY-MM-DD as "January 15, 2026" */
@@ -175,6 +177,30 @@ export function buildRenewalEmail(data: RenewalEmailData): { subject: string; ht
                   </td>
                 </tr>
 
+                <!-- AI Action Plan (shown when available) -->
+                ${data.actionPlan && data.actionPlan.length > 0 ? `
+                <tr>
+                  <td style="padding-bottom:24px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                      style="background:#F0FDF4;border:1px solid #86EFAC;border-radius:10px;padding:16px 18px;">
+                      <tr>
+                        <td>
+                          <p style="margin:0 0 10px;font-size:12px;font-weight:700;color:#14532D;text-transform:uppercase;letter-spacing:0.05em;">
+                            ✅ What to prepare before renewing
+                          </p>
+                          ${data.actionPlan.map(step => `
+                          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:8px;">
+                            <tr>
+                              <td style="vertical-align:top;padding-right:8px;font-size:13px;color:#15803D;">›</td>
+                              <td style="font-size:13px;color:#166534;line-height:1.5;">${step}</td>
+                            </tr>
+                          </table>`).join("")}
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>` : ""}
+
                 <!-- CTA Button -->
                 <tr>
                   <td style="padding-bottom:28px;text-align:center;">
@@ -257,6 +283,10 @@ export function buildRenewalEmail(data: RenewalEmailData): { subject: string; ht
     `Business:   ${businessName}`,
     `Permit:     ${formName}`,
     `Due date:   ${formattedDate}`,
+    ...(data.actionPlan && data.actionPlan.length > 0
+      ? [``, `What to prepare before renewing:`, ...data.actionPlan.map(s => `  › ${s}`)]
+      : []
+    ),
     ``,
     `Renew now: ${renewUrl}`,
     ``,

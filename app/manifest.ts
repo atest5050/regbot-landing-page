@@ -43,16 +43,10 @@ export default function manifest(): MetadataRoute.Manifest {
     // takes priority on web. Native apps are listed as related but not preferred over the PWA.
     prefer_related_applications: false,
 
-    // vUnified-20260414-national-expansion-v19: related_applications — fill in store IDs after
-    // first submission. Leave as stubs until Apple/Google assigns IDs.
-    // iOS App Store ID format: id + numeric ID from App Store Connect.
-    // Android Play Store ID: applicationId from build.gradle.
+    // related_applications: fill in after App Store/Play Store submission is approved.
+    // iOS App Store ID: obtain from App Store Connect after first submission.
+    // Android Play Store ID: applicationId from build.gradle (com.regpulse.app).
     related_applications: [
-      {
-        platform: 'itunes',
-        url: 'https://apps.apple.com/app/regpulse/id000000000',
-        id: 'com.regpulse.app',
-      },
       {
         platform: 'play',
         url: 'https://play.google.com/store/apps/details?id=com.regpulse.app',

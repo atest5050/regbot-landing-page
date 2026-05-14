@@ -260,6 +260,42 @@ Deno.serve(async (req: Request) => {
         const formName = item.text.replace(/\[.*?\]\(.*?\)/g, "$1").replace(/\s+/g, " ").trim();
         const renewUrl = `${appUrl}/chat?business=${encodeURIComponent(biz.id)}&form=${encodeURIComponent(item.formId ?? "")}&action=renew`;
 
+        // Generate AI action plan for urgent milestones (≤7 days). Non-fatal.
+        let actionPlan: string[] | undefined;
+        const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
+        if (anthropicKey && daysLeft <= 7) {
+          try {
+            const aiResp = await fetch("https://api.anthropic.com/v1/messages", {
+              method: "POST",
+              headers: {
+                "x-api-key": anthropicKey,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+              },
+              body: JSON.stringify({
+                model: "claude-haiku-4-5-20251001",
+                max_tokens: 200,
+                messages: [{
+                  role: "user",
+                  content: `List exactly 3 concise bullet points (no bullet symbols, just text) of what a small business owner must prepare or do before renewing this compliance item. Be specific and practical. One line per bullet, no headers.
+
+Business: ${biz.name}
+Location: ${biz.location ?? "unknown"}
+Permit/license: ${formName}
+Due in: ${daysLeft} day${daysLeft !== 1 ? "s" : ""}`,
+                }],
+              }),
+            });
+            if (aiResp.ok) {
+              const aiData = await aiResp.json() as { content?: Array<{ text?: string }> };
+              const aiText = aiData.content?.[0]?.text?.trim();
+              if (aiText) {
+                actionPlan = aiText.split("\n").map(s => s.trim()).filter(s => s.length > 0).slice(0, 3);
+              }
+            }
+          } catch { /* non-fatal */ }
+        }
+
         const emailData = {
           businessName: biz.name,
           formName,
@@ -267,6 +303,7 @@ Deno.serve(async (req: Request) => {
           daysLeft,
           renewUrl,
           recipientName: nameMap.get(biz.user_id) ?? userEmail,
+          actionPlan,
         };
 
         // ── Email channel ────────────────────────────────────────────────────

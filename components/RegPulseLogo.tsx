@@ -127,24 +127,17 @@ function Defs({ ekgFilterId, sw }: DefsProps) {
       </filter>
 
       {/* ── EKG neon glow — unique ID per stroke-weight bucket ──────────────
-          filterUnits="userSpaceOnUse" with full-viewBox bounds (0 0 100 110)
-          ensures the corona is NEVER clipped regardless of render size.
-          stdDeviation values scale with sw so:
-            small icons → tight, crisp glow
-            large icons → dramatic corona                                      */}
+          Glow-only filter: applied to the blurry glow layer only.
+          The crisp line is rendered unfiltered on top for sharpness.        */}
       <filter id={ekgFilterId}
-        x="0" y="0" width="100" height="110"
+        x="-8" y="-20" width="116" height="140"
         filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
-        {/* Wide corona */}
-        <feGaussianBlur in="SourceGraphic" stdDeviation={wideSD} result="wide" />
-        <feColorMatrix in="wide" type="matrix"
+        <feGaussianBlur in="SourceGraphic" stdDeviation={wideSD} result="blur" />
+        <feColorMatrix in="blur" type="matrix"
           values={`0 0 0 0 0.04  0 0 0 0 0.82  0 0 0 0 0.88  0 0 0 ${coronaOp} 0`}
-          result="corona" />
-        {/* Tight inner glow */}
-        <feGaussianBlur in="SourceGraphic" stdDeviation={tightSD} result="tight" />
+          result="glow" />
         <feMerge>
-          <feMergeNode in="corona" />
-          <feMergeNode in="tight" />
+          <feMergeNode in="glow" />
           <feMergeNode in="SourceGraphic" />
         </feMerge>
       </filter>
@@ -179,24 +172,33 @@ interface EkgPathProps {
 }
 
 function EkgPath({ ekgFilterId, sw }: EkgPathProps) {
+  // Two-layer approach: glow layer (filtered, wider) + crisp layer (no filter).
+  // Applying filter to the crisp line rasterizes it in WKWebView → blur.
+  // The glow layer provides the neon corona; the crisp layer stays sharp.
+  const ekgD = "M30 57 L38 57 L41 63 L45 40 L51 74 L55 57 L70 57";
   return (
-    <path
-      // Symmetric EKG centered at (x≈48, y=57):
-      //   M30 57  flat left entry
-      //   L38 57  → baseline
-      //   L41 63  P-Q dip (6↓, subtle)
-      //   L45 40  QRS peak (17↑ above y=57)
-      //   L51 74  S-wave trough (17↓ below y=57) ← equal amplitude
-      //   L55 57  return to baseline
-      //   L70 57  flat right tail
-      d="M30 57 L38 57 L41 63 L45 40 L51 74 L55 57 L70 57"
-      fill="none"
-      stroke="#22d3ee"
-      strokeWidth={sw}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      filter={`url(#${ekgFilterId})`}
-    />
+    <>
+      {/* Glow layer — blurry neon corona, no crisp edge needed */}
+      <path
+        d={ekgD}
+        fill="none"
+        stroke="#22d3ee"
+        strokeWidth={+(sw * 0.85).toFixed(1)}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        filter={`url(#${ekgFilterId})`}
+        opacity={0.9}
+      />
+      {/* Crisp layer — thin, sharp, no filter */}
+      <path
+        d={ekgD}
+        fill="none"
+        stroke="#7dd3fc"
+        strokeWidth={+(sw * 0.32).toFixed(1)}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </>
   );
 }
 

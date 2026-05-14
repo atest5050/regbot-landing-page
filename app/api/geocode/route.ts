@@ -34,10 +34,33 @@ export async function GET(request: NextRequest) {
       return Response.json({ error: 'No location data for this ZIP' }, { status: 404, headers: CORS });
     }
 
+    const lat = place.latitude as string | undefined;
+    const lon = place.longitude as string | undefined;
+
+    let county: string | null = null;
+
+    if (lat && lon) {
+      try {
+        const nomRes = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=10`,
+          { headers: { 'User-Agent': 'RegPulse/1.0 (atestani56@gmail.com)', 'Accept-Language': 'en' } }
+        );
+        if (nomRes.ok) {
+          const nomData = await nomRes.json() as { address?: { county?: string; state_district?: string } };
+          const raw = nomData.address?.county ?? nomData.address?.state_district ?? null;
+          // Strip common suffixes like " County", " Parish", " Borough", " Census Area"
+          county = raw ? raw.replace(/\s+(County|Parish|Borough|Census Area|Municipality)$/i, '').trim() : null;
+        }
+      } catch {
+        // County is optional — silently skip on Nominatim failure
+      }
+    }
+
     return Response.json({
       city: place['place name'],
       state: place['state'],
       stateAbbr: place['state abbreviation'],
+      county,
       zip,
       formatted: `${place['place name']}, ${place['state abbreviation']} ${zip}`,
     }, { headers: CORS });

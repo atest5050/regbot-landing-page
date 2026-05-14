@@ -267,6 +267,49 @@ export default function DocumentAnalysisCard({
         )}
       </div>
 
+      {/* ── Compliance Intelligence — risk flags + conditions ──────────────── */}
+      {((analysis.riskFlags?.length ?? 0) > 0 || (analysis.conditions?.length ?? 0) > 0) && (
+        <div className="px-4 py-3 border-b border-slate-100 space-y-2">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Compliance Intelligence</p>
+
+          {analysis.riskFlags?.map((flag, i) => {
+            const cfg =
+              flag.severity === "critical"
+                ? { bg: "bg-red-50",    border: "border-red-200",    icon: "text-red-500",    heading: "text-red-700"    }
+                : flag.severity === "warning"
+                ? { bg: "bg-amber-50",  border: "border-amber-200",  icon: "text-amber-500",  heading: "text-amber-700"  }
+                : { bg: "bg-blue-50",   border: "border-blue-200",   icon: "text-blue-500",   heading: "text-blue-700"   };
+            return (
+              <div key={i} className={`rounded-lg p-2.5 border ${cfg.bg} ${cfg.border}`}>
+                <div className="flex items-start gap-1.5">
+                  <AlertCircle className={`h-3.5 w-3.5 shrink-0 mt-0.5 ${cfg.icon}`} />
+                  <div>
+                    <p className={`text-[11px] font-semibold leading-snug ${cfg.heading}`}>{flag.message}</p>
+                    {flag.action && (
+                      <p className="text-[10px] text-slate-600 mt-0.5 leading-snug">{flag.action}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+          {(analysis.conditions?.length ?? 0) > 0 && (
+            <div className="rounded-lg bg-slate-50 border border-slate-200 p-2.5">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Operating Conditions</p>
+              <ul className="space-y-1">
+                {analysis.conditions!.map((c, i) => (
+                  <li key={i} className="flex items-start gap-1.5">
+                    <span className="text-slate-400 text-[11px] mt-px">•</span>
+                    <p className="text-[11px] text-slate-600 leading-snug">{c}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ── Summary ────────────────────────────────────────────────────────── */}
       <div className="px-4 py-3 border-b border-slate-100">
         <p className="text-xs text-slate-600 leading-relaxed">{analysis.summary}</p>

@@ -280,13 +280,16 @@
 
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { createClient } from "@/lib/supabase/client";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   ChevronRight, ChevronLeft, CheckCircle, X,
   FileText, ExternalLink, CreditCard, Loader2, Lock, Download,
-  AlertCircle, Sparkles,
+  AlertCircle, Sparkles, HelpCircle,
 } from "lucide-react";
 import type { FormTemplate, FormField } from "@/lib/formTemplates";
 import { LOCAL_FORMS } from "@/lib/formTemplates"; // vUnified-20260414-national-expansion-v4: county-aware URL resolution
@@ -303,12 +306,24 @@ interface ExtractedPdfField {
 // ── Business profile hint — lightweight shape for auto-fill ───────────────────
 export interface BusinessProfileHint {
   name?: string;
+  /** Full location string e.g. "Miami, FL 33101" */
   location?: string;
+  /** Parsed street address component */
+  streetAddress?: string;
+  /** Parsed city component */
+  city?: string;
+  /** Parsed 2-letter state abbreviation */
+  state?: string;
+  /** Parsed ZIP code */
+  zip?: string;
   businessType?: string;
+  /** LLC, Corporation, Sole Proprietor, Partnership, etc. */
+  entityType?: string;
   ownerName?: string;
   ein?: string;
   phone?: string;
   email?: string;
+  website?: string;
   /** vUnified-20260414-national-expansion-v4: detected county for county-aware URL resolution */
   county?: string;
 }
@@ -450,6 +465,58 @@ const PROFILE_FIELD_MAP: Record<string, keyof BusinessProfileHint> = {
   // v77 — additional mappings for new form types
   marketAddress:    'location',  // farmers market vendor — seed market address from business location as hint
   trainingSchool:   'name',      // hair braiding — school name seeds from business name as hint
+
+  // ── snake_case variants (new cannabis / professional / financial templates) ──
+  business_legal_name:    'name',
+  owner_name:             'ownerName',
+  primary_owner_name:     'ownerName',
+  premises_address:       'location',
+  facility_address:       'location',
+  cultivation_site_address: 'location',
+  dispensary_address:     'location',
+  practice_address:       'location',
+  clinic_address:         'location',
+
+  // ── City / state / ZIP components ─────────────────────────────────────────
+  businessCity:           'city',
+  business_city:          'city',
+  cityName:               'city',
+  city:                   'city',
+  businessState:          'state',
+  business_state:         'state',
+  stateOfOperation:       'state',
+  licenseState:           'state',
+  businessZip:            'zip',
+  business_zip:           'zip',
+  zipCode:                'zip',
+  postalCode:             'zip',
+  streetAddress:          'streetAddress',
+  business_street:        'streetAddress',
+
+  // ── Entity type ────────────────────────────────────────────────────────────
+  entityType:             'entityType',
+  entity_type:            'entityType',
+  businessStructure:      'entityType',
+  business_structure:     'entityType',
+  organizationType:       'entityType',
+  legalStructure:         'entityType',
+
+  // ── Website ───────────────────────────────────────────────────────────────
+  businessWebsite:        'website',
+  business_website:       'website',
+  websiteUrl:             'website',
+  website:                'website',
+
+  // ── Additional name variants ───────────────────────────────────────────────
+  dbaName:                'name',
+  tradeName:              'name',
+  doingBusinessAs:        'name',
+  facilityName:           'name',
+  clinicName:             'name',
+  practiceName:           'name',
+  dispensaryName:         'name',
+  cultivationSiteName:    'name',
+  pharmacyName:           'name',
 };
 
 // ── vUnified-20260414-national-expansion-v8 — AcroForm field name → profile key ─
@@ -1754,6 +1821,24 @@ function isSbaFallback(url: string | undefined): boolean {
   return !url || url.startsWith("https://www.sba.gov");
 }
 
+// ── iOS native external URL opener ───────────────────────────────────────────
+// WKWebView blocks target="_blank" anchors. Use Browser.open (SFSafariViewController)
+// when running as a Capacitor native app.
+function openExternalUrl(url: string) {
+  const cap = typeof window !== "undefined"
+    ? (window as unknown as Record<string, unknown>).Capacitor as Record<string, unknown> | undefined
+    : undefined;
+  const isNativePlatform = cap?.isNativePlatform;
+  const isNative = !!(cap && typeof isNativePlatform === "function" && (isNativePlatform as () => boolean)());
+  if (isNative) {
+    import("@capacitor/browser")
+      .then(({ Browser }) => Browser.open({ url, presentationStyle: "fullscreen" }))
+      .catch(() => window.open(url, "_blank"));
+  } else {
+    window.open(url, "_blank");
+  }
+}
+
 // ── vUnified-20260414-national-expansion-v4: County-aware portal URL resolution ─
 // Looks up the best available officialUrl for a form/template from LOCAL_FORMS,
 // preferring a county-specific countyUrls entry when the user's county is known.
@@ -1965,6 +2050,14 @@ export default function FormFiller({
     }
   }, [formData]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const getAuthHeader = useCallback(async (): Promise<Record<string, string>> => {
+    try {
+      const { data: { session } } = await createClient().auth.getSession();
+      if (session?.access_token) return { Authorization: `Bearer ${session.access_token}` };
+    } catch (_) {}
+    return {};
+  }, []);
+
   // ── PDF extraction ────────────────────────────────────────────────────────
   // vUnified-20260414-national-expansion-v13: uses quickFillExtractCache when available so
   // "Start Guided Flow" from no_seeds state skips the network round-trip entirely.
@@ -1980,9 +2073,10 @@ export default function FormFiller({
     }
     setPhase("pdf-loading");
     try {
-      const res = await fetch("/api/form/extract", {
+      const authHeader = await getAuthHeader();
+      const res = await fetch(`${API_BASE}/api/form/extract`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({ pdfUrl: template.officialFormPdfUrl }),
       });
       if (!res.ok) throw new Error(`Extract API returned ${res.status}`);
@@ -2010,6 +2104,32 @@ export default function FormFiller({
     }
   };
 
+  // ── Explain button — AI plain-English explanation of this form ────────────
+  const [explainText,    setExplainText]    = useState<string | null>(null);
+  const [explainLoading, setExplainLoading] = useState(false);
+
+  const handleExplain = async () => {
+    if (explainText || explainLoading) return;
+    setExplainLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/checklist/explain`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text:         template.name + (template.description ? ": " + template.description : ""),
+          businessType: businessProfile?.businessType,
+          state:        businessProfile?.state,
+        }),
+      });
+      const data = await res.json() as { explanation?: string };
+      setExplainText(data.explanation ?? "No explanation available.");
+    } catch {
+      setExplainText("Could not load explanation. Please try again.");
+    } finally {
+      setExplainLoading(false);
+    }
+  };
+
   // ── vUnified-20260414-national-expansion-v8: Quick pre-fill download with retry ──
   // Adds automatic retry (up to 3 total attempts) for transient network errors.
   // no_acroform and no_seeds are intentional terminal states, never retried.
@@ -2024,9 +2144,10 @@ export default function FormFiller({
     setQuickFillTotalFields(0);
     try {
       // 1. Fetch and extract AcroForm fields from the official PDF
-      const extractRes = await fetch('/api/form/extract', {
+      const authHeader = await getAuthHeader();
+      const extractRes = await fetch(`${API_BASE}/api/form/extract`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeader },
         body: JSON.stringify({ pdfUrl: template.officialFormPdfUrl }),
         signal: AbortSignal.timeout(20_000),
       });
@@ -2060,9 +2181,9 @@ export default function FormFiller({
       setQuickFillStep('filling');
 
       // 3. Fill the PDF with seeded values via /api/form/fill
-      const fillRes = await fetch('/api/form/fill', {
+      const fillRes = await fetch(`${API_BASE}/api/form/fill`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeader },
         body: JSON.stringify({ pdfBase64: extractData.pdfBase64, fieldValues: seeded }),
         signal: AbortSignal.timeout(20_000),
       });
@@ -2163,9 +2284,10 @@ export default function FormFiller({
     // 1. Try native AcroForm fill (only available after extract succeeded)
     if (pdfBase64) {
       try {
-        const res = await fetch("/api/form/fill", {
+        const authHeader = await getAuthHeader();
+        const res = await fetch(`${API_BASE}/api/form/fill`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...authHeader },
           body: JSON.stringify({ pdfBase64, fieldValues: formData }),
         });
         if (res.ok) {
@@ -2339,7 +2461,7 @@ export default function FormFiller({
             </div>
           )}
 
-          <p className="text-sm text-slate-600 dark:text-slate-300 mb-4 break-words">{template.description}</p>
+          <p className="text-sm text-slate-600 dark:text-slate-300 mb-3 break-words">{template.description}</p>
 
           <div className={`grid gap-2 mb-4 ${skipPayment ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3"}`}>
             <div className="bg-slate-50 dark:bg-[#131e2f] rounded-lg p-3">
@@ -2587,17 +2709,46 @@ export default function FormFiller({
             </div>
           )}
 
+          {/* Explain button — placed just above action buttons so it's visible when user scrolls to Start */}
+          <div className="mb-3">
+            {!explainText && !explainLoading && (
+              <button
+                onClick={handleExplain}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-[#0B1E3F] dark:text-blue-300 bg-[#0B1E3F]/6 dark:bg-blue-900/20 border border-[#0B1E3F]/15 dark:border-blue-700/40 rounded-lg px-3 py-1.5 hover:bg-[#0B1E3F]/10 dark:hover:bg-blue-900/30 transition-colors w-full justify-center min-h-[44px]"
+                style={{ touchAction: "manipulation" }}
+              >
+                <HelpCircle className="h-3.5 w-3.5 shrink-0" />
+                Explain this form in plain English
+              </button>
+            )}
+            {explainLoading && (
+              <div className="flex items-center justify-center gap-2 text-xs text-slate-400 dark:text-slate-500 min-h-[44px]">
+                <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+                Getting plain-English explanation…
+              </div>
+            )}
+            {explainText && (
+              <div className="rounded-xl border border-[#0B1E3F]/15 dark:border-blue-700/40 bg-[#0B1E3F]/4 dark:bg-blue-900/15 px-3 py-2.5">
+                <div className="flex items-start gap-2">
+                  <HelpCircle className="h-3.5 w-3.5 text-[#0B1E3F] dark:text-blue-300 shrink-0 mt-0.5" />
+                  <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{explainText}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* vUnified-20260414-national-expansion-v9: zero-field stub (LOCAL_FORMS adapter) shows
               portal CTA instead of "Start — 0 Questions". Quick-fill button remains when
               officialFormPdfUrl is present; otherwise primary CTA goes directly to officialUrl. */}
           {questionCount === 0 ? (
             <div className="flex gap-2 flex-wrap">
               {portalUrl ? (
-                <Button className="flex-1 bg-[#0B1E3F] hover:bg-[#0B1E3F]/90 min-h-[48px]" asChild>
-                  <a href={portalUrl} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-4 w-4 mr-1" />
-                    Visit Official Portal
-                  </a>
+                <Button
+                  className="flex-1 bg-[#0B1E3F] hover:bg-[#0B1E3F]/90 min-h-[48px]"
+                  onClick={() => openExternalUrl(portalUrl)}
+                >
+                  <ExternalLink className="h-4 w-4 mr-1" />
+                  Visit Official Portal
                 </Button>
               ) : (
                 <Button className="flex-1 bg-[#0B1E3F] hover:bg-[#0B1E3F]/90 min-h-[48px]" disabled>
@@ -2615,16 +2766,17 @@ export default function FormFiller({
               )}
             </div>
           ) : (
-          <div className="flex gap-2">
+          <div className="space-y-2">
             <Button
-              className="flex-1 bg-[#0B1E3F] hover:bg-[#0B1E3F]/90 min-h-[48px]"
+              className="w-full bg-[#0B1E3F] hover:bg-[#0B1E3F]/90 min-h-[48px]"
               onClick={template.officialFormPdfUrl ? tryExtractPdf : () => setPhase("filling")}
             >
               Start — {questionCount} Questions
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
+            <div className="flex gap-2">
             {template.officialFormPdfUrl && (
-              <Button variant="outline" size="sm" asChild className="min-h-[48px]">
+              <Button variant="outline" size="sm" asChild className="flex-1 min-h-[44px]">
                 <a href={template.officialFormPdfUrl} target="_blank" rel="noopener noreferrer">
                   <Download className="h-4 w-4 mr-1" />
                   Blank Form
@@ -2632,24 +2784,28 @@ export default function FormFiller({
               </Button>
             )}
             {portalUrl ? (
-              <Button variant="outline" size="sm" asChild className="min-h-[48px]">
-                <a href={portalUrl} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4 mr-1" />
-                  Official Site
-                </a>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 min-h-[44px]"
+                onClick={() => openExternalUrl(portalUrl)}
+              >
+                <ExternalLink className="h-4 w-4 mr-1" />
+                Official Site
               </Button>
             ) : (
               <Button
                 variant="outline"
                 size="sm"
                 disabled
-                className="min-h-[48px]"
+                className="flex-1 min-h-[44px]"
                 title="Check with your local county/city office — filing location varies by jurisdiction"
               >
                 <ExternalLink className="h-4 w-4 mr-1" />
                 Find Local Office
               </Button>
             )}
+            </div>
           </div>
           )}
         </div>
@@ -2732,15 +2888,14 @@ export default function FormFiller({
             {portalUrl && (
               <div className="mt-3 pt-3 border-t border-amber-300">
                 <p className="text-xs font-semibold text-amber-800 mb-1">Official submission link:</p>
-                <a
-                  href={portalUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-300 underline underline-offset-2 break-all"
+                <button
+                  onClick={() => openExternalUrl(portalUrl!)}
+                  className="flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-300 underline underline-offset-2 break-all text-left"
+                  style={{ touchAction: "manipulation" }}
                 >
                   <ExternalLink className="h-3.5 w-3.5 shrink-0" />
                   {portalUrl}
-                </a>
+                </button>
               </div>
             )}
           </div>
@@ -3049,15 +3204,14 @@ export default function FormFiller({
           </div>
 
           {portalUrl ? (
-            <a
-              href={portalUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-1.5 text-xs font-medium text-[#0B1E3F] dark:text-blue-300 bg-[#0B1E3F]/5 dark:bg-blue-900/20 hover:bg-[#0B1E3F]/10 dark:hover:bg-blue-900/30 border border-[#0B1E3F]/15 dark:border-blue-800/30 rounded-lg py-2 mb-4 transition-colors"
+            <button
+              onClick={() => openExternalUrl(portalUrl)}
+              className="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-[#0B1E3F] dark:text-blue-300 bg-[#0B1E3F]/5 dark:bg-blue-900/20 hover:bg-[#0B1E3F]/10 dark:hover:bg-blue-900/30 border border-[#0B1E3F]/15 dark:border-blue-800/30 rounded-lg py-2 mb-4 transition-colors min-h-[44px]"
+              style={{ touchAction: "manipulation" }}
             >
               <ExternalLink className="h-3.5 w-3.5 shrink-0" />
               Open Official Submission Portal
-            </a>
+            </button>
           ) : (
             <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-[#131e2f] border border-slate-200 dark:border-slate-700/50 rounded-lg py-2 mb-4">
               <ExternalLink className="h-3.5 w-3.5 shrink-0" />

@@ -1567,6 +1567,66 @@ export async function POST(req: NextRequest) {
     (id): id is typeof KNOWN_FORM_IDS[number] => (KNOWN_FORM_IDS as readonly string[]).includes(id),
   );
 
+  // ── 6b. Intelligence pass — cross-reference doc with checklist for risks ───
+  // Uses gpt-4o-mini for fast, cheap structured JSON. Non-fatal: a failure here
+  // never blocks the response. Only runs when the analysis has meaningful data.
+  if (analysis.status !== "Unknown" || analysis.matchedFormIds.length > 0) {
+    try {
+      const pendingItems = checklistItems.filter(i => i.status !== "done").slice(0, 10);
+      const intelligenceResp = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        max_tokens: 400,
+        temperature: 0,
+        response_format: { type: "json_object" },
+        messages: [{
+          role: "user",
+          content: [
+            "You are a US business compliance intelligence engine.",
+            "",
+            "Document extracted:",
+            `- Type: ${analysis.docType}`,
+            `- Status: ${analysis.status}`,
+            `- Issuing authority: ${analysis.issuingAuthority ?? "unknown"}`,
+            `- Expiration: ${analysis.expirationDate === null ? "Does not expire" : (analysis.expirationDate ?? "unknown")}`,
+            `- Scope: ${analysis.scope ?? "none stated"}`,
+            `- Summary: ${analysis.summary}`,
+            `- Business location: ${location || "unknown"}`,
+            "",
+            "Pending compliance items (not yet completed):",
+            pendingItems.length > 0 ? pendingItems.map(i => `- ${i.text}`).join("\n") : "None provided",
+            "",
+            'Return ONLY valid JSON: { "riskFlags": [{"severity":"critical"|"warning"|"info","message":"<120 chars","action":"<120 chars"}], "conditions": ["<100 chars each"] }',
+            "",
+            "Rules: critical=expired/suspended/operating illegally; warning=expires<90 days or unmet condition; info=posting/renewal facts.",
+            "conditions: ONLY explicit ongoing operational restrictions from the document.",
+            "Max 4 riskFlags, max 3 conditions. Empty arrays if nothing applies. No invented data.",
+          ].join("\n"),
+        }],
+      });
+      const raw = intelligenceResp.choices[0]?.message?.content ?? "{}";
+      const intel = JSON.parse(raw) as {
+        riskFlags?: Array<{ severity: string; message: string; action?: string }>;
+        conditions?: string[];
+      };
+      if (Array.isArray(intel.riskFlags) && intel.riskFlags.length > 0) {
+        analysis.riskFlags = intel.riskFlags
+          .filter(f => f.severity && f.message)
+          .map(f => ({
+            severity: (["critical","warning","info"].includes(f.severity) ? f.severity : "info") as "critical"|"warning"|"info",
+            message: String(f.message).slice(0, 150),
+            action:  f.action ? String(f.action).slice(0, 150) : undefined,
+          }));
+      }
+      if (Array.isArray(intel.conditions) && intel.conditions.length > 0) {
+        analysis.conditions = intel.conditions
+          .filter((c): c is string => typeof c === "string" && c.length > 0)
+          .map(c => c.slice(0, 120));
+      }
+    } catch (intelligenceErr) {
+      console.warn("[document/analyze] intelligence pass failed (non-fatal):", String(intelligenceErr));
+    }
+  }
+
   // ── 7. Return result ────────────────────────────────────────────────────────
   // v19 — Log full success summary including every extracted field
   console.log(

@@ -424,6 +424,7 @@ export async function dbLoadIsPro(
       .select("is_pro")
       .eq("id", userId)
       .single();
+    console.log("[dbLoadIsPro] uid=" + userId + " is_pro=" + (data as Pick<ProfileRow, "is_pro"> | null)?.is_pro + " err=" + (error?.message ?? "none"));
     if (error || !data) return false; // fail-closed: DB error → Free tier
     return !!(data as Pick<ProfileRow, "is_pro">).is_pro;
   }
@@ -484,6 +485,7 @@ interface DocumentRow {
   analysis: DocumentAnalysis | null;
   analyzed: boolean;
   uploaded_at: string;
+  form_id?: string | null;
 }
 
 function rowToDocument(row: DocumentRow): UploadedDocument {
@@ -497,6 +499,7 @@ function rowToDocument(row: DocumentRow): UploadedDocument {
     analysis:     row.analysis ?? undefined,
     analyzed:     row.analyzed,
     uploadedAt:   row.uploaded_at,
+    formId:       row.form_id ?? undefined,
   };
 }
 
@@ -545,6 +548,7 @@ export async function dbSaveDocument(
       storage_path: doc.storagePath,
       analysis:     doc.analysis ?? null,
       analyzed:     doc.analyzed,
+      form_id:      doc.formId ?? null,
     })
     .select()
     .single();

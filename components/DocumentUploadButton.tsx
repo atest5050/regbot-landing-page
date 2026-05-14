@@ -45,6 +45,10 @@ import type { DocumentAnalysis } from "@/lib/regbot-types";
 import type { ChecklistItem } from "@/lib/checklist";
 import { createClient } from "@/lib/supabase/client";
 
+// Capacitor app serves from capacitor://localhost — relative URLs can't be fetched.
+// Use the Vercel deployment base URL when set (Capacitor), fall back to "" (web).
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface AnalysisResult {
@@ -69,6 +73,11 @@ interface Props {
   businessName?: string;
   location?: string;
   checklist?: ChecklistItem[];
+  /**
+   * Pass the authenticated user's ID directly to avoid calling supabase.auth.getUser()
+   * inside the component — that call can deadlock on iOS Capacitor after fire-and-forget setSession.
+   */
+  userId?: string;
   onAnalysisComplete: (result: AnalysisResult) => void;
   /**
    * v25 — Called when mode="attach" upload succeeds.
@@ -118,6 +127,19 @@ function fileIcon(mime: string) {
   return <Image className="h-4 w-4 text-blue-500" />;
 }
 
+// iOS iCloud file picker sometimes doesn't set file.type. Infer from extension.
+function inferMimeType(file: File): string {
+  if (file.type) return file.type;
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+  const map: Record<string, string> = {
+    pdf: 'application/pdf',
+    jpg: 'image/jpeg', jpeg: 'image/jpeg',
+    png: 'image/png', gif: 'image/gif',
+    webp: 'image/webp', tiff: 'image/tiff', tif: 'image/tiff',
+  };
+  return map[ext] ?? file.type;
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function DocumentUploadButton({
@@ -125,6 +147,7 @@ export default function DocumentUploadButton({
   businessName = "My Business",
   location = "",
   checklist = [],
+  userId,
   onAnalysisComplete,
   onAttachComplete,
   variant = "compact",
@@ -141,8 +164,9 @@ export default function DocumentUploadButton({
 
   // Validate before upload
   const validate = (file: File): string | null => {
-    if (!ACCEPTED.includes(file.type)) {
-      return `Unsupported file type (${file.type}). Please upload a PDF, JPG, PNG, or WebP.`;
+    const mime = inferMimeType(file);
+    if (!ACCEPTED.includes(mime)) {
+      return `Unsupported file type (${mime || file.name.split('.').pop()}). Please upload a PDF, JPG, PNG, or WebP.`;
     }
     if (file.size > MAX_MB * 1024 * 1024) {
       return `File too large (${formatBytes(file.size)}). Max ${MAX_MB} MB.`;
@@ -166,13 +190,30 @@ export default function DocumentUploadButton({
       setProgress(p => Math.min(p + 6, 85));
     }, 700);
 
+    // Resolve MIME type early (iOS iCloud files may have empty file.type)
+    const resolvedMime = inferMimeType(file);
+
+    // iOS WKWebView drops its XPC connection to the WebContent process when the
+    // native file picker closes. Any fetch() that fires before the process recovers
+    // silently times out. Give the process 2 s to reconnect before any network call.
+    const isNative = typeof window !== "undefined" && !!(window as unknown as Record<string, unknown>).Capacitor;
+    if (isNative) await new Promise(r => setTimeout(r, 2000));
+
     try {
       // ── v25 — Attach mode: upload to storage only, skip AI analysis ───────────
       // Used for "Upload Completed Document" to store existing permits/licenses.
       if (mode === "attach") {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        // Use userId prop if provided to avoid supabase.auth.getUser() which can
+        // deadlock on iOS Capacitor after fire-and-forget setSession.
+        let resolvedUserId = userId;
+        let accessToken: string | undefined;
+        if (!resolvedUserId) {
+          const supabase = createClient();
+          const { data: { session } } = await supabase.auth.getSession();
+          resolvedUserId = session?.user?.id;
+          accessToken = session?.access_token;
+        }
+        if (!resolvedUserId) {
           throw new Error("Please sign in to upload completed documents.");
         }
         if (!businessId) {
@@ -180,15 +221,43 @@ export default function DocumentUploadButton({
         }
         const ts          = Date.now();
         const safeName    = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-        const storagePath = `${user.id}/${businessId}/${ts}-${safeName}`;
+        const storagePath = `${resolvedUserId}/${businessId}/${ts}-${safeName}`;
 
-        const { error: storageErr } = await supabase.storage
-          .from("business-documents")
-          .upload(storagePath, file, { contentType: file.type, upsert: false });
-
-        clearInterval(ticker);
-
-        if (storageErr) throw new Error(`Upload failed: ${storageErr.message}`);
+        if (isNative) {
+          // iOS: read as base64 and POST through server-side proxy (avoids WKWebView
+          // XPC connection issues with direct Supabase binary uploads).
+          if (!accessToken) {
+            const supabase = createClient();
+            const { data: { session } } = await supabase.auth.getSession();
+            accessToken = session?.access_token;
+          }
+          const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve((reader.result as string).split(",")[1]);
+            reader.onerror = () => reject(new Error("FileReader failed"));
+            reader.readAsDataURL(file);
+          });
+          const res = await fetch(`${API_BASE}/api/document/upload`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+            },
+            body: JSON.stringify({ base64, mimeType: resolvedMime, storagePath }),
+          });
+          clearInterval(ticker);
+          if (!res.ok) {
+            const msg = await res.text().catch(() => "Upload failed");
+            throw new Error(msg);
+          }
+        } else {
+          const supabase = createClient();
+          const { error: storageErr } = await supabase.storage
+            .from("business-documents")
+            .upload(storagePath, file, { contentType: resolvedMime, upsert: false });
+          clearInterval(ticker);
+          if (storageErr) throw new Error(`Upload failed: ${storageErr.message}`);
+        }
 
         setProgress(100);
         setTimeout(() => {
@@ -199,48 +268,36 @@ export default function DocumentUploadButton({
           onAttachComplete?.({
             storagePath,
             fileName:  file.name,
-            mimeType:  file.type,
+            mimeType:  resolvedMime,
             sizeBytes: file.size,
           });
         }, 300);
         return;
       }
 
-      // ── v18 — Force storage-first for ALL PDFs (testing) ─────────────────────
-      // Previously the storage-first path only activated for files > 5 MB.
-      // Vercel's body limit was still being hit because the threshold check was
-      // not firing in practice (businessId undefined, wrong mime detection, etc.).
-      // For now: ALL application/pdf uploads go through storage-first regardless
-      // of size. Images and other types keep the existing FormData path.
-      // Revert to the size-threshold logic once confirmed working end-to-end.
-      const useStorageFirst = (file.type === "application/pdf" || file.size > STORAGE_FIRST_THRESHOLD_BYTES) && !!businessId;
+      const useStorageFirst = (resolvedMime === "application/pdf" || file.size > STORAGE_FIRST_THRESHOLD_BYTES) && !!businessId;
 
       let res: Response;
 
       if (useStorageFirst) {
-        // ── Storage-first path (files > 5 MB) ──────────────────────────────────
-        //
-        // Phase 1 — Browser → Supabase Storage (no API route, no body size limit)
-        // Phase 2 — API downloads from storage and runs AI analysis
-        //
-        // This bypasses the Next.js App Router ~4.5 MB body limit entirely.
-        // The analyze endpoint receives only a small JSON body with the path.
-
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        let resolvedUserId = userId;
+        if (!resolvedUserId) {
+          const supabase = createClient();
+          const { data: { session } } = await supabase.auth.getSession();
+          resolvedUserId = session?.user?.id;
+        }
+        if (!resolvedUserId) {
           throw new Error("Please sign in to upload documents larger than 5 MB.");
         }
 
-        // Build a deterministic, collision-resistant storage path.
+        const supabase = createClient();
         const ts          = Date.now();
         const safeName    = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-        const storagePath = `${user.id}/${businessId}/${ts}-${safeName}`;
+        const storagePath = `${resolvedUserId}/${businessId}/${ts}-${safeName}`;
 
-        // Phase 1: upload raw file bytes directly from the browser.
         const { error: storageErr } = await supabase.storage
           .from("business-documents")
-          .upload(storagePath, file, { contentType: file.type, upsert: false });
+          .upload(storagePath, file, { contentType: resolvedMime, upsert: false });
 
         if (storageErr) {
           throw new Error(`Storage upload failed: ${storageErr.message}`);
@@ -255,20 +312,29 @@ export default function DocumentUploadButton({
         }, 800);
 
         // Phase 2: tell the backend where the file is — no large body involved.
-        res = await fetch("/api/document/analyze", {
-          method:  "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            storagePath,
-            fileName:     file.name,
-            mimeType:     file.type,
-            sizeBytes:    file.size,
-            businessId:   businessId ?? "",
-            businessName,
-            location,
-            checklist:    JSON.stringify(checklist),
-          }),
-        });
+        // 90-second timeout prevents the card from hanging forever if WKWebView
+        // drops the connection while the OpenAI call is in-flight.
+        const analyzeAbort = new AbortController();
+        const analyzeTimeout = setTimeout(() => analyzeAbort.abort(), 90_000);
+        try {
+          res = await fetch(`${API_BASE}/api/document/analyze`, {
+            method:  "POST",
+            headers: { "Content-Type": "application/json" },
+            signal:  analyzeAbort.signal,
+            body: JSON.stringify({
+              storagePath,
+              fileName:     file.name,
+              mimeType:     file.type,
+              sizeBytes:    file.size,
+              businessId:   businessId ?? "",
+              businessName,
+              location,
+              checklist:    JSON.stringify(checklist),
+            }),
+          });
+        } finally {
+          clearTimeout(analyzeTimeout);
+        }
 
         clearInterval(analysisTicker);
 
@@ -281,7 +347,13 @@ export default function DocumentUploadButton({
         body.append("location",     location);
         body.append("checklist",    JSON.stringify(checklist));
 
-        res = await fetch("/api/document/analyze", { method: "POST", body });
+        const fmAbort = new AbortController();
+        const fmTimeout = setTimeout(() => fmAbort.abort(), 90_000);
+        try {
+          res = await fetch(`${API_BASE}/api/document/analyze`, { method: "POST", body, signal: fmAbort.signal });
+        } finally {
+          clearTimeout(fmTimeout);
+        }
         clearInterval(ticker);
       }
 
@@ -345,7 +417,10 @@ export default function DocumentUploadButton({
       setProgress(0);
       setFileName(null);
       setPhase("uploading");
-      setError((err as Error).message ?? "Upload failed. Please try again.");
+      const msg = (err as Error).name === "AbortError"
+        ? "Analysis timed out. Please try again."
+        : ((err as Error).message ?? "Upload failed. Please try again.");
+      setError(msg);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [businessId, businessName, location, checklist, onAnalysisComplete]);

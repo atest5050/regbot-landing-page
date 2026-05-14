@@ -159,48 +159,6 @@ function SplashContent() {
 
   return (
     <>
-      {/* ── CSS animation keyframes ────────────────────────────────────────── */}
-      <style>{`
-        @keyframes rps89-ring-a {
-          0%   { transform: scale(0.88); opacity: 0.50; }
-          50%  { transform: scale(1.14); opacity: 0.12; }
-          100% { transform: scale(0.88); opacity: 0.50; }
-        }
-        @keyframes rps89-ring-b {
-          0%   { transform: scale(1.00); opacity: 0.28; }
-          50%  { transform: scale(1.30); opacity: 0.06; }
-          100% { transform: scale(1.00); opacity: 0.28; }
-        }
-        @keyframes rps89-ekg-scan {
-          0%   { stroke-dashoffset: 110;  opacity: 0.55; }
-          55%  { stroke-dashoffset: 0;    opacity: 1.00; }
-          100% { stroke-dashoffset: -110; opacity: 0.55; }
-        }
-        @keyframes rps89-enter {
-          from { opacity: 0; transform: scale(0.94); }
-          to   { opacity: 1; transform: scale(1.00); }
-        }
-        @keyframes rps89-dot {
-          0%, 80%, 100% { transform: scale(0.55); opacity: 0.30; }
-          40%            { transform: scale(1.00); opacity: 0.85; }
-        }
-        .rps89-logo {
-          animation: rps89-enter 0.75s ease-out both;
-        }
-        .rps89-shield-wrap {
-          filter: drop-shadow(0 0 14px rgba(34,211,238,0.20));
-          will-change: transform;
-          backface-visibility: hidden;
-        }
-        .rps89-ekg-path {
-          stroke-dasharray: 110;
-          animation: rps89-ekg-scan 1.9s ease-in-out infinite;
-        }
-        .rps89-dot1 { animation: rps89-dot 1.4s ease-in-out 0.00s infinite; }
-        .rps89-dot2 { animation: rps89-dot 1.4s ease-in-out 0.20s infinite; }
-        .rps89-dot3 { animation: rps89-dot 1.4s ease-in-out 0.40s infinite; }
-      `}</style>
-
       {/* ── Pulsing rings behind the shield ──────────────────────────────── */}
       <div
         style={{
@@ -269,17 +227,15 @@ function SplashContent() {
                 </feMerge>
               </filter>
 
-              {/* EKG neon glow — scaled corona for large render */}
-              <filter id="rps89-ekg" x="0" y="0" width="100" height="110"
+              {/* EKG neon glow — applied only to the blurry glow layer, NOT the crisp line */}
+              <filter id="rps89-ekg" x="-8" y="-20" width="116" height="140"
                 filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
-                <feGaussianBlur in="SourceGraphic" stdDeviation={wideSD} result="wide" />
-                <feColorMatrix in="wide" type="matrix"
-                  values={`0 0 0 0 0.04  0 0 0 0 0.82  0 0 0 0 0.88  0 0 0 ${coronaOp} 0`}
-                  result="corona" />
-                <feGaussianBlur in="SourceGraphic" stdDeviation={tightSD} result="tight" />
+                <feGaussianBlur in="SourceGraphic" stdDeviation="3.2" result="blur" />
+                <feColorMatrix in="blur" type="matrix"
+                  values="0 0 0 0 0.04  0 0 0 0 0.82  0 0 0 0 0.88  0 0 0 0.72 0"
+                  result="glow" />
                 <feMerge>
-                  <feMergeNode in="corona" />
-                  <feMergeNode in="tight" />
+                  <feMergeNode in="glow" />
                   <feMergeNode in="SourceGraphic" />
                 </feMerge>
               </filter>
@@ -299,16 +255,27 @@ function SplashContent() {
             <line x1="50" y1="4"  x2="12" y2="18"
               stroke="rgba(255,255,255,0.16)" strokeWidth="0.8" strokeLinecap="round" />
 
-            {/* Animated EKG — scan animation, neon cyan glow */}
+            {/* EKG glow layer — wide soft corona that animates in sync with the crisp line */}
             <path
               className="rps89-ekg-path"
               d="M30 57 L38 57 L41 63 L45 40 L51 74 L55 57 L70 57"
               fill="none"
               stroke="#22d3ee"
-              strokeWidth={sw}
+              strokeWidth={+(sw * 0.85).toFixed(1)}
               strokeLinecap="round"
               strokeLinejoin="round"
               filter="url(#rps89-ekg)"
+              opacity="0.9"
+            />
+            {/* EKG crisp line — thin, no filter, matches icon exactly */}
+            <path
+              className="rps89-ekg-path"
+              d="M30 57 L38 57 L41 63 L45 40 L51 74 L55 57 L70 57"
+              fill="none"
+              stroke="#7dd3fc"
+              strokeWidth={+(sw * 0.32).toFixed(1)}
+              strokeLinecap="round"
+              strokeLinejoin="round"
             />
           </svg>
         </div>

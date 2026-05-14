@@ -1,6 +1,7 @@
 // v285: explicit CORS for WKWebView cross-origin fetch.
 import { NextRequest, NextResponse } from 'next/server';
 import { PDFDocument, PDFTextField, PDFCheckBox, PDFDropdown, PDFOptionList } from 'pdf-lib';
+import { verifyPro } from '@/lib/supabase/verify-pro';
 
 const CORS = {
   'Access-Control-Allow-Origin':  '*',
@@ -41,6 +42,14 @@ function cleanFieldLabel(raw: string): string {
 }
 
 export async function POST(req: NextRequest) {
+  const proCheck = await verifyPro(req);
+  if (!proCheck) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401, headers: CORS });
+  }
+  if (!proCheck.isPro) {
+    return NextResponse.json({ error: 'Pro subscription required' }, { status: 403, headers: CORS });
+  }
+
   let body: { pdfUrl?: unknown };
   try {
     body = await req.json();

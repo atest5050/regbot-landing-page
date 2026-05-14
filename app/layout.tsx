@@ -69,7 +69,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "RegPulse — Never guess your local regulations again.",
   description: "RegPulse is your AI co-pilot for hyper-local permits, zoning, health codes, and compliance. Ask in plain English and get accurate, sourced answers with checklists and next steps — built for Etsy sellers, home bakers, food trucks, consultants, and every side hustler.",
-  metadataBase: new URL("https://regbot-landing-page.vercel.app"),
+  metadataBase: new URL("https://www.reg-bot.ai"),
   keywords: [
     "business compliance",
     "permits",
@@ -375,7 +375,11 @@ export default function RootLayout({
                 el.style.transition = 'opacity 0.4s ease-out';
                 el.style.opacity = '0';
                 el.style.pointerEvents = 'none';
-                setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 450);
+                // Do NOT call removeChild — React's fiber tree still references this node.
+                // Removing it externally causes insertBefore(x, rp-boot) to throw
+                // NotFoundError on the next React re-render, crashing WKWebView.
+                // display:none hides it completely while keeping the fiber ref valid.
+                setTimeout(function(){ el.style.display = 'none'; }, 450);
               })();
             `}
           </Script>

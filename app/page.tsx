@@ -143,25 +143,58 @@ function NativeApp() {
   //                                 then sets rp_oauth_checkout so ChatPage starts Stripe checkout.
   useEffect(() => {
     let handle: { remove: () => void } | null = null;
-    import("@capacitor/app").then(({ App }) => {
-      App.addListener("appUrlOpen", async ({ url }) => {
+    // Pre-import both modules before registering the listener — avoids dynamic import
+    // inside an async callback which triggers "JS Eval error" in WKWebView.
+    Promise.all([
+      import("@capacitor/app"),
+      import("@/lib/supabase/client"),
+    ]).then(([{ App }, { createClient }]) => {
+      const processedCodes = new Set<string>();
+
+      const processOAuthUrl = async (url: string) => {
         if (!url.startsWith("regpulse://")) return;
-        // Extract PKCE code if present (from social OAuth redirect)
         try {
           const parsed = new URL(url.replace(/^regpulse:\/\//, "https://x/"));
           const code = parsed.searchParams.get("code");
           if (code) {
-            const { createClient } = await import("@/lib/supabase/client");
+            if (processedCodes.has(code)) return;
+            processedCodes.add(code);
+            // Set checkout flag BEFORE exchangeCodeForSession so onAuthStateChange
+            // fires with the flag already in sessionStorage (Supabase notifies synchronously).
+            let pendingCheckout = false;
+            try {
+              if (sessionStorage.getItem("rp_oauth_intent_checkout") === "1") {
+                sessionStorage.removeItem("rp_oauth_intent_checkout");
+                sessionStorage.setItem("rp_oauth_checkout", "1");
+                pendingCheckout = true;
+              }
+            } catch (_) {}
             const sb = createClient();
             const { data } = await sb.auth.exchangeCodeForSession(code);
-            if (data.session) {
-              try { sessionStorage.setItem("rp_oauth_checkout", "1"); } catch (_) {}
+            if (data.session && pendingCheckout) {
+              // Directly trigger checkout via chat page's registered callback
+              // (cross-instance: onAuthStateChange on a different Supabase client won't fire).
+              try {
+                const trigger = (window as any).__rpTriggerCheckout;
+                if (typeof trigger === "function") trigger(data.session.user.id);
+              } catch (_) {}
+            } else if (!data.session && pendingCheckout) {
+              try { sessionStorage.removeItem("rp_oauth_checkout"); } catch (_) {}
             }
           }
         } catch (_) {}
         try { localStorage.setItem("rp_onboarded_v1", "1"); } catch (_) {}
         try { sessionStorage.setItem("rp_skip_splash", "1"); } catch (_) {}
         setShowChat(true);
+      };
+
+      // ASWebAuthenticationSession callback (iOS — bypasses SFSafariViewController limitations).
+      (window as unknown as Record<string, unknown>).__rpOAuthCallback = (url: string | null) => {
+        if (url) void processOAuthUrl(url);
+      };
+
+      App.addListener("appUrlOpen", async ({ url }) => {
+        await processOAuthUrl(url);
       }).then(h => { handle = h; });
     }).catch(() => {});
     return () => { handle?.remove(); };

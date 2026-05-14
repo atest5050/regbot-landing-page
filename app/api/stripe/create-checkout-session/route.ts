@@ -3,6 +3,7 @@
 import Stripe from 'stripe';
 import { NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { verifyAuth } from '@/lib/supabase/verify-pro';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2026-03-25.dahlia',
@@ -20,9 +21,18 @@ export async function OPTIONS() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await request.json() as { userId?: string };
+    const caller = await verifyAuth(request);
+    if (!caller) {
+      return Response.json({ error: 'Authentication required' }, { status: 401, headers: CORS });
+    }
+
+    const { userId, native } = await request.json() as { userId?: string; native?: boolean };
     if (!userId) {
       return Response.json({ error: 'Missing userId' }, { status: 400, headers: CORS });
+    }
+
+    if (caller.userId !== userId) {
+      return Response.json({ error: 'Forbidden' }, { status: 403, headers: CORS });
     }
 
     const priceId = process.env.STRIPE_PRO_PRICE_ID;
@@ -31,7 +41,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: 'Subscription pricing not configured' }, { status: 500, headers: CORS });
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://regbot-landing-page.vercel.app';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.reg-bot.ai';
 
     const supabase = await createClient();
     const { data: profile } = await supabase
@@ -44,7 +54,7 @@ export async function POST(request: NextRequest) {
       payment_method_types: ['card'],
       mode: 'subscription',
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${baseUrl}/chat/?success=true`,
+      success_url: native ? `${baseUrl}/mobile-return?s=1` : `${baseUrl}/chat/?success=true`,
       cancel_url:  `${baseUrl}/chat/?cancelled=1`,
       metadata: { userId },
     };
@@ -57,7 +67,8 @@ export async function POST(request: NextRequest) {
     const session = await stripe.checkout.sessions.create(params);
     return Response.json({ url: session.url }, { headers: CORS });
   } catch (error) {
-    console.error('[create-checkout-session]', error);
-    return Response.json({ error: 'Failed to create checkout session' }, { status: 500, headers: CORS });
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error('[create-checkout-session]', msg);
+    return Response.json({ error: msg }, { status: 500, headers: CORS });
   }
 }

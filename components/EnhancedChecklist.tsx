@@ -28,7 +28,7 @@
 
 "use client";
 
-import { useState, useMemo, Fragment } from "react";
+import { useState, useMemo, useCallback, Fragment } from "react";
 import {
   CheckCircle2,
   Circle,
@@ -52,6 +52,9 @@ import {
   Crown,
   Paperclip,
   ExternalLink,
+  HelpCircle,
+  Bookmark,
+  MinusCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ChecklistItem, ChecklistStatus } from "@/lib/checklist";
@@ -159,6 +162,20 @@ interface Props {
    * Parent generates a signed URL and opens it.
    */
   onViewDocument?: (doc: UploadedDocument) => void;
+  /** Business type — passed to the explain API for context. */
+  businessType?: string;
+  /** Two-letter state abbreviation — passed to the explain API for context. */
+  locationState?: string;
+  /**
+   * Called when the user clicks "Save to Business" on a checklist item.
+   * Parent handles business selection or prompts the user to create one.
+   */
+  onSaveToBusiness?: (item: ChecklistItem) => void;
+  /**
+   * Called when the user types a custom item in the quick-add input.
+   * Parent should create a new ChecklistItem and append it.
+   */
+  onAddItem?: (text: string) => void;
 }
 
 // ── Status config ─────────────────────────────────────────────────────────────
@@ -339,12 +356,46 @@ export default function EnhancedChecklist({
   uploadedDocuments,
   onUploadCompletedDoc,
   onViewDocument,
+  businessType,
+  locationState,
+  onSaveToBusiness,
+  onAddItem,
 }: Props) {
   const [expandedId, setExpandedId]   = useState<string | null>(null);
   const [sortBy, setSortBy]           = useState<"default" | "due-date" | "status">("default");
+  const [incompleteOpen, setIncompleteOpen] = useState(true);
+  const [completedOpen, setCompletedOpen]   = useState(false);
+  const [quickAddText, setQuickAddText]     = useState("");
   // Which confirmation bar is open: "reset" | "clear-done" | "clear-all" | null
-  const [confirmAction, setConfirmAction] = useState<"reset" | "clear-done" | "clear-all" | null>(null);
+  const [confirmAction, setConfirmAction] = useState<"reset" | "clear-done" | "clear-all" | "na-all" | null>(null);
   const [exporting, setExporting]     = useState(false);
+  // Plain-English explanations: itemId → { loading, text }
+  const [explanations, setExplanations] = useState<Record<string, { loading: boolean; text: string | null }>>({});
+
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+
+  const handleExplainItem = useCallback(async (itemId: string, text: string) => {
+    // Toggle off if already shown
+    if (explanations[itemId]?.text) {
+      setExplanations(prev => { const n = { ...prev }; delete n[itemId]; return n; });
+      return;
+    }
+    setExplanations(prev => ({ ...prev, [itemId]: { loading: true, text: null } }));
+    try {
+      const res = await fetch(`${API_BASE}/api/checklist/explain`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ text, businessType, state: locationState }),
+      });
+      const data = await res.json() as { ok: boolean; explanation?: string };
+      setExplanations(prev => ({
+        ...prev,
+        [itemId]: { loading: false, text: data.ok ? (data.explanation ?? null) : "Unable to load explanation." },
+      }));
+    } catch {
+      setExplanations(prev => ({ ...prev, [itemId]: { loading: false, text: "Unable to load explanation." } }));
+    }
+  }, [API_BASE, businessType, locationState, explanations]);
 
   // ── Derived stats ──────────────────────────────────────────────────────────
   const doneCount = useMemo(() => items.filter(i => i.status === "done").length, [items]);
@@ -378,8 +429,8 @@ export default function EnhancedChecklist({
   }, [items, sortBy]);
 
   // ── Pro tier gate ──────────────────────────────────────────────────────────
-  /** True when a Free user has consumed all monthly AI form completions. */
-  const isFormLimited = !isPro && monthlyFormsUsed >= freeMonthlyLimit;
+  /** True for all Free users — FormFiller and checklist actions are Pro-only. */
+  const isFormLimited = !isPro;
 
   // ── Dashboard action handlers ──────────────────────────────────────────────
 
@@ -663,7 +714,7 @@ export default function EnhancedChecklist({
         {/* Dashboard action buttons */}
         {confirmAction === null ? (
           <div className="space-y-1">
-            <div className="grid grid-cols-3 gap-1">
+            <div className="grid grid-cols-2 gap-1">
               {/* Mark All Done */}
               <button
                 onClick={handleMarkAllDone}
@@ -684,6 +735,20 @@ export default function EnhancedChecklist({
               >
                 <X className="h-3.5 w-3.5" />
                 <span className="text-[10px] leading-tight font-medium">Clear<br />Completed</span>
+              </button>
+
+              {/* Mark All N/A — removes all incomplete items */}
+              <button
+                onClick={() => {
+                  const incompleteCount = items.filter(i => i.status !== "done").length;
+                  if (incompleteCount > 0) setConfirmAction("na-all");
+                }}
+                disabled={items.filter(i => i.status !== "done").length === 0}
+                className="flex flex-col items-center gap-1 px-1 py-2 rounded-lg border border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/30 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/40 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-700 dark:hover:text-slate-200 transition-all disabled:opacity-30 disabled:cursor-not-allowed text-center"
+                title="Mark all incomplete items as N/A (removes them)"
+              >
+                <MinusCircle className="h-3.5 w-3.5" />
+                <span className="text-[10px] leading-tight font-medium">All<br />N/A</span>
               </button>
 
               {/* Reset Checklist */}
@@ -719,6 +784,16 @@ export default function EnhancedChecklist({
           <ConfirmBar
             message="Are you sure? This will permanently delete all data for this business."
             onConfirm={handleClearAll}
+            onCancel={() => setConfirmAction(null)}
+          />
+        ) : confirmAction === "na-all" ? (
+          <ConfirmBar
+            message={`Mark ${items.filter(i => i.status !== "done").length} incomplete items as N/A and remove them?`}
+            onConfirm={() => {
+              items.filter(i => i.status !== "done").forEach(i => onDelete(i.id));
+              setConfirmAction(null);
+              setExpandedId(null);
+            }}
             onCancel={() => setConfirmAction(null)}
           />
         ) : (
@@ -814,8 +889,12 @@ export default function EnhancedChecklist({
       </div>
 
       {/* ── Items list ────────────────────────────────────────────────────── */}
-      <div className="overflow-y-auto flex-1 space-y-1.5 pr-0.5">
-        {sorted.map(item => {
+      <div className="overflow-y-auto flex-1 pr-0.5">
+        {/* Incomplete folder */}
+        {(() => {
+          const incompleteItems = sorted.filter(i => i.status !== "done");
+          const completedItems  = sorted.filter(i => i.status === "done");
+          const renderItem = (item: (typeof sorted)[number]) => {
           const cfg = STATUS_CONFIG[item.status];
           const { Icon } = cfg;
           const isExpanded = expandedId === item.id;
@@ -947,15 +1026,24 @@ export default function EnhancedChecklist({
                     )}
                   </div>
 
-                  {/* vUnified-platform-fix: redesigned form action buttons into compact inline chips.
-                      Old design: 4-5 tall stacked buttons (mt-2 each) made collapsed rows very busy.
-                      New design: tiny single-line chips (py-0.5) that sit flush in the badge row.
-                      Premium actions (AI fill, Renew, Review) show an amber ⚡PRO pill.
-                      All actions are also available in the full 2-col grid when expanded. */}
+                  {/* Action chips — Pro-only; free users see a single upgrade badge */}
                   {(showCompleteFormCta || showViewCompletedFormCta || showRenewCta || showAlertCta || downloadPdfPath) && (
                     <div className="mt-1.5 flex items-center gap-1 flex-wrap">
+                      {isFormLimited ? (
+                        /* Free tier: single upgrade chip instead of all action buttons */
+                        <button
+                          onClick={e => { e.stopPropagation(); onUpgradeClick?.(); }}
+                          className="inline-flex items-center gap-0.5 text-[9px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded px-1.5 py-0.5 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors pointer-events-auto"
+                          style={{ touchAction: "manipulation" }}
+                          title="Upgrade to Pro to fill forms, download PDFs, and save to business"
+                        >
+                          <Crown className="h-2.5 w-2.5 shrink-0" />
+                          Pro Features
+                        </button>
+                      ) : (
+                        <>
                       {/* Complete Form with AI chip */}
-                      {showCompleteFormCta && !isFormLimited && (
+                      {showCompleteFormCta && (
                         <button
                           onClick={e => { e.stopPropagation(); onStartForm!(item); }}
                           className="inline-flex items-center gap-0.5 text-[9px] font-bold text-blue-600 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/40 rounded px-1.5 py-0.5 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors pointer-events-auto"
@@ -967,18 +1055,6 @@ export default function EnhancedChecklist({
                           <span className="ml-0.5 inline-flex items-center gap-0.5 bg-gradient-to-r from-amber-400 to-amber-500 text-white text-[7px] font-bold px-1 py-px rounded-full leading-none shrink-0">
                             <Crown className="h-1.5 w-1.5" />PRO
                           </span>
-                        </button>
-                      )}
-                      {/* Locked upgrade chip */}
-                      {showCompleteFormCta && isFormLimited && (
-                        <button
-                          onClick={e => { e.stopPropagation(); onUpgradeClick?.(); }}
-                          className="inline-flex items-center gap-0.5 text-[9px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50 rounded px-1.5 py-0.5 hover:bg-slate-100 dark:hover:bg-slate-700/30 transition-colors pointer-events-auto"
-                          style={{ touchAction: "manipulation" }}
-                          title={`${monthlyFormsUsed}/${freeMonthlyLimit} free completions used`}
-                        >
-                          <Lock className="h-2.5 w-2.5 shrink-0" />
-                          Upgrade
                         </button>
                       )}
                       {/* View Completed Form chip */}
@@ -1034,6 +1110,77 @@ export default function EnhancedChecklist({
                           Blank PDF
                         </a>
                       )}
+                      {/* Save to Business */}
+                      {onSaveToBusiness && (
+                        <button
+                          onClick={e => { e.stopPropagation(); onSaveToBusiness(item); }}
+                          className="inline-flex items-center gap-0.5 text-[9px] font-semibold border rounded px-1.5 py-0.5 transition-colors pointer-events-auto text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/40"
+                          style={{ touchAction: "manipulation" }}
+                          title="Save this item to a business profile"
+                        >
+                          <Bookmark className="h-2.5 w-2.5 shrink-0" />
+                          Save
+                        </button>
+                      )}
+                      {/* Explain in plain English */}
+                      <button
+                        onClick={e => { e.stopPropagation(); void handleExplainItem(item.id, item.text); }}
+                        className={`inline-flex items-center gap-0.5 text-[9px] font-semibold border rounded px-1.5 py-0.5 transition-colors pointer-events-auto ${
+                          explanations[item.id]?.text
+                            ? "text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-700/50 hover:bg-violet-100 dark:hover:bg-violet-900/40"
+                            : "text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700/40"
+                        }`}
+                        style={{ touchAction: "manipulation" }}
+                        title="Explain this requirement in plain English"
+                      >
+                        {explanations[item.id]?.loading ? (
+                          <svg className="h-2.5 w-2.5 animate-spin shrink-0" viewBox="0 0 24 24" fill="none">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                          </svg>
+                        ) : (
+                          <HelpCircle className="h-2.5 w-2.5 shrink-0" />
+                        )}
+                        {explanations[item.id]?.text ? "Hide" : "Explain"}
+                      </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  {/* Always-visible chips when no other action chips exist — Pro only */}
+                  {!(showCompleteFormCta || showViewCompletedFormCta || showRenewCta || showAlertCta || downloadPdfPath) && isPro && (
+                    <div className="mt-1.5 flex items-center gap-1">
+                      {onSaveToBusiness && (
+                        <button
+                          onClick={e => { e.stopPropagation(); onSaveToBusiness(item); }}
+                          className="inline-flex items-center gap-0.5 text-[9px] font-semibold border rounded px-1.5 py-0.5 transition-colors pointer-events-auto text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/40"
+                          style={{ touchAction: "manipulation" }}
+                          title="Save this item to a business profile"
+                        >
+                          <Bookmark className="h-2.5 w-2.5 shrink-0" />
+                          Save
+                        </button>
+                      )}
+                      <button
+                        onClick={e => { e.stopPropagation(); void handleExplainItem(item.id, item.text); }}
+                        className={`inline-flex items-center gap-0.5 text-[9px] font-semibold border rounded px-1.5 py-0.5 transition-colors pointer-events-auto ${
+                          explanations[item.id]?.text
+                            ? "text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-700/50 hover:bg-violet-100 dark:hover:bg-violet-900/40"
+                            : "text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700/40"
+                        }`}
+                        style={{ touchAction: "manipulation" }}
+                        title="Explain this requirement in plain English"
+                      >
+                        {explanations[item.id]?.loading ? (
+                          <svg className="h-2.5 w-2.5 animate-spin shrink-0" viewBox="0 0 24 24" fill="none">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                          </svg>
+                        ) : (
+                          <HelpCircle className="h-2.5 w-2.5 shrink-0" />
+                        )}
+                        {explanations[item.id]?.text ? "Hide" : "Explain"}
+                      </button>
                     </div>
                   )}
                 </div>
@@ -1043,6 +1190,47 @@ export default function EnhancedChecklist({
                   <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
                 </div>
               </div>
+
+              {/* Plain-English explanation bubble */}
+              {explanations[item.id]?.text && (
+                <div
+                  className="mx-3 mb-3 rounded-xl px-3 py-2.5 text-xs leading-relaxed relative"
+                  style={{
+                    background: "linear-gradient(135deg, rgba(139,92,246,0.08) 0%, rgba(99,102,241,0.08) 100%)",
+                    border: "1px solid rgba(139,92,246,0.2)",
+                  }}
+                  onClick={e => e.stopPropagation()}
+                >
+                  {/* Speech-bubble tail */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: -6,
+                      left: 18,
+                      width: 10,
+                      height: 10,
+                      background: "rgba(139,92,246,0.12)",
+                      border: "1px solid rgba(139,92,246,0.2)",
+                      borderBottom: "none",
+                      borderRight: "none",
+                      transform: "rotate(45deg)",
+                    }}
+                  />
+                  <div className="flex items-start gap-2">
+                    <HelpCircle className="h-3.5 w-3.5 text-violet-500 dark:text-violet-400 shrink-0 mt-px" />
+                    <p className="text-slate-700 dark:text-slate-200 flex-1">
+                      {explanations[item.id].text}
+                    </p>
+                    <button
+                      onClick={() => setExplanations(prev => { const n = { ...prev }; delete n[item.id]; return n; })}
+                      className="shrink-0 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors pointer-events-auto"
+                      title="Dismiss"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* ── Expanded detail panel ──────────────────────────────── */}
               {isExpanded && (
@@ -1150,8 +1338,17 @@ export default function EnhancedChecklist({
                     </button>
                   </div>
 
-                  {/* Remove — isolated at bottom so it can't be tapped accidentally */}
-                  <div className="flex justify-end">
+                  {/* N/A + Remove — isolated at bottom */}
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={() => { onDelete(item.id); setExpandedId(null); }}
+                      className="inline-flex items-center gap-1 text-[9px] font-semibold text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50 rounded-lg px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-700/40 transition-colors pointer-events-auto"
+                      style={{ touchAction: "manipulation" }}
+                      title="Mark as not applicable — removes this item"
+                    >
+                      <X className="h-3 w-3 shrink-0" />
+                      N/A
+                    </button>
                     <button
                       onClick={() => { onDelete(item.id); setExpandedId(null); }}
                       className="inline-flex items-center gap-1 text-[9px] font-semibold text-red-400 dark:text-red-400/80 hover:text-red-600 dark:hover:text-red-300 transition-colors pointer-events-auto"
@@ -1211,7 +1408,79 @@ export default function EnhancedChecklist({
               )}
             </div>
           );
-        })}
+          };
+
+          return (
+            <div className="space-y-0">
+              {/* ── Incomplete folder ─────────────────────────────────── */}
+              <button
+                onClick={() => setIncompleteOpen(o => !o)}
+                className="w-full flex items-center gap-1.5 px-1 py-2 text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors select-none"
+                style={{ touchAction: "manipulation" }}
+              >
+                <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${incompleteOpen ? "" : "-rotate-90"}`} />
+                <span>Incomplete</span>
+                <span className="ml-0.5 text-slate-400 dark:text-slate-600 font-normal normal-case tracking-normal">({incompleteItems.length})</span>
+              </button>
+              {incompleteOpen && (
+                <div className="space-y-1.5 mb-1.5">
+                  {incompleteItems.map(item => renderItem(item))}
+                  {incompleteItems.length === 0 && (
+                    <p className="text-center text-[11px] text-slate-400 dark:text-slate-600 py-3">All items complete</p>
+                  )}
+                  {/* Quick-add inline input */}
+                  {onAddItem && (
+                    <form
+                      onSubmit={e => {
+                        e.preventDefault();
+                        const t = quickAddText.trim();
+                        if (t) { onAddItem(t); setQuickAddText(""); }
+                      }}
+                      className="flex items-center gap-1.5 mt-0.5"
+                    >
+                      <input
+                        type="text"
+                        value={quickAddText}
+                        onChange={e => setQuickAddText(e.target.value)}
+                        placeholder="+ Add custom item…"
+                        className="flex-1 text-xs border border-dashed border-slate-300 dark:border-slate-600 rounded-lg px-2.5 py-1.5 bg-transparent text-slate-700 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-blue-400 dark:focus:border-blue-600 transition-colors"
+                        style={{ touchAction: "manipulation" }}
+                      />
+                      {quickAddText.trim() && (
+                        <button
+                          type="submit"
+                          className="shrink-0 text-[10px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/50 rounded-lg px-2 py-1.5 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+                          style={{ touchAction: "manipulation" }}
+                        >
+                          Add
+                        </button>
+                      )}
+                    </form>
+                  )}
+                </div>
+              )}
+
+              {/* ── Completed folder ──────────────────────────────────── */}
+              <button
+                onClick={() => setCompletedOpen(o => !o)}
+                className="w-full flex items-center gap-1.5 px-1 py-2 text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors select-none"
+                style={{ touchAction: "manipulation" }}
+              >
+                <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${completedOpen ? "" : "-rotate-90"}`} />
+                <span>Completed</span>
+                <span className="ml-0.5 text-slate-400 dark:text-slate-600 font-normal normal-case tracking-normal">({completedItems.length})</span>
+              </button>
+              {completedOpen && (
+                <div className="space-y-1.5 mb-1.5">
+                  {completedItems.map(item => renderItem(item))}
+                  {completedItems.length === 0 && (
+                    <p className="text-center text-[11px] text-slate-400 dark:text-slate-600 py-3">No completed items yet</p>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       {/* ── v25 — Completed Documents section ──────────────────────────────────

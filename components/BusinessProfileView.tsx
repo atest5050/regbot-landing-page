@@ -913,7 +913,7 @@ import {
   ArrowLeft, Building2, MapPin, FileText, ExternalLink,
   Download, Sparkles, Calendar, Activity,
   CheckCircle2, Pencil, X, Check, Paperclip, UploadCloud,
-  AlertCircle, SaveAll,
+  AlertCircle, SaveAll, Bell, ChevronDown, ChevronUp, CircleDot, Clock, Share2,
   Crown, // vUnified-20260414-national-expansion-v86: Pro status badge
   // v45 — zoning panel icons
   Shield, ShieldCheck, ShieldX, Loader2, Search, ChevronRight,
@@ -994,6 +994,11 @@ interface Props {
   /** v39 — called when user discards all drafts (optional; parent may be a no-op). */
   onDiscardDrafts?: () => void;
   /**
+   * Per-file upload progress, keyed by draft.localId (0–100).
+   * Parent sets this during active uploads so the draft card can show a progress bar.
+   */
+  uploadProgress?: Record<string, number>;
+  /**
    * v40 — called when user clicks "View" on a synthetic form-completion document
    * (storagePath = "", formId set). Opens the PacketScreen for that form instead
    * of trying to fetch a signed storage URL.
@@ -1061,6 +1066,26 @@ interface Props {
    * When provided, a "Manage" button appears alongside the Pro badge.
    */
   onManageSubscription?: () => void;
+  /**
+   * Two-letter state abbreviation used to compute form recommendations (e.g. "FL").
+   * Displayed as a badge in the Recommended Forms header so users can verify the
+   * correct state is being used, especially when location is a bare ZIP.
+   */
+  detectedState?: string;
+  /** ISO timestamp of the last successful auto-save. Shown as "Last saved X" in the header. */
+  lastSyncedAt?: string | null;
+  /**
+   * Upcoming renewals for this specific business, pre-filtered and sorted soonest-first.
+   * Each entry has the checklist item, daysLeft (negative = overdue), and a display name.
+   */
+  businessRenewals?: { item: ChecklistItem; daysLeft: number; formName: string }[];
+  /** Called when user clicks "Renew" on a renewal row. formId from ChecklistItem. */
+  onRenewItem?: (formId: string) => void;
+  /**
+   * Called when user clicks "Add all to checklist" in Recommended Forms.
+   * Receives the non-completed form entries so the parent can create ChecklistItems.
+   */
+  onAddAllToChecklist?: (entries: { id: string; name: string }[]) => void;
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -1126,6 +1151,8 @@ function getCatLabel(entry: FormEntry | { category: string; id?: string; name?: 
 
 const BADGE_CLS = "text-[9px] font-bold tracking-wide border rounded-md px-1.5 py-0.5";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+
 const ACCEPTED_EXTS = ".pdf,.jpg,.jpeg,.png,.gif,.webp,.tiff";
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -1177,6 +1204,7 @@ export default function BusinessProfileView({
   onLocationChange,
   onSaveDrafts,
   onDiscardDrafts,
+  uploadProgress,
   onViewCompletedForm,
   onCheckZoning,
   onAttachZoningResult,
@@ -1193,10 +1221,23 @@ export default function BusinessProfileView({
   // vUnified-20260414-national-expansion-v86/v87: Pro subscription status + portal handler
   isPro,
   onManageSubscription,
+  detectedState,
+  lastSyncedAt,
+  businessRenewals,
+  onRenewItem,
+  onAddAllToChecklist,
 }: Props) {
 
   // v61 — state for inline zoning result view modal
   const [zoningViewDoc, setZoningViewDoc] = useState<UploadedDocument | null>(null);
+
+  // Unified view — collapsible item folders
+  const [pendingOpen,   setPendingOpen]   = useState(true);
+  const [completedOpen, setCompletedOpen] = useState(false);
+  const [renewalsOpen,  setRenewalsOpen]  = useState(true);
+
+  // Completed Documents slide-up modal
+  const [docsModalOpen, setDocsModalOpen] = useState(false);
 
   // v40/v61 — unified view handler: routes zoning docs to inline modal,
   // synthetic form-completion docs to onViewCompletedForm (PacketScreen),
@@ -1228,15 +1269,55 @@ export default function BusinessProfileView({
   }, [business.name]);
 
   // ── Inline location editing ──────────────────────────────────────────────
-  const [editingLocation, setEditingLocation] = useState(false);
-  const [locationInput,   setLocationInput]   = useState(business.location);
+  const [editingLocation,  setEditingLocation]  = useState(false);
+  const [locationInput,    setLocationInput]    = useState(business.location);
+  const [locationResolving, setLocationResolving] = useState(false);
 
-  const commitLocation = useCallback(() => {
+  // Resolve a bare ZIP to "City, ST ZIP" via our /api/geocode proxy.
+  const resolveZip = useCallback(async (zip: string): Promise<string | null> => {
+    try {
+      const res = await fetch(`${API_BASE}/api/geocode?zip=${zip}`);
+      if (!res.ok) return null;
+      const data = await res.json() as { formatted?: string };
+      return data.formatted ?? null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  // On mount — if the stored location is a bare ZIP, auto-resolve it silently.
+  useEffect(() => {
+    const trimmed = business.location?.trim() ?? "";
+    if (!/^\d{5}$/.test(trimmed)) return;
+    void resolveZip(trimmed).then(resolved => {
+      if (resolved) {
+        setLocationInput(resolved);
+        onLocationChange?.(resolved);
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [business.id]);
+
+  const commitLocation = useCallback(async () => {
     setEditingLocation(false);
     const trimmed = locationInput.trim();
     if (!trimmed) { setLocationInput(business.location); return; }
+
+    // Auto-resolve bare 5-digit ZIP → "City, ST ZIP" via our geocode proxy.
+    if (/^\d{5}$/.test(trimmed)) {
+      setLocationResolving(true);
+      try {
+        const resolved = await resolveZip(trimmed);
+        if (resolved) {
+          setLocationInput(resolved);
+          onLocationChange?.(resolved);
+          return;
+        }
+      } finally { setLocationResolving(false); }
+    }
+
     if (trimmed !== business.location) onLocationChange?.(trimmed);
-  }, [locationInput, business.location, onLocationChange]);
+  }, [locationInput, business.location, onLocationChange, resolveZip]);
 
   const cancelLocation = useCallback(() => {
     setEditingLocation(false);
@@ -1266,8 +1347,51 @@ export default function BusinessProfileView({
   // ── v39 — Draft state ────────────────────────────────────────────────────
   // Files selected by the user are held here until explicitly saved or discarded.
   // Each formId can have at most one draft (new drop replaces prior draft).
-  const [drafts,  setDrafts]  = useState<DraftDoc[]>([]);
-  const [saving,  setSaving]  = useState(false);
+  const [drafts,     setDrafts]     = useState<DraftDoc[]>([]);
+  const [saving,     setSaving]     = useState(false);
+  const [saveError,  setSaveError]  = useState<string | null>(null);
+
+  // Draft metadata persisted to localStorage so the amber "pending" badge survives
+  // navigation away and back. Only metadata (name/type/size/formId) is stored — the
+  // actual File bytes cannot be serialized, so the user must re-attach to upload.
+  type StoredDraftMeta = { localId: string; formId: string | null; fileName: string; fileType: string; fileSize: number };
+  const draftMetaKey = `rp_pending_drafts_${business.id}`;
+
+  const [storedDraftMeta, setStoredDraftMeta] = useState<StoredDraftMeta[]>(() => {
+    try {
+      const raw = typeof window !== "undefined" ? localStorage.getItem(draftMetaKey) : null;
+      return raw ? (JSON.parse(raw) as StoredDraftMeta[]) : [];
+    } catch { return []; }
+  });
+
+  // Keep localStorage in sync whenever drafts change.
+  useEffect(() => {
+    try {
+      if (drafts.length > 0) {
+        const meta: StoredDraftMeta[] = drafts.map(d => ({
+          localId: d.localId, formId: d.formId ?? null,
+          fileName: d.file.name, fileType: d.file.type, fileSize: d.file.size,
+        }));
+        localStorage.setItem(draftMetaKey, JSON.stringify(meta));
+        setStoredDraftMeta(meta);
+      } else {
+        localStorage.removeItem(draftMetaKey);
+        setStoredDraftMeta([]);
+      }
+    } catch { /* localStorage may be blocked */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drafts]);
+
+  // Clear stored meta when the business changes.
+  useEffect(() => {
+    setStoredDraftMeta(() => {
+      try {
+        const raw = localStorage.getItem(draftMetaKey);
+        return raw ? (JSON.parse(raw) as StoredDraftMeta[]) : [];
+      } catch { return []; }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [business.id]);
 
   // ── v41 FIX — Local saved docs ───────────────────────────────────────────
   // After onSaveDrafts resolves it returns the newly-persisted UploadedDocument[].
@@ -1336,9 +1460,11 @@ export default function BusinessProfileView({
   const [zoningAddress,    setZoningAddress]    = useState(effectiveLocation);
   const [zoningBizType,    setZoningBizType]    = useState(business.businessType ?? "");
   const [zoningLoading,    setZoningLoading]    = useState(false);
-  const [zoningResult,     setZoningResult]     = useState<ZoningResult | null>(null);
-  const [zoningError,      setZoningError]      = useState<string | null>(null);
-  const [zoningAttached,   setZoningAttached]   = useState(false);
+  const [zoningResult,         setZoningResult]         = useState<ZoningResult | null>(null);
+  const [zoningError,          setZoningError]          = useState<string | null>(null);
+  const [zoningAttached,       setZoningAttached]       = useState(false);
+  const [zoningInterpretation, setZoningInterpretation] = useState<string | null>(null);
+  const [zoningInterpLoading,  setZoningInterpLoading]  = useState(false);
 
   // v69 — Category picker state
   const [editingCategory, setEditingCategory] = useState(false);
@@ -1454,9 +1580,28 @@ export default function BusinessProfileView({
     setZoningResult(null);
     setZoningError(null);
     setZoningAttached(false);
+    setZoningInterpretation(null);
     try {
       const result = await onCheckZoning(zoningAddress, zoningBizType || "business");
       setZoningResult(result);
+      // Fire AI interpretation in background — non-blocking
+      setZoningInterpLoading(true);
+      fetch(`${API_BASE}/api/zoning/interpret`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({
+          zoneType:       result.zoneType,
+          status:         result.status,
+          notes:          result.notes,
+          restrictions:   result.restrictions,
+          requiredPermits: result.requiredPermits,
+          businessType:   zoningBizType || "business",
+        }),
+      })
+        .then(r => r.json() as Promise<{ ok: boolean; interpretation?: string }>)
+        .then(d => { if (d.ok && d.interpretation) setZoningInterpretation(d.interpretation); })
+        .catch(() => { /* non-fatal */ })
+        .finally(() => setZoningInterpLoading(false));
     } catch (e) {
       setZoningError(e instanceof Error ? e.message : "Zoning check failed. Please try again.");
     } finally {
@@ -1555,23 +1700,24 @@ export default function BusinessProfileView({
   const handleSave = useCallback(async () => {
     if (!onSaveDrafts || drafts.length === 0) return;
     setSaving(true);
+    setSaveError(null);
     try {
-      // v41 FIX: onSaveDrafts now returns the docs it persisted.
-      // Storing them in localSavedDocs makes the green badge appear immediately
-      // on the card — no race against the parent re-render propagating the prop.
       const saved = await onSaveDrafts(drafts);
       if (saved.length > 0) {
         setLocalSavedDocs(prev => [...saved, ...prev]);
-      }
-      setDrafts([]);
-      setShowLeaveModal(false);
-      // If we were in the middle of a leave attempt, complete it now
-      if (pendingLeaveRef.current) {
-        pendingLeaveRef.current();
-        pendingLeaveRef.current = null;
+        setDrafts([]);
+        setShowLeaveModal(false);
+        if (pendingLeaveRef.current) {
+          pendingLeaveRef.current();
+          pendingLeaveRef.current = null;
+        }
+      } else {
+        // All uploads failed — keep drafts so user can retry
+        setSaveError("Upload failed. Check your connection and try again.");
       }
     } catch (err) {
       console.error("BusinessProfileView: onSaveDrafts threw", err);
+      setSaveError("Upload failed. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -1579,6 +1725,8 @@ export default function BusinessProfileView({
 
   const handleDiscard = useCallback(() => {
     setDrafts([]);
+    setStoredDraftMeta([]);
+    try { localStorage.removeItem(draftMetaKey); } catch { /* blocked */ }
     setShowLeaveModal(false);
     onDiscardDrafts?.();
     if (pendingLeaveRef.current) {
@@ -1636,6 +1784,31 @@ export default function BusinessProfileView({
     }).length;
   })();
   const showStats = hasScore || checklist.length > 0;
+
+  // PDF / print compliance report — uses computed vars so placed after them
+  const generateReport = useCallback(() => {
+    const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+    const pendingItems   = checklist.filter(i => i.status !== "done");
+    const completedItems = checklist.filter(i => i.status === "done");
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Compliance Report — ${business.name}</title>
+<style>body{font-family:system-ui,sans-serif;margin:40px;color:#0f172a;line-height:1.5}
+h1{font-size:22px;margin-bottom:4px}h2{font-size:15px;margin:24px 0 8px;border-bottom:1px solid #e2e8f0;padding-bottom:4px}
+p{margin:0 0 4px;font-size:13px}ul{margin:0;padding-left:20px}li{font-size:13px;margin-bottom:3px}
+.badge{display:inline-block;border-radius:4px;padding:1px 6px;font-size:11px;font-weight:700}
+.done{background:#dcfce7;color:#166534}.pend{background:#fef9c3;color:#854d0e}
+footer{margin-top:40px;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px}
+</style></head><body>
+<h1>Compliance Report — ${business.name}</h1>
+<p style="color:#64748b;font-size:13px">${business.businessType ?? ""} · ${business.location || "Location not set"} · Generated ${today}</p>
+${hasScore ? `<p style="margin-top:8px"><strong>Compliance Score:</strong> ${score}% (${done}/${total} forms complete)</p>` : ""}
+${pendingItems.length > 0 ? `<h2>Pending Items (${pendingItems.length})</h2><ul>${pendingItems.map(i => `<li><span class="badge pend">${i.status}</span> ${i.text}${i.renewalDate ? ` — renews ${i.renewalDate}` : ""}</li>`).join("")}</ul>` : ""}
+${completedItems.length > 0 ? `<h2>Completed Items (${completedItems.length})</h2><ul>${completedItems.map(i => `<li><span class="badge done">Done</span> ${i.text}</li>`).join("")}</ul>` : ""}
+${allCompletedDocs.length > 0 ? `<h2>Saved Documents (${allCompletedDocs.length})</h2><ul>${allCompletedDocs.map(d => `<li>${d.originalName} — ${new Date(d.uploadedAt).toLocaleDateString()}</li>`).join("")}</ul>` : ""}
+<footer>RegPulse AI Compliance Report · ${today}</footer>
+</body></html>`;
+    const w = window.open("", "_blank");
+    if (w) { w.document.write(html); w.document.close(); w.focus(); setTimeout(() => w.print(), 300); }
+  }, [business, checklist, allCompletedDocs, hasScore, score, done, total]);
 
   // vBusinessProfile-LivingDashboard-Polish: ref to smooth-scroll body to the
   // Recommended Forms section when the user taps the health ring.
@@ -1990,9 +2163,9 @@ export default function BusinessProfileView({
                     {business.location && zoningAddress !== business.location && (
                       <button
                         onClick={() => setZoningAddress(business.location)}
-                        className="inline-flex items-center gap-1 py-1.5 px-2 rounded-lg text-[10px] font-semibold text-cyan-400 hover:text-cyan-300 hover:bg-white/5 transition-colors"
+                        className="inline-flex items-center gap-1.5 min-h-[44px] px-3 rounded-lg text-[11px] font-semibold text-cyan-400 hover:text-cyan-300 hover:bg-white/5 transition-colors pointer-events-auto"
                       >
-                        <MapPin className="h-2.5 w-2.5" />
+                        <MapPin className="h-3 w-3 shrink-0" />
                         Use current location
                       </button>
                     )}
@@ -2115,6 +2288,23 @@ export default function BusinessProfileView({
                       </p>
                     </div>
                   </div>
+
+                  {/* AI plain-English interpretation */}
+                  {(zoningInterpLoading || zoningInterpretation) && (
+                    <div
+                      className="px-4 py-3 rounded-xl text-xs leading-relaxed"
+                      style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)" }}
+                    >
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-indigo-400 mb-1.5">
+                        AI Summary
+                      </p>
+                      {zoningInterpLoading && !zoningInterpretation ? (
+                        <p className="text-slate-400 italic">Generating plain-English summary…</p>
+                      ) : (
+                        <p className="text-slate-200 whitespace-pre-line">{zoningInterpretation}</p>
+                      )}
+                    </div>
+                  )}
 
                   {/* vZoning-panel-completion: Zone type — dedicated row so it's never truncated
                       In the prior design zoneType was only a tiny truncated subtitle inside the
@@ -2472,10 +2662,14 @@ export default function BusinessProfileView({
               ) : (
                 <div className="flex items-center gap-1.5 mt-1 group/loc flex-wrap">
                   <MapPin className="h-3 w-3 text-slate-500 shrink-0" />
-                  <span className="text-xs text-slate-400 truncate">
-                    {business.location || "No location set"}
-                  </span>
-                  {onLocationChange && (
+                  {locationResolving ? (
+                    <span className="text-xs text-cyan-400/70 animate-pulse">Resolving location…</span>
+                  ) : (
+                    <span className="text-xs text-slate-400 truncate">
+                      {locationInput || "No location set"}
+                    </span>
+                  )}
+                  {onLocationChange && !locationResolving && (
                     <button
                       onClick={() => { setLocationInput(business.location); setEditingLocation(true); }}
                       className="opacity-0 group-hover/loc:opacity-100 p-0.5 text-slate-500 hover:text-cyan-400 transition-all rounded"
@@ -2485,6 +2679,19 @@ export default function BusinessProfileView({
                     </button>
                   )}
                 </div>
+              )}
+
+              {/* Last synced indicator */}
+              {lastSyncedAt && (
+                <p className="text-[10px] text-slate-600 mt-0.5 flex items-center gap-1">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500/70" />
+                  Saved {(() => {
+                    const secs = Math.floor((Date.now() - new Date(lastSyncedAt).getTime()) / 1000);
+                    if (secs < 60) return "just now";
+                    if (secs < 3600) return `${Math.floor(secs / 60)}m ago`;
+                    return `${Math.floor(secs / 3600)}h ago`;
+                  })()}
+                </p>
               )}
 
               {/* v69 — Category row with icon + searchable picker */}
@@ -2551,17 +2758,40 @@ export default function BusinessProfileView({
             </div>
           </div>
 
-          {/* Health score pill */}
-          {hasScore && (
-            <div className="shrink-0 flex flex-col items-end gap-0.5">
-              <div className="flex items-center gap-1.5">
-                <Activity className="h-3.5 w-3.5 text-slate-500" />
-                <span className={`text-sm font-bold tabular-nums ${hc.cls}`}>{score}%</span>
-              </div>
-              <span className={`text-[10px] font-semibold ${hc.cls}`}>{hc.text}</span>
-              <span className="text-[9px] text-slate-500">{done}/{total} forms done</span>
+          {/* Right column: close + export + optional health score */}
+          <div className="shrink-0 flex flex-col items-end gap-2">
+            <div className="flex items-center gap-1.5">
+              {/* Export PDF report */}
+              <button
+                onClick={generateReport}
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-white/15 text-slate-400 hover:text-cyan-300 hover:border-cyan-400/30 hover:bg-cyan-400/8 transition-colors pointer-events-auto"
+                title="Export compliance report"
+                aria-label="Export compliance report as PDF"
+              >
+                <Share2 className="h-4 w-4" />
+              </button>
+              {/* Close / X button — always visible for quick dismissal */}
+              <button
+                onClick={() => handleLeaveAttempt(onBackToChat)}
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-white/15 text-slate-400 hover:text-white hover:border-white/30 hover:bg-white/8 transition-colors pointer-events-auto"
+                title="Close"
+                aria-label="Close business profile"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
-          )}
+            {/* Health score */}
+            {hasScore && (
+              <div className="flex flex-col items-end gap-0.5">
+                <div className="flex items-center gap-1.5">
+                  <Activity className="h-3.5 w-3.5 text-slate-500" />
+                  <span className={`text-sm font-bold tabular-nums ${hc.cls}`}>{score}%</span>
+                </div>
+                <span className={`text-[10px] font-semibold ${hc.cls}`}>{hc.text}</span>
+                <span className="text-[9px] text-slate-500">{done}/{total} forms done</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Back to Chat wide button — vMobile-final-deploy-fix: min-h-[48px] touch target */}
@@ -2795,6 +3025,160 @@ export default function BusinessProfileView({
             </section>
           )}
 
+          {/* ── Checklist Items (Pending + Completed folders) ─────────────── */}
+          {checklist.length > 0 && (() => {
+            const pendingItems   = checklist.filter(i => i.status !== "done");
+            const completedItems = checklist.filter(i => i.status === "done");
+            const statusLabel = (s: string) =>
+              s === "in-progress" ? "In Progress" :
+              s === "blocked"     ? "Blocked" :
+              s === "done"        ? "Done" : "To Do";
+            const statusColor = (s: string) =>
+              s === "in-progress" ? "bg-blue-500/20 text-blue-300 border-blue-500/30" :
+              s === "blocked"     ? "bg-red-500/20 text-red-300 border-red-500/30" :
+              s === "done"        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" :
+                                    "bg-slate-500/20 text-slate-300 border-slate-500/30";
+            const ItemCard = ({ item }: { item: ChecklistItem }) => (
+              <div
+                key={item.id}
+                className="rounded-lg px-3 py-2.5 flex items-start gap-2.5"
+                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+              >
+                <CircleDot className={`h-3.5 w-3.5 mt-0.5 shrink-0 ${item.status === "done" ? "text-emerald-400" : "text-slate-500"}`} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-slate-200 leading-snug">{item.text}</p>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    <span className={`inline-flex text-[9px] font-semibold border rounded-full px-1.5 py-0.5 ${statusColor(item.status)}`}>
+                      {statusLabel(item.status)}
+                    </span>
+                    {item.fee && <span className="text-[9px] text-slate-500">Fee: {item.fee}</span>}
+                    {item.renewalDate && (
+                      <span className="inline-flex items-center gap-0.5 text-[9px] text-amber-400">
+                        <Clock className="h-2.5 w-2.5" />
+                        Renews {new Date(item.renewalDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+            return (
+              <>
+                {/* Pending folder */}
+                <section>
+                  <button
+                    onClick={() => setPendingOpen(o => !o)}
+                    className="w-full flex items-center gap-2 mb-3 group"
+                  >
+                    <div className="h-6 w-6 rounded-lg flex items-center justify-center shrink-0"
+                      style={{ background: "rgba(251,191,36,0.15)", border: "1px solid rgba(251,191,36,0.25)" }}>
+                      <CircleDot className="h-3.5 w-3.5 text-amber-400" />
+                    </div>
+                    <h2 className="text-sm font-bold text-white flex-1 text-left">Pending Items</h2>
+                    <span className="text-xs text-slate-500 tabular-nums">{pendingItems.length}</span>
+                    {pendingOpen ? <ChevronUp className="h-3.5 w-3.5 text-slate-500" /> : <ChevronDown className="h-3.5 w-3.5 text-slate-500" />}
+                  </button>
+                  {pendingOpen && (
+                    pendingItems.length === 0
+                      ? <p className="text-xs text-slate-500 text-center py-3">All items completed</p>
+                      : <div className="flex flex-col gap-2">{pendingItems.map(item => <ItemCard key={item.id} item={item} />)}</div>
+                  )}
+                </section>
+
+                {/* Completed folder */}
+                {completedItems.length > 0 && (
+                  <section>
+                    <button
+                      onClick={() => setCompletedOpen(o => !o)}
+                      className="w-full flex items-center gap-2 mb-3 group"
+                    >
+                      <div className="h-6 w-6 rounded-lg flex items-center justify-center shrink-0"
+                        style={{ background: "rgba(52,211,153,0.15)", border: "1px solid rgba(52,211,153,0.25)" }}>
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                      </div>
+                      <h2 className="text-sm font-bold text-white flex-1 text-left">Completed Items</h2>
+                      <span className="text-xs text-slate-500 tabular-nums">{completedItems.length}</span>
+                      {completedOpen ? <ChevronUp className="h-3.5 w-3.5 text-slate-500" /> : <ChevronDown className="h-3.5 w-3.5 text-slate-500" />}
+                    </button>
+                    {completedOpen && (
+                      <div className="flex flex-col gap-2">{completedItems.map(item => <ItemCard key={item.id} item={item} />)}</div>
+                    )}
+                  </section>
+                )}
+              </>
+            );
+          })()}
+
+          {/* ── Upcoming Renewals ─────────────────────────────────────────────── */}
+          {businessRenewals && businessRenewals.length > 0 && (
+            <section>
+              <button
+                onClick={() => setRenewalsOpen(o => !o)}
+                className="w-full flex items-center gap-2 mb-3 group"
+              >
+                <div className="h-6 w-6 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ background: "rgba(251,146,60,0.15)", border: "1px solid rgba(251,146,60,0.25)" }}>
+                  <Bell className="h-3.5 w-3.5 text-orange-400" />
+                </div>
+                <h2 className="text-sm font-bold text-white flex-1 text-left">Upcoming Renewals</h2>
+                {(() => {
+                  const overdueCount = businessRenewals.filter(r => r.daysLeft < 0).length;
+                  const soonCount    = businessRenewals.filter(r => r.daysLeft >= 0 && r.daysLeft <= 30).length;
+                  return (overdueCount > 0 || soonCount > 0) ? (
+                    <span className={`text-[10px] font-bold border rounded-full px-1.5 py-0.5 tabular-nums ${overdueCount > 0 ? "text-red-300 bg-red-500/20 border-red-500/30" : "text-amber-300 bg-amber-500/20 border-amber-500/30"}`}>
+                      {overdueCount > 0 ? `${overdueCount} overdue` : `${soonCount} soon`}
+                    </span>
+                  ) : null;
+                })()}
+                <span className="text-xs text-slate-500 tabular-nums">{businessRenewals.length}</span>
+                {renewalsOpen ? <ChevronUp className="h-3.5 w-3.5 text-slate-500" /> : <ChevronDown className="h-3.5 w-3.5 text-slate-500" />}
+              </button>
+              {renewalsOpen && (
+                <div className="flex flex-col gap-2">
+                  {businessRenewals.map(({ item, daysLeft, formName }) => {
+                    const badgeColor =
+                      daysLeft < 0   ? "text-red-300 bg-red-500/20 border-red-500/30" :
+                      daysLeft <= 30 ? "text-red-300 bg-red-500/20 border-red-500/30" :
+                      daysLeft <= 60 ? "text-amber-300 bg-amber-500/20 border-amber-500/30" :
+                      daysLeft <= 90 ? "text-emerald-300 bg-emerald-500/20 border-emerald-500/30" :
+                                       "text-slate-400 bg-slate-500/20 border-slate-500/30";
+                    const countLabel =
+                      daysLeft < 0   ? `${Math.abs(daysLeft)}d overdue` :
+                      daysLeft === 0 ? "Today" :
+                      daysLeft === 1 ? "Tomorrow" :
+                      daysLeft <= 13 ? `${daysLeft}d` :
+                      daysLeft <= 90 ? `${Math.round(daysLeft / 7)}w` :
+                                       `${Math.round(daysLeft / 30)}mo`;
+                    return (
+                      <div key={item.id}
+                        className="rounded-lg px-3 py-2.5 flex items-center gap-3"
+                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-slate-200 truncate">{formName}</p>
+                          <p className="text-[10px] text-slate-500 mt-0.5">
+                            {new Date(item.renewalDate! + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                          </p>
+                        </div>
+                        <span className={`shrink-0 text-[10px] font-semibold border rounded px-1.5 py-0.5 ${badgeColor}`}>
+                          {countLabel}
+                        </span>
+                        {item.formId && onRenewItem && (
+                          <button
+                            onClick={() => onRenewItem(item.formId!)}
+                            className="shrink-0 text-[10px] font-semibold text-cyan-300 bg-cyan-500/15 border border-cyan-500/30 rounded px-2 py-1 hover:bg-cyan-500/25 transition-colors"
+                          >
+                            Renew
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          )}
+
           {/* ── vRuleChangeAlerts-Profile-Integration: Recent Rule Changes ── */}
           {/* Shown only when there are active (non-dismissed) alerts for this business.
               Hidden entirely when ruleAlerts is empty or undefined — no empty-state card,
@@ -2902,138 +3286,140 @@ export default function BusinessProfileView({
             </section>
           )}
 
-          {/* ── Completed Documents ──────────────────────────────────────── */}
+          {/* ── Completed Documents — summary chip + slide-up modal ────────── */}
           <section>
-            <div className="flex items-center gap-2 mb-4">
-              <FileText className="h-4 w-4 text-cyan-400" />
-              <h2 className="text-sm font-bold text-white">Completed Documents</h2>
-              <span className="text-xs text-slate-500">
-                ({allCompletedDocs.length}{drafts.length > 0 ? ` + ${drafts.length} unsaved` : ""})
-              </span>
-            </div>
-
-            {allCompletedDocs.length === 0 && drafts.length === 0 ? (
-              <div
-                className="rounded-xl p-8 text-center"
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
-              >
-                <FileText className="h-8 w-8 text-slate-600 mx-auto mb-2.5" />
-                <p className="text-sm text-slate-400 font-medium">No documents attached yet</p>
-                <p className="text-xs text-slate-600 mt-1">
-                  Use the Upload Completed button on a form card below, or drag a file onto it.
-                </p>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-2">
-
-                {/* v39 — Draft docs (amber tint, Unsaved badge) */}
-                {drafts.map(draft => (
-                  <div
-                    key={draft.localId}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl"
-                    style={{ background: "rgba(251,191,36,0.06)", border: "1px solid rgba(251,191,36,0.22)" }}
-                  >
-                    <div
-                      className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.25)" }}
-                    >
-                      <FileText className="h-4 w-4 text-amber-400" />
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-white truncate">{draft.file.name}</p>
-                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                        <span className="text-[10px] text-slate-500 capitalize">{draft.formName}</span>
-                        <span className="flex items-center gap-1 text-[10px] text-slate-500">
-                          <Calendar className="h-2.5 w-2.5" />
-                          {formatDate(draft.addedAt)}
-                        </span>
-                        <span className="text-[10px] text-slate-600 tabular-nums">
-                          {formatFileSize(draft.file.size)}
-                        </span>
-                        <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-amber-400 bg-amber-400/10 border border-amber-400/25 rounded-full px-1.5 py-0.5">
-                          Unsaved
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Remove draft */}
-                    <button
-                      onClick={() => setDrafts(prev => prev.filter(d => d.localId !== draft.localId))}
-                      className="shrink-0 p-1.5 text-slate-500 hover:text-red-400 rounded-lg hover:bg-red-400/10 transition-colors"
-                      title="Remove draft"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                ))}
-
-                {/* Saved docs — includes localSavedDocs + parent completedDocuments (deduped) */}
-                {allCompletedDocs.map((doc, i) => {
-                  // v67 — derive category badge from ALL_FORMS lookup
-                  const isZoningDoc = doc.formId === "zoning-check" || doc.analysis?.docType === "Zoning Compliance Check";
-                  const linkedForm  = doc.formId && !isZoningDoc ? ALL_FORMS[doc.formId] : undefined;
-                  const docCat = isZoningDoc
-                    ? { label: "ZONING", cls: "bg-cyan-500/20 text-cyan-300 border-cyan-400/30" }
-                    : linkedForm && "category" in linkedForm
-                      ? getCatLabel(linkedForm as FormEntry)
-                      : null;
-
+            {/* Unsaved drafts row (always visible when drafts exist) */}
+            {drafts.length > 0 && (
+              <div className="flex flex-col gap-2 mb-3">
+                {drafts.map(draft => {
+                  const pct = uploadProgress?.[draft.localId];
+                  const isUploading = pct !== undefined && pct < 100;
                   return (
-                    <div
-                      key={doc.id ?? i}
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl"
-                      style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)" }}
-                    >
-                      <div
-                        className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0"
-                        style={{ background: "rgba(34,211,238,0.10)", border: "1px solid rgba(34,211,238,0.20)" }}
-                      >
-                        <FileText className="h-4 w-4 text-cyan-400" />
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-white truncate">{doc.originalName}</p>
-                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                          {/* v67 — category badge */}
-                          {docCat && (
-                            <span className={`inline-flex ${BADGE_CLS} ${docCat.cls}`}>{docCat.label}</span>
-                          )}
-                          {doc.analysis?.docType && (
-                            <span className="text-[10px] text-slate-500">{doc.analysis.docType}</span>
-                          )}
-                          <span className="flex items-center gap-1 text-[10px] text-slate-500">
-                            <Calendar className="h-2.5 w-2.5" />
-                            {formatDate(doc.uploadedAt)}
-                          </span>
-                          <span className="text-[10px] text-slate-600 tabular-nums">
-                            {formatFileSize(doc.sizeBytes)}
-                          </span>
-                          {doc.analyzed ? (
-                            <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-400/25 rounded-full px-1.5 py-0.5">
-                              <CheckCircle2 className="h-2.5 w-2.5" />Analyzed
-                            </span>
-                          ) : (
-                            <span className="text-[10px] font-semibold text-slate-500 bg-white/5 border border-white/10 rounded-full px-1.5 py-0.5">
-                              Attached
-                            </span>
-                          )}
+                    <div key={draft.localId} className="rounded-xl overflow-hidden"
+                      style={{ background: "rgba(251,191,36,0.06)", border: "1px solid rgba(251,191,36,0.22)" }}>
+                      {pct !== undefined && (
+                        <div className="h-0.5 bg-amber-900/30">
+                          <div className="h-full bg-amber-400 transition-all duration-300" style={{ width: `${pct}%` }} />
                         </div>
+                      )}
+                      <div className="flex items-center gap-3 px-4 py-3">
+                        <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0"
+                          style={{ background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.25)" }}>
+                          <FileText className="h-4 w-4 text-amber-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-white truncate">{draft.file.name}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[10px] text-slate-500 capitalize">{draft.formName}</span>
+                            {isUploading
+                              ? <span className="text-[10px] font-semibold text-amber-400 bg-amber-400/10 border border-amber-400/25 rounded-full px-1.5 py-0.5">{pct}%</span>
+                              : <span className="text-[10px] font-semibold text-amber-400 bg-amber-400/10 border border-amber-400/25 rounded-full px-1.5 py-0.5">Unsaved</span>
+                            }
+                          </div>
+                        </div>
+                        {!isUploading && (
+                          <button onClick={() => setDrafts(prev => prev.filter(d => d.localId !== draft.localId))}
+                            className="shrink-0 p-1.5 text-slate-500 hover:text-red-400 rounded-lg hover:bg-red-400/10 transition-colors" title="Remove draft">
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                       </div>
-
-                      <button
-                        onClick={() => viewDoc(doc)}
-                        className="shrink-0 inline-flex items-center gap-1.5 text-[11px] font-semibold text-cyan-400 border border-cyan-400/30 bg-cyan-400/10 hover:bg-cyan-400/20 rounded-lg px-3 py-1.5 min-h-[44px] transition-all duration-200 backdrop-blur-sm"
-                      >
-                        <ExternalLink className="h-3 w-3" />
-                        View
-                      </button>
                     </div>
                   );
                 })}
               </div>
             )}
+
+            {/* Summary chip — tap to open full document list */}
+            <button
+              onClick={() => setDocsModalOpen(true)}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors pointer-events-auto group"
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", touchAction: "manipulation" }}
+            >
+              <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0"
+                style={{ background: "rgba(34,211,238,0.10)", border: "1px solid rgba(34,211,238,0.20)" }}>
+                <FileText className="h-4 w-4 text-cyan-400" />
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-xs font-semibold text-white">
+                  {allCompletedDocs.length > 0
+                    ? `${allCompletedDocs.length} document${allCompletedDocs.length !== 1 ? "s" : ""} saved`
+                    : "No documents yet"}
+                </p>
+                <p className="text-[10px] text-slate-500 mt-0.5">
+                  {allCompletedDocs.length > 0 ? "Tap to view all" : "Upload via form cards below"}
+                </p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-slate-300 transition-colors shrink-0" />
+            </button>
           </section>
+
+          {/* ── Documents slide-up modal ─────────────────────────────────────── */}
+          {docsModalOpen && (
+            <div className="fixed inset-0 z-[300] flex flex-col justify-end"
+              style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+              onClick={e => { if (e.target === e.currentTarget) setDocsModalOpen(false); }}>
+              <div className="rounded-t-2xl overflow-hidden flex flex-col max-h-[80vh]"
+                style={{ background: "#0f1823", border: "1px solid rgba(255,255,255,0.10)", borderBottom: "none" }}>
+                {/* Handle + header */}
+                <div className="flex items-center gap-2 px-5 pt-4 pb-3 border-b border-white/[0.07] shrink-0">
+                  <FileText className="h-4 w-4 text-cyan-400" />
+                  <h3 className="text-sm font-bold text-white flex-1">Completed Documents</h3>
+                  <span className="text-xs text-slate-500 tabular-nums">{allCompletedDocs.length}</span>
+                  <button onClick={() => setDocsModalOpen(false)}
+                    className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-white transition-colors pointer-events-auto">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                {/* Doc list */}
+                <div className="flex-1 overflow-y-auto overscroll-y-contain px-4 py-3 space-y-2">
+                  {allCompletedDocs.length === 0 ? (
+                    <div className="text-center py-10">
+                      <FileText className="h-8 w-8 text-slate-600 mx-auto mb-2" />
+                      <p className="text-sm text-slate-400">No documents yet</p>
+                      <p className="text-xs text-slate-600 mt-1">Drag a file onto a form card below, or use Upload Completed.</p>
+                    </div>
+                  ) : allCompletedDocs.map((doc, i) => {
+                    const isZoningDoc = doc.formId === "zoning-check" || doc.analysis?.docType === "Zoning Compliance Check";
+                    const linkedForm  = doc.formId && !isZoningDoc ? ALL_FORMS[doc.formId] : undefined;
+                    const docCat = isZoningDoc
+                      ? { label: "ZONING", cls: "bg-cyan-500/20 text-cyan-300 border-cyan-400/30" }
+                      : linkedForm && "category" in linkedForm ? getCatLabel(linkedForm as FormEntry) : null;
+                    return (
+                      <div key={doc.id ?? i} className="flex items-center gap-3 px-4 py-3 rounded-xl"
+                        style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)" }}>
+                        <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0"
+                          style={{ background: "rgba(34,211,238,0.10)", border: "1px solid rgba(34,211,238,0.20)" }}>
+                          <FileText className="h-4 w-4 text-cyan-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-white truncate">{doc.originalName}</p>
+                          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                            {docCat && <span className={`inline-flex ${BADGE_CLS} ${docCat.cls}`}>{docCat.label}</span>}
+                            {doc.analysis?.docType && <span className="text-[10px] text-slate-500">{doc.analysis.docType}</span>}
+                            <span className="flex items-center gap-1 text-[10px] text-slate-500">
+                              <Calendar className="h-2.5 w-2.5" />{formatDate(doc.uploadedAt)}
+                            </span>
+                            {doc.analyzed
+                              ? <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-400/25 rounded-full px-1.5 py-0.5"><CheckCircle2 className="h-2.5 w-2.5" />Analyzed</span>
+                              : <span className="text-[10px] font-semibold text-slate-500 bg-white/5 border border-white/10 rounded-full px-1.5 py-0.5">Attached</span>
+                            }
+                          </div>
+                        </div>
+                        <button onClick={() => viewDoc(doc)}
+                          className="shrink-0 inline-flex items-center gap-1.5 text-[11px] font-semibold text-cyan-400 border border-cyan-400/30 bg-cyan-400/10 hover:bg-cyan-400/20 rounded-lg px-3 py-1.5 min-h-[44px] transition-all pointer-events-auto">
+                          <ExternalLink className="h-3 w-3" />View
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }} className="px-4 pt-2 shrink-0">
+                  <div className="h-px bg-white/[0.07]" />
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* ── v35: Recommended Forms with drag-and-drop ────────────────── */}
           {/* vBusinessProfile-LivingDashboard-Polish: ref enables ring → scroll-to-forms */}
@@ -3043,13 +3429,32 @@ export default function BusinessProfileView({
             <section ref={recommendedFormsSectionRef}>
               <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <Sparkles className="h-4 w-4 text-amber-400 shrink-0" />
-                <h2 className="text-sm font-bold text-white">Recommended Forms</h2>
+                <h2 className="text-sm font-bold text-white flex-1">Recommended Forms</h2>
+                {onAddAllToChecklist && (() => {
+                  const pending = zoningAwareSortedForms.filter(e => !allCompletedDocs.some(d => d.formId === e.id || (d.analysis?.matchedFormIds ?? []).includes(e.id)));
+                  return pending.length > 0 ? (
+                    <button
+                      onClick={() => onAddAllToChecklist(pending.map(e => ({ id: e.id, name: e.name })))}
+                      className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold text-cyan-300 bg-cyan-500/15 border border-cyan-400/30 rounded-full px-2 py-1 hover:bg-cyan-500/25 transition-colors pointer-events-auto"
+                      style={{ touchAction: "manipulation" }}
+                      title="Add all pending recommended forms to your checklist"
+                    >
+                      <CheckCircle2 className="h-2.5 w-2.5" />
+                      Add all to checklist
+                    </button>
+                  ) : null;
+                })()}
                 {/* vZoningSmartRecommendations: "Zoning-smart" pill shown when a zoning
                     result is active — signals to the user that the list is personalised. */}
                 {zoningAwareFormIds.size > 0 && (
                   <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-cyan-300 bg-cyan-500/15 border border-cyan-400/40 rounded-full px-1.5 py-0.5 shrink-0">
                     <MapPin className="h-2.5 w-2.5" />
                     Zoning-smart
+                  </span>
+                )}
+                {detectedState && (
+                  <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-cyan-300 bg-cyan-500/15 border border-cyan-400/40 rounded-full px-1.5 py-0.5 shrink-0">
+                    {detectedState}
                   </span>
                 )}
                 {business.location && (
@@ -3079,8 +3484,11 @@ export default function BusinessProfileView({
                     doc.formId === entry.id ||
                     (doc.analysis?.matchedFormIds ?? []).includes(entry.id)
                   );
-                  // v39 — pending draft for this card (amber badge, not yet saved)
+                  // v39 — pending draft for this card (amber badge, not yet saved).
+                  // Also check storedDraftMeta for metadata-only entries that survived navigation.
                   const cardDraft = drafts.find(d => d.formId === entry.id);
+                  const cardStoredMeta = !cardDraft ? storedDraftMeta.find(m => m.formId === entry.id) : null;
+                  const hasPendingDraft = !!cardDraft || !!cardStoredMeta;
 
                   // v44 — isCompleted drives card-level visual state
                   const isCompleted = cardDocs.length > 0;
@@ -3118,7 +3526,7 @@ export default function BusinessProfileView({
                           ? "1.5px solid rgba(34,211,238,0.55)"
                           : isCompleted
                             ? "1.5px solid rgba(52,211,153,0.45)"
-                            : cardDraft
+                            : hasPendingDraft
                               ? "1px solid rgba(251,191,36,0.30)"
                               : "1px solid rgba(255,255,255,0.09)",
                         // vZoningSmartRecommendations: cyan left accent overrides the
@@ -3157,9 +3565,9 @@ export default function BusinessProfileView({
                             </span>
                           )}
                           {/* v39 — amber "Pending save" badge for drafts */}
-                          {cardDraft && !isCompleted && (
+                          {hasPendingDraft && !isCompleted && (
                             <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-amber-400 bg-amber-400/10 border border-amber-400/25 rounded-full px-1.5 py-0.5">
-                              Pending save
+                              {cardDraft ? "Pending save" : "Re-attach to upload"}
                             </span>
                           )}
                           {downloaded && (
@@ -3171,9 +3579,20 @@ export default function BusinessProfileView({
                         </div>
                       </div>
 
-                      {/* v44 — Form title + prominent filename block */}
+                      {/* Form title — clickable when AI completion is available */}
                       <div>
-                        <p className="text-xs font-semibold text-white leading-snug">{entry.name}</p>
+                        {onStartForm && !isCompleted ? (
+                          <button
+                            onClick={() => { if (!pendingFormId) { setPendingFormId(entry.id); onStartForm(entry.id); setTimeout(() => setPendingFormId(null), 1000); } }}
+                            className="text-xs font-semibold text-cyan-300 hover:text-cyan-200 leading-snug text-left transition-colors pointer-events-auto flex items-center gap-1"
+                            style={{ touchAction: "manipulation" }}
+                            title={`Complete ${entry.name} with AI`}
+                          >
+                            {pendingFormId === entry.id ? <><Loader2 className="h-2.5 w-2.5 animate-spin shrink-0" />Opening…</> : <><Sparkles className="h-2.5 w-2.5 shrink-0 opacity-70" />{entry.name}</>}
+                          </button>
+                        ) : (
+                          <p className="text-xs font-semibold text-white leading-snug">{entry.name}</p>
+                        )}
 
                         {/* v44 — Prominent filename block when a doc is attached.
                             Renders as a full-width emerald pill so it's impossible to miss. */}
@@ -3196,11 +3615,13 @@ export default function BusinessProfileView({
                         )}
 
                         {/* v39 — show draft filename in amber when pending */}
-                        {cardDraft && !isCompleted && (
+                        {!isCompleted && (cardDraft || cardStoredMeta) && (
                           <p className="mt-0.5 flex items-center gap-1 text-[10px] text-amber-400/80 truncate">
                             <FileText className="h-2.5 w-2.5 shrink-0" />
-                            <span className="truncate">{cardDraft.file.name}</span>
-                            <span className="shrink-0 text-amber-600">(unsaved)</span>
+                            <span className="truncate">{cardDraft ? cardDraft.file.name : cardStoredMeta!.fileName}</span>
+                            <span className="shrink-0 text-amber-600">
+                              {cardDraft ? "(unsaved)" : "(re-attach to upload)"}
+                            </span>
                           </p>
                         )}
                       </div>
@@ -3292,38 +3713,6 @@ export default function BusinessProfileView({
                           </a>
                         )}
 
-                        {/* v75 / vSeamlessProfileFormFillerBridge — "Complete with AI" button.
-                            Always visible; disabled when already completed.
-                            Shows "Opening…" briefly (pendingFormId) so the user gets
-                            immediate tap feedback before the profile view closes. */}
-                        {onStartForm && (
-                          <button
-                            onClick={() => {
-                              if (!isCompleted && !pendingFormId) {
-                                // vSeamlessProfileFormFillerBridge: brief visual feedback
-                                // before parent closes the profile view and opens FormFiller.
-                                setPendingFormId(entry.id);
-                                onStartForm(entry.id);
-                                // Safety reset — if parent doesn't close the view (no template),
-                                // clear the pending state after 1 s so the button recovers.
-                                setTimeout(() => setPendingFormId(null), 1000);
-                              }
-                            }}
-                            disabled={isCompleted || pendingFormId === entry.id}
-                            title={isCompleted ? "Already completed — view document above" : `Complete ${entry.name} with AI assistance`}
-                            className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors min-h-[44px] pointer-events-auto ${
-                              isCompleted
-                                ? "opacity-40 cursor-not-allowed text-slate-400 bg-white/5 border border-white/10"
-                                : "text-[#0d1b35]"
-                            }`}
-                            style={!isCompleted ? { background: "rgb(34,211,238)", touchAction: "manipulation" } : { touchAction: "manipulation" }}
-                            onMouseEnter={e => { if (!isCompleted) (e.currentTarget as HTMLButtonElement).style.background = "rgb(103,232,249)"; }}
-                            onMouseLeave={e => { if (!isCompleted) (e.currentTarget as HTMLButtonElement).style.background = "rgb(34,211,238)"; }}
-                          >
-                            <Sparkles className="h-3 w-3" />
-                            {pendingFormId === entry.id ? "Opening…" : "Complete with AI"}
-                          </button>
-                        )}
 
                         {/* Upload Completed (hidden input + button) — always available */}
                         <input
@@ -3435,6 +3824,9 @@ export default function BusinessProfileView({
             paddingBottom:     "max(1rem, env(safe-area-inset-bottom))",
           }}
         >
+          {saveError && (
+            <p className="text-xs text-red-400 text-center mb-2 px-2">{saveError}</p>
+          )}
           <button
             onClick={() => { void handleSave(); }}
             disabled={saving}
