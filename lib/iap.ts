@@ -71,11 +71,16 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
 
 /** True only on native iOS — the only platform where StoreKit is available. */
 export function isIAPAvailable(): boolean {
-  if (!isCapacitorNative()) return false;
   if (typeof window === 'undefined') return false;
   const cap = (window as any).Capacitor;
-  const platform = cap?.getPlatform?.() ?? cap?.platform ?? '';
-  return platform === 'ios' || !!(window as any).webkit?.messageHandlers;
+  if (!cap) return false;
+  // Only trust Capacitor's own isNativePlatform() signal — never webkit.messageHandlers,
+  // which is truthy on macOS browsers (Safari/Chrome) and would incorrectly trigger IAP.
+  if (typeof cap.isNativePlatform === 'function' && cap.isNativePlatform()) {
+    const platform = typeof cap.getPlatform === 'function' ? cap.getPlatform() : (cap.platform ?? '');
+    return platform === 'ios';
+  }
+  return false;
 }
 
 /**
