@@ -3230,6 +3230,7 @@ export default function ChatPage() {
   // On native iOS: uses StoreKit 2 IAP (Apple policy compliant).
   // On web:        uses Stripe hosted checkout (unchanged).
   const startCheckout = async (userId: string) => {
+    console.log("[checkout] start", { inFlight: checkoutInFlightRef.current, isPro, isIAP: isIAPAvailable() });
     if (checkoutInFlightRef.current) { setProCheckoutLoading(false); return; }
     if (isPro) {
       setCheckoutOverlayVisible(false);
@@ -3242,6 +3243,7 @@ export default function ChatPage() {
     setUpgradeModalVisible(false);
     try {
       // ── Native iOS: StoreKit 2 IAP ────────────────────────────────────────
+      console.log("[checkout] isIAPAvailable=", isIAPAvailable(), "API_BASE=", API_BASE);
       if (isIAPAvailable()) {
         // WKWebView XPC recovery delay after ASWebAuthenticationSession closes.
         await new Promise(r => setTimeout(r, 2000));
@@ -3272,10 +3274,12 @@ export default function ChatPage() {
 
       // ── Web: Stripe hosted checkout ───────────────────────────────────────
       const { data: { session: checkoutSession } } = await getSb().auth.getSession();
+      console.log("[checkout] session=", !!checkoutSession?.access_token, "userId=", userId);
       const checkoutHeaders: Record<string, string> = { "Content-Type": "application/json" };
       if (checkoutSession?.access_token) checkoutHeaders["Authorization"] = `Bearer ${checkoutSession.access_token}`;
       const controller = new AbortController();
       const timeoutId  = setTimeout(() => controller.abort(), 15000);
+      console.log("[checkout] firing fetch to", `${API_BASE}/api/stripe/create-checkout-session`);
       const res  = await fetch(`${API_BASE}/api/stripe/create-checkout-session`, {
         method:  "POST",
         headers: checkoutHeaders,
