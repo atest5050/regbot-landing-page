@@ -3273,10 +3273,9 @@ export default function ChatPage() {
       }
 
       // ── Web: Stripe hosted checkout ───────────────────────────────────────
-      const { data: { session: checkoutSession } } = await getSb().auth.getSession();
-      console.log("[checkout] session=", !!checkoutSession?.access_token, "userId=", userId);
+      // Server uses cookie-based auth on web — no Bearer token needed here.
+      console.log("[checkout] firing fetch (web/cookie auth), userId=", userId);
       const checkoutHeaders: Record<string, string> = { "Content-Type": "application/json" };
-      if (checkoutSession?.access_token) checkoutHeaders["Authorization"] = `Bearer ${checkoutSession.access_token}`;
       const controller = new AbortController();
       const timeoutId  = setTimeout(() => controller.abort(), 15000);
       console.log("[checkout] firing fetch to", `${API_BASE}/api/stripe/create-checkout-session`);
