@@ -9951,6 +9951,7 @@ export default function ChatPage() {
       {/* v290 — Checkout loading overlay — 100% inline styles */}
       {checkoutOverlayVisible && !isCapacitorNative() && (
         <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, left: 0, zIndex: 10000, background: "linear-gradient(160deg,#0B1E3F 0%,#0f2a55 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+          <button onClick={() => setCheckoutOverlayVisible(false)} style={{ position: "absolute", top: 16, right: 16, background: "transparent", border: "none", cursor: "pointer", color: "#94a3b8", fontSize: 24, lineHeight: 1 }}>✕</button>
           <Crown style={{ width: 40, height: 40, color: "#fbbf24" }} />
           <p style={{ color: "#ffffff", fontWeight: 600, fontSize: 18, margin: 0 }}>Opening Stripe checkout…</p>
           <Loader2 style={{ width: 24, height: 24, color: "#60a5fa" }} />
