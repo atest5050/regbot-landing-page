@@ -2514,19 +2514,8 @@ export default function ChatPage() {
             setAuthWorking(false);
             setOnboardingVisible(false);
             if (userId && wantCheckout && !alreadyPro) {
-              if (isCapacitorNative()) {
-                // iOS App Store compliance: never open in-app Stripe checkout.
-                // Open the Payment Link in SFSafariViewController instead.
-                let url = SUBSCRIBE_URL;
-                const p = new URLSearchParams({ client_reference_id: userId });
-                url = `${SUBSCRIBE_URL}?${p.toString()}`;
-                import("@capacitor/browser")
-                  .then(({ Browser }) => Browser.open({ url, presentationStyle: "fullscreen" }))
-                  .catch(() => window.open(url, "_blank"));
-                void loadFromSupabase(userId);
-              } else if (startCheckoutRef.current) {
-                setCheckoutOverlayVisible(true);
-                console.log("[rpOAuth] calling startCheckout uid=" + userId);
+              if (startCheckoutRef.current) {
+                setCheckoutOverlayVisible(!isIAPAvailable());
                 void startCheckoutRef.current(userId);
               }
             } else {
@@ -3348,6 +3337,10 @@ export default function ChatPage() {
    * automatic profile upgrade without requiring the user to enter their email again.
    */
   const openSubscribePage = async () => {
+    if (isIAPAvailable() && user?.id && startCheckoutRef.current) {
+      void startCheckoutRef.current(user.id);
+      return;
+    }
     let url = SUBSCRIBE_URL;
     if (user?.id) {
       const params = new URLSearchParams({ client_reference_id: user.id });
